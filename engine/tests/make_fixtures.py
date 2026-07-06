@@ -68,16 +68,17 @@ def test_repo():
     root = pathlib.Path(tempfile.mkdtemp())
     shutil.copytree(REPO / "templates", root / "templates")
     shutil.copytree(REPO / "engine" / "assets", root / "engine" / "assets")
-    (root / "site.yaml").write_text(SITE_YAML)
-    semis = root / "series" / "semiconductors"
+    (root / "press" / "series").mkdir(parents=True)
+    (root / "press" / "site.yaml").write_text(SITE_YAML)
+    semis = root / "press" / "series" / "semiconductors"
     semis.mkdir(parents=True)
     (semis / "series.yaml").write_text(SEMICONDUCTORS_YAML)
     (semis / "prompt.md").write_text("Deep dives on the semiconductor supply chain.\n")
-    briefs = root / "series" / "ai-briefs"
+    briefs = root / "press" / "series" / "ai-briefs"
     briefs.mkdir(parents=True)
     (briefs / "series.yaml").write_text(AI_BRIEFS_YAML)
     (briefs / "prompt.md").write_text("A nightly brief on AI and semiconductors.\n")
-    tags = root / "series" / "_tags"
+    tags = root / "press" / "series" / "_tags"
     tags.mkdir()
     (tags / "equity.md").write_text("Frame companies for a public-market reader.\n")
     return str(root)

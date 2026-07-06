@@ -21,7 +21,7 @@ def autopublish(repo, diff_base):
         print("false")
         return
     try:
-        with open(f"{repo}/series/{m.group(1)}/series.yaml") as fh:
+        with open(f"{repo}/press/series/{m.group(1)}/series.yaml") as fh:
             cfg = yaml.safe_load(fh)
         print("true" if cfg.get("autopublish", False) else "false")
     except Exception:

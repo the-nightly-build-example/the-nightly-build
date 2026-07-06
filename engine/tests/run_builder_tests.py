@@ -126,7 +126,7 @@ check("editions copied verbatim",
 print("== sequence series ==")
 seq_repo = str(pathlib.Path(tempfile.mkdtemp()) / "repo")
 shutil.copytree(TESTREPO, seq_repo)
-sy = pathlib.Path(seq_repo) / "series" / "semiconductors" / "series.yaml"
+sy = pathlib.Path(seq_repo) / "press" / "series" / "semiconductors" / "series.yaml"
 sy.write_text(sy.read_text().replace("mode: collection", "mode: sequence"))
 seq_lib = tempfile.mkdtemp()
 seq_ed = make_fixtures.dossier().replace(

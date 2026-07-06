@@ -66,7 +66,11 @@ def load_yaml(path):
 
 
 def load_site_config(repo):
-    cfg = load_yaml(os.path.join(repo, "site.yaml"))
+    """Engine defaults, overridden by the user's press/site.yaml if present."""
+    cfg = {}
+    path = os.path.join(repo, "press", "site.yaml")
+    if os.path.isfile(path):
+        cfg = load_yaml(path)
     cfg.setdefault("title", "The Nightly Build")
     cfg.setdefault("theme", "engine/assets/themes/newspaper.css")
     cfg.setdefault("appearance", "auto")
@@ -74,7 +78,7 @@ def load_site_config(repo):
 
 
 def load_series_configs(repo):
-    root = os.path.join(repo, "series")
+    root = os.path.join(repo, "press", "series")
     out = {}
     if not os.path.isdir(root):
         return out

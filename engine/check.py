@@ -264,11 +264,29 @@ def load_yaml(path):
 
 
 def load_registry(repo):
-    return load_yaml(os.path.join(repo, "templates", "registry.yaml"))
+    """Shipped registry, overlaid by the user's press/templates/registry.yaml.
+
+    A press entry fully defines its template (add a new one, or redefine a
+    shipped id); entries are replaced whole, not deep-merged.
+    """
+    registry = load_yaml(os.path.join(repo, "templates", "registry.yaml")) or {}
+    press_path = os.path.join(repo, "press", "templates", "registry.yaml")
+    if os.path.isfile(press_path):
+        registry.update(load_yaml(press_path) or {})
+    return registry
+
+
+def find_template(repo, template_id):
+    """User templates shadow shipped ones: press/templates/ wins."""
+    for base in ("press/templates", "templates"):
+        path = os.path.join(repo, base, f"{template_id}.html")
+        if os.path.isfile(path):
+            return path
+    return None
 
 
 def load_series(repo, series_id):
-    path = os.path.join(repo, "series", series_id, "series.yaml")
+    path = os.path.join(repo, "press", "series", series_id, "series.yaml")
     if not os.path.isfile(path):
         return None, path
     return load_yaml(path), path
@@ -311,8 +329,9 @@ def validate_meta_fields(meta, rep):
                   f"protocol major must be {PROTOCOL_MAJOR}, got {meta.get('protocol')}")
     need("series", str, pattern=SERIES_RE.pattern)
     need("slug", str, pattern=SLUG_RE.pattern)
-    need("template", str,
-         enum=["dossier", "lesson", "brief", "paper", "chronicle", "deck"])
+    # template membership is validated against the merged registry (B-SERIES /
+    # B-META-MATCH) — user templates in press/templates/ are first-class
+    need("template", str)
     need("title", str)
     need("mode", str, enum=["collection", "sequence", "rolling"])
     need("date", str, pattern=DATE_RE.pattern)
