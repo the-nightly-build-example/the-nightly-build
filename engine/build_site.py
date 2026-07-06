@@ -612,6 +612,59 @@ def atom_feed(site, base_url, feed_path, title, eds, generated):
 
 
 # --------------------------------------------------------------------------- #
+# Morning email digest (procedural — assembled from nb-meta, no model)
+# --------------------------------------------------------------------------- #
+
+def render_email(site_title, date, eds, series_cfgs, base_url):
+    """Email-safe digest: inline styles only, no scripts, absolute links."""
+    def absolute(path):
+        return f"{base_url}{path}" if base_url else path
+
+    eds = sorted(eds, key=lambda e: -e["reading_minutes"])
+    total_minutes = sum(e["reading_minutes"] for e in eds)
+    rows = []
+    for ed in eds:
+        meta = ed["meta"]
+        cfg = series_cfgs.get(ed["series"], {})
+        url = absolute(f"/library/{ed['series']}/{ed['slug']}.html")
+        rows.append(f"""
+  <div style="border-top:1px solid #E2DFD8;padding:18px 0 14px">
+    <div style="font-family:monospace;font-size:11px;letter-spacing:1px;
+                text-transform:uppercase;color:#C63D17">
+      {esc(str(meta.get('template', '')))} · {esc(cfg.get('name', ed['series']))}</div>
+    <div style="font-family:Georgia,serif;font-size:20px;line-height:1.3;
+                margin:6px 0 4px">
+      <a href="{esc(url)}" style="color:#171614;text-decoration:none">
+        {esc(str(meta.get('title', ed['slug'])))}</a></div>
+    <div style="font-family:Georgia,serif;font-style:italic;font-size:14px;
+                color:#57554F;margin:0 0 6px">{esc(str(meta.get('dek', '')))}</div>
+    <div style="font-family:monospace;font-size:11px;color:#94918A">
+      {ed['reading_minutes']} min read · {meta.get('sources', '?')} sources</div>
+  </div>""")
+    return f"""<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#FCFBF9">
+<div style="max-width:600px;margin:0 auto;padding:28px 20px;color:#171614">
+  <div style="font-family:Georgia,serif;font-size:26px;font-weight:bold;
+              letter-spacing:-0.5px">{esc(site_title)}<span
+              style="color:#C63D17">.</span></div>
+  <div style="font-family:monospace;font-size:12px;color:#57554F;
+              text-transform:uppercase;letter-spacing:1px;margin:4px 0 10px">
+    Tonight's build · {esc(date)}</div>
+  <div style="font-family:Georgia,serif;font-size:15px;margin:0 0 12px">
+    {len(eds)} edition{"s" if len(eds) != 1 else ""} ·
+    {total_minutes} minutes of reading, built while you slept.</div>
+  {"".join(rows)}
+  <div style="border-top:2px solid #171614;margin-top:16px;padding-top:12px;
+              font-family:monospace;font-size:11px;color:#94918A">
+    <a href="{esc(absolute('/') or '/')}" style="color:#33608F">the newsstand</a> ·
+    <a href="{esc(absolute('/feed.xml'))}" style="color:#33608F">feed</a> ·
+    The Nightly Build</div>
+</div>
+</body></html>
+"""
+
+
+# --------------------------------------------------------------------------- #
 # Build
 # --------------------------------------------------------------------------- #
 
@@ -703,6 +756,22 @@ def build(repo, library_root, out, preview_root=None, base_url="", now=None):
         write(os.path.join(out, "series", sid, "feed.xml"),
               atom_feed(site, base_url, f"series/{sid}/feed.xml",
                         f"{site_cfg['title']} — {s['name']}", eds, now))
+
+    # email digests: one per build (permanent) + the latest at a stable path
+    # for the morning-mail workflow
+    for date in catalog["builds"]:
+        eds = [e for e in editions.values() if e["meta"].get("date") == date]
+        write(os.path.join(out, "builds", date, "email.html"),
+              render_email(site_cfg["title"], date, eds, series_cfgs, base_url))
+    latest = max(catalog["builds"], default=None)
+    if latest:
+        eds = [e for e in editions.values()
+               if e["meta"].get("date") == latest]
+        write(os.path.join(out, "email-latest.html"),
+              render_email(site_cfg["title"], latest, eds, series_cfgs, base_url))
+        write(os.path.join(out, "email-latest-subject.txt"),
+              f"{site_cfg['title']} — {latest}: {len(eds)} "
+              f"edition{'s' if len(eds) != 1 else ''}\n")
 
     copy_assets(repo, site_cfg, out)
     copy_editions(editions, out, bool(preview_root))

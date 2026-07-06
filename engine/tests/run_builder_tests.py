@@ -123,6 +123,19 @@ check("editions copied verbatim",
       read(out, "library", "semiconductors", "micron.html")
       == make_fixtures.dossier())
 
+print("== email digest ==")
+email = read(out, "email-latest.html")
+check("email digest exists with edition titles",
+      "Micron Technology" in email and "Daily brief for 2026-07-06" in email)
+check("email digest is latest build only", "2026-07-05" not in email)
+check("email digest is inline-only (no scripts, no engine assets)",
+      "<script" not in email and "assets/" not in email)
+check("email subject line",
+      read(out, "email-latest-subject.txt").strip()
+      == "The Nightly Build — 2026-07-06: 2 editions")
+check("per-build digests are permanent",
+      "Daily brief for 2026-07-05" in read(out, "builds", "2026-07-05", "email.html"))
+
 print("== sequence series ==")
 seq_repo = str(pathlib.Path(tempfile.mkdtemp()) / "repo")
 shutil.copytree(TESTREPO, seq_repo)

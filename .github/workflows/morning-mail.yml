@@ -1,0 +1,92 @@
+# The paperboy: delivers the latest build's email digest every morning.
+# Opt-in twice over: press/site.yaml must set email.send_utc_hour, AND the
+# MAIL_* secrets must exist. Runs hourly because scheduled workflows live on
+# main (engine-space) — the user-owned send hour lives in press/site.yaml,
+# so changing it never touches an engine file. The digest itself is built by
+# the press (site/email-latest.html on the library branch); this workflow
+# only gates and sends. workflow_dispatch = send now (for testing).
+name: nightly-build-morning-mail
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (press/site.yaml)
+        uses: actions/checkout@v4
+
+      - name: Checkout library (built digest)
+        uses: actions/checkout@v4
+        with:
+          ref: library
+          path: _library
+
+      - name: Gate — configured hour, fresh build, secrets present
+        id: gate
+        env:
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          FORCE: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          pip install pyyaml --quiet
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import datetime, json, os, pathlib, yaml
+
+          def out(send, why):
+              print(f"send={'true' if send else 'false'}")
+              print(f"why={why}")
+              raise SystemExit
+
+          if not os.environ.get("MAIL_TO"):
+              out(False, "MAIL_TO secret not set (RSS remains available)")
+          force = os.environ.get("FORCE") == "true"
+          site = {}
+          p = pathlib.Path("press/site.yaml")
+          if p.is_file():
+              site = yaml.safe_load(p.read_text()) or {}
+          hour = (site.get("email") or {}).get("send_utc_hour")
+          now = datetime.datetime.now(datetime.timezone.utc)
+          if not force:
+              if hour is None:
+                  out(False, "email.send_utc_hour not set in press/site.yaml")
+              if int(hour) != now.hour:
+                  out(False, f"not the configured hour ({hour}:00 UTC)")
+          digest = pathlib.Path("_library/site/email-latest.html")
+          if not digest.is_file():
+              out(False, "no built digest on library yet")
+          try:
+              catalog = json.loads(
+                  pathlib.Path("_library/site/catalog.json").read_text())
+              latest = max(catalog["builds"])
+              age = (now.date()
+                     - datetime.date.fromisoformat(latest)).days
+          except Exception:
+              out(False, "catalog unreadable")
+          if age > 1 and not force:
+              out(False, f"latest build ({latest}) is stale — nothing new to send")
+          out(True, f"delivering build {latest}")
+          EOF
+
+      - name: Read subject
+        if: steps.gate.outputs.send == 'true'
+        id: subject
+        run: echo "subject=$(cat _library/site/email-latest-subject.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Send
+        if: steps.gate.outputs.send == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SMTP_SERVER }}
+          server_port: ${{ secrets.MAIL_SMTP_PORT }}
+          username: ${{ secrets.MAIL_SMTP_USERNAME }}
+          password: ${{ secrets.MAIL_SMTP_PASSWORD }}
+          from: ${{ secrets.MAIL_FROM }}
+          to: ${{ secrets.MAIL_TO }}
+          subject: ${{ steps.subject.outputs.subject }}
+          html_body: file://_library/site/email-latest.html
