@@ -26,11 +26,13 @@ import make_fixtures  # noqa: E402
 
 TODAY = "2026-07-06"
 PASS, FAIL = 0, []
+# tests never read the shipped series configs — forks clear those on setup
+TESTREPO = make_fixtures.test_repo()
 
 
 def run_local(html_text, series, slug=None, library=None, repo=None, today=TODAY):
     """Write html to a temp file laid out as library/<series>/<slug>.html and check."""
-    repo = repo or str(REPO)
+    repo = repo or TESTREPO
     tmp = tempfile.mkdtemp()
     slug = slug or "micron"
     d = pathlib.Path(tmp) / "library" / series
@@ -82,10 +84,10 @@ def make_library(published):
 
 
 def seq_repo():
-    """Copy the repo's series into a temp repo, rewrite semiconductors as a sequence."""
+    """Copy the fixture repo, rewrite semiconductors as a sequence."""
     tmp = tempfile.mkdtemp()
     for sub in ("series", "templates"):
-        shutil.copytree(REPO / sub, pathlib.Path(tmp) / sub)
+        shutil.copytree(pathlib.Path(TESTREPO) / sub, pathlib.Path(tmp) / sub)
     y = pathlib.Path(tmp) / "series" / "semiconductors" / "series.yaml"
     y.write_text(y.read_text().replace("mode: collection", "mode: sequence")
                               .replace("template: dossier", "template: chronicle"))
@@ -270,7 +272,7 @@ expect("W-LENGTH-LOW (brief item count)", run_local(
     "ai-briefs", slug=TODAY), must_have=["W-LENGTH-LOW"], blocks=0)
 reqdoc_repo = tempfile.mkdtemp()
 for sub in ("series", "templates"):
-    shutil.copytree(REPO / sub, pathlib.Path(reqdoc_repo) / sub)
+    shutil.copytree(pathlib.Path(TESTREPO) / sub, pathlib.Path(reqdoc_repo) / sub)
 ry = pathlib.Path(reqdoc_repo) / "series" / "semiconductors" / "series.yaml"
 ry.write_text(ry.read_text().replace(
     'prompt: "Emphasize the HBM supply-agreement structure and the memory-cycle debate."',
@@ -291,7 +293,7 @@ expect("W-SELF-COUNT", run_local(
 print("== strict promotion ==")
 strict_repo = tempfile.mkdtemp()
 for sub in ("series", "templates"):
-    shutil.copytree(REPO / sub, pathlib.Path(strict_repo) / sub)
+    shutil.copytree(pathlib.Path(TESTREPO) / sub, pathlib.Path(strict_repo) / sub)
 sy = pathlib.Path(strict_repo) / "series" / "semiconductors" / "series.yaml"
 sy.write_text(sy.read_text().replace("strict: false", "strict: true"))
 expect("strict promotes WARN to BLOCK", run_local(
@@ -366,8 +368,10 @@ def git(*args, cwd):
 
 
 prdir = tempfile.mkdtemp()
-for sub in ("series", "templates", "engine"):
-    shutil.copytree(REPO / sub, pathlib.Path(prdir) / sub)
+for sub in ("series", "templates"):
+    shutil.copytree(pathlib.Path(TESTREPO) / sub, pathlib.Path(prdir) / sub)
+shutil.copytree(REPO / "engine", pathlib.Path(prdir) / "engine",
+                ignore=shutil.ignore_patterns("__pycache__", "fixtures"))
 git("init", "-q", "-b", "main", cwd=prdir)
 git("config", "user.email", "t@t", cwd=prdir)
 git("config", "user.name", "t", cwd=prdir)
@@ -451,11 +455,8 @@ print("== validate_config ==")
 vc = REPO / "engine" / "validate_config.py"
 rc_good = subprocess.run([sys.executable, str(vc), "--repo", str(REPO)],
                          capture_output=True).returncode
-broken = tempfile.mkdtemp()
-for sub in ("series", "templates"):
-    shutil.copytree(REPO / sub, pathlib.Path(broken) / sub)
-shutil.copytree(REPO / "engine" / "assets", pathlib.Path(broken) / "engine" / "assets")
-shutil.copyfile(REPO / "site.yaml", pathlib.Path(broken) / "site.yaml")
+broken = pathlib.Path(tempfile.mkdtemp()) / "repo"
+shutil.copytree(TESTREPO, broken)
 by = pathlib.Path(broken) / "series" / "semiconductors" / "series.yaml"
 by.write_text(by.read_text().replace("mode: collection", "mode: rolling"))
 rc_bad = subprocess.run([sys.executable, str(vc), "--repo", broken],
