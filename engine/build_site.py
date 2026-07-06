@@ -46,7 +46,7 @@ except ImportError:  # pragma: no cover
     sys.stderr.write("build_site.py requires PyYAML (pip install pyyaml)\n")
     sys.exit(2)
 
-PROTOCOL = "1.0"
+PROTOCOL = "1.1"
 WORDS_PER_MINUTE = 230
 FEED_LIMIT = 50
 META_RE = re.compile(
