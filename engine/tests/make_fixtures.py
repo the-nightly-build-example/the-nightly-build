@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Generate valid fixture editions and fixture repos used by the test suite.
+"""Generate the fixture editions and fixture repos used by every suite.
 
-The suite never reads the repo's shipped series configs: forks clear those on
-setup, and the tests must stay green on a cleared fork. test_repo() fabricates
-a repo with the canonical TEST series (semiconductors, ai-briefs) plus the
-real templates and engine assets.
+The suites never read the repo's shipped configuration because forks
+replace it during setup, and the tests must stay green on any fork.
+test_repo() fabricates a complete press with two fixture series
+(semiconductors, ai-briefs) on top of the real templates and engine
+assets, so what the tests exercise is the shipped machinery.
 """
 
 import pathlib
@@ -64,7 +65,7 @@ appearance: auto
 
 
 def test_repo():
-    """A temp repo with fixture series + the real templates and assets."""
+    # A temp repo with the fixture series plus the real templates and assets.
     root = pathlib.Path(tempfile.mkdtemp())
     shutil.copytree(REPO / "templates", root / "templates")
     shutil.copytree(REPO / "engine" / "assets", root / "engine" / "assets")
@@ -203,7 +204,8 @@ def brief(date="2026-07-06"):
 
 
 def _count_words(body_html):
-    return len(re.findall(r"\S+", re.sub(r"<[^>]+>", " ", body_html)))
+    text = re.sub(r"<[^>]+>", " ", body_html)
+    return len(re.findall(r"\S+", text))
 
 
 def _meta(series, slug, template, title, mode, order, words, n_sources):

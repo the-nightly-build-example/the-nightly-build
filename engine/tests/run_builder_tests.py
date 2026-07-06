@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""
-Test suite for engine/build_site.py. Zero test-framework dependencies.
+"""Test suite for the press, with zero framework dependencies.
 
-Strategy: assemble temp library checkouts from the fixture editions, run the
-builder, and assert on catalog.json and the rendered pages.
+Strategy: assemble temp library checkouts from fixture editions, run the
+builder, and assert on catalog.json and the rendered pages. Chrome
+assertions pin the markup contract, and the theme parity check fails the
+suite when any palette block misses a token.
 
 Run: python3 engine/tests/run_builder_tests.py
 """
@@ -44,20 +45,17 @@ def write_edition(root, series, slug, html):
     (d / f"{slug}.html").write_text(html)
 
 
-def brief_for(date):
-    return make_fixtures.brief(date)
-
-
 def make_full_library():
     lib = tempfile.mkdtemp()
     write_edition(lib, "semiconductors", "micron", make_fixtures.dossier())
-    write_edition(lib, "ai-briefs", "2026-07-05", brief_for("2026-07-05"))
-    write_edition(lib, "ai-briefs", "2026-07-06", brief_for("2026-07-06"))
+    write_edition(lib, "ai-briefs", "2026-07-05", make_fixtures.brief("2026-07-05"))
+    write_edition(lib, "ai-briefs", "2026-07-06", make_fixtures.brief("2026-07-06"))
     return lib
 
 
 def read(out, *parts):
-    return pathlib.Path(out, *parts).read_text()
+    path = pathlib.Path(out, *parts)
+    return path.read_text()
 
 
 print("== full build ==")

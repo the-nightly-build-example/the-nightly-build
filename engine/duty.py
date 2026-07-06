@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""
-The Nightly Build — engine/duty.py
+"""Compute tonight's work list deterministically from config and library state.
 
-Tonight's work list, computed deterministically. The correspondent runs this
-before researching anything (PROTOCOL step 3); the morning-mail gate runs it
-to tell an expected quiet night from a missed one. One source of truth for
-cadence, pause, completion, and commission-queue state — so no agent ever
-does calendar math in its head.
+The correspondent runs this before researching anything, and the
+morning-mail gate runs it to tell an expected quiet night from a missed
+one. It is the single source of truth for cadence, pauses, completion,
+commission queues, and rerun safety, so no agent ever does calendar math
+on its own.
 
 Run: python3 engine/duty.py --repo . --library <library-checkout> [--date YYYY-MM-DD]
 Prints JSON: {"date", "weekday", "due": [...], "idle": [...]}. Always exits 0.
@@ -54,7 +53,12 @@ def series_dir_in_library(library: str, series_id: str) -> str | None:
 
 
 def published_state(library: str, series_id: str) -> tuple[set[str], set[str]]:
-    """(published slugs, nb-meta dates of published editions) for a series."""
+    """Return (published slugs, published nb-meta dates) for one series.
+
+    Slugs drive dedupe and completion checks. The nb-meta dates exist
+    for rerun safety: an edition published tonight idles its series even
+    when its slug is topical rather than dated.
+    """
     base = series_dir_in_library(library, series_id)
     if base is None:
         return set(), set()
@@ -76,7 +80,12 @@ def published_state(library: str, series_id: str) -> tuple[set[str], set[str]]:
 
 
 def config_items(cfg: dict[str, object]) -> list[dict[str, object]]:
-    """The series' items list, defensively narrowed from parsed YAML."""
+    """Return the series' items list, defensively narrowed from parsed YAML.
+
+    series.yaml is user-edited, so items may be missing or malformed.
+    Non-list values become an empty list and non-dict entries are
+    dropped, with keys normalized to strings.
+    """
     raw = cfg.get("items")
     if not isinstance(raw, list):
         return []

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""
-Test suite for engine/check.py. Zero test-framework dependencies.
+"""Test suite for the proof, with zero framework dependencies.
 
-Strategy: generate valid fixtures, then derive each failure case by mutating the
-valid edition, asserting the exact finding code appears (and that the valid cases
-are BLOCK-clean). PR mode is tested against a real throwaway git repo.
+Strategy: build valid fixture editions, then derive each failure case by
+mutating a valid one and asserting that the exact finding code appears.
+Valid cases must stay BLOCK-clean, and PR mode runs against a real
+throwaway git repository so the diff-shape rules face actual git output.
 
 Run: python3 engine/tests/run_tests.py
 """
@@ -32,7 +32,7 @@ TESTREPO = make_fixtures.test_repo()
 
 
 def run_local(html_text, series, slug=None, library=None, repo=None, today=TODAY):
-    """Write html to a temp file laid out as library/<series>/<slug>.html and check."""
+    # Write html as library/<series>/<slug>.html in a temp dir and run the proof.
     repo = repo or TESTREPO
     tmp = tempfile.mkdtemp()
     slug = slug or "micron"
@@ -51,7 +51,8 @@ def run_local(html_text, series, slug=None, library=None, repo=None, today=TODAY
 
 
 def codes(rep):
-    return sorted({f.code for f in rep.findings})
+    seen = {f.code for f in rep.findings}
+    return sorted(seen)
 
 
 def expect(name, rep, must_have=(), must_not=(), blocks=None):
@@ -77,7 +78,7 @@ def expect(name, rep, must_have=(), must_not=(), blocks=None):
 
 
 def make_library(published):
-    """published: dict series -> [slugs]. Returns temp dir shaped like a library checkout."""
+    # published: {series: [slugs]}. Returns a temp dir shaped like a library checkout.
     tmp = tempfile.mkdtemp()
     for series, slugs in published.items():
         d = pathlib.Path(tmp) / "library" / series
@@ -88,7 +89,7 @@ def make_library(published):
 
 
 def seq_repo():
-    """Copy the fixture repo, rewrite semiconductors as a sequence."""
+    # Copy the fixture repo and rewrite semiconductors as a sequence.
     tmp = tempfile.mkdtemp()
     for sub in ("press", "templates"):
         shutil.copytree(pathlib.Path(TESTREPO) / sub, pathlib.Path(tmp) / sub)
@@ -710,7 +711,7 @@ print("== rhythm & governance (cadence, paused, selection) ==")
 
 
 def patched_repo(patch, series="semiconductors"):
-    """Copy the fixture repo and append yaml to one series config."""
+    # Copy the fixture repo and append yaml to one series config.
     tmp = tempfile.mkdtemp()
     for sub in ("press", "templates", "engine"):
         shutil.copytree(pathlib.Path(TESTREPO) / sub, pathlib.Path(tmp) / sub)
@@ -885,7 +886,8 @@ def duty(repo, library, date=TODAY):
 
 
 def duty_of(report, sid):
-    return next((e for e in report["due"] + report["idle"] if e["series"] == sid), None)
+    entries = report["due"] + report["idle"]
+    return next((e for e in entries if e["series"] == sid), None)
 
 
 empty_lib = make_library({"semiconductors": [], "ai-briefs": []})
@@ -963,7 +965,8 @@ print("== PR mode (real git repo) ==")
 
 
 def git(*args, cwd):
-    subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True)
+    cmd = ["git", *args]
+    subprocess.run(cmd, cwd=cwd, check=True, capture_output=True)
 
 
 prdir = tempfile.mkdtemp()

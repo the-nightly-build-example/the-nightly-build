@@ -1,34 +1,37 @@
 #!/usr/bin/env python3
-"""
-The Nightly Build — engine/build_site.py (the press).
+"""Build the static site from a library checkout: the press.
 
-Reads editions from a library checkout, writes the static site:
+Every page shares one 800px content column and the shared assets under
+engine/assets, so a stylesheet or theme change restyles the entire back
+catalog on the next build. Edition copies get content-hash stamped asset
+links; the canonical files on the library branch stay byte-exact.
+
+Output layout:
 
     site/
-      index.html                  # the newsstand = tonight's build
-      builds/index.html           # calendar archive of every build
-      builds/<YYYY-MM-DD>/        # one page per night, permanent
-      series/index.html           # series directory
-      series/<id>/index.html      # per-series pages (mode-aware)
-      tags/<tag>/index.html
-      catalog.json                # machine-readable library state (§7.1)
-      feed.xml, series/<id>/feed.xml   # Atom feeds
-      assets/                     # copied from main's engine/assets
-      library/<series>/<slug>.html     # editions, copied verbatim
+      index.html                       tonight's build
+      builds/<YYYY-MM-DD>/             one page per night, linked prev/next
+      builds/index.html                all nights
+      series/index.html                the Sections page
+      series/<id>/index.html           per-series pages, mode-aware
+      tags/<tag>/index.html            tag pages
+      search/index.html                client-side fuzzy search
+      search-index.json                full-text index for the search page
+      catalog.json                     machine-readable library state
+      feed.xml, series/<id>/feed.xml   Atom; newest entries carry full content
+      assets/                          copied from main's engine/assets
+      library/<series>/<slug>.html     editions, asset links stamped
 
 Invocations:
-    Publish:      build_site.py --repo <main checkout> --library <library checkout> --out site
+
+    Publish:      build_site.py --repo <main> --library <library checkout> --out site
     Press check:  build_site.py --repo . --preview press-check/ --out press-check/site/
 
-Documented implementer decisions (handoff §15):
-  * Feeds are Atom.
-  * builds/ groups strictly by nb-meta `date`; a late merge lands under its
-    authored date and the newsstand simply shows the latest date that has editions.
-  * Reading time = nb-meta reading_minutes, else max(1, round(words / 230)).
-  * Appearance is persisted under localStorage key "nb-appearance".
-  * On the mobile feed, non-lead deks clamp to one line (full dek on the edition).
-
-Dependencies: Python stdlib + PyYAML.
+Implementer decisions: feeds are Atom and the newest FEED_CONTENT_LIMIT
+entries embed full content; builds/ groups strictly by nb-meta date, so a
+late merge lands under its authored date; reading time falls back to
+max(1, round(words / 230)); appearance persists under the localStorage key
+"nb-appearance".
 """
 
 import argparse
@@ -68,7 +71,7 @@ def load_yaml(path):
 
 
 def load_site_config(repo):
-    """Engine defaults, overridden by the user's press/site.yaml if present."""
+    # Engine defaults, overridden by the user's press/site.yaml when present.
     cfg = {}
     path = os.path.join(repo, "press", "site.yaml")
     if os.path.isfile(path):
@@ -105,7 +108,7 @@ def read_meta(path):
 
 
 def editions_dir(root, sid):
-    """Accept both a full library checkout and a bare library/ folder."""
+    # Accepts a full library checkout or a bare library/ folder.
     for base in (os.path.join(root, "library", sid), os.path.join(root, sid)):
         if os.path.isdir(base):
             return base
@@ -144,7 +147,13 @@ def reading_minutes(meta):
 
 
 def collect_editions(series_cfgs, library_root, preview_root=None):
-    """Return {(sid, slug): edition dict}. Preview drafts override published."""
+    """Load every edition under the library root, preview drafts included.
+
+    Returns {(series_id, slug): edition dict} where each dict carries the
+    parsed nb-meta, the source file path, reading minutes, and a draft
+    flag. A preview draft with the same (series, slug) as a published
+    edition replaces it, which is how press-check promotion previews work.
+    """
     editions = {}
     sources = [(library_root, False)]
     if preview_root:
@@ -170,9 +179,13 @@ def collect_editions(series_cfgs, library_root, preview_root=None):
 
 
 def assign_positions(editions, series_cfgs):
-    """position = 1-based rank within the series' canonical order:
-    sequence → nb-meta order; collection → config item order (unknown slugs
-    last, alphabetical); rolling → date ascending."""
+    """Assign each edition its 1-based position in the series' canonical order.
+
+    Sequences order by nb-meta order, collections by config item order
+    with unknown slugs last, open desks by publication date, rolling
+    series by their date slugs. The position feeds catalog.json and the
+    'Ed. N of M' labels, so it must be stable across rebuilds.
+    """
     by_series = {}
     for ed in editions.values():
         by_series.setdefault(ed["series"], []).append(ed)
@@ -320,7 +333,6 @@ MONTHS = (
 
 
 def pretty_date(iso):
-    """2026-07-06 → Monday, July 6, 2026 (platform-independent)."""
     try:
         d = dt.date.fromisoformat(iso)
     except (ValueError, TypeError):
@@ -329,8 +341,12 @@ def pretty_date(iso):
 
 
 def asset_stamp(repo):
-    """Content hash of the shared assets: cache-busting version tag. A
-    returning reader must never see new markup with a stale stylesheet."""
+    """Return a short content hash of the shared assets for cache busting.
+
+    Every generated page and edition copy links assets with ?v=<stamp>,
+    so a returning reader can never pair cached old CSS with newer
+    markup. The stamp changes exactly when nb.css or nb.js change.
+    """
     h = hashlib.md5()
     base = os.path.join(repo, "engine", "assets")
     for name in ("nb.css", "nb.js"):
@@ -342,7 +358,6 @@ def asset_stamp(repo):
 
 
 def page(site, title, body, depth=0, active=None):
-    """One page chrome for every page: two-element bar + thin bottom footer."""
     rel = "../" * depth
     mode_attr = (
         f' data-mode="{site["appearance"]}"'
@@ -426,8 +441,12 @@ def lead_cell(ed, series_cfgs, depth=0):
 
 
 def night_body(eds, series_cfgs, depth, date):
-    """One night's page: edition line, then ONE ruled table — the lead is
-    its full-width first cell, the rest of the night fills the grid."""
+    """Render one night as an edition line plus a single ruled table.
+
+    The longest read leads as the table's full-width first cell and the
+    rest of the night fills the two-column grid beneath it. Every visual
+    separation on the page is a rule of this one table.
+    """
     eds = sorted(eds, key=lambda e: -e["reading_minutes"])
     total = sum(e["reading_minutes"] for e in eds)
     body = (
@@ -513,7 +532,13 @@ def render_build_archive(site, dates):
 
 
 def desk_status(s, cfg):
-    """(status_html, is_resting) for one desk on the Sections page."""
+    """Return (status_html, is_resting) for one desk on the Sections page.
+
+    Finite desks show progress or read complete, rolling desks show
+    their cadence, open desks count published editions. Resting desks
+    (complete or paused) collect under the In-the-stacks disclosure
+    instead of their section.
+    """
     mode, count, total = s.get("mode"), s["count"], s.get("total")
     if cfg.get("paused"):
         return "paused", True
@@ -761,7 +786,7 @@ BODY_RE = re.compile(r"<body[^>]*>([\s\S]*?)</body>", re.I)
 
 
 def edition_text(path):
-    """Readable text of an edition, for the search index."""
+    # Readable text of an edition, for the search index.
     with open(path, "r", encoding="utf-8", errors="replace") as fh:
         raw = fh.read()
     m = BODY_RE.search(raw)
@@ -807,8 +832,13 @@ HREF_RE = re.compile(r'((?:href|src)=")([^"]+)(")', re.I)
 
 
 def feed_content_html(path, base_url):
-    """Edition body as a feed-safe HTML fragment: scripts/styles stripped,
-    URLs absolutized when a base URL is known."""
+    """Return the edition body as a feed-safe HTML fragment.
+
+    Scripts, styles, and comments are stripped so feed readers get
+    content, not code. When a base URL is known, relative hrefs are
+    absolutized; oversized bodies return empty so the entry falls back
+    to its summary.
+    """
     with open(path, "r", encoding="utf-8", errors="replace") as fh:
         raw = fh.read()
     m = re.search(r"<body[^>]*>([\s\S]*?)</body>", raw, re.I)
@@ -867,7 +897,12 @@ def atom_feed(site, base_url, feed_path, title, eds, generated):
 
 
 def render_email(site_title, date, eds, series_cfgs, base_url):
-    """Email-safe digest: inline styles only, no scripts, absolute links."""
+    """Render the morning digest as a self-contained email document.
+
+    Email clients ignore stylesheets, so every style is inline and the
+    palette is hardcoded to the light theme. Links must be absolute
+    because the mail has no base URL to resolve against.
+    """
 
     def absolute(path):
         return f"{base_url}{path}" if base_url else path
@@ -945,8 +980,12 @@ EDITION_ASSET_RE = re.compile(
 
 
 def copy_editions(editions, out, stamp=""):
-    """Editions are canonical on the library branch; the SITE copy is a build
-    artifact, so its shared-asset links get the cache-busting stamp."""
+    """Copy editions into the site, stamping their shared-asset links.
+
+    The canonical files on the library branch stay byte-exact; only the
+    generated site copy gets ?v=<stamp> on nb.css, nb.js, and theme.css
+    so cached assets can never mismatch the markup.
+    """
     for ed in editions.values():
         dst = os.path.join(out, "library", ed["series"], f"{ed['slug']}.html")
         os.makedirs(os.path.dirname(dst), exist_ok=True)

@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Small CI helpers kept separate from check.py's core logic."""
+"""Answer press-configuration questions for the CI workflows.
+
+check.yml needs facts that live in series.yaml but should not be parsed in
+shell, currently just whether the validated series has autopublish
+enabled. Keeping this outside check.py keeps the proof free of workflow
+concerns and keeps the YAML parsing in one reviewed file instead of inline
+python inside workflow definitions.
+"""
 
 import argparse
 import re

@@ -1,29 +1,23 @@
 #!/usr/bin/env python3
-"""
-The Nightly Build — engine/check.py ("the proof")
+"""Validate an edition against the protocol and series config: the proof.
 
-One tool, two tiers:
-  BLOCK — site/protocol integrity. CI refuses to publish on any BLOCK.
-  WARN  — quality calibration. Never blocks (unless the series sets strict: true).
+Findings come in two tiers. BLOCK findings are integrity failures and CI
+refuses to publish on any of them. WARN findings are quality calibration:
+agents treat them as revision notes and they block only when a series sets
+strict true. The same tool runs in the agent loop, in press checks, and in
+CI, which keeps the publishing bar identical everywhere.
 
 Invocations:
-  Agent loop / press check:
-    python3 engine/check.py library/<series>/<slug>.html --series <id> --repo . [--library DIR]
-  CI:
-    python3 engine/check.py --pr --repo . --main <main checkout> \
-        --base <ref> --head <ref> [--pr-body FILE] [--library DIR]
 
-  In PR mode --repo is the PR checkout (git diff + edition file); configs and
-  the registry load from --main, because the library branch carries no engine
-  or series files. --main defaults to --repo for repos that keep both together.
+    Agent loop / press check:
+        python3 engine/check.py library/<series>/<slug>.html --series <id> --repo . [--library DIR]
+    CI (PR mode):
+        python3 engine/check.py --pr --repo . --main <main checkout> \
+            --base <ref> --head <ref> [--pr-body FILE] [--library DIR]
 
-  --library DIR points at the PUBLISHED state (the library branch checkout, or its
-  library/ folder) BEFORE this edition; used for sequence/rolling next-work checks.
-  If omitted, those specific sub-checks are skipped with a note.
-
-Exit code: 0 iff BLOCK count is 0. Machine output via --json.
-
-Dependencies: Python stdlib + PyYAML.
+In PR mode --repo is the PR checkout, used for the diff and the edition
+file. Configs and templates load from --main because the orphan library
+branch carries no engine.
 """
 
 import argparse
@@ -83,11 +77,13 @@ class Report:
         self.notes = []
 
     def block(self, code, msg, suggestion=None):
-        self.findings.append(Finding(code, "BLOCK", msg, suggestion))
+        finding = Finding(code, "BLOCK", msg, suggestion)
+        self.findings.append(finding)
 
     def warn(self, code, msg, suggestion=None):
         level = "BLOCK" if self.strict else "WARN"
-        self.findings.append(Finding(code, level, msg, suggestion))
+        finding = Finding(code, level, msg, suggestion)
+        self.findings.append(finding)
 
     def note(self, msg):
         self.notes.append(msg)
@@ -124,7 +120,13 @@ VOID = {
 
 
 class Edition(HTMLParser):
-    """Single-pass structural parse of an edition file."""
+    """Single-pass structural parse of one edition file.
+
+    Collects everything the checks need in one HTMLParser walk:
+    sections, script tags, sandbox violations, citations, source
+    entries, slides, and word counts. Parsing never raises; malformed
+    input sets parse_ok False and the caller reports a BLOCK.
+    """
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
@@ -273,7 +275,8 @@ class Edition(HTMLParser):
 
     @property
     def word_count(self):
-        return len(re.findall(r"\S+", " ".join(self._text_parts)))
+        text = " ".join(self._text_parts)
+        return len(re.findall(r"\S+", text))
 
 
 # --------------------------------------------------------------------------- #
@@ -287,10 +290,11 @@ def load_yaml(path):
 
 
 def load_registry(repo):
-    """Shipped registry, overlaid by the user's press/templates/registry.yaml.
+    """Load the shipped template registry overlaid by the press registry.
 
-    A press entry fully defines its template (add a new one, or redefine a
-    shipped id); entries are replaced whole, not deep-merged.
+    A press entry fully replaces a shipped entry of the same id, which
+    is both how users add templates and how they redefine a shipped
+    template's band press-wide.
     """
     registry = load_yaml(os.path.join(repo, "templates", "registry.yaml")) or {}
     press_path = os.path.join(repo, "press", "templates", "registry.yaml")
@@ -300,7 +304,7 @@ def load_registry(repo):
 
 
 def find_template(repo, template_id):
-    """User templates shadow shipped ones: press/templates/ wins."""
+    # User templates shadow shipped ones: press/templates/ wins.
     for base in (
         os.path.join(repo, "press", "templates"),
         os.path.join(repo, "templates"),
@@ -319,7 +323,12 @@ def load_series(repo, series_id):
 
 
 def published_slugs(library_dir, series_id):
-    """Return set of published slugs for a series, or None if unknowable."""
+    """Return the set of published slugs for a series.
+
+    Returns None when no library checkout was provided, which callers
+    must treat as unknowable rather than empty: dedupe and sequence
+    checks are skipped with a note instead of firing falsely.
+    """
     if not library_dir:
         return None
     for base in (

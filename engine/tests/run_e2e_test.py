@@ -47,11 +47,13 @@ def check(name, condition, detail=""):
 
 
 def git(*args, cwd):
-    subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True)
+    cmd = ["git", *args]
+    subprocess.run(cmd, cwd=cwd, check=True, capture_output=True)
 
 
 def run(cmd, cwd=None):
-    return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+    return proc
 
 
 # ---------------------------------------------------------------- the press
@@ -89,7 +91,7 @@ subprocess.run(
 
 
 def library_state():
-    """Refresh a plain-dir snapshot of the library branch (what CI checks out)."""
+    # refresh a plain-dir snapshot of the library branch (what CI checks out)
     for child in pathlib.Path(libdir).iterdir():
         shutil.rmtree(child) if child.is_dir() else child.unlink()
     subprocess.run(
@@ -99,7 +101,7 @@ def library_state():
 
 
 def night_shift_run(branch, series, slug, html, today, from_ref="library"):
-    """One agent run: branch off library, add one edition, validate as CI does."""
+    # one agent run: branch off library, add one edition, validate as CI does
     git("checkout", "-q", from_ref, cwd=root)
     git("checkout", "-qb", branch, cwd=root)
     d = pathlib.Path(root, "library", series)

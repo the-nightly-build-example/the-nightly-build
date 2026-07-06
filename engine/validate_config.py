@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""
-The Nightly Build — engine/validate_config.py
+"""Validate the press configuration before anything schedules or publishes.
 
-Validates the repo's configuration surface: site.yaml, templates/registry.yaml,
-and every series/<id>/series.yaml. Used by setup.sh and the Librarian; the same
-constraints the proof enforces at publish time, caught at configuration time.
+Covers press/site.yaml, the merged template registry, and every
+series/<id>/series.yaml. setup.sh and the librarian run it after each
+configuration change; it applies the same constraints the proof enforces
+at publish time, so mistakes surface while a human is watching instead of
+during an unattended nightly run.
 
 Run: python3 engine/validate_config.py [--repo .]
 Exit 0 iff everything validates.
