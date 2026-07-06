@@ -123,6 +123,11 @@ feed = ET.fromstring(read(out, "feed.xml"))
 NS = "{http://www.w3.org/2005/Atom}"
 check("global atom feed has all editions",
       len(feed.findall(f"{NS}entry")) == 3)
+first_entry = feed.findall(f"{NS}entry")[0]
+content_el = first_entry.find(f"{NS}content")
+content_text = content_el.text or "" if content_el is not None else ""
+check("newest entries carry full content", "Micron" in content_text)
+check("feed content is script-free", "<script" not in content_text)
 series_feed = ET.fromstring(read(out, "series", "ai-briefs", "feed.xml"))
 check("series feed scoped to series",
       len(series_feed.findall(f"{NS}entry")) == 2)

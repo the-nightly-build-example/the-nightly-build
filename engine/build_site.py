@@ -49,6 +49,8 @@ except ImportError:  # pragma: no cover
 PROTOCOL = "1.1"
 WORDS_PER_MINUTE = 230
 FEED_LIMIT = 50
+FEED_CONTENT_LIMIT = 10        # newest N entries carry full content
+FEED_CONTENT_MAX = 150_000     # per-entry cap after stripping, bytes
 META_RE = re.compile(
     r'<script[^>]*\bid="nb-meta"[^>]*>(.*?)</script>', re.S | re.I)
 BODY_TAG_RE = re.compile(r"<body[^>]*>", re.I)
@@ -652,21 +654,52 @@ def build_search_index(editions, series_cfgs):
 # Feeds (Atom)
 # --------------------------------------------------------------------------- #
 
+FEED_STRIP_RE = re.compile(
+    r"<script[\s\S]*?</script>|<style[\s\S]*?</style>", re.I)
+HREF_RE = re.compile(r'((?:href|src)=")([^"]+)(")', re.I)
+
+
+def feed_content_html(path, base_url):
+    """Edition body as a feed-safe HTML fragment: scripts/styles stripped,
+    URLs absolutized when a base URL is known."""
+    with open(path, "r", encoding="utf-8", errors="replace") as fh:
+        raw = fh.read()
+    m = re.search(r"<body[^>]*>([\s\S]*?)</body>", raw, re.I)
+    body = FEED_STRIP_RE.sub(" ", m.group(1) if m else raw)
+
+    def absolutize(match):
+        pre, url, post = match.groups()
+        if base_url and url.startswith("../"):
+            return f'{pre}{base_url}/{url.replace("../", "")}{post}'
+        if base_url and url.startswith("/"):
+            return f"{pre}{base_url}{url}{post}"
+        return match.group(0)
+
+    body = HREF_RE.sub(absolutize, body)
+    return body if len(body) <= FEED_CONTENT_MAX else ""
+
+
 def atom_feed(site, base_url, feed_path, title, eds, generated):
     def absolute(path):
         return f"{base_url}{path}" if base_url else path
 
     entries = []
-    for ed in eds[:FEED_LIMIT]:
+    for i, ed in enumerate(eds[:FEED_LIMIT]):
         meta = ed["meta"]
         link = absolute(f"/library/{ed['series']}/{ed['slug']}.html")
         updated = f"{meta.get('date', generated.date().isoformat())}T00:00:00Z"
+        content = ""
+        if i < FEED_CONTENT_LIMIT:
+            fragment = feed_content_html(ed["file"], base_url)
+            if fragment:
+                content = ('\n    <content type="html">' + esc(fragment)
+                           + "</content>")
         entries.append(f"""  <entry>
     <title>{esc(str(meta.get('title', ed['slug'])))}</title>
     <link rel="alternate" type="text/html" href="{esc(link)}"/>
     <id>urn:nightly-build:{ed['series']}/{ed['slug']}</id>
     <updated>{updated}</updated>
-    <summary>{esc(str(meta.get('dek', '')))}</summary>
+    <summary>{esc(str(meta.get('dek', '')))}</summary>{content}
     <category term="{esc(ed['series'])}"/>
   </entry>""")
     self_link = absolute(f"/{feed_path}")
