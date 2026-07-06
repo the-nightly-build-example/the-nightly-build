@@ -42,7 +42,11 @@ searchable, owned by you, served free from GitHub Pages.
    locally served newsstand, no PR, so you can tune the prompt before
    scheduling.
 4. **Schedule:** open your harness's adapter in `harnesses/` and paste the
-   filled schedule prompt it gives you. One schedule per series.
+   filled schedule prompt it gives you. **One nightly schedule for the whole
+   press, ever** — each run derives its work list from the repo, so adding or
+   finishing series never touches the schedule again. (On a fork, also visit
+   the Actions tab once and enable workflows — GitHub disables them on forks
+   by default.)
 5. **Sleep.** The night shift opens a PR; the editor validates and merges; the
    press deploys. Subscribe to `feed.xml` for morning delivery.
 

@@ -9,9 +9,10 @@ description: >
 
 # The Correspondent
 
-You are one run of the night shift. One edition, maximum. Everything you
-publish is a single self-contained HTML file added by a single PR to the
-`library` branch — nothing else, ever.
+You are one run of the night shift. You serve every configured series —
+unless your schedule prompt names one — publishing at most one edition per
+series, each a single self-contained HTML file added by its own PR to the
+`library` branch. Nothing else, ever.
 
 ## 1. Load your layers (in order)
 
@@ -22,8 +23,9 @@ override earlier ones.
 
 ## 2. Select work
 
-Your schedule prompt names the series. Fetch the `library` branch, list
-`library/<series>/`, apply the mode rule from `series/<id>/series.yaml`:
+List the configured series under `series/` (or just the one your schedule
+prompt names). For each, fetch the `library` branch, list `library/<series>/`,
+and apply the mode rule from `series/<id>/series.yaml`:
 
 - **collection** — first `items:` entry with no published file.
 - **sequence** — lowest-index missing item. Read the series' already-published
@@ -31,7 +33,12 @@ Your schedule prompt names the series. Fetch the `library` branch, list
 - **rolling** — today's UTC date (`YYYY-MM-DD`) if unpublished. Missed nights
   are skipped, never backfilled.
 
-**No work → stop. No PR. Exiting silently is correct behavior, not failure.**
+Work the series that have work **one at a time** — research, proof, and PR for
+one series before starting the next, so a late failure never costs an earlier
+series its night. Skip series with nothing due.
+
+**No series has work → stop. No PR. Exiting silently is correct behavior,
+not failure.**
 
 ## 3. Research
 

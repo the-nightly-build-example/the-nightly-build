@@ -83,29 +83,36 @@ draft, adjust `prompt.md`, re-run, compare.
 
 ## 5. Harness handoff
 
-Detect or ask which harness will run the night shift, read the matching
-`harnesses/<harness>.md`, and emit three things:
+**One schedule per press, ever.** The schedule prompt is press-level: each
+night the run derives its work list from the repo, so adding, retiring, or
+completing series never requires touching the harness again. If the press
+already has its schedule, say so and skip this section — configuring the new
+series on `main` was the whole job.
+
+For a first-time handoff, detect or ask which harness will run the night
+shift, read the matching `harnesses/<harness>.md`, and emit three things:
 
 1. **Connect** — the one-time GitHub connection step, verbatim from the adapter.
 2. **Schedule** — the adapter's schedule instructions plus the filled prompt
-   (template below). One schedule per series is the recommendation.
+   (template below): one nightly schedule for the whole press.
 3. **Model** — the adapter's model-selection guidance. Deep research wants the
    strongest available model; nb-meta records what actually ran.
 
 State plainly: *pasting the schedule is the one step I can't do for you.*
 
-Schedule prompt template (fill `<repo>` and `<series-id>`; keep ≤ ~130 words):
+Schedule prompt template (fill `<repo>`; keep ≤ ~130 words):
 
-> You are the night shift for The Nightly Build repo `<repo>`. Work series:
-> `<series-id>`. Read `PROTOCOL.md` on main and follow it exactly. Fallback
-> summary: list `library/<series-id>/` on the `library` branch; pick the next
-> unpublished item per `series/<series-id>/series.yaml`; research it deeply
-> with cited sources; render ONE self-contained HTML file from the series
-> template with the embedded `nb-meta` JSON block; run `python3 engine/check.py
-> <file> --series <series-id>` and revise until BLOCK=0; open ONE pull request
-> targeting the `library` branch adding ONLY `library/<series-id>/<slug>.html`,
-> title `nb: <series-id>/<slug> — <Title>`, body containing the nb-meta yaml
-> block. If nothing is unpublished, exit without a PR. Never modify other files.
+> You are the night shift for The Nightly Build repo `<repo>`. Read
+> `PROTOCOL.md` on main and follow it exactly. Fallback summary: for every
+> series configured under `series/` on main, list `library/<series>/` on the
+> `library` branch; if the series has an unpublished next item per its
+> `series.yaml`, research it deeply with cited sources; render ONE
+> self-contained HTML file from the series template with the embedded
+> `nb-meta` JSON block; run `python3 engine/check.py <file> --series <id>` and
+> revise until BLOCK=0; open ONE pull request per series targeting the
+> `library` branch adding ONLY `library/<series>/<slug>.html`, title
+> `nb: <series>/<slug> — <Title>`, body containing the nb-meta yaml block. If
+> no series has work, exit without a PR. Never modify other files.
 
 ## 6. Curation verbs
 

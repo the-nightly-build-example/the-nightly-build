@@ -14,20 +14,22 @@ separate repo, or on `main`) that fires a Codex cloud task via the Codex API —
 or an issue-label trigger if you prefer click-to-run. The trigger passes the
 prompt below verbatim; all real behavior lives in `PROTOCOL.md`.
 
-Fill `<repo>` and `<series-id>`. **One schedule per series** recommended; a
-single task iterating multiple series also works (one edition per series per
-run).
+Fill `<repo>`. **One schedule for the whole press** — the run derives
+tonight's work list from the repo, so adding, retiring, or completing series
+never touches the trigger. Advanced: per-series triggers (parallel nights, or
+different models) — append `Work ONLY series <series-id>.` to the prompt.
 
-> You are the night shift for The Nightly Build repo `<repo>`. Work series:
-> `<series-id>`. Read `PROTOCOL.md` on main and follow it exactly. Fallback
-> summary: list `library/<series-id>/` on the `library` branch; pick the next
-> unpublished item per `series/<series-id>/series.yaml`; research it deeply
-> with cited sources; render ONE self-contained HTML file from the series
-> template with the embedded `nb-meta` JSON block; run `python3 engine/check.py
-> <file> --series <series-id>` and revise until BLOCK=0; open ONE pull request
-> targeting the `library` branch adding ONLY `library/<series-id>/<slug>.html`,
-> title `nb: <series-id>/<slug> — <Title>`, body containing the nb-meta yaml
-> block. If nothing is unpublished, exit without a PR. Never modify other files.
+> You are the night shift for The Nightly Build repo `<repo>`. Read
+> `PROTOCOL.md` on main and follow it exactly. Fallback summary: for every
+> series configured under `series/` on main, list `library/<series>/` on the
+> `library` branch; if the series has an unpublished next item per its
+> `series.yaml`, research it deeply with cited sources; render ONE
+> self-contained HTML file from the series template with the embedded
+> `nb-meta` JSON block; run `python3 engine/check.py <file> --series <id>` and
+> revise until BLOCK=0; open ONE pull request per series targeting the
+> `library` branch adding ONLY `library/<series>/<slug>.html`, title
+> `nb: <series>/<slug> — <Title>`, body containing the nb-meta yaml block. If
+> no series has work, exit without a PR. Never modify other files.
 
 ## 3. Model
 
@@ -44,4 +46,5 @@ in `nb-meta.model` (`nb-meta.harness: codex`).
 - First-run troubleshooting: GitHub not connected in Codex settings; the cloud
   environment lacks internet access (enable it in the Codex environment
   settings — research requires web); no work available (correct silent exit);
-  Pages not enabled (`./setup.sh`).
+  Pages not enabled (`./setup.sh`); Actions disabled — GitHub turns workflows
+  off on forks until you enable them once in the fork's Actions tab.
