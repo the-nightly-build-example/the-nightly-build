@@ -86,9 +86,9 @@ def make_library(published):
 def seq_repo():
     """Copy the fixture repo, rewrite semiconductors as a sequence."""
     tmp = tempfile.mkdtemp()
-    for sub in ("series", "templates"):
+    for sub in ("press", "templates"):
         shutil.copytree(pathlib.Path(TESTREPO) / sub, pathlib.Path(tmp) / sub)
-    y = pathlib.Path(tmp) / "series" / "semiconductors" / "series.yaml"
+    y = pathlib.Path(tmp) / "press" / "series" / "semiconductors" / "series.yaml"
     y.write_text(y.read_text().replace("mode: collection", "mode: sequence")
                               .replace("template: dossier", "template: chronicle"))
     # chronicle allows sequence; but our fixture is a dossier — instead keep dossier
@@ -271,9 +271,9 @@ expect("W-LENGTH-LOW (brief item count)", run_local(
        .replace('<sup class="nb-cite"><a href="#s2">2</a></sup>', ''),
     "ai-briefs", slug=TODAY), must_have=["W-LENGTH-LOW"], blocks=0)
 reqdoc_repo = tempfile.mkdtemp()
-for sub in ("series", "templates"):
+for sub in ("press", "templates"):
     shutil.copytree(pathlib.Path(TESTREPO) / sub, pathlib.Path(reqdoc_repo) / sub)
-ry = pathlib.Path(reqdoc_repo) / "series" / "semiconductors" / "series.yaml"
+ry = pathlib.Path(reqdoc_repo) / "press" / "series" / "semiconductors" / "series.yaml"
 ry.write_text(ry.read_text().replace(
     'prompt: "Emphasize the HBM supply-agreement structure and the memory-cycle debate."',
     'prompt: "Emphasize HBM."\n    required_docs:\n      - id: mu-10k-2025\n        path: sources/mu-10k-2025.txt'))
@@ -292,9 +292,9 @@ expect("W-SELF-COUNT", run_local(
 
 print("== sources_exclusive ==")
 excl_repo = tempfile.mkdtemp()
-for sub in ("series", "templates"):
+for sub in ("press", "templates"):
     shutil.copytree(pathlib.Path(TESTREPO) / sub, pathlib.Path(excl_repo) / sub)
-ey = pathlib.Path(excl_repo) / "series" / "semiconductors" / "series.yaml"
+ey = pathlib.Path(excl_repo) / "press" / "series" / "semiconductors" / "series.yaml"
 ey.write_text(ey.read_text().replace(
     "consult:\n  - https://www.sec.gov/",
     "sources_exclusive: true\nconsult:\n  - https://www.sec.gov/\n"
@@ -318,9 +318,9 @@ expect("exclusive: declared required-doc entries are exempt", run_local(
 
 print("== strict promotion ==")
 strict_repo = tempfile.mkdtemp()
-for sub in ("series", "templates"):
+for sub in ("press", "templates"):
     shutil.copytree(pathlib.Path(TESTREPO) / sub, pathlib.Path(strict_repo) / sub)
-sy = pathlib.Path(strict_repo) / "series" / "semiconductors" / "series.yaml"
+sy = pathlib.Path(strict_repo) / "press" / "series" / "semiconductors" / "series.yaml"
 sy.write_text(sy.read_text().replace("strict: false", "strict: true"))
 expect("strict promotes WARN to BLOCK", run_local(
     mut('"sources": 8', '"sources": 20'), "semiconductors", repo=strict_repo),
@@ -341,7 +341,7 @@ TPL_SERIES = {
               "items:\n  - {slug: eu-chips, title: EU Chips}"),
 }
 for sid, (mode, template, items) in TPL_SERIES.items():
-    d = pathlib.Path(tpl_repo) / "series" / sid
+    d = pathlib.Path(tpl_repo) / "press" / "series" / sid
     d.mkdir(parents=True)
     (d / "series.yaml").write_text(
         f"name: {sid}\nmode: {mode}\ntemplate: {template}\n"
@@ -386,6 +386,71 @@ for template_id, treg in registry.items():
         print(f"  FAIL template {template_id}.html: sections={ok_sections} "
               f"meta={ok_meta} scripts={ok_scripts} sandbox={ok_sandbox}")
 
+print("== user templates (press/templates overlay) ==")
+ut_repo = tempfile.mkdtemp()
+for sub in ("press", "templates", "engine"):
+    shutil.copytree(pathlib.Path(TESTREPO) / sub, pathlib.Path(ut_repo) / sub)
+ut_tpl = pathlib.Path(ut_repo) / "press" / "templates"
+ut_tpl.mkdir()
+(ut_tpl / "registry.yaml").write_text(
+    "memo:\n  class: shortread\n  words: [200, 3000]\n"
+    "  sections: [note, sources]\n  cite_rule: per-section\n"
+    "  modes: [collection]\n")
+(ut_tpl / "memo.html").write_text("<!DOCTYPE html><html><body>"
+                                  '<section data-nb-section="note"></section>'
+                                  '<section data-nb-section="sources"></section>'
+                                  "</body></html>")
+ut_series = pathlib.Path(ut_repo) / "press" / "series" / "memos"
+ut_series.mkdir()
+(ut_series / "series.yaml").write_text(
+    "name: Memos\nmode: collection\ntemplate: memo\nautopublish: true\n"
+    "strict: false\nitems:\n  - {slug: first, title: First Memo}\n")
+
+MEMO = f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>First Memo</title>
+<script type="application/json" id="nb-meta">
+{{"protocol": "1.0", "series": "memos", "slug": "first", "template": "memo",
+  "title": "First Memo", "mode": "collection", "order": null,
+  "date": "2026-07-06", "tags": [], "sources": 5, "words": 230,
+  "reading_minutes": 1, "dek": "A memo.",
+  "harness": "test-fixture", "model": "claude-fable-5"}}
+</script>
+</head><body>
+<section data-nb-section="note"><p>{make_fixtures.LOREM * 7}
+<sup class="nb-cite"><a href="#s1">1</a></sup></p></section>
+<section data-nb-section="sources"><ol>{"".join(
+    f'<li id="s{i}"><a data-nb-source href="https://example.org/m{i}">x</a></li>'
+    for i in range(1, 6))}</ol></section>
+</body></html>"""
+expect("edition from a user-defined template passes the proof",
+       run_local(MEMO, "memos", slug="first", repo=ut_repo), blocks=0)
+expect("user template enforces its own sections", run_local(
+    MEMO.replace('data-nb-section="note"', 'data-nb-section="body"'),
+    "memos", slug="first", repo=ut_repo), must_have=["B-HTML"])
+ut_rc = subprocess.run(
+    [sys.executable, str(REPO / "engine" / "validate_config.py"),
+     "--repo", ut_repo], capture_output=True)
+if ut_rc.returncode == 0:
+    PASS += 1
+    print("  ok   validate_config accepts the overlay registry")
+else:
+    FAIL.append("validate_config overlay")
+    print(f"  FAIL validate_config overlay: {ut_rc.stdout.decode()[-300:]}")
+reg = C.load_registry(ut_repo)
+if "memo" in reg and "dossier" in reg:
+    PASS += 1
+    print("  ok   merged registry keeps shipped + adds press templates")
+else:
+    FAIL.append("registry merge")
+    print(f"  FAIL registry merge: keys={sorted(reg)}")
+if C.find_template(ut_repo, "memo") and "press" in C.find_template(ut_repo, "memo") \
+        and "press" not in (C.find_template(ut_repo, "dossier") or ""):
+    PASS += 1
+    print("  ok   template lookup: press shadows shipped")
+else:
+    FAIL.append("template lookup precedence")
+    print("  FAIL template lookup precedence")
+
 print("== PR mode (real git repo) ==")
 
 
@@ -394,7 +459,7 @@ def git(*args, cwd):
 
 
 prdir = tempfile.mkdtemp()
-for sub in ("series", "templates"):
+for sub in ("press", "templates"):
     shutil.copytree(pathlib.Path(TESTREPO) / sub, pathlib.Path(prdir) / sub)
 shutil.copytree(REPO / "engine", pathlib.Path(prdir) / "engine",
                 ignore=shutil.ignore_patterns("__pycache__", "fixtures"))
@@ -479,15 +544,21 @@ expect("PR modifying engine code", run_pr(mutate=modify_engine),
 
 print("== validate_config ==")
 vc = REPO / "engine" / "validate_config.py"
-rc_good = subprocess.run([sys.executable, str(vc), "--repo", str(REPO)],
+# the shipped examples/ must validate when used as a press
+ex_repo = pathlib.Path(tempfile.mkdtemp()) / "repo"
+ex_repo.mkdir()
+shutil.copytree(REPO / "templates", ex_repo / "templates")
+shutil.copytree(REPO / "engine" / "assets", ex_repo / "engine" / "assets")
+shutil.copytree(REPO / "examples", ex_repo / "press")
+rc_good = subprocess.run([sys.executable, str(vc), "--repo", str(ex_repo)],
                          capture_output=True).returncode
 broken = pathlib.Path(tempfile.mkdtemp()) / "repo"
 shutil.copytree(TESTREPO, broken)
-by = pathlib.Path(broken) / "series" / "semiconductors" / "series.yaml"
+by = pathlib.Path(broken) / "press" / "series" / "semiconductors" / "series.yaml"
 by.write_text(by.read_text().replace("mode: collection", "mode: rolling"))
 rc_bad = subprocess.run([sys.executable, str(vc), "--repo", broken],
                         capture_output=True).returncode
-for name, cond in [("valid repo config passes", rc_good == 0),
+for name, cond in [("shipped examples validate as a press", rc_good == 0),
                    ("illegal mode/template pairing fails", rc_bad == 1)]:
     if cond:
         PASS += 1

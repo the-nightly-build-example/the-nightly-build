@@ -26,24 +26,48 @@ ok "repo: $repo"
 python3 -c 'import yaml' 2>/dev/null ||
 	die "PyYAML is required: pip install pyyaml (or: uv pip install pyyaml)"
 
-# 1b. Forks must not run the upstream dogfood series --------------------------
-dogfood_series=(ai-history transformers-101 frontier-compute landmark-papers
-	ai-rules daily-brief)
-is_fork=$(gh repo view --json isFork -q .isFork 2>/dev/null || print false)
-if [[ "$is_fork" == "true" ]]; then
-	for s in "${dogfood_series[@]}"; do
-		if [[ -d "series/$s" ]]; then
-			warn "upstream dogfood series are still configured on this fork."
-			warn "they are the upstream project's own assignments — remove them"
-			warn "and add your own series before scheduling anything:"
-			warn "  rm -r series/*"
-			break
-		fi
-	done
+# 1b. This repo is a press; the canonical repo is engine-only ------------------
+UPSTREAM_REPO="RyanSaxe/the-nightly-build"
+if [[ "$repo" == "$UPSTREAM_REPO" ]]; then
+	die "this is the engine repo — it runs no press. Fork it, then run setup there."
+fi
+
+# 1c. Scaffold press/ (your side of the repo) ---------------------------------
+if [[ ! -d press ]]; then
+	say "scaffolding press/ (your side of the repo)"
+	mkdir -p press/series press/themes press/templates
+	cat >press/site.yaml <<'YAML'
+title: "The Nightly Build"
+theme: engine/assets/themes/newspaper.css   # or press/themes/<yours>.css
+appearance: auto   # auto | light | dark
+
+# Morning email delivery (also requires the MAIL_* repo secrets — see
+# docs/delivery.md). Without this block, the Atom feed is the push channel.
+# email:
+#   send_utc_hour: 12
+YAML
+	cat >press/editorial.md <<'MD'
+# Voice — press/editorial.md
+
+Your editorial voice, composed into every edition's instructions after the
+house style (spec/editorial.md). Tone, register, language, assumed
+background — make the paper yours. Ask your agent to interview you and fill
+this in, or write it by hand.
+MD
+	cat >press/README.md <<'MD'
+# press/ — your side of the repo
+
+Everything here is yours; everything outside is the engine. Configure series
+under series/, your voice in editorial.md, your look via site.yaml and
+themes/. Copy working examples from examples/ to get started.
+MD
+	ok "press/ scaffolded — configure it (or ask your agent to 'set me up')"
+else
+	ok "press/ exists"
 fi
 
 # 2. Configuration validates before anything else ----------------------------
-say "validating site.yaml, templates/registry.yaml, series/*/series.yaml"
+say "validating press/ configuration and the template registry"
 python3 engine/validate_config.py || die "fix the configuration above, then re-run"
 
 # 3. The library branch (orphan, empty press) --------------------------------
