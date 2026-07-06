@@ -26,8 +26,7 @@ except ImportError:  # pragma: no cover
     sys.exit(2)
 
 DAY_NAMES = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
-META_RE = re.compile(
-    r'<script[^>]*\bid="nb-meta"[^>]*>(.*?)</script>', re.S)
+META_RE = re.compile(r'<script[^>]*\bid="nb-meta"[^>]*>(.*?)</script>', re.S)
 
 
 def cadence_includes(cadence, day: str) -> bool:
@@ -43,8 +42,10 @@ def cadence_includes(cadence, day: str) -> bool:
 
 
 def series_dir_in_library(library: str, series_id: str) -> str | None:
-    for base in (os.path.join(library, "library", series_id),
-                 os.path.join(library, series_id)):
+    for base in (
+        os.path.join(library, "library", series_id),
+        os.path.join(library, series_id),
+    ):
         if os.path.isdir(base):
             return base
     return None
@@ -60,8 +61,7 @@ def published_state(library: str, series_id: str) -> tuple[set, set]:
         if not fname.endswith(".html"):
             continue
         slugs.add(fname[:-5])
-        with open(os.path.join(base, fname), encoding="utf-8",
-                  errors="replace") as fh:
+        with open(os.path.join(base, fname), encoding="utf-8", errors="replace") as fh:
             m = META_RE.search(fh.read())
         if m:
             try:
@@ -73,8 +73,9 @@ def published_state(library: str, series_id: str) -> tuple[set, set]:
     return slugs, dates
 
 
-def series_duty(sid: str, cfg: dict, pub: set, pub_dates: set,
-                date: _dt.date, day: str) -> tuple[bool, dict]:
+def series_duty(
+    sid: str, cfg: dict, pub: set, pub_dates: set, date: _dt.date, day: str
+) -> tuple[bool, dict]:
     """(is_due, entry) for one series on one night."""
     mode = cfg.get("mode")
     entry = {"series": sid, "mode": mode}
@@ -94,65 +95,87 @@ def series_duty(sid: str, cfg: dict, pub: set, pub_dates: set,
         slug = date.isoformat()
         if slug in pub:
             return False, {**entry, "reason": "already published tonight"}
-        return True, {**entry, "slug": slug,
-                      "reason": "tonight's date is unpublished"}
+        return True, {**entry, "slug": slug, "reason": "tonight's date is unpublished"}
     if mode == "sequence":
         if not unpublished:
             return False, {**entry, "reason": "complete"}
         nxt = next(it["slug"] for it in items if it.get("slug") not in pub)
-        order = next(i for i, it in enumerate(items, 1)
-                     if it.get("slug") == nxt)
-        return True, {**entry, "slug": nxt, "order": order,
-                      "reason": f"{len(pub)} of {len(items)} published; "
-                                f"'{nxt}' is next"}
+        order = next(i for i, it in enumerate(items, 1) if it.get("slug") == nxt)
+        return True, {
+            **entry,
+            "slug": nxt,
+            "order": order,
+            "reason": f"{len(pub)} of {len(items)} published; '{nxt}' is next",
+        }
     if mode == "collection":
         if not unpublished:
             return False, {**entry, "reason": "complete"}
         selection = cfg.get("selection", "in-order")
         candidates = unpublished if selection == "random" else unpublished[:1]
-        return True, {**entry, "candidates": candidates,
-                      "selection": selection,
-                      "reason": f"{len(unpublished)} of {len(items)} items "
-                                f"unpublished"}
+        return True, {
+            **entry,
+            "candidates": candidates,
+            "selection": selection,
+            "reason": f"{len(unpublished)} of {len(items)} items unpublished",
+        }
     if mode == "open":
         if unpublished:
-            return True, {**entry, "commissions": unpublished,
-                          "reason": "commissioned items pending — publish "
-                                    "one of these before a freestyle pick"}
-        return True, {**entry, "commissions": [],
-                      "reason": "open desk — invent tonight's topic within "
-                                "the beat; do not repeat a published slug"}
+            return True, {
+                **entry,
+                "commissions": unpublished,
+                "reason": "commissioned items pending — publish "
+                "one of these before a freestyle pick",
+            }
+        return True, {
+            **entry,
+            "commissions": [],
+            "reason": "open desk — invent tonight's topic within "
+            "the beat; do not repeat a published slug",
+        }
     return False, {**entry, "reason": f"unknown mode {mode!r}"}
 
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description="Tonight's deterministic work list")
     p.add_argument("--repo", default=".", help="repo root (main checkout)")
-    p.add_argument("--library", required=True,
-                   help="library-branch checkout (published state)")
+    p.add_argument(
+        "--library", required=True, help="library-branch checkout (published state)"
+    )
     p.add_argument("--date", default=None, help="UTC date, default today")
     args = p.parse_args(argv)
 
-    date = (_dt.date.fromisoformat(args.date) if args.date
-            else _dt.datetime.now(_dt.timezone.utc).date())
+    date = (
+        _dt.date.fromisoformat(args.date)
+        if args.date
+        else _dt.datetime.now(_dt.timezone.utc).date()
+    )
     day = DAY_NAMES[date.weekday()]
 
     due, idle = [], []
     root = os.path.join(args.repo, "press", "series")
-    sids = sorted(d for d in os.listdir(root)
-                  if not d.startswith("_")
-                  and os.path.isfile(os.path.join(root, d, "series.yaml"))
-                  ) if os.path.isdir(root) else []
+    sids = (
+        sorted(
+            d
+            for d in os.listdir(root)
+            if not d.startswith("_")
+            and os.path.isfile(os.path.join(root, d, "series.yaml"))
+        )
+        if os.path.isdir(root)
+        else []
+    )
     for sid in sids:
-        with open(os.path.join(root, sid, "series.yaml"),
-                  encoding="utf-8") as fh:
+        with open(os.path.join(root, sid, "series.yaml"), encoding="utf-8") as fh:
             cfg = yaml.safe_load(fh) or {}
         pub, pub_dates = published_state(args.library, sid)
         is_due, entry = series_duty(sid, cfg, pub, pub_dates, date, day)
         (due if is_due else idle).append(entry)
 
-    print(json.dumps({"date": date.isoformat(), "weekday": day,
-                      "due": due, "idle": idle}, indent=2))
+    print(
+        json.dumps(
+            {"date": date.isoformat(), "weekday": day, "due": due, "idle": idle},
+            indent=2,
+        )
+    )
     return 0
 
 

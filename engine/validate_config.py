@@ -24,13 +24,37 @@ except ImportError:  # pragma: no cover
 SERIES_ID_RE = re.compile(r"^[a-z0-9-]{1,32}$")
 SLUG_RE = re.compile(r"^[a-z0-9-]{1,64}$")
 MODES = {"collection", "sequence", "rolling", "open"}
-TEMPLATE_KEYS = {"class", "words", "items", "slides", "sections", "cite_rule",
-                 "modes", "furniture"}
+TEMPLATE_KEYS = {
+    "class",
+    "words",
+    "items",
+    "slides",
+    "sections",
+    "cite_rule",
+    "modes",
+    "furniture",
+}
 CITE_RULES = {"per-section", "per-item", "per-slide"}
-SERIES_KEYS = {"name", "mode", "template", "templates", "prompt", "autopublish",
-               "strict", "min_sources", "words", "items", "tags", "consult",
-               "required_docs", "sources_exclusive", "cadence", "paused",
-               "selection", "section"}
+SERIES_KEYS = {
+    "name",
+    "mode",
+    "template",
+    "templates",
+    "prompt",
+    "autopublish",
+    "strict",
+    "min_sources",
+    "words",
+    "items",
+    "tags",
+    "consult",
+    "required_docs",
+    "sources_exclusive",
+    "cadence",
+    "paused",
+    "selection",
+    "section",
+}
 DAY_NAMES = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 CADENCE_WORDS = {"daily", "weekdays", "weekends"}
 SELECTIONS = {"in-order", "random"}
@@ -39,8 +63,11 @@ SELECTIONS = {"in-order", "random"}
 def cadence_is_valid(cadence):
     if isinstance(cadence, str):
         return cadence in CADENCE_WORDS
-    return (isinstance(cadence, list) and len(cadence) > 0
-            and all(d in DAY_NAMES for d in cadence))
+    return (
+        isinstance(cadence, list)
+        and len(cadence) > 0
+        and all(d in DAY_NAMES for d in cadence)
+    )
 
 
 def load(path):
@@ -54,12 +81,14 @@ def check_site(repo, errors):
     if not os.path.isfile(path):
         return  # optional: the engine ships defaults
     site = load(path) or {}
-    if "title" in site and (not isinstance(site["title"], str)
-                            or not site["title"].strip()):
+    if "title" in site and (
+        not isinstance(site["title"], str) or not site["title"].strip()
+    ):
         errors.append(f"{label}/site.yaml: 'title' must be a non-empty string")
     theme = site.get("theme")
-    if theme is not None and (not isinstance(theme, str)
-                              or not os.path.isfile(os.path.join(repo, theme))):
+    if theme is not None and (
+        not isinstance(theme, str) or not os.path.isfile(os.path.join(repo, theme))
+    ):
         errors.append(f"{label}/site.yaml: theme file not found: {theme!r}")
     if site.get("appearance", "auto") not in ("auto", "light", "dark"):
         errors.append(f"{label}/site.yaml: 'appearance' must be auto | light | dark")
@@ -97,15 +126,20 @@ def check_registry(repo, errors):
         for band_key in ("words", "items", "slides"):
             band = entry.get(band_key)
             if band is not None and not (
-                    isinstance(band, list) and len(band) == 2
-                    and all(isinstance(x, int) for x in band)
-                    and band[0] <= band[1]):
+                isinstance(band, list)
+                and len(band) == 2
+                and all(isinstance(x, int) for x in band)
+                and band[0] <= band[1]
+            ):
                 errors.append(f"{where}: '{band_key}' must be [low, high] integers")
-        candidates = [os.path.join(repo, "press", "templates", f"{tid}.html"),
-                      os.path.join(repo, "templates", f"{tid}.html")]
+        candidates = [
+            os.path.join(repo, "press", "templates", f"{tid}.html"),
+            os.path.join(repo, "templates", f"{tid}.html"),
+        ]
         if not any(os.path.isfile(c) for c in candidates):
-            errors.append(f"{where}: no {tid}.html in the press templates "
-                          f"folder or templates/")
+            errors.append(
+                f"{where}: no {tid}.html in the press templates folder or templates/"
+            )
     return registry
 
 
@@ -127,8 +161,10 @@ def check_series(repo, registry, errors):
         cfg = load(path) or {}
         unknown = set(cfg) - SERIES_KEYS
         if unknown:
-            errors.append(f"{where}: unknown keys {sorted(unknown)} — "
-                          f"typo? (known: {sorted(SERIES_KEYS)})")
+            errors.append(
+                f"{where}: unknown keys {sorted(unknown)} — "
+                f"typo? (known: {sorted(SERIES_KEYS)})"
+            )
         if not isinstance(cfg.get("name"), str) or not cfg["name"].strip():
             errors.append(f"{where}: 'name' must be a non-empty string")
         mode = cfg.get("mode")
@@ -136,36 +172,39 @@ def check_series(repo, registry, errors):
             errors.append(f"{where}: mode must be one of {sorted(MODES)}")
         cadence = cfg.get("cadence")
         if cadence is not None and not cadence_is_valid(cadence):
-            errors.append(f"{where}: cadence must be daily | weekdays | "
-                          f"weekends | a list of day names {list(DAY_NAMES)}")
+            errors.append(
+                f"{where}: cadence must be daily | weekdays | "
+                f"weekends | a list of day names {list(DAY_NAMES)}"
+            )
         if not isinstance(cfg.get("paused", False), bool):
             errors.append(f"{where}: 'paused' must be true or false")
         section = cfg.get("section")
-        if section is not None and (not isinstance(section, str)
-                                    or not section.strip()):
+        if section is not None and (
+            not isinstance(section, str) or not section.strip()
+        ):
             errors.append(f"{where}: 'section' must be a non-empty string")
         selection = cfg.get("selection")
         if selection is not None:
             if selection not in SELECTIONS:
-                errors.append(f"{where}: selection must be one of "
-                              f"{sorted(SELECTIONS)}")
+                errors.append(f"{where}: selection must be one of {sorted(SELECTIONS)}")
             elif mode != "collection":
-                errors.append(f"{where}: 'selection' only applies to "
-                              f"collection mode")
+                errors.append(f"{where}: 'selection' only applies to collection mode")
         templates = cfg.get("templates")
         if templates is not None and mode != "open":
-            errors.append(f"{where}: 'templates' (a choice list) is only valid "
-                          f"in open mode; use 'template'")
+            errors.append(
+                f"{where}: 'templates' (a choice list) is only valid "
+                f"in open mode; use 'template'"
+            )
             templates = None
-        if templates is not None and (not isinstance(templates, list)
-                                      or not templates):
+        if templates is not None and (not isinstance(templates, list) or not templates):
             errors.append(f"{where}: 'templates' must be a non-empty list")
             templates = None
         if mode == "open" and templates and cfg.get("template"):
             errors.append(f"{where}: use 'template' or 'templates', not both")
         if mode == "open" and not templates and not cfg.get("template"):
-            errors.append(f"{where}: open mode requires 'template' or a "
-                          f"'templates' choice list")
+            errors.append(
+                f"{where}: open mode requires 'template' or a 'templates' choice list"
+            )
             allowed = []
         else:
             allowed = templates or [cfg.get("template")]
@@ -177,9 +216,11 @@ def check_series(repo, registry, errors):
             else:
                 tregs.append(treg)
                 if mode in MODES and mode not in (treg.get("modes") or []):
-                    errors.append(f"{where}: mode '{mode}' not allowed for "
-                                  f"template '{template}' "
-                                  f"(allowed: {treg.get('modes')})")
+                    errors.append(
+                        f"{where}: mode '{mode}' not allowed for "
+                        f"template '{template}' "
+                        f"(allowed: {treg.get('modes')})"
+                    )
         prompt = cfg.get("prompt")
         if prompt and not os.path.isfile(os.path.join(root, sid, prompt)):
             errors.append(f"{where}: prompt file '{prompt}' not found")
@@ -189,13 +230,18 @@ def check_series(repo, registry, errors):
         words = cfg.get("words")
         if words is not None:
             floors = [t["words"][0] for t in tregs if t.get("words")]
-            if not (isinstance(words, list) and len(words) == 2
-                    and all(isinstance(x, int) for x in words)
-                    and words[0] <= words[1]):
+            if not (
+                isinstance(words, list)
+                and len(words) == 2
+                and all(isinstance(x, int) for x in words)
+                and words[0] <= words[1]
+            ):
                 errors.append(f"{where}: 'words' must be [low, high] integers")
             elif floors and words[0] < max(floors):
-                errors.append(f"{where}: words floor {words[0]} loosens the "
-                              f"registry floor {max(floors)} (may only tighten)")
+                errors.append(
+                    f"{where}: words floor {words[0]} loosens the "
+                    f"registry floor {max(floors)} (may only tighten)"
+                )
         items = cfg.get("items") or []
         if mode in ("collection", "sequence") and not items:
             errors.append(f"{where}: {mode} mode requires 'items'")
@@ -205,31 +251,38 @@ def check_series(repo, registry, errors):
         for i, item in enumerate(items):
             slug = (item or {}).get("slug")
             if not isinstance(slug, str) or not SLUG_RE.match(slug):
-                errors.append(f"{where}: item #{i + 1} slug {slug!r} must match "
-                              f"{SLUG_RE.pattern}")
+                errors.append(
+                    f"{where}: item #{i + 1} slug {slug!r} must match {SLUG_RE.pattern}"
+                )
             elif slug in seen:
                 errors.append(f"{where}: duplicate item slug '{slug}'")
             seen.add(slug)
             for doc in (item or {}).get("required_docs") or []:
                 dpath = os.path.join(root, sid, doc.get("path", ""))
                 if not doc.get("id") or not os.path.isfile(dpath):
-                    errors.append(f"{where}: required_doc "
-                                  f"{doc.get('id')!r} file not found: {doc.get('path')!r}")
-        item_consult = [p for item in items
-                        for p in (item or {}).get("consult") or []]
+                    errors.append(
+                        f"{where}: required_doc "
+                        f"{doc.get('id')!r} file not found: {doc.get('path')!r}"
+                    )
+        item_consult = [p for item in items for p in (item or {}).get("consult") or []]
         for prefix in (cfg.get("consult") or []) + item_consult:
             if not str(prefix).startswith("https://"):
-                errors.append(f"{where}: consult entries must be https:// "
-                              f"prefixes, got {prefix!r}")
+                errors.append(
+                    f"{where}: consult entries must be https:// "
+                    f"prefixes, got {prefix!r}"
+                )
         exclusive = cfg.get("sources_exclusive", False)
         if not isinstance(exclusive, bool):
             errors.append(f"{where}: sources_exclusive must be true or false")
         elif exclusive:
-            has_docs = (cfg.get("required_docs")
-                        or any((item or {}).get("required_docs") for item in items))
+            has_docs = cfg.get("required_docs") or any(
+                (item or {}).get("required_docs") for item in items
+            )
             if not (cfg.get("consult") or item_consult or has_docs):
-                errors.append(f"{where}: sources_exclusive requires declared "
-                              f"sources (consult and/or required_docs)")
+                errors.append(
+                    f"{where}: sources_exclusive requires declared "
+                    f"sources (consult and/or required_docs)"
+                )
 
 
 def main(argv=None):
