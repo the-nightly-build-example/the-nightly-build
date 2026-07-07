@@ -47,16 +47,16 @@ source count. The reader's front page and a single edition, on a phone:
 
 ## How it works
 
-| Piece | Where | Purpose |
-|---|---|---|
-| `PROTOCOL.md` | main | The complete agent contract |
-| the proof | `engine/check.py` | Validates editions. BLOCK findings stop publication; WARN findings drive revision |
-| the editor | `check.yml` | Validates every PR to `library`; auto-merges clean ones from `autopublish` series (otherwise a human merges); supersedes competitors |
-| the press | `engine/build_site.py` | Rebuilds the site on every merge: front page, night archive, sections, search, feeds, email digests |
-| the paperboy | `morning-mail.yml` | Optional daily email of the latest build |
-| duty | `engine/duty.py` | Deterministic nightly work selection: cadence, pauses, completion, commissions |
-| templates | `templates/` | Two citation geometries plus a shared furniture catalog. User templates in `press/templates/` are first class |
-| skills | `skills/` | Librarian (setup and curation) and Correspondent (the night shift runtime) |
+| Piece         | Where                  | Purpose                                                                                                                              |
+| ------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `PROTOCOL.md` | main                   | The complete agent contract                                                                                                          |
+| the proof     | `engine/check.py`      | Validates editions. BLOCK findings stop publication; WARN findings drive revision                                                    |
+| the editor    | `check.yml`            | Validates every PR to `library`; auto-merges clean ones from `autopublish` series (otherwise a human merges); supersedes competitors |
+| the press     | `engine/build_site.py` | Rebuilds the site on every merge: front page, night archive, sections, search, feeds, email digests                                  |
+| the paperboy  | `morning-mail.yml`     | Optional daily email of the latest build                                                                                             |
+| duty          | `engine/duty.py`       | Deterministic nightly work selection: cadence, pauses, completion, commissions                                                       |
+| templates     | `templates/`           | Two citation geometries plus a shared furniture catalog. User templates in `press/templates/` are first class                        |
+| skills        | `skills/`              | Librarian (setup and curation) and Correspondent (the night shift runtime)                                                           |
 
 Two branches with disjoint jobs: `main` holds the engine and your
 configuration, `library` holds published editions and the generated site.
@@ -92,7 +92,7 @@ Actions secrets on the trusted post-merge path.
 The engine is Python 3.9+ with one dependency, PyYAML. Scripts carry PEP 723
 metadata, so `uv run engine/check.py` works without any setup.
 
-```
+```sh
 python3 engine/tests/run_tests.py    # proof, builder, and end-to-end suites
 python3 engine/validate_config.py    # validate press/ configuration
 ```
