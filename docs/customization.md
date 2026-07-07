@@ -85,8 +85,8 @@ Registry entries come in two styles:
 - Flexible outline: declare anchor `sections` plus
   `flex_sections: [min, max]`, and the agent names that many additional
   sections per edition. Either way the cite rule applies to every labeled
-  section, except a few exempt ones (`sources`, `objectives`, `items`,
-  `slides`).
+  section except `sources` (always exempt) and any you list in the template's
+  `cite_exempt` (for a non-cited section like an objectives box).
 
 Worked example: the classic lesson template, six fixed sections for an
 ordered course, rebuilt as a press template.
@@ -99,12 +99,17 @@ lesson:
   words: [1500, 4000]
   sections: [objectives, recap, teach, check, bridge, sources]
   cite_rule: per-section
+  cite_exempt: [objectives]   # the goals box carries no citations
   modes: [sequence]
 ```
 
 Rules: `sections` must include `sources`. Bands are `[low, high]`.
-`cite_rule` is `per-section`, `per-item` (needs `data-nb-item` markers), or
-`per-slide` (needs `data-nb-slide` markers).
+`cite_rule` is `per-section` or `per-item` (needs `data-nb-item` markers).
+Two optional fields let a template declare requirements the engine would
+otherwise not know: `cite_exempt: [names]` (sections that need no citations,
+on top of the always-exempt `sources`) and `require_why: true` (each
+`data-nb-item` must carry a `data-nb-why` line, as `brief` does). The engine
+reads these from the entry, so any template can use them.
 Entries here overlay the shipped registry, so reusing a shipped id
 redefines it. The test suite exercises this exact lesson entry, so the
 walkthrough cannot drift from what the proof enforces.
