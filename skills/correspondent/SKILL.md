@@ -90,6 +90,7 @@ python3 engine/check.py library/<series>/<slug>.html \
     --series <id> --repo . --library <path-to-library-checkout>
 ```
 
+If the proof reports PyYAML missing, `pip install pyyaml` and rerun.
 Iterate until `BLOCK: 0`. Then treat every WARN as a revision note and address
 what you reasonably can — WARNs are the quality bar, BLOCKs are the publishing
 bar. Ship with the final WARN summary quoted in the PR body; an honest WARN
@@ -99,7 +100,7 @@ record beats a gamed one.
 
 Target the `library` branch. Add exactly one file: `library/<series>/<slug>.html`.
 
-- Title: `nb: <series>/<slug> — <Title>`
+- Title: `nb: <series>/<slug> - <Title>`
 - Body: a fenced ```nb-meta``` yaml block mirroring the embedded JSON (fields:
   series, slug, mode, template, date, title, order), your run URL if you have
   one, and the proof's final WARN summary.

@@ -1,29 +1,27 @@
 #!/usr/bin/env python3
-"""
-The Nightly Build — engine/check.py ("the proof")
+# /// script
+# requires-python = ">=3.9"
+# dependencies = ["pyyaml"]
+# ///
+"""Validate an edition against the protocol and series config: the proof.
 
-One tool, two tiers:
-  BLOCK — site/protocol integrity. CI refuses to publish on any BLOCK.
-  WARN  — quality calibration. Never blocks (unless the series sets strict: true).
+Findings come in two tiers. BLOCK findings are integrity failures and CI
+refuses to publish on any of them. WARN findings are quality calibration:
+agents treat them as revision notes and they block only when a series sets
+strict true. The same tool runs in the agent loop, in press checks, and in
+CI, which keeps the publishing bar identical everywhere.
 
 Invocations:
-  Agent loop / press check:
-    python3 engine/check.py library/<series>/<slug>.html --series <id> --repo . [--library DIR]
-  CI:
-    python3 engine/check.py --pr --repo . --main <main checkout> \
-        --base <ref> --head <ref> [--pr-body FILE] [--library DIR]
 
-  In PR mode --repo is the PR checkout (git diff + edition file); configs and
-  the registry load from --main, because the library branch carries no engine
-  or series files. --main defaults to --repo for repos that keep both together.
+    Agent loop / press check:
+        python3 engine/check.py library/<series>/<slug>.html --series <id> --repo . [--library DIR]
+    CI (PR mode):
+        python3 engine/check.py --pr --repo . --main <main checkout> \
+            --base <ref> --head <ref> [--pr-body FILE] [--library DIR]
 
-  --library DIR points at the PUBLISHED state (the library branch checkout, or its
-  library/ folder) BEFORE this edition; used for sequence/rolling next-work checks.
-  If omitted, those specific sub-checks are skipped with a note.
-
-Exit code: 0 iff BLOCK count is 0. Machine output via --json.
-
-Dependencies: Python stdlib + PyYAML.
+In PR mode --repo is the PR checkout, used for the diff and the edition
+file. Configs and templates load from --main because the orphan library
+branch carries no engine.
 """
 
 import argparse
@@ -37,7 +35,7 @@ from html.parser import HTMLParser
 
 try:
     import yaml
-except ImportError:  # pragma: no cover
+except ImportError:
     sys.stderr.write("check.py requires PyYAML (pip install pyyaml)\n")
     sys.exit(2)
 
@@ -61,8 +59,13 @@ SELF_COUNT_TOLERANCE = 0.20
 
 
 class Finding:
-    def __init__(self, code, level, message, suggestion=None):
-        self.code, self.level, self.message, self.suggestion = code, level, message, suggestion
+    def __init__(self, code, level, *, message, suggestion=None):
+        self.code, self.level, self.message, self.suggestion = (
+            code,
+            level,
+            message,
+            suggestion,
+        )
 
     def as_dict(self):
         d = {"code": self.code, "level": self.level, "message": self.message}
@@ -77,15 +80,14 @@ class Report:
         self.strict = strict
         self.notes = []
 
-    def block(self, code, msg, suggestion=None):
-        self.findings.append(Finding(code, "BLOCK", msg, suggestion))
+    def block(self, code, msg, *, suggestion=None):
+        finding = Finding(code, "BLOCK", message=msg, suggestion=suggestion)
+        self.findings.append(finding)
 
-    def warn(self, code, msg, suggestion=None):
+    def warn(self, code, msg, *, suggestion=None):
         level = "BLOCK" if self.strict else "WARN"
-        self.findings.append(Finding(code, level, msg, suggestion))
-
-    def note(self, msg):
-        self.notes.append(msg)
+        finding = Finding(code, level, message=msg, suggestion=suggestion)
+        self.findings.append(finding)
 
     @property
     def blocks(self):
@@ -100,33 +102,53 @@ class Report:
 # HTML parsing
 # --------------------------------------------------------------------------- #
 
-VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input",
-        "link", "meta", "param", "source", "track", "wbr"}
+VOID = {
+    "area",
+    "base",
+    "br",
+    "col",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr",
+}
 
 
 class Edition(HTMLParser):
-    """Single-pass structural parse of an edition file."""
+    """Single-pass structural parse of one edition file.
+
+    Collects everything the checks need in one HTMLParser walk:
+    sections, script tags, sandbox violations, citations, source
+    entries, slides, and word counts. html.parser is tolerant by
+    design, so malformed markup degrades into text instead of raising;
+    the structural checks downstream catch what matters.
+    """
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
-        self.stack = []                # list of dicts per open element
-        self.parse_ok = True
+        self.stack = []  # list of dicts per open element
         self.meta_raw = None
-        self.chart_raw = []            # raw JSON strings of data-nb-chart blocks
-        self.script_tags = []          # (attrs_dict) for every <script>
-        self.sections = []             # data-nb-section values in order
-        self.section_cites = {}        # section -> inline cite count
-        self.items = []                # per data-nb-item: {"cites": int, "why": bool}
-        self.slides = []               # per data-nb-slide: {"kind": str, "cites": int}
+        self.chart_raw = []  # raw JSON strings of data-nb-chart blocks
+        self.script_tags = []  # (attrs_dict) for every <script>
+        self.sections = []  # data-nb-section values in order
+        self.section_cites = {}  # section -> inline cite count
+        self.items = []  # per data-nb-item: {"cites": int, "why": bool}
+        self.slides = []  # per data-nb-slide: {"kind": str, "cites": int}
         self.ids = set()
         self.source_container_ids = set()
-        self.sources = []              # {"href":, "required":}
-        self.cite_hrefs = []           # hrefs of anchors inside sup.nb-cite
+        self.sources = []  # {"href":, "required":}
+        self.cite_hrefs = []  # hrefs of anchors inside sup.nb-cite
         self.bad_event_attrs = []
         self.bad_js_urls = []
         self.forbidden_tags = []
-        self.external_refs = []        # (tag, url) for script src / link href / img src
-        self._capture = None           # ("meta"|"chart", buffer) while inside a JSON script
+        self.external_refs = []  # (tag, url) for script src / link href / img src
+        self._capture = None  # ("meta"|"chart", buffer) while inside a JSON script
         self._text_parts = []
         self._suppress_text_depth = 0  # inside script/style
 
@@ -201,8 +223,9 @@ class Edition(HTMLParser):
                 self.cite_hrefs.append(href[1:])
                 sec = self._current("section")
                 if sec is not None:
-                    self.section_cites[sec["section"]] = \
+                    self.section_cites[sec["section"]] = (
                         self.section_cites.get(sec["section"], 0) + 1
+                    )
                 it = self._current("item")
                 if it is not None:
                     self.items[it["item"]]["cites"] += 1
@@ -210,10 +233,12 @@ class Edition(HTMLParser):
                 if sl is not None:
                     self.slides[sl["slide"]]["cites"] += 1
             if "data-nb-source" in a:
-                self.sources.append({
-                    "href": href,
-                    "required": a.get("data-nb-required") or None,
-                })
+                self.sources.append(
+                    {
+                        "href": href,
+                        "required": a.get("data-nb-required") or None,
+                    }
+                )
                 for e in self.stack:
                     if e.get("id"):
                         self.source_container_ids.add(e["id"])
@@ -246,17 +271,16 @@ class Edition(HTMLParser):
         elif self._suppress_text_depth == 0:
             self._text_parts.append(data)
 
-    def error(self, message):  # pragma: no cover (py<3.10 compat)
-        self.parse_ok = False
-
     @property
     def word_count(self):
-        return len(re.findall(r"\S+", " ".join(self._text_parts)))
+        text = " ".join(self._text_parts)
+        return len(re.findall(r"\S+", text))
 
 
 # --------------------------------------------------------------------------- #
 # Config loading
 # --------------------------------------------------------------------------- #
+
 
 def load_yaml(path):
     with open(path, "r", encoding="utf-8") as fh:
@@ -264,10 +288,11 @@ def load_yaml(path):
 
 
 def load_registry(repo):
-    """Shipped registry, overlaid by the user's press/templates/registry.yaml.
+    """Load the shipped template registry overlaid by the press registry.
 
-    A press entry fully defines its template (add a new one, or redefine a
-    shipped id); entries are replaced whole, not deep-merged.
+    A press entry fully replaces a shipped entry of the same id, which
+    is both how users add templates and how they redefine a shipped
+    template's band press-wide.
     """
     registry = load_yaml(os.path.join(repo, "templates", "registry.yaml")) or {}
     press_path = os.path.join(repo, "press", "templates", "registry.yaml")
@@ -277,9 +302,11 @@ def load_registry(repo):
 
 
 def find_template(repo, template_id):
-    """User templates shadow shipped ones: press/templates/ wins."""
-    for base in (os.path.join(repo, "press", "templates"),
-                 os.path.join(repo, "templates")):
+    # User templates shadow shipped ones: press/templates/ wins.
+    for base in (
+        os.path.join(repo, "press", "templates"),
+        os.path.join(repo, "templates"),
+    ):
         path = os.path.join(base, f"{template_id}.html")
         if os.path.isfile(path):
             return path
@@ -294,11 +321,18 @@ def load_series(repo, series_id):
 
 
 def published_slugs(library_dir, series_id):
-    """Return set of published slugs for a series, or None if unknowable."""
+    """Return the set of published slugs for a series.
+
+    Returns None when no library checkout was provided, which callers
+    must treat as unknowable rather than empty: dedupe and sequence
+    checks are skipped with a note instead of firing falsely.
+    """
     if not library_dir:
         return None
-    for base in (os.path.join(library_dir, "library", series_id),
-                 os.path.join(library_dir, series_id)):
+    for base in (
+        os.path.join(library_dir, "library", series_id),
+        os.path.join(library_dir, series_id),
+    ):
         if os.path.isdir(base):
             return {f[:-5] for f in os.listdir(base) if f.endswith(".html")}
     return set()  # library exists but series dir doesn't => nothing published
@@ -308,8 +342,31 @@ def published_slugs(library_dir, series_id):
 # Checks
 # --------------------------------------------------------------------------- #
 
+
+def chart_spec_error(raw):
+    try:
+        spec = json.loads(raw)
+    except ValueError as e:
+        return str(e)
+    if not isinstance(spec, dict):
+        return "spec must be a JSON object"
+    if spec.get("type") not in ("line", "bar", "scatter"):
+        return "bad chart type"
+    if not isinstance(spec.get("labels"), list) or not spec["labels"]:
+        return "labels required"
+    series = spec.get("series")
+    if not isinstance(series, list) or not series:
+        return "series required"
+    for s in series:
+        if not isinstance(s, dict) or not isinstance(s.get("name"), str):
+            return "series name required"
+        if not isinstance(s.get("values"), list):
+            return "series values required"
+    return None
+
+
 def validate_meta_fields(meta, rep):
-    def need(field, typ, pattern=None, enum=None):
+    def need(field, typ, *, pattern=None, enum=None):
         v = meta.get(field)
         if v is None:
             rep.block("B-META-PARSE", f"nb-meta missing required field '{field}'")
@@ -318,16 +375,22 @@ def validate_meta_fields(meta, rep):
             rep.block("B-META-PARSE", f"nb-meta field '{field}' has wrong type")
             return None
         if pattern and not re.match(pattern, str(v)):
-            rep.block("B-META-PARSE", f"nb-meta field '{field}' fails pattern {pattern}")
+            rep.block(
+                "B-META-PARSE", f"nb-meta field '{field}' fails pattern {pattern}"
+            )
         if enum and v not in enum:
             rep.block("B-META-PARSE", f"nb-meta field '{field}' must be one of {enum}")
         return v
 
     need("protocol", str)
-    if isinstance(meta.get("protocol"), str) and \
-            meta["protocol"].split(".")[0] != PROTOCOL_MAJOR:
-        rep.block("B-META-PARSE",
-                  f"protocol major must be {PROTOCOL_MAJOR}, got {meta.get('protocol')}")
+    if (
+        isinstance(meta.get("protocol"), str)
+        and meta["protocol"].split(".")[0] != PROTOCOL_MAJOR
+    ):
+        rep.block(
+            "B-META-PARSE",
+            f"protocol major must be {PROTOCOL_MAJOR}, got {meta.get('protocol')}",
+        )
     need("series", str, pattern=SERIES_RE.pattern)
     need("slug", str, pattern=SLUG_RE.pattern)
     # template membership is validated against the merged registry (B-SERIES /
@@ -345,8 +408,9 @@ def validate_meta_fields(meta, rep):
         rep.block("B-META-PARSE", "nb-meta 'order' must be a positive integer or null")
 
 
-def check_edition(html_path, series_id, repo, library_dir, rep,
-                  pr_body_meta=None, today=None):
+def check_edition(
+    html_path, series_id, *, repo, library_dir, rep, pr_body_meta=None, today=None
+):
     today = today or _dt.date.today()
 
     # --- B-SERIES ---
@@ -355,11 +419,14 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
         rep.block("B-SERIES", f"series '{series_id}' not found at {spath}")
         return None
     if series.get("paused"):
-        rep.block("B-SERIES", f"series '{series_id}' is paused — remove "
-                              f"'paused: true' from series.yaml to publish")
+        rep.block(
+            "B-SERIES",
+            f"series '{series_id}' is paused — remove "
+            f"'paused: true' from series.yaml to publish",
+        )
     try:
         registry = load_registry(repo)
-    except Exception as e:
+    except (OSError, yaml.YAMLError, TypeError, ValueError) as e:
         rep.block("B-SERIES", f"templates/registry.yaml unreadable: {e}")
         return None
 
@@ -367,20 +434,24 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
     if mode_cfg == "open":
         # open series pick a template per edition; nb-meta names the choice,
         # resolved after the meta block parses
-        allowed_templates = (series.get("templates")
-                             or ([series["template"]] if series.get("template")
-                                 else []))
+        allowed_templates = series.get("templates") or (
+            [series["template"]] if series.get("template") else []
+        )
         unknown = [t for t in allowed_templates if t not in (registry or {})]
         if not allowed_templates or unknown:
-            rep.block("B-SERIES",
-                      f"open series templates {unknown or 'missing'} not in "
-                      f"templates/registry.yaml")
+            rep.block(
+                "B-SERIES",
+                f"open series templates {unknown or 'missing'} not in "
+                f"templates/registry.yaml",
+            )
             return None
         for t in allowed_templates:
             if "open" not in (registry[t].get("modes") or []):
-                rep.block("B-SERIES",
-                          f"mode 'open' not allowed for template '{t}' "
-                          f"(allowed: {registry[t].get('modes')})")
+                rep.block(
+                    "B-SERIES",
+                    f"mode 'open' not allowed for template '{t}' "
+                    f"(allowed: {registry[t].get('modes')})",
+                )
         # placeholder registry entry; the real one is bound from nb-meta
         # right after it parses (or the check returns early)
         template_id, treg = None, {}
@@ -389,13 +460,17 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
         template_id = series.get("template")
         treg = (registry or {}).get(template_id)
         if not treg:
-            rep.block("B-SERIES",
-                      f"series template '{template_id}' not in templates/registry.yaml")
+            rep.block(
+                "B-SERIES",
+                f"series template '{template_id}' not in templates/registry.yaml",
+            )
             return None
         if mode_cfg not in (treg.get("modes") or []):
-            rep.block("B-SERIES",
-                      f"series mode '{mode_cfg}' not allowed for template "
-                      f"'{template_id}' (allowed: {treg.get('modes')})")
+            rep.block(
+                "B-SERIES",
+                f"series mode '{mode_cfg}' not allowed for template "
+                f"'{template_id}' (allowed: {treg.get('modes')})",
+            )
 
     # --- file existence / size ---
     if not os.path.isfile(html_path):
@@ -408,22 +483,20 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
         raw = fh.read()
 
     ed = Edition()
-    try:
-        ed.feed(raw)
-        ed.close()
-    except Exception as e:
-        rep.block("B-HTML", f"HTML failed to parse: {e}")
-        return None
+    ed.feed(raw)
+    ed.close()
 
     # --- B-META-PARSE ---
     if not ed.meta_raw:
-        rep.block("B-META-PARSE", "no <script type=\"application/json\" id=\"nb-meta\"> block")
+        rep.block(
+            "B-META-PARSE", 'no <script type="application/json" id="nb-meta"> block'
+        )
         return None
     try:
         meta = json.loads(ed.meta_raw)
         if not isinstance(meta, dict):
             raise ValueError("nb-meta must be a JSON object")
-    except Exception as e:
+    except ValueError as e:
         rep.block("B-META-PARSE", f"nb-meta JSON invalid: {e}")
         return None
     validate_meta_fields(meta, rep)
@@ -432,39 +505,54 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
         template_id = meta.get("template")
         treg = (registry or {}).get(template_id)
         if treg is None:
-            rep.block("B-META-MATCH",
-                      f"nb-meta template '{template_id}' not in templates/registry.yaml")
+            rep.block(
+                "B-META-MATCH",
+                f"nb-meta template '{template_id}' not in templates/registry.yaml",
+            )
             return None
         if template_id not in allowed_templates:
-            rep.block("B-META-MATCH",
-                      f"nb-meta template '{template_id}' is not one of the "
-                      f"series' allowed templates {allowed_templates}")
+            rep.block(
+                "B-META-MATCH",
+                f"nb-meta template '{template_id}' is not one of the "
+                f"series' allowed templates {allowed_templates}",
+            )
 
     # --- path <-> meta agreement (B-META-MATCH) ---
     fname = os.path.basename(html_path)
     slug_from_path = fname[:-5] if fname.endswith(".html") else fname
     parent = os.path.basename(os.path.dirname(html_path))
     if meta.get("slug") != slug_from_path:
-        rep.block("B-META-MATCH",
-                  f"path slug '{slug_from_path}' != nb-meta slug '{meta.get('slug')}'")
+        rep.block(
+            "B-META-MATCH",
+            f"path slug '{slug_from_path}' != nb-meta slug '{meta.get('slug')}'",
+        )
     if parent and parent != series_id:
-        rep.block("B-META-MATCH",
-                  f"file sits under '{parent}/' but series is '{series_id}'")
+        rep.block(
+            "B-META-MATCH", f"file sits under '{parent}/' but series is '{series_id}'"
+        )
     if meta.get("series") != series_id:
-        rep.block("B-META-MATCH",
-                  f"nb-meta series '{meta.get('series')}' != declared series '{series_id}'")
+        rep.block(
+            "B-META-MATCH",
+            f"nb-meta series '{meta.get('series')}' != declared series '{series_id}'",
+        )
     if meta.get("mode") != series.get("mode"):
-        rep.block("B-META-MATCH",
-                  f"nb-meta mode '{meta.get('mode')}' != series mode '{series.get('mode')}'")
+        rep.block(
+            "B-META-MATCH",
+            f"nb-meta mode '{meta.get('mode')}' != series mode '{series.get('mode')}'",
+        )
     if meta.get("template") != template_id:
-        rep.block("B-META-MATCH",
-                  f"nb-meta template '{meta.get('template')}' != series template '{template_id}'")
+        rep.block(
+            "B-META-MATCH",
+            f"nb-meta template '{meta.get('template')}' != series template '{template_id}'",
+        )
     if pr_body_meta is not None:
         for field in ("series", "slug", "mode", "template", "date", "title"):
             if field in pr_body_meta and pr_body_meta.get(field) != meta.get(field):
-                rep.block("B-META-MATCH",
-                          f"PR body '{field}'={pr_body_meta.get(field)!r} disagrees "
-                          f"with embedded nb-meta {meta.get(field)!r}")
+                rep.block(
+                    "B-META-MATCH",
+                    f"PR body '{field}'={pr_body_meta.get(field)!r} disagrees "
+                    f"with embedded nb-meta {meta.get(field)!r}",
+                )
         b_order = pr_body_meta.get("order", meta.get("order"))
         if b_order != meta.get("order"):
             rep.block("B-META-MATCH", "PR body 'order' disagrees with embedded nb-meta")
@@ -479,32 +567,44 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
     if mode in ("collection", "sequence"):
         idx = next((i for i, it in enumerate(items) if it.get("slug") == slug), None)
         if idx is None:
-            rep.block("B-SLUG", f"slug '{slug}' is not a configured item of series "
-                                f"'{series_id}'")
+            rep.block(
+                "B-SLUG",
+                f"slug '{slug}' is not a configured item of series '{series_id}'",
+            )
         else:
             item_cfg = items[idx]
             if mode == "sequence":
                 if pub is None:
                     if meta.get("order") != idx + 1:
-                        rep.block("B-MODE",
-                                  f"sequence order must be item position {idx + 1}; "
-                                  f"nb-meta says {meta.get('order')}")
-                    rep.note("library state not provided (--library); "
-                             "next-expected check skipped")
+                        rep.block(
+                            "B-MODE",
+                            f"sequence order must be item position {idx + 1}; "
+                            f"nb-meta says {meta.get('order')}",
+                        )
+                    rep.notes.append(
+                        "library state not provided (--library); "
+                        "next-expected check skipped"
+                    )
                 else:
-                    expected = next((i for i, it in enumerate(items)
-                                     if it.get("slug") not in pub), None)
+                    expected = next(
+                        (i for i, it in enumerate(items) if it.get("slug") not in pub),
+                        None,
+                    )
                     if expected is None:
                         rep.block("B-MODE", "sequence is complete; nothing to publish")
                     elif idx != expected:
-                        rep.block("B-MODE",
-                                  f"next expected sequence item is "
-                                  f"'{items[expected].get('slug')}' (#{expected + 1}), "
-                                  f"not '{slug}'")
+                        rep.block(
+                            "B-MODE",
+                            f"next expected sequence item is "
+                            f"'{items[expected].get('slug')}' (#{expected + 1}), "
+                            f"not '{slug}'",
+                        )
                     elif meta.get("order") != expected + 1:
-                        rep.block("B-MODE",
-                                  f"nb-meta order must be {expected + 1}, "
-                                  f"got {meta.get('order')}")
+                        rep.block(
+                            "B-MODE",
+                            f"nb-meta order must be {expected + 1}, "
+                            f"got {meta.get('order')}",
+                        )
             else:
                 if pub is not None and slug in pub:
                     rep.block("B-MODE", f"'{slug}' is already published")
@@ -519,27 +619,36 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
             except ValueError:
                 rep.block("B-SLUG", f"rolling slug '{slug}' is not a real date")
             if meta.get("date") != slug:
-                rep.block("B-META-MATCH",
-                          f"rolling nb-meta date '{meta.get('date')}' must equal slug")
+                rep.block(
+                    "B-META-MATCH",
+                    f"rolling nb-meta date '{meta.get('date')}' must equal slug",
+                )
             if pub is not None and slug in pub:
                 rep.block("B-MODE", f"a brief for {slug} is already published")
         if pub is None:
-            rep.note("library state not provided (--library); "
-                     "already-published check skipped")
+            rep.notes.append(
+                "library state not provided (--library); "
+                "already-published check skipped"
+            )
     elif mode == "open":
         item_cfg = next((it for it in items if it.get("slug") == slug), None)
         if pub is None:
-            rep.note("library state not provided (--library); "
-                     "open-mode dedupe and commission checks skipped")
+            rep.notes.append(
+                "library state not provided (--library); "
+                "open-mode dedupe and commission checks skipped"
+            )
         else:
             if slug in pub:
                 rep.block("B-MODE", f"'{slug}' is already published")
-            pending = sorted(it.get("slug") for it in items
-                             if it.get("slug") not in pub)
+            pending = sorted(
+                it.get("slug") for it in items if it.get("slug") not in pub
+            )
             if pending and slug not in pending:
-                rep.block("B-MODE",
-                          f"commissioned items pending: {pending} — publish a "
-                          f"commission before an open pick")
+                rep.block(
+                    "B-MODE",
+                    f"commissioned items pending: {pending} — publish a "
+                    f"commission before an open pick",
+                )
 
     # --- B-HTML: required sections ---
     required_sections = treg.get("sections") or []
@@ -548,7 +657,10 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
         if counts[s] == 0:
             rep.block("B-HTML", f"required section '{s}' (data-nb-section) is missing")
         elif counts[s] > 1:
-            rep.block("B-HTML", f"section '{s}' appears {counts[s]} times; must be exactly once")
+            rep.block(
+                "B-HTML",
+                f"section '{s}' appears {counts[s]} times; must be exactly once",
+            )
 
     # --- B-SANDBOX ---
     for a in ed.script_tags:
@@ -557,15 +669,20 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
         if src and ENGINE_SCRIPT_RE.match(src) and stype in ("", "text/javascript"):
             continue  # the engine-owned runtime (assets/nb.js) is the one allowed load
         if stype != "application/json":
-            rep.block("B-SANDBOX",
-                      f"editions may not contain executable <script> (type={stype or 'none'})")
+            rep.block(
+                "B-SANDBOX",
+                f"editions may not contain executable <script> (type={stype or 'none'})",
+            )
         elif a.get("id") != "nb-meta" and "data-nb-chart" not in a:
-            rep.block("B-SANDBOX",
-                      "JSON <script> blocks must be #nb-meta or data-nb-chart")
+            rep.block(
+                "B-SANDBOX", "JSON <script> blocks must be #nb-meta or data-nb-chart"
+            )
         if src:
             rep.block("B-SANDBOX", "editions may not load external scripts")
     if ed.forbidden_tags:
-        rep.block("B-SANDBOX", f"forbidden tags present: {sorted(set(ed.forbidden_tags))}")
+        rep.block(
+            "B-SANDBOX", f"forbidden tags present: {sorted(set(ed.forbidden_tags))}"
+        )
     for tag, attr in ed.bad_event_attrs:
         rep.block("B-SANDBOX", f"inline event handler {attr}= on <{tag}>")
     for tag, url in ed.bad_js_urls:
@@ -574,20 +691,11 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
         if kind == "script":
             continue  # already blocked above
         if not url.startswith(ALLOWED_EXTERNAL_PREFIXES) and "://" in url:
-            rep.block("B-SANDBOX",
-                      f"external {kind} reference not on allowlist: {url}")
+            rep.block("B-SANDBOX", f"external {kind} reference not on allowlist: {url}")
     for i, raw_chart in enumerate(ed.chart_raw, 1):
-        try:
-            spec = json.loads(raw_chart)
-            assert isinstance(spec, dict)
-            assert spec.get("type") in ("line", "bar", "scatter"), "bad chart type"
-            assert isinstance(spec.get("labels"), list) and spec["labels"], "labels required"
-            assert isinstance(spec.get("series"), list) and spec["series"], "series required"
-            for s in spec["series"]:
-                assert isinstance(s.get("name"), str), "series name required"
-                assert isinstance(s.get("values"), list), "series values required"
-        except Exception as e:
-            rep.block("B-SANDBOX", f"data-nb-chart block #{i} invalid: {e}")
+        err = chart_spec_error(raw_chart)
+        if err is not None:
+            rep.block("B-SANDBOX", f"data-nb-chart block #{i} invalid: {err}")
 
     # --- B-SOURCES-FORM ---
     if not ed.sources:
@@ -595,16 +703,21 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
     for s in ed.sources:
         href = s["href"]
         if not re.match(r"^https://[^\s]+$", href or ""):
-            rep.block("B-SOURCES-FORM",
-                      f"source href must be absolute https URL: {href!r}")
+            rep.block(
+                "B-SOURCES-FORM", f"source href must be absolute https URL: {href!r}"
+            )
 
     # --- B-CITES-RESOLVE ---
     for target in ed.cite_hrefs:
         if target not in ed.ids:
-            rep.block("B-CITES-RESOLVE", f"inline citation '#{target}' resolves to nothing")
+            rep.block(
+                "B-CITES-RESOLVE", f"inline citation '#{target}' resolves to nothing"
+            )
         elif target not in ed.source_container_ids:
-            rep.block("B-CITES-RESOLVE",
-                      f"inline citation '#{target}' does not point at a source entry")
+            rep.block(
+                "B-CITES-RESOLVE",
+                f"inline citation '#{target}' does not point at a source entry",
+            )
 
     # ============================ WARN tier ============================ #
 
@@ -617,13 +730,17 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
             lo = max(lo, reg_lo)  # series may tighten, never loosen below registry
         wc = ed.word_count
         if wc < lo:
-            rep.warn("W-LENGTH-LOW",
-                     f"{template_id} band is {lo}-{hi} words; found {wc}",
-                     "consider deepening the thinnest section")
+            rep.warn(
+                "W-LENGTH-LOW",
+                f"{template_id} band is {lo}-{hi} words; found {wc}",
+                suggestion="consider deepening the thinnest section",
+            )
         elif wc > hi:
-            rep.warn("W-LENGTH-HIGH",
-                     f"{template_id} band is {lo}-{hi} words; found {wc}",
-                     "consider trimming or splitting")
+            rep.warn(
+                "W-LENGTH-HIGH",
+                f"{template_id} band is {lo}-{hi} words; found {wc}",
+                suggestion="consider trimming or splitting",
+            )
     if treg.get("items"):
         lo, hi = treg["items"]
         n = len(ed.items)
@@ -640,11 +757,11 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
             rep.warn("W-LENGTH-HIGH", f"deck expects {lo}-{hi} slides; found {n}")
 
     # source floor
-    floor = series.get("min_sources") or \
-        DEFAULT_MIN_SOURCES.get(treg.get("class", "longread"), 5)
+    floor = series.get("min_sources") or DEFAULT_MIN_SOURCES.get(
+        treg.get("class", "longread"), 5
+    )
     if len(ed.sources) < floor:
-        rep.warn("W-SOURCES-MIN",
-                 f"{len(ed.sources)} sources; series floor is {floor}")
+        rep.warn("W-SOURCES-MIN", f"{len(ed.sources)} sources; series floor is {floor}")
 
     # cite density
     rule = treg.get("cite_rule")
@@ -669,43 +786,53 @@ def check_edition(html_path, series_id, repo, library_dir, rep,
     if template_id == "brief":
         for i, it in enumerate(ed.items, 1):
             if not it["why"]:
-                rep.warn("W-WHY-MISSING",
-                         f"item #{i} lacks a 'why it matters' line (data-nb-why)")
+                rep.warn(
+                    "W-WHY-MISSING",
+                    f"item #{i} lacks a 'why it matters' line (data-nb-why)",
+                )
 
     # source policy: required docs must be read AND cited; consult prefixes
     # must be read first but citing them is optional (no check here); with
     # sources_exclusive, citations may come ONLY from the declared set.
-    req_docs = list((item_cfg or {}).get("required_docs") or []) + \
-        list(series.get("required_docs") or [])
+    req_docs = list((item_cfg or {}).get("required_docs") or []) + list(
+        series.get("required_docs") or []
+    )
     declared_doc_ids = {doc.get("id") for doc in req_docs}
     got_required = {s["required"] for s in ed.sources if s["required"]}
     for doc in req_docs:
         if doc.get("id") not in got_required:
-            rep.warn("W-REQ-DOC",
-                     f"required doc '{doc.get('id')}' has no data-nb-required source entry")
-    consult = list(series.get("consult") or []) + \
-        list((item_cfg or {}).get("consult") or [])
+            rep.warn(
+                "W-REQ-DOC",
+                f"required doc '{doc.get('id')}' has no data-nb-required source entry",
+            )
+    consult = list(series.get("consult") or []) + list(
+        (item_cfg or {}).get("consult") or []
+    )
     if series.get("sources_exclusive"):
         for s in ed.sources:
             if s["required"] and s["required"] in declared_doc_ids:
                 continue
             if not any(s["href"].startswith(prefix) for prefix in consult):
-                rep.block("B-SOURCES-EXCLUSIVE",
-                          f"source outside the declared set: {s['href']}",
-                          "this series is sources_exclusive — cite only "
-                          "required_docs and consult sources")
+                rep.block(
+                    "B-SOURCES-EXCLUSIVE",
+                    f"source outside the declared set: {s['href']}",
+                    suggestion="this series is sources_exclusive — cite only "
+                    "required_docs and consult sources",
+                )
 
     # self-counts
     if isinstance(meta.get("sources"), int) and ed.sources:
         actual = len(ed.sources)
         if abs(meta["sources"] - actual) > SELF_COUNT_TOLERANCE * max(actual, 1):
-            rep.warn("W-SELF-COUNT",
-                     f"nb-meta sources={meta['sources']} vs counted {actual}")
+            rep.warn(
+                "W-SELF-COUNT", f"nb-meta sources={meta['sources']} vs counted {actual}"
+            )
     if isinstance(meta.get("words"), int):
         actual = ed.word_count
         if actual and abs(meta["words"] - actual) > SELF_COUNT_TOLERANCE * actual:
-            rep.warn("W-SELF-COUNT",
-                     f"nb-meta words={meta['words']} vs counted {actual}")
+            rep.warn(
+                "W-SELF-COUNT", f"nb-meta words={meta['words']} vs counted {actual}"
+            )
 
     return meta
 
@@ -729,17 +856,29 @@ def parse_pr_body(path):
             return None
         # YAML reads bare dates (slug: 2026-07-05) as date objects; nb-meta
         # holds strings — normalize so honest PR bodies compare equal
-        return {k: (v.isoformat() if isinstance(v, _dt.date) else v)
-                for k, v in data.items()}
-    except Exception:
+        return {
+            k: (v.isoformat() if isinstance(v, _dt.date) else v)
+            for k, v in data.items()
+        }
+    except yaml.YAMLError:
         return None
 
 
-def pr_changed_files(repo, base, head):
+def pr_changed_files(repo, *, base, head):
     out = subprocess.run(
-        ["git", "-C", repo, "diff", "--name-status", "--no-renames",
-         f"{base}...{head}"],
-        capture_output=True, text=True, check=True).stdout
+        [
+            "git",
+            "-C",
+            repo,
+            "diff",
+            "--name-status",
+            "--no-renames",
+            f"{base}...{head}",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
     changes = []
     for line in out.splitlines():
         parts = line.split("\t")
@@ -750,23 +889,29 @@ def pr_changed_files(repo, base, head):
 
 def run_pr_mode(args, rep):
     try:
-        changes = pr_changed_files(args.repo, args.base, args.head)
+        changes = pr_changed_files(args.repo, base=args.base, head=args.head)
     except subprocess.CalledProcessError as e:
         rep.block("B-DIFF-SHAPE", f"git diff failed: {e.stderr or e}")
         return
     if len(changes) != 1:
-        rep.block("B-DIFF-SHAPE",
-                  f"PR must change exactly one file; found {len(changes)}: "
-                  f"{[p for _, p in changes]}")
+        rep.block(
+            "B-DIFF-SHAPE",
+            f"PR must change exactly one file; found {len(changes)}: "
+            f"{[p for _, p in changes]}",
+        )
         return
     status, path = changes[0]
     if status != "A":
-        rep.block("B-DIFF-SHAPE", f"the one change must be an addition; got status '{status}'")
+        rep.block(
+            "B-DIFF-SHAPE", f"the one change must be an addition; got status '{status}'"
+        )
         return
     m = PR_PATH_RE.match(path)
     if not m:
-        rep.block("B-DIFF-SHAPE",
-                  f"added file must be library/<series>/<slug>.html; got '{path}'")
+        rep.block(
+            "B-DIFF-SHAPE",
+            f"added file must be library/<series>/<slug>.html; got '{path}'",
+        )
         return
     series_id = m.group(1)
     cfg_repo = getattr(args, "main", None) or args.repo
@@ -776,26 +921,40 @@ def run_pr_mode(args, rep):
     if args.pr_body:
         pr_body_meta = parse_pr_body(args.pr_body)
         if pr_body_meta is None:
-            rep.block("B-META-MATCH", "PR body lacks a parseable ```nb-meta``` yaml block")
+            rep.block(
+                "B-META-MATCH", "PR body lacks a parseable ```nb-meta``` yaml block"
+            )
     fs_path = os.path.join(args.repo, path)
-    check_edition(fs_path, series_id, cfg_repo, args.library, rep,
-                  pr_body_meta=pr_body_meta,
-                  today=args.today and _dt.date.fromisoformat(args.today))
+    check_edition(
+        fs_path,
+        series_id,
+        repo=cfg_repo,
+        library_dir=args.library,
+        rep=rep,
+        pr_body_meta=pr_body_meta,
+        today=args.today and _dt.date.fromisoformat(args.today),
+    )
 
 
 # --------------------------------------------------------------------------- #
 # Output / CLI
 # --------------------------------------------------------------------------- #
 
+
 def emit(rep, as_json):
     blocks, warns = rep.blocks, rep.warns
     if as_json:
-        print(json.dumps({
-            "block_count": len(blocks),
-            "warn_count": len(warns),
-            "findings": [f.as_dict() for f in rep.findings],
-            "notes": rep.notes,
-        }, indent=2))
+        print(
+            json.dumps(
+                {
+                    "block_count": len(blocks),
+                    "warn_count": len(warns),
+                    "findings": [f.as_dict() for f in rep.findings],
+                    "notes": rep.notes,
+                },
+                indent=2,
+            )
+        )
     else:
         print(f"BLOCK: {len(blocks)}")
         for f in blocks:
@@ -817,11 +976,15 @@ def main(argv=None):
     p = argparse.ArgumentParser(description="The Nightly Build proof")
     p.add_argument("file", nargs="?", help="edition HTML file (local mode)")
     p.add_argument("--series", help="series id (local mode)")
-    p.add_argument("--repo", default=".",
-                   help="repo root (local mode: main checkout; PR mode: PR checkout)")
-    p.add_argument("--main",
-                   help="main checkout for configs/registry (PR mode; "
-                        "defaults to --repo)")
+    p.add_argument(
+        "--repo",
+        default=".",
+        help="repo root (local mode: main checkout; PR mode: PR checkout)",
+    )
+    p.add_argument(
+        "--main",
+        help="main checkout for configs/registry (PR mode; defaults to --repo)",
+    )
     p.add_argument("--library", help="published library state (branch checkout dir)")
     p.add_argument("--pr", action="store_true", help="CI mode")
     p.add_argument("--base", help="PR base ref (pr mode)")
@@ -843,8 +1006,14 @@ def main(argv=None):
             p.error("local mode requires FILE and --series")
         series, _ = load_series(args.repo, args.series)
         rep.strict = bool(series and series.get("strict"))
-        check_edition(args.file, args.series, args.repo, args.library, rep,
-                      today=args.today and _dt.date.fromisoformat(args.today))
+        check_edition(
+            args.file,
+            args.series,
+            repo=args.repo,
+            library_dir=args.library,
+            rep=rep,
+            today=args.today and _dt.date.fromisoformat(args.today),
+        )
 
     # strict promotion for pr mode (series known only after path parse)
     return emit(rep, args.json)

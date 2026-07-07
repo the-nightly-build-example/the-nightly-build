@@ -1,5 +1,17 @@
 #!/usr/bin/env python3
-"""Small CI helpers kept separate from check.py's core logic."""
+# /// script
+# requires-python = ">=3.9"
+# dependencies = ["pyyaml"]
+# ///
+"""Answer press-configuration questions for the CI workflows.
+
+check.yml needs facts that live in series.yaml but should not be parsed in
+shell, currently just whether the validated series has autopublish
+enabled. Keeping this outside check.py keeps the proof free of workflow
+concerns and keeps the YAML parsing in one reviewed file instead of inline
+python inside workflow definitions.
+"""
+
 import argparse
 import re
 import subprocess
@@ -10,9 +22,16 @@ PR_PATH_RE = re.compile(r"^library/([a-z0-9-]{1,32})/[a-z0-9-]{1,64}\.html$")
 
 
 def autopublish(repo, diff_base):
-    out = subprocess.run(
-        ["git", "diff", "--name-only", "--no-renames", f"{diff_base}...HEAD"],
-        capture_output=True, text=True, check=True).stdout.strip().splitlines()
+    out = (
+        subprocess.run(
+            ["git", "diff", "--name-only", "--no-renames", f"{diff_base}...HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        .stdout.strip()
+        .splitlines()
+    )
     if len(out) != 1:
         print("false")
         return
@@ -24,7 +43,7 @@ def autopublish(repo, diff_base):
         with open(f"{repo}/press/series/{m.group(1)}/series.yaml") as fh:
             cfg = yaml.safe_load(fh)
         print("true" if cfg.get("autopublish", False) else "false")
-    except Exception:
+    except (OSError, yaml.YAMLError, AttributeError):
         print("false")
 
 

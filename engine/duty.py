@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
-"""
-The Nightly Build — engine/duty.py
+# /// script
+# requires-python = ">=3.9"
+# dependencies = ["pyyaml"]
+# ///
+"""Compute tonight's work list deterministically from config and library state.
 
-Tonight's work list, computed deterministically. The correspondent runs this
-before researching anything (PROTOCOL step 3); the morning-mail gate runs it
-to tell an expected quiet night from a missed one. One source of truth for
-cadence, pause, completion, and commission-queue state — so no agent ever
-does calendar math in its head.
+The correspondent runs this before researching anything, and the
+morning-mail gate runs it to tell an expected quiet night from a missed
+one. It is the single source of truth for cadence, pauses, completion,
+commission queues, and rerun safety, so no agent ever does calendar math
+on its own.
 
 Run: python3 engine/duty.py --repo . --library <library-checkout> [--date YYYY-MM-DD]
 Prints JSON: {"date", "weekday", "due": [...], "idle": [...]}. Always exits 0.
 """
+
+from __future__ import annotations
 
 import argparse
 import datetime as _dt
@@ -21,13 +26,12 @@ import sys
 
 try:
     import yaml
-except ImportError:  # pragma: no cover
+except ImportError:
     sys.stderr.write("duty.py requires PyYAML (pip install pyyaml)\n")
     sys.exit(2)
 
 DAY_NAMES = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
-META_RE = re.compile(
-    r'<script[^>]*\bid="nb-meta"[^>]*>(.*?)</script>', re.S)
+META_RE = re.compile(r'<script[^>]*\bid="nb-meta"[^>]*>(.*?)</script>', re.S)
 
 
 def cadence_includes(cadence, day: str) -> bool:
@@ -43,15 +47,22 @@ def cadence_includes(cadence, day: str) -> bool:
 
 
 def series_dir_in_library(library: str, series_id: str) -> str | None:
-    for base in (os.path.join(library, "library", series_id),
-                 os.path.join(library, series_id)):
+    for base in (
+        os.path.join(library, "library", series_id),
+        os.path.join(library, series_id),
+    ):
         if os.path.isdir(base):
             return base
     return None
 
 
-def published_state(library: str, series_id: str) -> tuple[set, set]:
-    """(published slugs, nb-meta dates of published editions) for a series."""
+def published_state(library: str, series_id: str) -> tuple[set[str], set[str]]:
+    """Return (published slugs, published nb-meta dates) for one series.
+
+    Slugs drive dedupe and completion checks. The nb-meta dates exist
+    for rerun safety: an edition published tonight idles its series even
+    when its slug is topical rather than dated.
+    """
     base = series_dir_in_library(library, series_id)
     if base is None:
         return set(), set()
@@ -60,8 +71,7 @@ def published_state(library: str, series_id: str) -> tuple[set, set]:
         if not fname.endswith(".html"):
             continue
         slugs.add(fname[:-5])
-        with open(os.path.join(base, fname), encoding="utf-8",
-                  errors="replace") as fh:
+        with open(os.path.join(base, fname), encoding="utf-8", errors="replace") as fh:
             m = META_RE.search(fh.read())
         if m:
             try:
@@ -73,9 +83,39 @@ def published_state(library: str, series_id: str) -> tuple[set, set]:
     return slugs, dates
 
 
-def series_duty(sid: str, cfg: dict, pub: set, pub_dates: set,
-                date: _dt.date, day: str) -> tuple[bool, dict]:
-    """(is_due, entry) for one series on one night."""
+def config_items(cfg: dict[str, object]) -> list[dict[str, object]]:
+    """Return the series' items list, defensively narrowed from parsed YAML.
+
+    series.yaml is user-edited, so items may be missing or malformed.
+    Non-list values become an empty list and non-dict entries are
+    dropped, with keys normalized to strings.
+    """
+    raw = cfg.get("items")
+    if not isinstance(raw, list):
+        return []
+    return [{str(k): v for k, v in it.items()} for it in raw if isinstance(it, dict)]
+
+
+def series_duty(
+    sid: str,
+    cfg: dict[str, object],
+    *,
+    pub: set[str],
+    pub_dates: set[str],
+    date: _dt.date,
+    day: str,
+) -> tuple[bool, dict[str, object]]:
+    """Decide whether one series publishes tonight, and why.
+
+    Returns (is_due, entry). The entry always names the series and mode,
+    then either a reason for sitting out (paused, off-cadence, already
+    published tonight, complete) or what to publish: a slug for sequence
+    and rolling, candidates for collection (all remaining items under
+    selection: random, otherwise just the next one), and commissions for
+    open desks with queued items. Gates apply in order: paused, then
+    cadence, then already-published-tonight, so a paused series never
+    reports a cadence excuse.
+    """
     mode = cfg.get("mode")
     entry = {"series": sid, "mode": mode}
 
@@ -87,72 +127,96 @@ def series_duty(sid: str, cfg: dict, pub: set, pub_dates: set,
     if date.isoformat() in pub_dates:
         return False, {**entry, "reason": "already published tonight"}
 
-    items = cfg.get("items") or []
+    items = config_items(cfg)
     unpublished = [it["slug"] for it in items if it.get("slug") not in pub]
 
     if mode == "rolling":
         slug = date.isoformat()
         if slug in pub:
             return False, {**entry, "reason": "already published tonight"}
-        return True, {**entry, "slug": slug,
-                      "reason": "tonight's date is unpublished"}
+        return True, {**entry, "slug": slug, "reason": "tonight's date is unpublished"}
     if mode == "sequence":
         if not unpublished:
             return False, {**entry, "reason": "complete"}
         nxt = next(it["slug"] for it in items if it.get("slug") not in pub)
-        order = next(i for i, it in enumerate(items, 1)
-                     if it.get("slug") == nxt)
-        return True, {**entry, "slug": nxt, "order": order,
-                      "reason": f"{len(pub)} of {len(items)} published; "
-                                f"'{nxt}' is next"}
+        order = next(i for i, it in enumerate(items, 1) if it.get("slug") == nxt)
+        return True, {
+            **entry,
+            "slug": nxt,
+            "order": order,
+            "reason": f"{len(pub)} of {len(items)} published; '{nxt}' is next",
+        }
     if mode == "collection":
         if not unpublished:
             return False, {**entry, "reason": "complete"}
         selection = cfg.get("selection", "in-order")
         candidates = unpublished if selection == "random" else unpublished[:1]
-        return True, {**entry, "candidates": candidates,
-                      "selection": selection,
-                      "reason": f"{len(unpublished)} of {len(items)} items "
-                                f"unpublished"}
+        return True, {
+            **entry,
+            "candidates": candidates,
+            "selection": selection,
+            "reason": f"{len(unpublished)} of {len(items)} items unpublished",
+        }
     if mode == "open":
         if unpublished:
-            return True, {**entry, "commissions": unpublished,
-                          "reason": "commissioned items pending — publish "
-                                    "one of these before a freestyle pick"}
-        return True, {**entry, "commissions": [],
-                      "reason": "open desk — invent tonight's topic within "
-                                "the beat; do not repeat a published slug"}
+            return True, {
+                **entry,
+                "commissions": unpublished,
+                "reason": "commissioned items pending — publish "
+                "one of these before a freestyle pick",
+            }
+        return True, {
+            **entry,
+            "commissions": [],
+            "reason": "open desk — invent tonight's topic within "
+            "the beat; do not repeat a published slug",
+        }
     return False, {**entry, "reason": f"unknown mode {mode!r}"}
 
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description="Tonight's deterministic work list")
     p.add_argument("--repo", default=".", help="repo root (main checkout)")
-    p.add_argument("--library", required=True,
-                   help="library-branch checkout (published state)")
+    p.add_argument(
+        "--library", required=True, help="library-branch checkout (published state)"
+    )
     p.add_argument("--date", default=None, help="UTC date, default today")
     args = p.parse_args(argv)
 
-    date = (_dt.date.fromisoformat(args.date) if args.date
-            else _dt.datetime.now(_dt.timezone.utc).date())
+    date = (
+        _dt.date.fromisoformat(args.date)
+        if args.date
+        else _dt.datetime.now(_dt.timezone.utc).date()
+    )
     day = DAY_NAMES[date.weekday()]
 
     due, idle = [], []
     root = os.path.join(args.repo, "press", "series")
-    sids = sorted(d for d in os.listdir(root)
-                  if not d.startswith("_")
-                  and os.path.isfile(os.path.join(root, d, "series.yaml"))
-                  ) if os.path.isdir(root) else []
+    sids = (
+        sorted(
+            d
+            for d in os.listdir(root)
+            if not d.startswith("_")
+            and os.path.isfile(os.path.join(root, d, "series.yaml"))
+        )
+        if os.path.isdir(root)
+        else []
+    )
     for sid in sids:
-        with open(os.path.join(root, sid, "series.yaml"),
-                  encoding="utf-8") as fh:
+        with open(os.path.join(root, sid, "series.yaml"), encoding="utf-8") as fh:
             cfg = yaml.safe_load(fh) or {}
         pub, pub_dates = published_state(args.library, sid)
-        is_due, entry = series_duty(sid, cfg, pub, pub_dates, date, day)
+        is_due, entry = series_duty(
+            sid, cfg, pub=pub, pub_dates=pub_dates, date=date, day=day
+        )
         (due if is_due else idle).append(entry)
 
-    print(json.dumps({"date": date.isoformat(), "weekday": day,
-                      "due": due, "idle": idle}, indent=2))
+    print(
+        json.dumps(
+            {"date": date.isoformat(), "weekday": day, "due": due, "idle": idle},
+            indent=2,
+        )
+    )
     return 0
 
 
