@@ -17,6 +17,21 @@ forms in prose, and your own templates when you want structure enforced.
 Over weeks the nightly output accumulates into a permanent, searchable
 library that you own and that GitHub serves for free.
 
+## What it looks like
+
+One 800px column, a ruled front-page table, warm light and dark themes, and
+editions labeled by the form the agent chose. Rendered from the example
+configuration; regenerate after look changes.
+
+<p>
+<img src="assets/screenshots/front-light.png" width="49%" alt="The front page in light mode">
+<img src="assets/screenshots/front-dark.png" width="49%" alt="The front page in dark mode">
+</p>
+<p>
+<img src="assets/screenshots/edition-dark.png" width="62%" alt="An edition in dark mode">
+<img src="assets/screenshots/front-phone.png" width="36%" alt="The front page on a phone">
+</p>
+
 ## Quickstart
 
 1. Fork this repository. Keep GitHub's "Copy the main branch only" box
