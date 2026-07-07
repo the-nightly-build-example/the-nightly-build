@@ -3,7 +3,7 @@
 
 The suites never read the repo's shipped configuration because forks
 replace it during setup, and the tests must stay green on any fork.
-test_repo() fabricates a complete press with two fixture series
+Instead test_repo() fabricates a complete press with two fixture series
 (semiconductors, ai-briefs) on top of the real templates and engine
 assets, so what the tests exercise is the shipped machinery.
 """

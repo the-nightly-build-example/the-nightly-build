@@ -105,7 +105,17 @@ def series_duty(
     date: _dt.date,
     day: str,
 ) -> tuple[bool, dict[str, object]]:
-    """(is_due, entry) for one series on one night."""
+    """Decide whether one series publishes tonight, and why.
+
+    Returns (is_due, entry). The entry always names the series and mode,
+    then either a reason for sitting out (paused, off-cadence, already
+    published tonight, complete) or what to publish: a slug for sequence
+    and rolling, candidates for collection (all remaining items under
+    selection: random, otherwise just the next one), and commissions for
+    open desks with queued items. Gates apply in order: paused, then
+    cadence, then already-published-tonight, so a paused series never
+    reports a cadence excuse.
+    """
     mode = cfg.get("mode")
     entry = {"series": sid, "mode": mode}
 

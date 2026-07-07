@@ -602,7 +602,7 @@ for template_id, treg in registry.items():
     try:
         json.loads(tpl.meta_raw or "")
         ok_meta = True
-    except Exception:
+    except ValueError:
         ok_meta = False
     ok_scripts = all(
         (a.get("type") or "").strip().lower() == "application/json"

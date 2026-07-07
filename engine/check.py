@@ -125,14 +125,14 @@ class Edition(HTMLParser):
 
     Collects everything the checks need in one HTMLParser walk:
     sections, script tags, sandbox violations, citations, source
-    entries, slides, and word counts. Parsing never raises; malformed
-    input sets parse_ok False and the caller reports a BLOCK.
+    entries, slides, and word counts. html.parser is tolerant by
+    design, so malformed markup degrades into text instead of raising;
+    the structural checks downstream catch what matters.
     """
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.stack = []  # list of dicts per open element
-        self.parse_ok = True
         self.meta_raw = None
         self.chart_raw = []  # raw JSON strings of data-nb-chart blocks
         self.script_tags = []  # (attrs_dict) for every <script>
@@ -271,9 +271,6 @@ class Edition(HTMLParser):
         elif self._suppress_text_depth == 0:
             self._text_parts.append(data)
 
-    def error(self, message):
-        self.parse_ok = False
-
     @property
     def word_count(self):
         text = " ".join(self._text_parts)
@@ -346,6 +343,28 @@ def published_slugs(library_dir, series_id):
 # --------------------------------------------------------------------------- #
 
 
+def chart_spec_error(raw):
+    try:
+        spec = json.loads(raw)
+    except ValueError as e:
+        return str(e)
+    if not isinstance(spec, dict):
+        return "spec must be a JSON object"
+    if spec.get("type") not in ("line", "bar", "scatter"):
+        return "bad chart type"
+    if not isinstance(spec.get("labels"), list) or not spec["labels"]:
+        return "labels required"
+    series = spec.get("series")
+    if not isinstance(series, list) or not series:
+        return "series required"
+    for s in series:
+        if not isinstance(s, dict) or not isinstance(s.get("name"), str):
+            return "series name required"
+        if not isinstance(s.get("values"), list):
+            return "series values required"
+    return None
+
+
 def validate_meta_fields(meta, rep):
     def need(field, typ, *, pattern=None, enum=None):
         v = meta.get(field)
@@ -407,7 +426,7 @@ def check_edition(
         )
     try:
         registry = load_registry(repo)
-    except Exception as e:
+    except (OSError, yaml.YAMLError, TypeError, ValueError) as e:
         rep.block("B-SERIES", f"templates/registry.yaml unreadable: {e}")
         return None
 
@@ -464,12 +483,8 @@ def check_edition(
         raw = fh.read()
 
     ed = Edition()
-    try:
-        ed.feed(raw)
-        ed.close()
-    except Exception as e:
-        rep.block("B-HTML", f"HTML failed to parse: {e}")
-        return None
+    ed.feed(raw)
+    ed.close()
 
     # --- B-META-PARSE ---
     if not ed.meta_raw:
@@ -481,7 +496,7 @@ def check_edition(
         meta = json.loads(ed.meta_raw)
         if not isinstance(meta, dict):
             raise ValueError("nb-meta must be a JSON object")
-    except Exception as e:
+    except ValueError as e:
         rep.block("B-META-PARSE", f"nb-meta JSON invalid: {e}")
         return None
     validate_meta_fields(meta, rep)
@@ -678,21 +693,9 @@ def check_edition(
         if not url.startswith(ALLOWED_EXTERNAL_PREFIXES) and "://" in url:
             rep.block("B-SANDBOX", f"external {kind} reference not on allowlist: {url}")
     for i, raw_chart in enumerate(ed.chart_raw, 1):
-        try:
-            spec = json.loads(raw_chart)
-            assert isinstance(spec, dict)
-            assert spec.get("type") in ("line", "bar", "scatter"), "bad chart type"
-            assert isinstance(spec.get("labels"), list) and spec["labels"], (
-                "labels required"
-            )
-            assert isinstance(spec.get("series"), list) and spec["series"], (
-                "series required"
-            )
-            for s in spec["series"]:
-                assert isinstance(s.get("name"), str), "series name required"
-                assert isinstance(s.get("values"), list), "series values required"
-        except Exception as e:
-            rep.block("B-SANDBOX", f"data-nb-chart block #{i} invalid: {e}")
+        err = chart_spec_error(raw_chart)
+        if err is not None:
+            rep.block("B-SANDBOX", f"data-nb-chart block #{i} invalid: {err}")
 
     # --- B-SOURCES-FORM ---
     if not ed.sources:
@@ -857,7 +860,7 @@ def parse_pr_body(path):
             k: (v.isoformat() if isinstance(v, _dt.date) else v)
             for k, v in data.items()
         }
-    except Exception:
+    except yaml.YAMLError:
         return None
 
 

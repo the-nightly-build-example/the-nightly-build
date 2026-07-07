@@ -6,8 +6,8 @@
 """Validate the press configuration before anything schedules or publishes.
 
 Covers press/site.yaml, the merged template registry, and every
-series/<id>/series.yaml. setup.sh and the librarian run it after each
-configuration change; it applies the same constraints the proof enforces
+series/<id>/series.yaml. Both setup.sh and the librarian run it after
+each configuration change; it applies the same constraints the proof enforces
 at publish time, so mistakes surface while a human is watching instead of
 during an unattended nightly run.
 

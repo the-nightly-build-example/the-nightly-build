@@ -465,7 +465,7 @@ def night_body(eds, series_cfgs, *, depth, date):
     return body + f'<div class="nb-grid">{cells}</div>'
 
 
-def render_newsstand(site, catalog, *, series_cfgs, editions, now):
+def render_newsstand(site, catalog, *, series_cfgs, editions):
     if not editions:
         body = (
             '<div class="nb-empty" style="margin-top:26px">'
@@ -1027,9 +1027,7 @@ def build(repo, library_root, *, out, preview_root=None, base_url="", now=None):
     write(os.path.join(out, "catalog.json"), json.dumps(catalog, indent=2) + "\n")
     write(
         os.path.join(out, "index.html"),
-        render_newsstand(
-            site, catalog, series_cfgs=series_cfgs, editions=editions, now=now
-        ),
+        render_newsstand(site, catalog, series_cfgs=series_cfgs, editions=editions),
     )
     write(
         os.path.join(out, "builds", "index.html"),
