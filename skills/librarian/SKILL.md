@@ -201,9 +201,13 @@ edition). Re-validate after every change.
   incl. `sources`, optional `flex_sections: [min, max]` for an agent-named
   middle, cite_rule, modes) and a `press/templates/<id>.html` scaffold (crib
   a shipped template's head and chrome; keep the asset links and sandbox
-  rules). Omit `flex_sections` for a fully fixed outline — the
-  build-your-own walkthrough in `docs/customization.md` rebuilds the classic
-  lesson template this way. Validate, then press check before scheduling.
+  rules). Omit `flex_sections` for a fully fixed outline. Two optional fields
+  declare requirements the engine reads from the entry (never from a template
+  name): `cite_exempt: [names]` for sections that carry no citations (on top
+  of the always-exempt `sources`) and `require_why: true` to require a
+  `data-nb-why` line on each item. The build-your-own walkthrough in
+  `docs/customization.md` rebuilds the classic lesson template this way.
+  Validate, then press check before scheduling.
 - *"Give my paper its own furniture"* — add component classes to the press
   theme CSS (it restyles the whole library on every publish) and instruct
   the desks to use them in `prompt.md`; see `docs/customization.md`.
