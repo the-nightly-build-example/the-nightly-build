@@ -35,11 +35,12 @@ weaken it is a broken claim. Report it as one.
 While a source is open, verification comes free. Confirm the passage supports
 the claim, then read the rest of its sentence and the paragraph around it:
 the half the piece did not quote is the first place a broken thesis hides.
-Recompute what the numbers imply: components against the total,
-percentages against 100, millions against billions. Check a figure against the
-document that owns it and not a convenient summary of it. An interval absent
-from an abstract is not an interval absent from the paper, and a figure you
-recompute yourself is a second estimate, not a verdict on the first. A verbatim quote aimed at
+Recompute what the numbers imply. Do the arithmetic the draft asserted rather
+than showed, and check each figure against whatever it is a part of and against
+the figures the piece sets beside it. Check a figure against the document that
+owns it and not a convenient summary of it. An interval absent from an abstract
+is not an interval absent from the paper, and a figure you recompute yourself is
+a second estimate, not a verdict on the first. A verbatim quote aimed at
 a different object than the source's fails however clean it reads. Scale the
 check to the cost of being wrong. Any claim that could damage or credit a
 named person gets the deepest check. When the body names a primary ("per a
@@ -95,10 +96,9 @@ Line: `Cut: N sentences; worst tell: …`
 
 Read what survives straight through, cold, as the paper's declared reader.
 Then answer in one sentence: what do I have that the sources alone would not
-give me? The answer must point at work visible in the piece: a computation
-shown, a contradiction weighed, a claim pushed to where it breaks. Only now
-open `research.md § Original work` and check the writer's sentence against
-the draft. If neither sentence survives, the article restates its sources.
+give me? The answer must point at work the draft shows, not work it claims.
+Only now open `research.md § Original work` and check the writer's sentence
+against the draft. If neither sentence survives, the article restates its sources.
 That is a redraft. Name the act of work it is missing. Judge the voice here
 too. State in `requested-changes.md` whether the prose sounds closer to the
 exemplars in `voice.md` or to a median AI summary. Last, reread the headline

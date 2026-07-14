@@ -44,16 +44,16 @@ The prose floor belongs to the writer and editor.
    and moving it to a press-release wire does not make it a second voice. A
    journal's news desk writing up a paper the journal published IS a secondary:
    different author, no stake, whatever the domain says. A trade group's white
-   paper on the rule it is fighting is a party's filing, not a read of one — and
-   it is a primary, because the group owns the claims in it. Nothing carries a
+   paper on the rule it is fighting is a party's filing, not a read of one, and
+   it is a primary because the group owns the claims in it. Nothing carries a
    kind by its URL, which is why the reason is the entry. The engine cannot see
    any of this; it counts the labels. Your call becomes `data-nb-kind` in the
    markup and a series may hold the piece to a composition (`sources_by_kind`,
    `per_item_sources`), so a wrong call is a wrong article, not a mislabel.
-5. Read for what breaks the piece as well as what feeds it. A source that
-   undercuts the commission's angle — a discontinued metric, a retracted
-   figure, a quote whose context points elsewhere — is the log's most valuable
-   line. Record it under Contradictions, especially when it is inconvenient.
+5. Read for what breaks the piece as well as what feeds it. The source that
+   undercuts the commission's angle is the log's most valuable line, and
+   finding it is the part of the job nobody else can do for you. Record it
+   under Contradictions, especially when it is inconvenient.
 6. Meet or exceed the series' source floor, and its composition if it sets one.
 
 ## The log
