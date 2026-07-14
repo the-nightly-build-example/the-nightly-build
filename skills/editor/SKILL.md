@@ -47,6 +47,17 @@ Reuters report"), cite that primary. Flag any citation past the series'
 declared sources in `requested-changes.md` with the reason the piece needs
 it. A roster ignored wholesale is a finding.
 
+While the sources are open, audit what each one is labeled. Every entry declares
+a kind (`data-nb-kind`), and the proof can only count the labels: it cannot see
+that a vendor's blog is tagged `primary`, or that the "independent" read of a
+paper is the lab's own announcement of it. Verify the kinds, never trust them.
+Open each source and ask who owns the claim. A primary owns it. A secondary
+reports on a primary from outside it, by someone with no stake in it — a
+different author, which is not the same as a different website. A mislabeled
+kind is a broken claim about the sourcing, so report it as one, say whether the
+piece is short the source it pretended to have, and record in your notes that
+you checked.
+
 A miscited claim gets the right source if at hand. An unsupported claim
 gets cut. A load-bearing claim that breaks, or that outruns the log, is a
 redraft. Name what needs finding, so the researcher finds it instead of the

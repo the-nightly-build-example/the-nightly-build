@@ -1317,6 +1317,290 @@ for name, cond in [
 ]:
     check(name, cond)
 
+print("== source kinds (B-SOURCE-KIND: composition, not count) ==")
+# min_sources counts and cannot see composition: a brief whose every item came
+# off one arXiv listing clears any floor. A series declares the mix it wants
+# instead. Whether a declared kind is honest is the editor's read, not a count.
+
+ARXIV = "https://arxiv.org/abs/2601.00001"
+PER_ITEM_BRIEFS = patched_repo(
+    "per_item_sources:\n  primary: [1, 1]\n  secondary: [1, 2]\n", series="ai-briefs"
+)
+BY_KIND_SEMIS = patched_repo(
+    "sources_by_kind:\n  primary: [4, null]\n  secondary: [2, null]\n"
+)
+
+
+def kinded_brief(items):
+    """A brief whose items cite the (href, kind) sources named, in first-cite order."""
+    numbered = {}
+    for item in items:
+        for href, kind in item:
+            numbered.setdefault(href, (len(numbered) + 1, kind))
+    body = "".join(
+        f'<div data-nb-item><span class="tag">topic{i}</span>'
+        f"<h4>Development number {i} happened today"
+        + "".join(
+            f'<sup class="nb-cite"><a href="#s{numbered[href][0]}">'
+            f"{numbered[href][0]}</a></sup>"
+            for href, _ in item
+        )
+        + "</h4><p>What happened, and the immediate context around it.</p></div>"
+        for i, item in enumerate(items, 1)
+    )
+    src = "".join(
+        f'<li id="s{n}"><a data-nb-source data-nb-kind="{kind}" href="{href}">src</a></li>'
+        for href, (n, kind) in sorted(numbered.items(), key=lambda kv: kv[1][0])
+    )
+    meta = f"""{{
+  "protocol": "1.0", "series": "ai-briefs", "slug": "{TODAY}",
+  "template": "brief", "title": "Daily brief for {TODAY}",
+  "mode": "rolling", "order": null, "date": "{TODAY}", "tags": [],
+  "sources": {len(numbered)}, "words": 300, "reading_minutes": 5,
+  "dek": "Five items, each cited to the document that owns it.",
+  "harness": "test-fixture", "model": "claude-fable-5"
+}}"""
+    return f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Brief {TODAY}</title>
+<script type="application/json" id="nb-meta">
+{meta}
+</script>
+</head><body class="nb-article">
+<section data-nb-section="items">{body}</section>
+<section data-nb-section="sources"><h2>Sources</h2><ol>{src}</ol></section>
+</body></html>"""
+
+
+def brief_with(first_item):
+    """The conforming brief, with its first item's sources swapped out."""
+    return kinded_brief(
+        [
+            first_item,
+            [
+                ("https://www.sec.gov/filings/x", "primary"),
+                ("https://ft.com/b", "secondary"),
+            ],
+            [
+                ("https://curia.europa.eu/r", "primary"),
+                ("https://apnews.com/c", "secondary"),
+            ],
+            [
+                ("https://www.federalregister.gov/d", "primary"),
+                ("https://wsj.com/e", "secondary"),
+            ],
+        ]
+    )
+
+
+CONFORMING_ITEM = [(ARXIV, "primary"), ("https://reuters.com/a", "secondary")]
+expect(
+    "a brief whose every item pairs its primary with an independent read passes",
+    run_local(
+        brief_with(CONFORMING_ITEM), "ai-briefs", slug=TODAY, repo=PER_ITEM_BRIEFS
+    ),
+    blocks=0,
+)
+expect(
+    "an item with no primary blocks: nothing cited owns the claim",
+    run_local(
+        brief_with(
+            [("https://reuters.com/a", "secondary"), ("https://ft.com/z", "secondary")]
+        ),
+        "ai-briefs",
+        slug=TODAY,
+        repo=PER_ITEM_BRIEFS,
+    ),
+    must_have=["B-SOURCE-KIND"],
+    blocks=True,
+)
+expect(
+    "an item over the secondary ceiling blocks",
+    run_local(
+        brief_with(
+            [
+                *CONFORMING_ITEM,
+                ("https://theverge.com/a", "secondary"),
+                ("https://wired.com/a", "secondary"),
+            ]
+        ),
+        "ai-briefs",
+        slug=TODAY,
+        repo=PER_ITEM_BRIEFS,
+    ),
+    must_have=["B-SOURCE-KIND"],
+    blocks=True,
+)
+expect(
+    "an item citing its one primary twice still cites one primary",
+    run_local(
+        brief_with([(ARXIV, "primary"), (ARXIV, "primary"), *CONFORMING_ITEM[1:]]),
+        "ai-briefs",
+        slug=TODAY,
+        repo=PER_ITEM_BRIEFS,
+    ),
+    blocks=0,
+)
+expect(
+    "a kind the protocol does not define blocks, composition declared or not",
+    run_local(
+        brief_with(CONFORMING_ITEM).replace(
+            'data-nb-kind="secondary"', 'data-nb-kind="tertiary"', 1
+        ),
+        "ai-briefs",
+        slug=TODAY,
+    ),
+    must_have=["B-SOURCE-KIND"],
+    blocks=True,
+)
+expect(
+    "a source that declares no kind blocks where the series constrains the mix",
+    run_local(
+        brief_with(CONFORMING_ITEM).replace(' data-nb-kind="primary"', "", 1),
+        "ai-briefs",
+        slug=TODAY,
+        repo=PER_ITEM_BRIEFS,
+    ),
+    must_have=["B-SOURCE-KIND"],
+    blocks=True,
+)
+
+ALL_PRIMARY = VALID.replace(
+    "<a data-nb-source", '<a data-nb-source data-nb-kind="primary"'
+)
+MIXED = ALL_PRIMARY.replace(
+    'data-nb-kind="primary" href="https://example.org/src7"',
+    'data-nb-kind="secondary" href="https://example.org/src7"',
+).replace(
+    'data-nb-kind="primary" href="https://example.org/src8"',
+    'data-nb-kind="secondary" href="https://example.org/src8"',
+)
+expect(
+    "sources_by_kind: an article sourced only to the documents it reports on blocks",
+    run_local(ALL_PRIMARY, "semiconductors", repo=BY_KIND_SEMIS),
+    must_have=["B-SOURCE-KIND"],
+    blocks=True,
+)
+expect(
+    "sources_by_kind: a conforming mix passes, and a null ceiling means no ceiling",
+    run_local(MIXED, "semiconductors", repo=BY_KIND_SEMIS),
+    blocks=0,
+)
+expect(
+    "sources_by_kind: a ceiling is enforced too",
+    run_local(
+        MIXED,
+        "semiconductors",
+        repo=patched_repo("sources_by_kind:\n  secondary: [0, 1]\n"),
+    ),
+    must_have=["B-SOURCE-KIND"],
+    blocks=True,
+)
+expect(
+    "sources_by_kind: a source with no kind escapes the mix, so it blocks",
+    run_local(
+        MIXED.replace(
+            'data-nb-kind="primary" href="https://example.org/src4"',
+            'href="https://example.org/src4"',
+        ),
+        "semiconductors",
+        repo=BY_KIND_SEMIS,
+    ),
+    must_have=["B-SOURCE-KIND"],
+    blocks=True,
+)
+expect(
+    "a series that constrains nothing has nothing to say about an unkinded source",
+    run_local(VALID, "semiconductors"),
+    must_not=["B-SOURCE-KIND"],
+    blocks=0,
+)
+# A floor met by an entry no line cites is not met: the mix is what the article
+# rests on, not what its list advertises.
+LISTED_NOT_CITED = MIXED.replace(
+    "</ol>",
+    '<li id="s9"><a data-nb-source data-nb-kind="secondary" '
+    'href="https://apnews.com/x">src</a></li></ol>',
+    1,
+)
+expect(
+    "sources_by_kind counts the sources the article cites, not the ones it lists",
+    run_local(
+        LISTED_NOT_CITED,
+        "semiconductors",
+        repo=patched_repo("sources_by_kind:\n  secondary: [3, null]\n"),
+    ),
+    must_have=["B-SOURCE-KIND"],
+    blocks=True,
+)
+
+expect(
+    "a band the config botched is a finding, not a traceback",
+    run_local(
+        MIXED, "semiconductors", repo=patched_repo("sources_by_kind:\n  primary: 4\n")
+    ),
+    must_have=["B-SERIES"],
+)
+
+
+def open_briefs_repo(templates, patch=""):
+    """The rolling brief series reopened as an open section with a template choice."""
+    tmp = clone_testrepo("press", "templates", "engine")
+    y = pathlib.Path(tmp) / "press" / "series" / "ai-briefs" / "series.yaml"
+    y.write_text(
+        f"name: AI & Semiconductors\nmode: open\ntemplates: [{', '.join(templates)}]\n"
+        f"prompt: prompt.md\nautopublish: true\nstrict: false\nmin_sources: 5\n{patch}"
+    )
+    return tmp
+
+
+def unkinded_template_repo():
+    """A series constraining the mix, on a template whose sources carry no kind."""
+    tmp = patched_repo("sources_by_kind:\n  primary: [4, null]\n")
+    skel = pathlib.Path(tmp) / "templates" / "article" / "skeleton.html"
+    skel.write_text(skel.read_text().replace(' data-nb-kind="primary"', ""))
+    return tmp
+
+
+PER_ITEM_PATCH = "per_item_sources:\n  primary: [1, 1]\n  secondary: [1, 2]\n"
+for name, cond in [
+    (
+        "per_item_sources validates on a per-item template",
+        vc_rc(PER_ITEM_BRIEFS) == 0,
+    ),
+    (
+        "per_item_sources on a per-section template is a config error",
+        vc_rc(patched_repo("per_item_sources:\n  primary: [1, 1]\n")) == 1,
+    ),
+    (
+        "per_item_sources on an open section whose every template cites per item "
+        "validates",
+        vc_rc(open_briefs_repo(["brief"], PER_ITEM_PATCH)) == 0,
+    ),
+    (
+        "per_item_sources a template choice could dodge is a config error",
+        vc_rc(open_briefs_repo(["brief", "article"], PER_ITEM_PATCH)) == 1,
+    ),
+    ("sources_by_kind with a null ceiling validates", vc_rc(BY_KIND_SEMIS) == 0),
+    (
+        "a kind outside primary/secondary is rejected",
+        vc_rc(patched_repo("sources_by_kind:\n  tertiary: [1, 2]\n")) == 1,
+    ),
+    (
+        "a band whose high is below its low is rejected",
+        vc_rc(patched_repo("sources_by_kind:\n  primary: [4, 2]\n")) == 1,
+    ),
+    (
+        "a scalar where a band belongs is rejected",
+        vc_rc(patched_repo("sources_by_kind:\n  primary: 4\n")) == 1,
+    ),
+    (
+        "a composition on a template whose skeleton omits data-nb-kind is a "
+        "config error",
+        vc_rc(unkinded_template_repo()) == 1,
+    ),
+]:
+    check(name, cond)
+
 print("== banned terms (spec list, press overrides) ==")
 
 
