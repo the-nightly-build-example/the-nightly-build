@@ -64,7 +64,16 @@ at the top. Send it back.
 
 `PROTOCOL.md` step 8 owns the shape: one file, the title, the body assembled
 from your artifacts, and the CI-parity preflight you must run before any PR
-exists. Follow it exactly. Open the PR only on `BLOCK: 0`.
+exists. Build the body; do not compose it by hand:
+
+```sh
+uv run engine/build_record.py library/<series>/<slug>.html \
+  --work .nb-work/<series>/<slug> --out .nb-work/<series>/<slug>/pr-body.md \
+  --comment-out .nb-work/<series>/<slug>/record-comment.md
+```
+
+Open with `pr-body.md`. If the builder leaves `record-comment.md`, post it once
+as a follow-up comment. Open the PR only on `BLOCK: 0`.
 
 Report back to the correspondent with the PR number and the proof's WARN
 summary. It will watch CI and hand you anything red; route that finding back
