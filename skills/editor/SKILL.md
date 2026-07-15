@@ -82,8 +82,10 @@ Signposts go with them: any sentence pointing where the piece has been or is
 headed. So does language leaked from the briefing stack: skeleton
 placeholders, prompt phrases, taxonomy labels.
 
-Then trim inside the survivors. Cut from the middles, never the end, and stop
-before a reader could point to a scar.
+Then trim inside the survivors. Cut from the middles, never the end. Read each
+remaining sentence against the Prose standard in `spec/editorial.md`:
+punctuation must serve the thought's pace, not add false weight or hide a
+run-on. Stop before a reader could point to a scar.
 
 Read the paragraph endings in sequence, then read the draft against the library
 checkout. The checkout holds the whole paper, so the comparison does too: this
@@ -97,11 +99,6 @@ fix for a voiced sentence with no cargo is deletion, not flattening. Restore
 the specific word where the draft went generic.
 
 Line: `Cut: N sentences; worst tell: …`
-
-Read the survivors once for cadence. Punctuation is part of the cut: choose the
-mark that gives the sentence its right pace and weight. A semicolon, dash, or
-aside that calls attention to itself rather than the thought goes. The standard
-is the sentence's meaning, not a house count.
 
 ## Third read: the reader
 
@@ -118,11 +115,11 @@ established.
 
 Line: `Reader: this gives me …` (or `nothing beyond the sources; redraft`).
 
-If an exact source visual in `research.md § Figures` would let the reader test
-a load-bearing part of the argument better than prose alone, request it in
-`requested-changes.md`. If the log missed the needed visual, send the researcher
-back for a candidate from the cited primary document. Name the figure and the
-argument it must carry; never request decoration or a publisher image.
+Figures are evidence, never decoration. Request one when an exact source visual
+would let the reader test a load-bearing part of the argument better than prose
+alone. Request its removal when it no longer earns space. If the log missed the
+needed visual, send the researcher back for a candidate from the cited primary
+document. Name the figure and the argument it must carry.
 
 For every included source figure, compare the source, asset, and rendered page.
 It must retain the evidence the argument spends and omit surrounding clutter.
