@@ -65,9 +65,11 @@ discipline, every template:
   each into
   `library/<series>/<slug>/figure-N.<format>` with
   `uv run --group figure-capture engine/capture_figure.py`; use the log's
-  direct-image, PDF-crop, or web-selector route. Add the documented
-  `nb-figure` markup with useful alt text and a caption citation. Skip it when
-  the visual decorates rather than explains. Never use an external image URL.
+  source location and make the first crop yourself. Retain the evidence the
+  argument needs and remove surrounding clutter. Inspect the asset and rendered
+  article before hand-off. Add the documented `nb-figure` markup with useful alt text
+  and a caption citation. Skip it when the visual decorates rather than
+  explains. Never use an external image URL.
 - Fill `nb-meta` with the piece's actual values: real dates, real counts,
   `harness` and `model` from `task.md`, nothing inflated. Write to the path
   the commission names: on a real night, `library/<series>/<slug>.html`.
