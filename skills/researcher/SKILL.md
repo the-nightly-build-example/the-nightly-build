@@ -14,9 +14,9 @@ to where it was read.
 
 ## Scope
 
-Read first: `task.md` (the commission), the series' `series.yaml` (source
-policy, source floor) and its prompt with any tag and item prompts, and
-PROTOCOL steps 4–5 (the source-policy contract). Evidence is your concern.
+Read first: `task.md` (including its resolved source minimum and composition),
+the series' `series.yaml` (source policy) and its prompt with any tag and item
+prompts, and PROTOCOL steps 4–5 (the source-policy contract). Evidence is your concern.
 The prose floor belongs to the writer and editor.
 
 ## Procedure
@@ -54,7 +54,11 @@ The prose floor belongs to the writer and editor.
    undercuts the commission's angle is the log's most valuable line, and
    finding it is the part of the job nobody else can do for you. Record it
    under Contradictions, especially when it is inconvenient.
-6. Meet or exceed the series' source floor, and its composition if it sets one.
+6. Meet or exceed the commission's stated source floor and composition. The
+   focal primary document is evidence, not the whole article: seek independent
+   reporting, criticism, replication, later work, or technical explanation when
+   it changes the reader's interpretation. Do not add a source merely to fill a
+   count, and do not let outside context replace the document that owns a claim.
 
 ## The log
 

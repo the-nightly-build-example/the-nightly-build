@@ -36,6 +36,17 @@ thin brief this pipeline exists to prevent.
 Read `task.md` first. It is the commission, and every role reads it first too.
 Hand roles file paths, never summaries.
 
+Before you write `task.md`, resolve its source policy:
+
+```sh
+uv run engine/source_policy.py --repo . --series <id>
+```
+
+Put the resulting minimum and any kind composition on the commission card.
+Name the focal primary source, then say which independent context would earn a
+place: reporting, criticism, replication, later work, or expert technical
+writing. A source count is a research plan, never a license to pad a bibliography.
+
 ## The chain
 
 Run these in order, each a fresh context loading the named skill:

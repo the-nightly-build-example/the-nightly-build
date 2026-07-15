@@ -1,8 +1,15 @@
-"""The WARN tier: length, cite density, source policy, banned terms, placeholders."""
+"""The WARN tier: length, cite density, source policy, banned terms, placeholders.
+
+These checks deliberately advise rather than block: their role is to expose thin
+or awkward articles to the editor while preserving the hard safety contract in
+the other proof modules. Template defaults live here because they shape quality.
+"""
 
 import re
 
 from nb.article import Article
+
+__all__ = ("caps_runs", "check_warns", "placeholder_entries")
 
 DEFAULT_MIN_SOURCES = {"longread": 8, "shortread": 5}
 DEFAULT_CITE_EXEMPT = ("sources",)  # a template extends this via registry cite_exempt
