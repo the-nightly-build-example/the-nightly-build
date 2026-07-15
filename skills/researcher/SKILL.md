@@ -86,11 +86,10 @@ one unit counts.
 ## Figures
 For every primary document whose visual evidence could carry an argument better
 than prose, name every exact candidate worth considering, or write `None found`.
-There may be more than one. Record each figure number, its source URL and PDF
-page or web location, what the reader can learn from it, and which panels,
-legend, labels, or table columns carry that argument. Do not prescribe crop
+There may be more than one. Record its figure number, source location, what the
+reader can learn, and the visual evidence a crop must preserve. Do not prescribe
 coordinates: the writer makes the first crop and the editor judges it in the
-rendered article. The writer decides which earn space; you make those decisions
+rendered article. The writer decides which earn space; make that decision
 reversible and never substitute a publisher's decorative image.
 
 ## Discarded

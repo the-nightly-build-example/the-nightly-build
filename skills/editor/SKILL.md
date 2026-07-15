@@ -98,20 +98,10 @@ the specific word where the draft went generic.
 
 Line: `Cut: N sentences; worst tell: …`
 
-## Punctuation read
-
-Read the surviving prose once for cadence and emphasis, not for grammar trivia.
-Punctuation changes the reader's pace and the weight of a claim. Replace a
-semicolon that merely gives short parallel clauses false gravity with commas
-after a useful colon, or with pointed sentences. Keep semicolons for genuinely
-balanced independent clauses or complex lists. Treat an em dash as an
-interruption that earns its turn; repeated dashes, parenthetical asides, and
-stacked colons make a piece sound as though it is explaining itself while it
-writes. Read the pressure points aloud: the sentence before a figure, a claim's
-caveat, each section landing, and the dek. Make only surgical punctuation fixes
-that improve meaning, cadence, or emphasis.
-
-Line: `Punctuation: fixed …; held …`
+Read the survivors once for cadence. Punctuation is part of the cut: choose the
+mark that gives the sentence its right pace and weight. A semicolon, dash, or
+aside that calls attention to itself rather than the thought goes. The standard
+is the sentence's meaning, not a house count.
 
 ## Third read: the reader
 
@@ -134,11 +124,9 @@ a load-bearing part of the argument better than prose alone, request it in
 back for a candidate from the cited primary document. Name the figure and the
 argument it must carry; never request decoration or a publisher image.
 
-For every included source figure, open the source page and inspect the local
-asset in the rendered article. A professional crop contains the complete panel,
-axis, legend, labels, or table columns the argument depends on, while excluding
-page headers, unrelated panels, and dead whitespace. Ask the writer to recrop
-when it fails either test; state what must remain and what must leave, never
+For every included source figure, compare the source, asset, and rendered page.
+It must retain the evidence the argument spends and omit surrounding clutter.
+If it does not, request a recrop in terms of what to retain or remove, never
 coordinates. The editor requests image work but never edits assets or markup.
 
 ## Surgical, never a rewrite

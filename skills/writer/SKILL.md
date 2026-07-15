@@ -65,10 +65,9 @@ discipline, every template:
   each into
   `library/<series>/<slug>/figure-N.<format>` with
   `uv run --group figure-capture engine/capture_figure.py`; use the log's
-  source location and make the first crop yourself. Keep every panel, axis,
-  legend, label, or table column the argument needs; remove page furniture and
-  unrelated material. Inspect both the local asset and the rendered article
-  before hand-off. Add the documented `nb-figure` markup with useful alt text
+  source location and make the first crop yourself. Retain the evidence the
+  argument needs and remove surrounding clutter. Inspect the asset and rendered
+  article before hand-off. Add the documented `nb-figure` markup with useful alt text
   and a caption citation. Skip it when the visual decorates rather than
   explains. Never use an external image URL.
 - Fill `nb-meta` with the piece's actual values: real dates, real counts,
