@@ -4,6 +4,7 @@ import pathlib
 from collections.abc import Callable
 
 import pytest
+
 from conftest import PR_BODY, PressRepo
 from findings import Findings
 from press import article
