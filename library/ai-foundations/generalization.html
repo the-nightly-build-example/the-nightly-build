@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rebuild ImageNet's test set and the top model loses eleven points · AI Foundations</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "ai-foundations",
+        "slug": "generalization",
+        "template": "article",
+        "title": "Rebuild ImageNet's test set and the top model loses eleven points",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-16",
+        "tags": [],
+        "sources": 8,
+        "words": 1987,
+        "reading_minutes": 9,
+        "dek": "A fresh test set built by the original recipe, no adversary needed, exposes how much of any accuracy number belongs to the data it was measured on rather than to the model.",
+        "harness": "claude-code-routine",
+        "model": "claude"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">AI Foundations</div>
+        <h1 class="nb-title">Rebuild ImageNet's test set and the top model loses eleven points</h1>
+        <p class="nb-dekline">
+          A fresh test set built by the original recipe, no adversary needed, exposes how much of any accuracy number belongs to the data it was measured on rather than to the model.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-16</span>
+        </div>
+      </header>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What the number was measured on</h2>
+        <p>
+          A ResNet-152 image classifier scores 78.3% top-1 accuracy on ImageNet.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+          The figure is exact and reproducible. It is also a statement about fifty
+          thousand particular photographs, the ImageNet validation set the model has
+          been graded on for years. In 2019 a team led by Benjamin Recht built a new
+          ImageNet test set, following the original recipe as closely as they could:
+          fresh photographs of the same classes, filtered the same way. On that set the
+          same ResNet-152 scored 67.0%.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The best model of the day fell about as far, from 83% to 72%, and across a
+          broad range of architectures the drop ran 11 to 14 points.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+          Nothing had corrupted the images: no adversary, no added noise, no blurring.
+          The recipe was the original one.
+        </p>
+        <p>
+          The number, then, was never a property of the model alone. It measured the
+          model against one specific collection of data, and a fresh draw from the
+          same source moved it by eleven points. Generalization is the plain name for
+          the quantity that decides whether such a figure means anything: how well a
+          system does on data it was not fitted to, as against data it was.
+        </p>
+        <div class="nb-callout">
+          <span class="nb-callout-term">Generalization</span>
+          Performance on data a model was not fitted to. A held-out score estimates
+          it; a training score cannot, because the model was fitted to reach that one.
+        </div>
+      </section>
+
+      <section data-nb-section="the-split" id="the-split">
+        <h2>Fitting on one half, judging on the other</h2>
+        <p>
+          The estimate works by division. Split the data in two at random. Fit the
+          model on one part, the training set, and never let it see the other, the test
+          set. Then report its error on the test set as the estimate of future
+          performance. The textbook name for that quantity is the generalization error,
+          the expected error on a new input from the same source as the training
+          data.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The training error grades the model on
+          questions it was already shown the answers to. A model with enough
+          flexibility can drive that number to zero by memorizing, storing an answer
+          for each training example without capturing anything that transfers.<sup
+            class="nb-cite"><a href="#s2">2</a></sup>
+          The test error asks a different question. Every test example is one the
+          model's parameters were never adjusted to fit, so a low test error is
+          evidence about examples not yet seen. The number stops being a grade on the
+          past and becomes a bet about the future.
+        </p>
+        <p>
+          The bet rests on one assumption, and naming it shows where the estimate can
+          fail. Training and test data must come from the same underlying distribution,
+          which Goodfellow, Bengio, and Courville call the data-generating
+          distribution: the two sets are identically distributed, drawn from the same
+          probability distribution as each other.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          When that holds, the held-out score is honest. When it quietly fails, the
+          score is still a number, still reproducible, and no longer about the future
+          it is meant to predict.
+        </p>
+        <p>
+          ImageNet's usual split trains on about 1.2 million labeled photographs and
+          holds out fifty thousand. Recht's fresh test set changed that distribution
+          slightly: same classes, same recipe, a different and apparently harder sample
+          of the world's images.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The eleven-point drop is a violated same-distribution assumption in practice.
+          The new images were never in training, so this is not cheating. It is ordinary
+          distribution shift, the gap between a benchmark and the deployment it stands
+          in for.
+        </p>
+      </section>
+
+      <section data-nb-section="the-leak" id="the-leak">
+        <h2>When the held-out data stops being unseen</h2>
+        <p>
+          Distribution shift is the honest kind of failure. There is a dishonest kind,
+          and it needs the test set not to change at all, only to be consulted more
+          than once.
+        </p>
+        <p>
+          Picture a detection task with no signal in it whatsoever: ten thousand
+          examples, each described by ten thousand features drawn independently from a
+          standard normal distribution, and a label set by a coin flip, uncorrelated
+          with everything.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          No classifier can beat 50% true accuracy, because there is nothing to learn.
+          In 2015 Cynthia Dwork and colleagues ran a routine workflow on such data:
+          score the features on the holdout, keep the ones that look predictive, build a
+          model from them, and check it on the same holdout.
+          Reusing the holdout that way, they reported accuracy above 63% on data where
+          the truth cannot exceed 50%.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Thirteen points of apparent skill, conjured from pure noise by asking the
+          held-out set the same kind of question over and over and letting its answers
+          steer the next model.
+        </p>
+        <p>
+          A holdout is honest only if consulted once.<sup
+            class="nb-cite"><a href="#s3">3</a></sup>
+          Each time a modeling choice is made because it improved the holdout score, a
+          little of that set's randomness leaks into the model, and the set stops being
+          unseen. The published number then reflects the analyst's fit to the
+          test set, not the model's fit to the world. That is a test set leaking into
+          training, and it is why the second question about any accuracy figure, after
+          what data it was measured on, is how many times that data was looked at.
+        </p>
+        <p>
+          These two failures get blurred together, and one result already on the table
+          keeps them apart. Recht's team checked whether the ImageNet drop came from
+          years of researchers tuning against the old test set, the very adaptivity
+          Dwork describes, and found that it did not.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Gains on the old set carried over to the new one: models that scored higher
+          on the original scored higher on the replacement too, along a line with slope
+          greater than one.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The ImageNet gap is distribution shift, not leakage. A number can mislead
+          because the world moved or because the analyst peeked, and telling which
+          requires knowing how the data was handled.
+        </p>
+      </section>
+
+      <section data-nb-section="memorized-noise" id="memorized-noise">
+        <h2>A network that memorizes noise and still generalizes</h2>
+        <p>
+          Both failures so far leave the tool intact: a held-out score computed on
+          unseen data from the right distribution still estimates the future. The
+          deeper trouble is that the theory meant to predict which models generalize is
+          wrong, and a single experiment shows it.
+        </p>
+        <p>
+          In 2017 Chiyuan Zhang and coauthors trained a standard image network, an
+          Inception model with about 1.6 million parameters, on CIFAR-10 after
+          replacing every label with a random one.<sup
+            class="nb-cite"><a href="#s4">4</a></sup>
+          The network reached 100.0% training accuracy, memorizing an arbitrary answer
+          for all fifty thousand images. Its test accuracy was 9.78%, which for a
+          ten-class problem is chance.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Replace the images themselves with pure Gaussian noise and the network still
+          fit them to zero training error.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">100.0%</span><span class="nb-stat-l">train accuracy, random labels</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">9.78%</span><span class="nb-stat-l">test accuracy, random labels</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">89.05%</span><span class="nb-stat-l">test accuracy, true labels</span>
+          </div>
+        </div>
+        <p>
+          Trained on the real labels, that
+          identical architecture scored 89.05% on the test set.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Same model, same capacity, same optimizer. On real labels it generalized; on
+          random labels it memorized and did not. The capacity to memorize and the
+          tendency to generalize are two separate things in the same network.
+        </p>
+        <p>
+          That capacity is no accident of scale. Zhang's group proved that a plain
+          two-layer network with 2n + d weights can fit any labeling of n examples in d
+          dimensions.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Typical networks carry far more parameters than training examples, so fitting
+          the data perfectly, signal or noise, is expected. The usual rescue does not
+          save the classical story either: standard regularizers are neither necessary
+          nor sufficient to control the train-test gap.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          If a model large enough to memorize the data should overfit, then making it
+          larger should make it worse. Past a point, it makes it better. Mikhail Belkin
+          and colleagues drew the full curve: as capacity grows, test error first
+          traces the classical U and peaks exactly where the model becomes just able to
+          fit the training set perfectly, the interpolation threshold.<sup
+            class="nb-cite"><a href="#s5">5</a></sup>
+          Push capacity past that point and test error falls again, often below its
+          earlier best.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          They named the shape double descent, and the classical U is only its left
+          half.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          Preetum Nakkiran and coauthors found the same shape in current deep networks,
+          along two axes: wider models and longer training each trace the descent, the
+          rise, and the second descent.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          One caution the popular retellings drop: the sharp peak at the threshold
+          shows up most clearly when labels carry noise. Their headline curves use
+          ResNet-18s on CIFAR-10 with 15% of labels corrupted, and the peak is
+          accentuated by that corruption.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Near the threshold, they found, adding training data can raise test error
+          instead of lowering it, so more data does not always help.<sup
+            class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="what-broke" id="what-broke">
+        <h2>What broke, and what only looked broken</h2>
+        <p>
+          The result contradicts one theory, and it was the mainstream one. In 1992
+          Stuart Geman, Elie Bienenstock, and Rene Doursat set out the bias-variance
+          dilemma for neural networks. Flexible, model-free estimators, they argued,
+          suffer high variance: give them freedom to fit anything and they fit the
+          sampling noise, so their predictions swing with the training set.<sup
+            class="nb-cite"><a href="#s7">7</a></sup>
+          You cannot drive bias and variance to zero together at a finite sample size;
+          only in the limit of infinite data does the dilemma dissolve.<sup
+            class="nb-cite"><a href="#s7">7</a></sup>
+          Their conclusion was explicit: current feedforward networks were largely
+          inadequate for hard problems in machine perception and learning.<sup
+            class="nb-cite"><a href="#s7">7</a></sup>
+          The Zhang and Belkin results land on that sentence. The networks the analysis
+          predicted would be crippled by variance are the ones that now generalize
+          best.
+        </p>
+        <p>
+          How much this overturns is contested, and the strongest dissent belongs at
+          full strength. Andrew Gordon Wilson argues that benign overfitting, double
+          descent, and the success of over-parameterization are neither unique to
+          neural networks nor inexplicable, and that long-standing tools such as
+          PAC-Bayes bounds already accommodate them.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          His unifying idea is a soft inductive bias: keep a flexible model able to
+          represent almost anything, but give it a built-in preference for the simplest
+          explanation consistent with the data.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          On that reading the old U-curve broke while statistical learning theory did
+          not; it held more room than the textbook summary admitted.
+        </p>
+        <p>
+          Both readings share one mechanism, which answers the memorizing network's
+          question. A model that can fit anything need not fit every dataset the same
+          way. Given real structure, the training
+          procedure settles on a fit that also captures the structure. Given noise, it
+          settles on rote memorization, because that is all there is to fit. Capacity
+          sets what a model can represent. It does not by itself set which fit the model
+          will prefer among all those that reach zero training error, and that
+          preference is where generalization is won or lost.
+        </p>
+        <p>
+          Which returns to the opening figure. A benchmark score is one model measured
+          against one collection of data, consulted some number of times, from a
+          distribution that may or may not match where the model runs. It is a real
+          measurement. It is not, on its own, a capability, and the distance between the
+          two is exactly the distribution shift, the leakage, and the choice among fits
+          the number hides. Read on those terms, "95% accurate" is not yet a fact about
+          a system. It is the start of a question about the data.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Fig. 1; results table"
+              href="https://arxiv.org/abs/1902.10811"
+              >Recht et al. (ICML 2019) · Do ImageNet Classifiers Generalize to ImageNet?</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Section 5.2, Capacity, Overfitting and Underfitting"
+              href="https://www.deeplearningbook.org/contents/ml.html"
+              >Goodfellow, Bengio, Courville (MIT Press, 2016) · Deep Learning, Machine Learning Basics</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Fig. 1A"
+              href="https://www.nematilab.info/bmijc/assets/091218_paper.pdf"
+              >Dwork et al. (Science, 2015) · The reusable holdout: Preserving validity in adaptive data analysis</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Section 1; Table 1; Theorem 1"
+              href="https://arxiv.org/abs/1611.03530"
+              >Zhang et al. (ICLR 2017) · Understanding deep learning requires rethinking generalization</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Fig. 1; Section 3"
+              href="https://arxiv.org/abs/1812.11118"
+              >Belkin, Hsu, Ma, Mandal (PNAS, 2019) · Reconciling modern machine-learning practice and the classical bias-variance trade-off</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Fig. 1; Fig. 3"
+              href="https://arxiv.org/abs/1912.02292"
+              >Nakkiran et al. (ICLR 2020) · Deep Double Descent: Where Bigger Models and More Data Hurt</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Sections 1 and 4"
+              href="https://doi.org/10.1162/neco.1992.4.1.1"
+              >Geman, Bienenstock, Doursat (Neural Computation, 1992) · Neural Networks and the Bias/Variance Dilemma</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2503.02113"
+              >Wilson (ICML 2025) · Deep Learning is Not So Mysterious or Different</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
