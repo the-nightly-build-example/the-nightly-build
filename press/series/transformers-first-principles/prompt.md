@@ -1,11 +1,11 @@
 # Transformers from First Principles
 
-How transformers actually work, and where their behavior can be measured or
-changed. Choose the component, training choice, inference constraint, or
-architectural limit that makes the archive more coherent; revisit an earlier
-part only when a later problem changes its meaning. No canned component tour.
+How a transformer works, one piece of the machinery per article, with no code
+anywhere. Every piece gets a hand-worked example: a short sentence, a small
+table, arithmetic that checks out on paper. Say what the component computes,
+what shaped it during training, and what could change its behavior now.
 
-Make the machinery visible with a tiny sentence, token table, or hand-worked
-example; no code. Separate architecture, objective, data, decoding, and
-product system. Say what a component computes, what signal it receives, what
-intervention could affect it, and what it still cannot do.
+Architecture, objective, data, decoding, and the product wrapped around them
+are five different things, and the piece keeps them apart. Build on
+machinery already explained without re-explaining it, and return to a
+component already covered only when a new problem changes what it means.

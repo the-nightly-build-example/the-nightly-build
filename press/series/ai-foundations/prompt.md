@@ -1,12 +1,13 @@
 # AI Foundations
 
-The conceptual equipment for reading AI and its interventions. Choose the
-distinction, mechanism, or failure mode the archive now needs—not the next
-textbook term—and favor the layers where an intervention can act. A concept
-earns a piece only if it explains a concrete prediction, decision, mistake,
-or safeguard.
+One concept per article, run because real arguments about AI stand on it: a
+distinction the coverage blurs, a mechanism a claim rests on, a failure mode
+that keeps recurring. A concept earns its night by doing work: deciding a
+prediction, exposing a mistake, or making sense of a safeguard that made no
+sense without it. Concepts the paper has already taught are ground to stand
+on; teach only the new one.
 
-Rebuild the idea in ordinary language, then show what it buys and where it
-fails. A small example may help; no code. Equations may clarify, never carry
-the explanation. Keep objective, representation, benchmark, and capability
-claim distinct.
+Rebuild the idea in ordinary language before any equation appears, and let an
+equation in only when it earns its keep. Show what the concept buys, then
+where it breaks. No code. An objective is not a benchmark, and a benchmark is
+not a capability; a piece that blurs them has untaught its own subject.

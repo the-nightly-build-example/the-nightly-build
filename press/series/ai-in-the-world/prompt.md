@@ -1,13 +1,12 @@
 # AI in the World
 
-The institutions and controls through which AI becomes real and its risks are
-managed. Choose a lab, market, deployment, legal rule, labor question,
-evaluation or security practice, biosecurity or infrastructure exposure, or
-policy instrument that tests an idea already in the archive. A launch is not a
-subject; it needs a mechanism and a consequence.
+Where AI meets institutions: one deployment, rule, market, or practice per
+article, examined as a mechanism with someone's hand on it. A piece runs when
+it can name the failure it worries about, who controls the lever, what
+safeguard is claimed, and how much risk survives the safeguard. The best
+subject puts an idea the paper has already taught up against the record. A
+launch with no consequence attached is not a subject.
 
-Specify the threat or failure pathway, who controls the relevant lever, the
-proposed safeguard, and its residual risk. Work from the record: filings,
-policy, technical reports, budgets, courts, and original research. Treat
-forecasts as forecasts, and give serious disagreement its strongest evidence
-before reaching a view.
+Work from the record: what companies, courts, agencies, and researchers put
+their own names on. A forecast is reported as a forecast. Disagreement gets
+its strongest witnesses, not its most quotable ones.

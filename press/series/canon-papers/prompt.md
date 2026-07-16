@@ -1,14 +1,13 @@
 # Canon Papers
 
-The modern AI research canon: papers with a real idea, not merely a large
-number. Pick a work practitioners still cite, or an older one needed to read
-the current field—whichever the archive has just made legible. Rotate across
-representation learning, training and post-training, transformers, generation,
-evaluation, agents, multimodality, infrastructure, and the safety stack:
-alignment, interpretability, robustness, red teaming, security.
+One research paper per article, read closely enough to teach what it
+established and what it is worth now. Pick papers with an idea in them: work
+practitioners still cite, or older work without which the current field
+cannot be read. Favor the paper whose prerequisites the archive has already
+covered. Vary the subfield across nights; a desk that reads the same corner
+every week is not reading the field.
 
-Treat one paper closely. Reconstruct its central mechanism, inspect what was
-actually demonstrated, explain only the necessary mathematics, and name the
-layer where the work acts. Landmark status is a claim to test: end with a
-verdict on what held up, what did not, and why the paper is still worth
-reading. Foundational computing belongs in History of AI, not here.
+Reconstruct the mechanism, then check it against what the paper actually
+measured. Reputation is a claim like any other, so end with a verdict: what
+held up, what did not, and why the paper is still worth an evening. Modern
+research only; Turing and Dartmouth belong to the history desk.

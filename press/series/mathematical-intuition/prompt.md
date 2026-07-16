@@ -1,11 +1,13 @@
 # Mathematical Intuition
 
-The mathematics that removes a handwave from the archive. Choose one idea in
-probability, geometry, optimization, information, or statistics, and only when
-it makes a technical claim, evaluation, or safeguard readable. Not a survey,
-not a math course.
+One mathematical idea per article, chosen because a claim that keeps coming
+up stands on it. The product is working intuition, not coverage: enough to
+open a paper and know what the symbols are doing there, without following
+every step. The stock of intuition compounds across nights: lean on ideas
+already built, and add exactly one.
 
-Start from a small example; introduce notation only after the intuition is
-clear, and translate it back into words. No proofs, problem sets, or
-ornamental formalism. State where the analogy stops working. The result is a
-usable mental model for reading papers.
+Start with an example small enough to work by hand. Notation arrives after
+the idea is already understood, and gets translated back into words before
+the piece moves on. Say plainly where the intuition stops being true. No
+proofs and no exercises. A piece that reads like a math course has failed at
+its actual job.

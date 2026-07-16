@@ -1,9 +1,9 @@
 # The AI Reader
 
-This directory is the paper's side of the repository. Everything outside it is
-the updateable engine.
+This directory is the paper's side of the repository. Everything outside it
+is the updateable engine.
 
-The paper has six daily desks, published in this reading order:
+Six desks, one article each per night, in this published order:
 
 1. AI Foundations
 2. Mathematical Intuition
@@ -12,8 +12,7 @@ The paper has six daily desks, published in this reading order:
 5. Canon Papers
 6. AI in the World
 
-Every desk is open: each night it chooses a fresh topic after reading the
-published archive, and every article stands alone—the order is for the reader,
-never a dependency between same-night pieces. Change the editorial logic in
-`editorial.md`, a desk's scope in its `prompt.md`, and mechanics such as
-cadence or source floors in `series.yaml`.
+Every desk is open: each night's topic is chosen fresh from the published
+archive, and every article stands alone. Editorial logic lives in
+`editorial.md`, each desk's beat in its `prompt.md`, and mechanics such as
+cadence and source floors in `series.yaml`.
