@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AlexNet · Canon Papers</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "canon-papers",
+        "slug": "alexnet",
+        "template": "paper",
+        "title": "AlexNet beat the last hand-built vision system by ten points",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-16",
+        "tags": ["vision", "convolutional-networks", "imagenet"],
+        "sources": 7,
+        "words": 2318,
+        "reading_minutes": 11,
+        "dek": "The paper measured every part it leaned on, which is why fourteen years on its survivors and its discards are still easy to name.",
+        "harness": "claude-code-routine",
+        "model": "claude"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">Canon Papers</div>
+        <h1 class="nb-title">AlexNet beat the last hand-built vision system by ten points</h1>
+        <p class="nb-dekline">
+          The paper measured every part it leaned on, which is why fourteen
+          years on its survivors and its discards are still easy to name.
+        </p>
+        <div class="nb-byline">
+          <span>11 min read</span><span>2026-07-16</span>
+        </div>
+      </header>
+
+      <section data-nb-section="abstract" id="abstract">
+        <div class="nb-paper-card">
+          <p class="nb-paper-title">
+            ImageNet Classification with Deep Convolutional Neural Networks
+          </p>
+          <p class="nb-paper-meta">
+            Alex Krizhevsky, Ilya Sutskever, Geoffrey E. Hinton · Advances in
+            Neural Information Processing Systems 25 (NIPS 2012), pp. 1097–1105
+          </p>
+          <a
+            class="nb-paper-link"
+            href="https://proceedings.neurips.cc/paper_files/paper/2012/file/c399862d3b9d6b76c8436e924a68c45b-Paper.pdf"
+            >Read the paper</a
+          >
+          <blockquote class="nb-paper-abstract">
+            We trained a large, deep convolutional neural network to classify
+            the 1.2 million high-resolution images in the ImageNet LSVRC-2010
+            contest into the 1000 different classes. On the test data, we
+            achieved top-1 and top-5 error rates of 37.5% and 17.0% which is
+            considerably better than the previous state-of-the-art. The neural
+            network, which has 60 million parameters and 650,000 neurons,
+            consists of five convolutional layers, some of which are followed
+            by max-pooling layers, and three fully-connected layers with a
+            final 1000-way softmax. To make training faster, we used
+            non-saturating neurons and a very efficient GPU implementation of
+            the convolution operation. To reduce overfitting in the
+            fully-connected layers we employed a recently-developed
+            regularization method called "dropout" that proved to be very
+            effective. We also entered a variant of this model in the
+            ILSVRC-2012 competition and achieved a winning top-5 test error
+            rate of 15.3%, compared to 26.2% achieved by the second-best
+            entry.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </blockquote>
+        </div>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Classifying a million images into a thousand bins</h2>
+        <p>
+          The task was narrow and hard. The ImageNet challenge handed a model
+          1.2 million labeled training photographs and asked it to sort each
+          test image into one of 1,000 categories, scored two ways: top-1 error
+          counts an image wrong when the true label is not the model's single
+          best guess, and top-5 error counts it wrong only when the true label
+          is missing from the model's five most probable guesses. Those images
+          were a slice of a larger database. ImageNet, assembled by Deng and
+          colleagues from crowd workers and organized on the WordNet
+          hierarchy,<sup class="nb-cite"><a href="#s2" data-nb-note="ImageNet's construction: the WordNet hierarchy and its Mechanical Turk crowd workers, from the dataset paper.">2</a></sup>
+          held over 15 million labeled images across some 22,000
+          categories;<sup class="nb-cite"><a href="#s1" data-nb-locator="§2" data-nb-note="AlexNet's own statement of the full-ImageNet scale, well past the dataset paper's 3.2M-image 2009 founding count.">1</a></sup>
+          the challenge used a 1,000-category subset.
+        </p>
+        <p>
+          Before this paper, the strong entries did not learn their features.
+          They ran hand-designed detectors over the image, summarized the
+          responses into a fixed vector, and fed that to a shallow classifier.
+          The paper's answer was to learn the features instead. A convolutional
+          network learns small filters that slide across the image and report
+          where a pattern appears; stacking such layers, each combining the
+          previous layer's outputs, lets later layers assemble edges into parts
+          and parts into objects. "Deep" names the stack: here, five
+          convolutional layers and three fully-connected layers, eight learned
+          layers holding 60 million parameters, trained end to end on the raw
+          pixels.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The result is a pair of numbers, not
+          one. On the 2010 test set the network reached 37.5% top-1 and 17.0%
+          top-5 error; a variant won the 2012 contest at 15.3% top-5 against a
+          26.2% runner-up.<sup class="nb-cite"><a href="#s1">1</a></sup> The
+          reconstruction that follows asks two questions of that result: which
+          of the network's parts produced it, judged against the paper's own
+          measurements, and which of those parts the field kept.
+        </p>
+      </section>
+
+      <section data-nb-section="two-numbers" id="two-numbers">
+        <h2>Two numbers, two contests</h2>
+        <p>
+          Keep the two error lines apart, because the folklore fuses them. The
+          37.5% / 17.0% pair is the ILSVRC-2010 result, the one the abstract
+          leads with and Table 1 records. The celebrated 15.3% is a different
+          line entirely: the winning top-5 error in the 2012 contest, from an
+          ensemble of seven networks, two of them pre-trained on the extra
+          Fall-2011 images. Without that extra data the same group's 2012 entry
+          scored 16.4%, and that 16.4% is the number the challenge organizers
+          log as the year's winner.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <figure class="nb-excerpt">
+          <blockquote>
+            We also entered a variant of this model in the ILSVRC-2012
+            competition and achieved a winning top-5 test error rate of 15.3%,
+            compared to 26.2% achieved by the second-best entry.<sup class="nb-cite"><a href="#s1" data-nb-locator="Abstract, final sentence">1</a></sup>
+          </blockquote>
+          <figcaption>
+            <span class="nb-excerpt-loc">Abstract, final sentence</span>
+            This is the abstract's only line about 2012; every other figure it
+            reports belongs to the 2010 result. The paper's single most-quoted
+            number, 15.3%, rests entirely on this one sentence, and it names its
+            own yardstick: that year's second-best 26.2%, not a prior-year
+            winner.
+          </figcaption>
+        </figure>
+        <p>
+          This matters for the claim people make on the paper's behalf. "Top-5
+          error fell from about 26% to about 15% in a year" is real arithmetic,
+          but the 26.2% is the 2012 second-best entry, a system built on SIFT
+          descriptors and Fisher vectors, which is to say the prior era's method
+          standing in the same contest. So the honest statement is stronger and
+          more specific than a vague annual drop: the network beat the best
+          non-neural system in its own competition by roughly ten top-5 points.
+          The organizers' independent ledger frames the longer arc the same way,
+          putting the 2010 winner at 28.2% top-5 and the 2012 SuperVision entry
+          at 16.4%, with the extra-data variant at 15.3%.<sup class="nb-cite"><a href="#s3" data-nb-locator="§6.1.1 and Table 5">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="relu" id="relu">
+        <h2>The unit chosen because it trained faster</h2>
+        <p>
+          Start with a single neuron. It computes a weighted sum of its inputs,
+          then passes that sum through a squashing function. The classic choice,
+          tanh, flattens toward its limits: once a unit is driven strongly
+          positive or negative, the function is nearly flat there, so the slope
+          the training procedure needs to adjust the weights is close to zero
+          and learning at that unit crawls. This is saturation. Replace the
+          squash with the simplest possible alternative, pass positive sums
+          through unchanged and clamp negative sums to zero, and the slope is a
+          constant 1 wherever the unit is active, so updates never stall on a
+          saturated unit. That function, f(x) = max(0, x), is the rectified
+          linear unit, ReLU.<sup class="nb-cite"><a href="#s1" data-nb-locator="§3.1 · p. 3">1</a></sup>
+        </p>
+        <figure class="nb-excerpt">
+          <blockquote>
+            A four-layer convolutional neural network with ReLUs (solid line)
+            reaches a 25% training error rate on CIFAR-10 six times faster than
+            an equivalent network with tanh neurons (dashed line).<sup class="nb-cite"><a href="#s1" data-nb-locator="Fig. 1 caption · p. 3">1</a></sup>
+          </blockquote>
+          <figcaption>
+            <span class="nb-excerpt-loc">Fig. 1 caption · p. 3</span>
+            The measured speedup that justifies the choice. Note the domain: a
+            small four-layer net on CIFAR-10, not the ImageNet network, whose
+            benefit the paper states only qualitatively.
+          </figcaption>
+        </figure>
+        <p>
+          The evidence is a training-speed figure, and its scope is worth
+          holding onto. Six times faster to a 25% training error is the CIFAR-10
+          curve; for the full ImageNet network the paper claims the ReLU model
+          trains "several times faster" but shows no matching curve, so the
+          precise multiple is measured off-domain and asserted on-domain. The
+          idea was also not new. Nair and Hinton had introduced rectified linear
+          units two years earlier, but for a different job, generative
+          restricted Boltzmann machines evaluated on the NORB objects and
+          Labeled Faces in the Wild, not large supervised classifiers.<sup class="nb-cite"><a href="#s4" data-nb-locator="Abstract">4</a></sup>
+          What this paper added was the demonstration that the unit accelerates
+          supervised training at ImageNet scale.
+        </p>
+      </section>
+
+      <section data-nb-section="overfitting" id="overfitting">
+        <h2>Overfitting, answered twice</h2>
+        <p>
+          Sixty million parameters over 1.2 million images is an invitation to
+          memorize. A model that large can fit the training photographs so
+          closely that it captures their accidents rather than the categories,
+          and then fails on images it has not seen. That failure is overfitting,
+          and the paper answers it twice.
+        </p>
+        <p>
+          The first answer manufactures variety. At training time the network
+          never sees a full image; it sees a random 224×224 crop of the 256×256
+          original, half the time mirrored left to right. The exact input almost
+          never repeats, which the paper counts as expanding the training set by
+          a factor of 2,048. A second scheme perturbs the colours, shifting each
+          image's RGB values along the principal directions of colour variation
+          in the data, and the paper measures this alone as cutting top-1 error
+          by over 1%.<sup class="nb-cite"><a href="#s1" data-nb-locator="§4.1 · pp. 5–6">1</a></sup>
+          The 2,048 is a count of distinct crops, not of independent images: the
+          crops of one photograph are heavily correlated, so the expansion buys
+          less than the raw multiple suggests.
+        </p>
+        <p>
+          The second answer disables the network as it trains. On each training
+          case, every neuron in the first two fully-connected layers is set to
+          zero with probability one half, chosen fresh each time. No neuron can
+          then count on any particular partner being present, so it cannot build
+          a feature that only works in one fixed committee; it must contribute
+          something useful on its own. This is dropout.<sup class="nb-cite"><a href="#s1" data-nb-locator="§4.2 · p. 6">1</a></sup>
+        </p>
+        <figure class="nb-excerpt">
+          <blockquote>
+            Without dropout, our network exhibits substantial overfitting.
+            Dropout roughly doubles the number of iterations required to
+            converge.<sup class="nb-cite"><a href="#s1" data-nb-locator="§4.2 · p. 6">1</a></sup>
+          </blockquote>
+          <figcaption>
+            <span class="nb-excerpt-loc">§4.2 · p. 6</span>
+            Names the benefit and, in the same breath, the price. Dropout is
+            reported as necessary against overfitting here, not free: it about
+            doubles the training the network needs.
+          </figcaption>
+        </figure>
+        <p>
+          One caution about standing. Dropout is the paper's reference [10], the
+          authors' own 2012 preprint, where the same group had already shown it
+          cutting a single network on the 2010 subset from 48.6% to a then-record
+          42.4% error.<sup class="nb-cite"><a href="#s5" data-nb-locator="pp. 4–5">5</a></sup>
+          That preprint is a primary source for what dropout is and does, but it
+          shares its authors with AlexNet, so it cannot serve as an independent
+          voice confirming the technique. The dropout result rests on one
+          research group measuring its own idea.
+        </p>
+      </section>
+
+      <section data-nb-section="two-gpus" id="two-gpus">
+        <h2>A 3GB card forced the split across two GPUs</h2>
+        <p>
+          The split across two graphics cards is often read as an architectural
+          idea. The paper presents it as a hardware constraint. A single GTX 580
+          carried 3GB of memory, which capped how large a network could be
+          trained on it, so the authors spread the model across two cards, each
+          holding half the convolutional kernels and the two halves exchanging
+          activations only at certain layers.<sup class="nb-cite"><a href="#s1" data-nb-locator="§3.2 · p. 3">1</a></sup>
+        </p>
+        <p>
+          The measured payoff was −1.7% top-1 and −1.2% top-5 against a one-GPU
+          network with half as many kernels per layer. The paper then undercuts
+          its own comparison in a footnote: the one-GPU baseline "is bigger than
+          'half the size' of the two-GPU net," so, in the authors' words, the
+          comparison "is biased in favor of the one-GPU net." Read the delta as
+          the authors do, then, as evidence that a bigger network helped their
+          system, not as a clean measurement of the split itself. The specific
+          cross-GPU wiring was also awkward enough that the paper notes it made
+          the connectivity pattern "a problem for cross-validation." That is the
+          signature of a workaround fitted to a memory limit, not a principle to
+          carry forward.
+        </p>
+      </section>
+
+      <section data-nb-section="normalization-dropped" id="normalization-dropped">
+        <h2>The normalization the field later dropped</h2>
+        <p>
+          One more part earned a measured delta and then did not last. Local
+          response normalization sits after the ReLU in certain layers and
+          rescales each unit's activity by a function of the activity of its
+          neighbouring channels at the same position, so a strongly firing
+          feature damps the features near it. The paper frames this as lateral
+          inhibition borrowed from real neurons, and measures it as reducing
+          top-1 and top-5 error by 1.4% and 1.2%.<sup class="nb-cite"><a href="#s1" data-nb-locator="§3.3 · p. 4">1</a></sup>
+          A smaller trick sits beside it: pooling windows that overlap rather
+          than tile, worth a further 0.4% and 0.3%, and, the paper notes, a
+          touch harder to overfit.
+        </p>
+        <p>
+          Here an independent check is available, and it points the other way.
+          Simonyan and Zisserman, testing deeper networks on the same ImageNet
+          benchmark and sharing no authors with this paper, report that response
+          normalization "does not improve the performance on the ILSVRC dataset,
+          but leads to increased memory consumption and computation time," and
+          drop it from all but one of their models.<sup class="nb-cite"><a href="#s6" data-nb-locator="§2.1 and §4">6</a></sup>
+          Both findings can hold at once, since the effect can depend on the
+          dataset and the surrounding architecture. But AlexNet's number is a
+          single-system delta measured against one baseline, while VGG's is an
+          independent controlled comparison on the same task, and it is VGG's
+          verdict the field followed: later architectures left the normalization
+          out.
+        </p>
+      </section>
+
+      <section data-nb-section="keepers-and-dead-ends" id="keepers-and-dead-ends">
+        <h2>The keepers and the dead ends</h2>
+        <p>
+          Four ingredients outlived the
+          contest, and two did not.
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>
+                ReLU, now the default activation across the field, chosen here
+                for a measured training-speed gain.<sup class="nb-cite"><a href="#s1">1</a></sup>
+              </li>
+              <li>
+                Dropout, still a standard regularizer, reported as the defense
+                that kept the network from memorizing.<sup class="nb-cite"><a href="#s1">1</a></sup>
+              </li>
+              <li>
+                GPU training, the compute substrate later work simply assumes:
+                90 passes over 1.2 million images in five to six days on two
+                cards.<sup class="nb-cite"><a href="#s1">1</a></sup>
+              </li>
+              <li>
+                The thesis that a larger network with more data beats
+                hand-engineered features, carried by the ten-point margin over
+                the 2012 runner-up.<sup class="nb-cite"><a href="#s1">1</a></sup>
+              </li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>
+                Local response normalization, independently found not to help on
+                ImageNet and dropped by later networks.<sup class="nb-cite"><a href="#s6">6</a></sup>
+              </li>
+              <li>
+                The specific two-GPU split, a 3GB-memory workaround by the
+                paper's own account, discarded once memory grew and data-parallel
+                training took over.<sup class="nb-cite"><a href="#s1">1</a></sup>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <p>
+          That leaves the interpretive question the paper cannot settle about
+          itself: was the win the architecture, or the data and the compute
+          arriving at once? The honest reading credits the convergence. Writing
+          for IEEE Spectrum, the Computer History Museum's Hansen Hsu casts the
+          moment as three ingredients meeting: "In 2012, AlexNet brought
+          together these elements—deep neural networks, big datasets, and
+          GPUs—for the first time, with pathbreaking results. Each of these
+          needed the other." The same piece records Yann LeCun's read of the
+          turn in the field: "Before AlexNet, almost none of the leading
+          computer-vision papers used neural nets. After it, almost all of them
+          would."<sup class="nb-cite"><a href="#s7">7</a></sup> The paper agrees
+          against interest, closing on the note that its results "can be improved
+          simply by waiting for faster GPUs and bigger datasets," which concedes
+          that scale, not the architecture alone, was carrying weight.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The paper repays a close reading today for a plain reason: it measured
+          its own parts. Those measurements, not the reputation that grew around
+          them, are what let a reader open it today and sort the units the field
+          kept from the ones it quietly set down.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://proceedings.neurips.cc/paper_files/paper/2012/file/c399862d3b9d6b76c8436e924a68c45b-Paper.pdf"
+              >NeurIPS · Krizhevsky, Sutskever &amp; Hinton, "ImageNet
+              Classification with Deep Convolutional Neural Networks" (2012)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.image-net.org/static_files/papers/imagenet_cvpr09.pdf"
+              >CVPR · Deng et al., "ImageNet: A Large-Scale Hierarchical Image
+              Database" (2009)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1409.0575"
+              >IJCV · Russakovsky et al., "ImageNet Large Scale Visual
+              Recognition Challenge" (2015)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.cs.toronto.edu/~fritz/absps/reluICML.pdf"
+              >ICML · Nair &amp; Hinton, "Rectified Linear Units Improve
+              Restricted Boltzmann Machines" (2010)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1207.0580"
+              >arXiv · Hinton et al., "Improving neural networks by preventing
+              co-adaptation of feature detectors" (2012)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1409.1556"
+              >ICLR · Simonyan &amp; Zisserman, "Very Deep Convolutional Networks
+              for Large-Scale Image Recognition" (2015)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://spectrum.ieee.org/alexnet-source-code"
+              >IEEE Spectrum · Hansen Hsu, "AlexNet Source Code Is Now Open
+              Source" (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
