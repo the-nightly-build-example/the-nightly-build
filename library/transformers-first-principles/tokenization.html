@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A transformer never reads the letters in strawberry · Transformers from First Principles</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "transformers-first-principles",
+        "slug": "tokenization",
+        "template": "article",
+        "title": "A transformer never reads the letters in strawberry",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-16",
+        "tags": [],
+        "sources": 8,
+        "words": 1900,
+        "reading_minutes": 8,
+        "dek": "The model reads integer tokens from a table built by counting letter pairs across a corpus, and that table decides how it handles spelling, digits, and rare scripts.",
+        "harness": "claude-code-routine",
+        "model": "claude"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">Transformers from First Principles</div>
+        <h1 class="nb-title">A transformer never reads the letters in strawberry</h1>
+        <p class="nb-dekline">
+          The model reads integer tokens from a table built by counting letter
+          pairs across a corpus, and that table decides how it handles spelling,
+          digits, and rare scripts.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-07-16</span>
+        </div>
+      </header>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Why the model cannot count the r's</h2>
+        <p>
+          Ask a language model how many r's are in <em>strawberry</em> and it
+          may miss, and the reason is not spelling. Run the word through the
+          tokenizer that GPT-3.5 and GPT-4 actually use and it comes back as
+          three pieces, <code>str</code>, <code>aw</code>, <code>berry</code>,
+          none of them a single letter.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The model never receives the characters. It receives three integers,
+          one per piece, looked up in a fixed table. The r's are buried inside
+          <code>str</code> and <code>berry</code>, so a question that looks like
+          spelling is a question about how the word was cut.
+        </p>
+        <p>
+          That cut is the first step of the pipeline, before any of the
+          machinery the rest of this course covers. Every string of text is
+          turned into a sequence of integer tokens, and the model reads only
+          those tokens. The step has a name, tokenization, and one dominant
+          method, byte-pair encoding.
+        </p>
+        <p>
+          The count matters beyond puzzles. A model's context window is measured
+          in tokens, not words or characters: GPT-2 raised its window from 512
+          to 1024 tokens, and the same unit meters usage today.<sup
+            class="nb-cite"><a href="#s2">2</a></sup>
+          A tokenizer that splits a text into more pieces makes it cost more
+          and run out of room sooner, for the same sentence.
+        </p>
+        <div class="nb-objectives">
+          <div class="nb-objectives-label">In this article</div>
+          <ul>
+            <li>Count adjacent letter pairs in a small corpus and merge the most frequent one, by hand.</li>
+            <li>Apply a learned merge table to split a word the tokenizer never saw.</li>
+            <li>Separate what the table computes from what the training corpus fixed into it.</li>
+            <li>Explain why spelling, digit, and rare-script behavior is really tokenizer behavior.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section data-nb-section="counting-pairs" id="counting-pairs">
+        <h2>Counting pairs until a suffix appears</h2>
+        <p>
+          Start with four words and how often each occurs in some collection of
+          text. Write every word as its separate characters followed by a marker
+          for the end of the word, printed here as <code>&lt;/w&gt;</code>, which
+          keeps the tokenizer from merging the end of one word into the start of
+          the next.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The count beside each word weights every pair inside it.
+        </p>
+        <table>
+          <thead>
+            <tr><th>word</th><th>count</th><th>as symbols</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>low</td><td>5</td><td><code>l o w &lt;/w&gt;</code></td></tr>
+            <tr><td>lower</td><td>2</td><td><code>l o w e r &lt;/w&gt;</code></td></tr>
+            <tr><td>newest</td><td>6</td><td><code>n e w e s t &lt;/w&gt;</code></td></tr>
+            <tr><td>widest</td><td>3</td><td><code>w i d e s t &lt;/w&gt;</code></td></tr>
+          </tbody>
+        </table>
+        <p>
+          Now count every adjacent pair, adding the word's frequency each time
+          the pair appears. Pairs that would straddle two words are never
+          counted.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The pair <code>(e, s)</code> sits inside <em>newest</em> (6) and
+          <em>widest</em> (3), so it scores 9. The full tally:
+        </p>
+        <table>
+          <thead>
+            <tr><th>pair</th><th>count</th><th>from</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>(e, s)</code></td><td>9</td><td>newest 6 + widest 3</td></tr>
+            <tr><td><code>(s, t)</code></td><td>9</td><td>newest 6 + widest 3</td></tr>
+            <tr><td><code>(t, &lt;/w&gt;)</code></td><td>9</td><td>newest 6 + widest 3</td></tr>
+            <tr><td><code>(w, e)</code></td><td>8</td><td>lower 2 + newest 6</td></tr>
+            <tr><td><code>(l, o)</code></td><td>7</td><td>low 5 + lower 2</td></tr>
+            <tr><td><code>(o, w)</code></td><td>7</td><td>low 5 + lower 2</td></tr>
+            <tr><td><code>(n, e)</code></td><td>6</td><td>newest 6</td></tr>
+            <tr><td><code>(e, w)</code></td><td>6</td><td>newest 6</td></tr>
+            <tr><td><code>(w, &lt;/w&gt;)</code></td><td>5</td><td>low 5</td></tr>
+            <tr><td><code>(w, i)</code></td><td>3</td><td>widest 3</td></tr>
+            <tr><td><code>(i, d)</code></td><td>3</td><td>widest 3</td></tr>
+            <tr><td><code>(d, e)</code></td><td>3</td><td>widest 3</td></tr>
+            <tr><td><code>(e, r)</code></td><td>2</td><td>lower 2</td></tr>
+            <tr><td><code>(r, &lt;/w&gt;)</code></td><td>2</td><td>lower 2</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Three pairs tie at the top: <code>(e, s)</code>, <code>(s, t)</code>,
+          and <code>(t, &lt;/w&gt;)</code>, all 9. The tie is not an accident of
+          the numbers chosen. Those three pairs occur only inside the ending
+          <code>e s t &lt;/w&gt;</code>, which both <em>newest</em> and
+          <em>widest</em> carry and nothing else does, so each pair always equals
+          the frequency of <em>newest</em> plus <em>widest</em>, whatever
+          frequencies are used. The honest reading is that the procedure has
+          found the <em>-est</em> suffix, and the next three steps collapse it
+          into one symbol. Merge the top pair, recount, merge again; when the top
+          scorers all live in the same ending, they fall in sequence.
+        </p>
+        <p>
+          This is the whole of byte-pair encoding. Count adjacent pairs, replace
+          the most frequent pair everywhere with a new combined symbol, and
+          repeat until the vocabulary reaches a target size. The number of merges
+          is the method's one setting.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The idea is older than language models. Philip Gage described it in 1994
+          as a way to compress a file, replacing the commonest pair of bytes with
+          a byte the file never used.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          On the string <code>aaabdaaabac</code> the commonest pair
+          <code>aa</code> is swapped for one new symbol, then <code>ab</code>, and
+          the string shrinks at each pass.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Applied to characters instead of bytes, the same counting builds a
+          tokenizer.
+        </p>
+      </section>
+
+      <section data-nb-section="splitting-a-new-word" id="splitting-a-new-word">
+        <h2>Splitting a word the table never saw</h2>
+        <p>
+          Breaking the tie by taking the first pair to appear in a left-to-right
+          scan, the merges run in this order. Each row adds one symbol to the
+          vocabulary.
+        </p>
+        <table>
+          <thead>
+            <tr><th>step</th><th>merge</th><th>new symbol</th><th>count</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><code>e</code> + <code>s</code></td><td><code>es</code></td><td>9</td></tr>
+            <tr><td>2</td><td><code>es</code> + <code>t</code></td><td><code>est</code></td><td>9</td></tr>
+            <tr><td>3</td><td><code>est</code> + <code>&lt;/w&gt;</code></td><td><code>est&lt;/w&gt;</code></td><td>9</td></tr>
+            <tr><td>4</td><td><code>l</code> + <code>o</code></td><td><code>lo</code></td><td>7</td></tr>
+            <tr><td>5</td><td><code>lo</code> + <code>w</code></td><td><code>low</code></td><td>7</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Five learned symbols now sit above the plain characters:
+          <code>es</code>, <code>est</code>, <code>est&lt;/w&gt;</code>,
+          <code>lo</code>, and <code>low</code>. This ordered list is the merge
+          table, and applying it is a fixed procedure with no choices left in it.
+          Take a word the four training words never contained, <em>lowest</em>,
+          write it out as <code>l o w e s t &lt;/w&gt;</code>, and run the five
+          merges in order. Step 1 joins <code>e s</code> into <code>es</code>.
+          Step 2 gives <code>est</code>. Step 3 gives <code>est&lt;/w&gt;</code>.
+          Step 4 joins <code>l o</code>. Step 5 gives <code>low</code>. What
+          remains is <code>low</code> and <code>est&lt;/w&gt;</code>:
+          <em>lowest</em> becomes <code>[low][est&lt;/w&gt;]</code>, two tokens, a
+          stem and a suffix, neither a whole word nor a single letter.<sup
+            class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The split is deterministic. The same word and the same table always
+          give the same tokens, in the same order, because the merges are applied
+          greedily by rank with nothing to decide. That determinism is also the
+          method's known limit: it commits to one segmentation and cannot weigh
+          alternatives, the gap the probabilistic unigram tokenizer was later
+          built to fill.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          A word with a stray letter shows the greed plainly. <em>slowest</em>
+          becomes <code>[s][low][est&lt;/w&gt;]</code>: the leading <code>s</code>
+          never earned a merge, so it is stranded as its own token.
+        </p>
+        <p>
+          This toy is not a caricature of the real thing. The production
+          tokenizer, trained on far more text, cuts <em>newest</em> into exactly
+          <code>[new][est]</code> and independently found the same <em>-est</em>
+          suffix the four words discovered.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Common whole words such as <em>lower</em> and <em>lowest</em> are frequent
+          enough to have earned a single merged token each, so they arrive whole;
+          the rarer a string, the more it fragments toward its pieces.
+        </p>
+        <div class="nb-aside">
+          The example uses Sennrich's own four words, but its printed figure
+          cannot be copied. Its caption lists a different word set than its code,
+          and the merges it prints do not follow from either. The table here was
+          recomputed from the frequencies and checked by hand.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </div>
+      </section>
+
+      <section data-nb-section="what-the-table-remembers" id="what-the-table-remembers">
+        <h2>What the corpus fixed into the table</h2>
+        <p>
+          Two different things have been quietly separated, and holding them
+          apart is the point. Applying the table is a deterministic function of
+          the string. Building the table was a one-time count over a training
+          corpus, and once built, the table is frozen. The corpus is what decided
+          that <code>est</code> and <code>low</code> deserve their own symbols and
+          a rarer ending does not. Change the corpus and a different set of merges
+          is learned; the tokenizer encodes the statistics of the text it was
+          built on.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <div class="nb-callout">
+          <span class="nb-callout-term">Merge table</span>
+          The ordered list of pair-merges learned by counting a corpus once.
+          Applying it to a string is fixed and repeatable; the corpus is what
+          chose its entries.
+        </div>
+        <p>
+          Modern tokenizers count bytes rather than characters. A tokenizer built
+          over the roughly 130,000 Unicode code points would start from a base of
+          that many symbols before learning a single merge; working over raw bytes
+          needs a base of only 256, one per possible byte value.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Because all 256 bytes exist as tokens, every possible string is
+          representable and nothing is ever unencodable. GPT-2 built a vocabulary
+          of 50,257 this way, the 256 bytes plus 50,000 learned merges plus one
+          end marker.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The tokenizer is a full system in its own right, with its own training
+          run and a rule that lets it rebuild the exact original text from the
+          tokens, whitespace included.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="where-the-split-goes-wrong" id="where-the-split-goes-wrong">
+        <h2>Where a frozen table splits oddly</h2>
+        <p>
+          A fixed table cut for one corpus makes choices that look strange
+          elsewhere, and each is checkable. Whitespace decides edges: the model
+          treats a leading space as part of the following token, so
+          <code>strawberry</code> alone is three tokens, while
+          <code>&nbsp;strawberry</code> with a leading space is one, the same
+          letters cut a different way.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The space was folded into the merges deliberately, because most words in
+          running text follow a space, and it keeps common words from
+          fragmenting.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">3</span><span class="nb-stat-l">tokens in strawberry</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">1</span><span class="nb-stat-l">tokens with a leading space</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">4</span><span class="nb-stat-l">tokens in 1234567890</span>
+          </div>
+        </div>
+        <p>
+          Digits show the same mechanics. The string <code>1234567890</code>
+          splits into <code>[123][456][789][0]</code>, four tokens chunked in
+          groups that ignore place value, and a comma re-cuts the groups:
+          <code>1,234,567</code> becomes five tokens,
+          <code>[1][,][234][,][567]</code>.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A model doing arithmetic is not reading digits in columns; it is reading
+          arbitrary numeric chunks, which is why careful column arithmetic is hard
+          for it. Rarity fragments too. A long, uncommon word such as
+          <em>supercalifragilistic</em> breaks into six or seven tokens,<sup class="nb-cite"><a href="#s1">1</a></sup>
+          since no part of it was frequent enough to earn a large merged
+          symbol, the way common subwords do.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Rarity, not alphabet, is what drives this: a common Japanese greeting
+          encodes to a single token, because it appeared often enough in the
+          corpus, while a genuinely rare string of any script falls back toward
+          its bytes.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="before-the-model-reads" id="before-the-model-reads">
+        <h2>The layer that runs before the model</h2>
+        <p>
+          Tokenization is the representation the whole pipeline stands on, and it
+          is settled before the model does anything. Embeddings, attention, and
+          training all operate on the token sequence this step produces; they
+          never see the letters, only the integers.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          A short word and a small table are enough to see the entire mechanism:
+          count pairs, merge the most frequent, repeat, then apply the frozen list
+          to any word, seen or unseen, and read off the pieces. The model inherits
+          those pieces as its atoms.
+        </p>
+        <p>
+          So a large share of behavior that looks like reasoning is really the
+          shape of the split. The r's in <em>strawberry</em> are unspellable to
+          the model because they are welded inside <code>str</code> and
+          <code>berry</code>. Arithmetic wobbles because digits arrive in chunks
+          that ignore place value. Rare languages cost more and read worse because
+          their text was scarce when the table was counted, so it shatters into
+          bytes.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          None of that is the model failing to think. It is a table, learned once
+          off some corpus, deciding what the model is allowed to see.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-note="Token splits reproduced locally with the cl100k_base and o200k_base encodings."
+              href="https://github.com/openai/tiktoken"
+              >OpenAI · tiktoken, the BPE tokenizer used by GPT-3.5/4/4o</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§2.2–2.3, Input Representation"
+              href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf"
+              >Radford et al. · Language Models are Unsupervised Multitask Learners (GPT-2, OpenAI 2019)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.2, Figure 1"
+              href="https://arxiv.org/abs/1508.07909"
+              >Sennrich, Haddow &amp; Birch · Neural Machine Translation of Rare Words with Subword Units (ACL 2016)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://scispace.com/papers/a-new-algorithm-for-data-compression-3htk4tchd5"
+              >Gage · A New Algorithm for Data Compression (The C Users Journal, 1994)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://en.wikipedia.org/wiki/Byte-pair_encoding"
+              >Wikipedia · Byte-pair encoding</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.1"
+              href="https://arxiv.org/abs/1804.10959"
+              >Kudo · Subword Regularization: Improving Neural Network Translation Models with Multiple Subword Candidates (ACL 2018)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.1"
+              href="https://arxiv.org/abs/1808.06226"
+              >Kudo &amp; Richardson · SentencePiece: A Simple and Language Independent Subword Tokenizer (EMNLP 2018)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/learn/nlp-course/chapter6/5"
+              >Hugging Face · Byte-Pair Encoding tokenization (NLP Course, chapter 6)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
