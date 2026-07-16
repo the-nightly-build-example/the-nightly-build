@@ -167,7 +167,9 @@ def test_duplicated_section_blocks(run_local: Callable[..., Findings]) -> None:
             mut("</article>", '<iframe src="https://x.example"></iframe></article>'),
             id="iframe",
         ),
-        pytest.param(mut("<article>", '<article onclick="x()">'), id="inline-event-handler"),
+        pytest.param(
+            mut("<article>", '<article onclick="x()">'), id="inline-event-handler"
+        ),
         pytest.param(
             mut('href="https://example.org/src3"', 'href="javascript:alert(1)"'),
             id="javascript:-url",
@@ -386,9 +388,7 @@ def test_flex_template_passes_with_agent_named_sections_in_band(
             ],
             id="too-many",
         ),
-        pytest.param(
-            [("twice", cite(1)), ("twice", cite(2))], id="duplicate-labels"
-        ),
+        pytest.param([("twice", cite(1)), ("twice", cite(2))], id="duplicate-labels"),
     ],
 )
 def test_a_flex_outline_out_of_band_blocks(
