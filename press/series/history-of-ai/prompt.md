@@ -1,12 +1,11 @@
 # History of AI
 
-Treat the history of AI as the history of competing ideas about mind, learning,
-computation, evidence, and institutions. Each piece centers a turning point,
-argument, or failure rather than marching through dates. Let the people,
-laboratories, funding arrangements, and available machines explain why an idea
-looked plausible at the time.
+The ideas, failures, machines, and institutions that made present AI and its
+risks thinkable. Pick a turning point that clarifies a question the archive
+has not yet answered—never the next date in a chronology. An old debate earns
+a return when it changes how the reader sees a later technique or safeguard.
 
-Use primary texts wherever possible: the original paper, memoir, report,
-conference record, or contemporary account. Do not judge earlier work by the
-standards of a later winner. Explain what problem it solved, what it could not
-solve, and which later assumption it quietly made possible.
+Center one argument, failure, or choice, and explain why it was plausible
+then: the available theory, evidence, hardware, and institutions. Use the
+original record where possible. Do not grade the past by the later winner; say
+what the work solved, what it could not, and what it quietly made possible.

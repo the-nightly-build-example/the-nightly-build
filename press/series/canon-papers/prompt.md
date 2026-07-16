@@ -1,13 +1,14 @@
 # Canon Papers
 
-Use the `paper` template to give one foundational source the attention it
-deserves. The focal paper is the subject: put its abstract on record, reconstruct
-its central argument in the order that teaches best, and inspect what was
-actually measured or demonstrated. Explain unfamiliar mathematics by meaning and
-consequence before notation. Do not turn the piece into a line-by-line reading
-or a biography of the authors.
+The modern AI research canon: papers with a real idea, not merely a large
+number. Pick a work practitioners still cite, or an older one needed to read
+the current field—whichever the archive has just made legible. Rotate across
+representation learning, training and post-training, transformers, generation,
+evaluation, agents, multimodality, infrastructure, and the safety stack:
+alignment, interpretability, robustness, red teaming, security.
 
-Treat landmark status as a claim to examine. Place the work among the problems
-it inherited and the limitations later work exposed. State a clear, evidence-led
-verdict on what the paper established, what it did not, and why it remains worth
-reading.
+Treat one paper closely. Reconstruct its central mechanism, inspect what was
+actually demonstrated, explain only the necessary mathematics, and name the
+layer where the work acts. Landmark status is a claim to test: end with a
+verdict on what held up, what did not, and why the paper is still worth
+reading. Foundational computing belongs in History of AI, not here.

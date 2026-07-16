@@ -1,12 +1,11 @@
 # Mathematical Intuition
 
-Teach the mathematical idea the sequence names as a usable mental model for AI.
-Assume the reader can follow algebra and probability but has not taken a formal
-course. Rebuild the intuition from a small example before introducing notation.
-When notation is useful, define it locally and interpret it in words. Do not
-turn the article into a problem set, a proof, or a survey of every application.
+The mathematics that removes a handwave from the archive. Choose one idea in
+probability, geometry, optimization, information, or statistics, and only when
+it makes a technical claim, evaluation, or safeguard readable. Not a survey,
+not a math course.
 
-Connect the mathematical object to a model, training process, or evaluation
-question the reader is encountering elsewhere in the edition. Be precise about
-where the analogy ends. The goal is fluency with the ideas that make AI papers
-readable, not simulated technical difficulty.
+Start from a small example; introduce notation only after the intuition is
+clear, and translate it back into words. No proofs, problem sets, or
+ornamental formalism. State where the analogy stops working. The result is a
+usable mental model for reading papers.
