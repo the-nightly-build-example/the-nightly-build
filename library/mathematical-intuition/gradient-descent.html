@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Every trained model is rolling downhill on a computed slope · Mathematical Intuition</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "mathematical-intuition",
+        "slug": "gradient-descent",
+        "template": "article",
+        "title": "Every trained model is rolling downhill on a computed slope",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-16",
+        "tags": ["optimization"],
+        "sources": 8,
+        "words": 1559,
+        "reading_minutes": 8,
+        "dek": "Minimizing x² by hand turns “training” concrete: the derivative points downhill, and a single step-size number decides whether the run settles at the bottom or flies apart.",
+        "harness": "claude-code-routine",
+        "model": "claude"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">Mathematical Intuition</div>
+        <h1 class="nb-title">Every trained model is rolling downhill on a computed slope</h1>
+        <p class="nb-dekline">
+          Minimizing x² by hand turns “training” concrete: the derivative points downhill, and a single step-size number decides whether the run settles at the bottom or flies apart.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-07-16</span>
+        </div>
+      </header>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The claim inside “trained by gradient descent”</h2>
+        <p>
+          When a paper says a model was trained by gradient descent, it is
+          describing a picture that happens to be literally true. The model
+          starts somewhere on a landscape of error and rolls downhill, one step
+          at a time, toward a low point. The landscape is the objective; the
+          height at each location is how wrong the model currently is; and each
+          step moves in the direction that lowers that number fastest. Cauchy
+          wrote the method down in 1847, as a way to solve systems of equations,
+          and its shape has not changed since: from wherever you stand, read the
+          slope, and step against it.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The one thing to hold onto is where the downhill direction comes from.
+          The method does not try a handful of directions and keep whichever
+          looked best. It computes the slope directly, from the derivative of
+          the objective, and the derivative hands back the steepest downhill
+          direction in a single evaluation. The slope is computed, not searched.
+          That is what makes the idea general: any objective you can
+          differentiate, you can improve this way, without ever solving for the
+          minimum in closed form.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-parabola-by-hand" id="the-parabola-by-hand">
+        <h2>Rolling a parabola downhill by hand</h2>
+        <p>
+          Take the simplest bowl there is: f(x) = x², a parabola whose lowest
+          point sits at zero. Its derivative is 2x, and that expression is the
+          whole slope, its size telling you how steep the curve is where you
+          stand and its sign telling you which way is uphill. At x = 1 the slope
+          is 2, positive, so uphill runs to the right and downhill runs to the
+          left. Step left.
+        </p>
+        <p>
+          How far left is the one free choice, the step size, written η. Multiply
+          the slope by η and subtract, and the new position is x minus η times
+          2x. Start at x = 1 with a step size of a quarter. The slope there is 2,
+          a quarter of that is one half, and the first step lands at 0.5. From
+          0.5 the slope is 1, so the next step of 0.25 lands at 0.25. The one
+          after that lands at 0.125, then 0.0625. The position runs 1, 0.5, 0.25,
+          0.125, 0.0625, each step covering exactly half the ground the last one
+          did, the way folding a strip of paper in half again and again leaves
+          you a smaller and smaller piece.
+        </p>
+        <p>
+          The error falls faster than the position. The loss runs 1, then 0.25,
+          then 0.0625, 0.015625, 0.00390625, dropping to a quarter of itself each
+          step while x only halves. The motion also slows on its own: because the
+          slope shrinks as x nears zero, each step is smaller than the last even
+          though η never changes. The run eases into the minimum instead of
+          slamming into it. This is the part Cauchy established in his note. For a
+          small enough step the function is guaranteed to come down, and the
+          amount it drops is proportional to the squared steepness of the
+          slope.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <div class="nb-aside">
+          A historical survey dates a “method of steepest descent” to Cauchy in
+          1829, but that earlier work is a different object, a trick for
+          approximating integrals that borrows the same downhill geometry and the
+          same name.<sup class="nb-cite"><a href="#s2">2</a></sup> The step used
+          to train models is the 1847 one.
+        </div>
+      </section>
+
+      <section data-nb-section="the-gradient" id="the-gradient">
+        <h2>The gradient points the steepest way down</h2>
+        <p>
+          A real model has millions of numbers to adjust, not one, so the single
+          slope 2x becomes a list: one partial derivative per parameter, each
+          measuring how the error changes as you nudge that parameter alone by
+          itself. Stack those slopes into a vector and you have the gradient,
+          written ∇f, which reads in plain words as the list of slopes pointing
+          the steepest way uphill, so its negative points the steepest way down.<sup
+            class="nb-cite"><a href="#s3">3</a></sup> From there the recipe is the
+          toy example again: step against the gradient, with the step size a
+          separate dial you either fix in advance or set by testing a few lengths
+          along that direction.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Two practical wrinkles sit on top of this without changing the picture.
+          The gradient of a real objective is usually not computed on all the
+          data at once but estimated from a small sample, and the step size is
+          deliberately shrunk as training goes on. That combination predates
+          neural networks: Robbins and Monro built exactly this scheme of
+          shrinking steps and noisy measurements in 1951, to chase the root of a
+          function they could only sample.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          None of it moves the mechanism. The field's standard framing still
+          describes training as pushing the parameters opposite the gradient,
+          with the learning rate, its everyday name for the step size, setting
+          how big each push is.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="one-number-decides" id="one-number-decides">
+        <h2>One number decides whether it settles or flies apart</h2>
+        <p>
+          The step size is a real dial because turning it too far breaks the
+          method in a specific way. Go back to x² and change nothing but the step:
+          set η to 1.5. Now the first step overshoots the bottom and lands on the
+          far side, at −2. The next overshoots worse, to 4, then −8, then 16. Each
+          step doubles the distance to the minimum and flips to the opposite side,
+          so the position runs away while swinging across the very point it is
+          meant to reach. The loss tracks the flight: 1, 4, 16, 64, 256,
+          quadrupling every step.
+        </p>
+        <p>
+          For this parabola the boundary is exact. Any step size above 1 diverges,
+          and anything below 1 converges. Right at the hinge, η = 1, the position
+          bounces between 1 and −1 forever, coming no nearer and going no farther.
+          A step size of exactly one half is the sweet spot that drops onto the
+          minimum in a single move. The dial has a hard edge, and for x² it sits
+          at one.
+        </p>
+        <figure class="nb-chart">
+          <figcaption>
+            Fig. 1 · Loss at each step for f(x) = x² on a log scale: with a step
+            size of 0.25 the loss falls from 1 to about 0.004 in four steps; with
+            a step size of 1.5 it climbs from 1 to 256.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </figcaption>
+          <canvas></canvas>
+          <noscript>chart requires JS; data in caption and prose</noscript>
+          <script type="application/json" data-nb-chart>
+            {
+              "type": "line",
+              "labels": ["0", "1", "2", "3", "4"],
+              "series": [
+                { "name": "step size 0.25 (converges)", "values": [1, 0.25, 0.0625, 0.015625, 0.00390625] },
+                { "name": "step size 1.5 (diverges)", "values": [1, 4, 16, 64, 256] }
+              ],
+              "y": { "scale": "log", "label": "loss f(x) = x²" },
+              "x": { "label": "step number" }
+            }
+          </script>
+        </figure>
+        <p>
+          The number 1 is special to x². For any other objective the safe range
+          depends on how sharply the surface curves, but the general statement has
+          the same shape as the toy: there is an upper bound on the step size, set
+          by the curvature of the objective, and above it the guarantee of descent
+          is gone.<sup class="nb-cite"><a href="#s6">6</a></sup> On the jagged error
+          surfaces of real networks this failure has a name. Such surfaces carry
+          near-vertical walls, and one ordinary step taken at the base of a wall
+          can fling the parameters far across the landscape, throwing away much of
+          the training in a single move.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="where-the-picture-stops" id="where-the-picture-stops">
+        <h2>Where the downhill picture stops</h2>
+        <p>
+          Inside a bowl the downhill picture is exactly right, and it is worth
+          leaning on completely while it holds. The fence is where the surface
+          stops being a single bowl. Gradient descent does reach a low point, but
+          low is local: it settles wherever the ground first goes flat around it,
+          which is a stable resting place and not necessarily the deepest one on
+          the whole surface.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          On the high-dimensional surfaces of real networks, the more common
+          obstacle is a saddle: a point where the surface falls away in some
+          directions and rises in others, ringed by wide, nearly flat plateaus.
+          Dauphin and colleagues argued that these saddles, far more than local
+          minima, are what dominate such surfaces, and that the flat regions
+          around them can slow learning to a crawl while looking, from the inside,
+          like a stuck minimum.<sup class="nb-cite"><a href="#s8">8</a></sup> The
+          honest form of the caution is about stalling. On the flat the steps grow
+          tiny and progress nearly stops, though gradient descent often does drift
+          free of a saddle in time and carry on down.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          One more boundary: the error the
+          method drives down is measured on the training data, which is only a
+          stand-in for the performance anyone actually cares about.<sup
+            class="nb-cite"><a href="#s6">6</a></sup> So the next time a paper
+          reports a model trained by gradient descent, the phrase has a machine
+          behind it. A point on a landscape of error reads the slope beneath it
+          and steps downhill by an amount someone chose, easing toward a bottom
+          that is stable, reachable, and only ever as good as the landscape it
+          was given.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="eq. 1, pp. 2–3"
+              href="https://ems.press/content/book-chapter-files/27368"
+              >Documenta Mathematica · Lemaréchal, “Cauchy and the Gradient Method” (Cauchy 1847, in translation)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/1908.01083"
+              >arXiv · Saad, “Iterative methods for linear systems of equations: A brief historical journey”</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="slides 9.10–9.11, 9.16"
+              href="https://web.stanford.edu/class/ee364a/lectures/unconstrained.pdf"
+              >Stanford EE364a · Boyd &amp; Vandenberghe, Convex Optimization, unconstrained minimization</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3, eq. 7, p. 401"
+              href="https://projecteuclid.org/journals/annals-of-mathematical-statistics/volume-22/issue-3/A-Stochastic-Approximation-Method/10.1214/aoms/1177729586.full"
+              >Annals of Mathematical Statistics · Robbins &amp; Monro, “A Stochastic Approximation Method” (1951)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.ruder.io/optimizing-gradient-descent/"
+              >Sebastian Ruder · “An overview of gradient descent optimization algorithms” (2016)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§2.2 eq. 2.6, §4.3 Thm 4.8"
+              href="https://arxiv.org/abs/1606.04838"
+              >SIAM Review · Bottou, Curtis &amp; Nocedal, “Optimization Methods for Large-Scale Machine Learning” (2018)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§8.2.2–8.2.4"
+              href="https://www.deeplearningbook.org/contents/optimization.html"
+              >Deep Learning (MIT Press) · Goodfellow, Bengio &amp; Courville, ch. 8, “Optimization for Training Deep Models”</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="abstract; §1"
+              href="https://arxiv.org/abs/1406.2572"
+              >NeurIPS 2014 · Dauphin et al., “Identifying and attacking the saddle point problem in high-dimensional non-convex optimization”</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
