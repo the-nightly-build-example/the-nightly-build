@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arthur Samuel's checkers program learned by chasing its own deeper guess · History of AI</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "history-of-ai",
+        "slug": "samuel-checkers",
+        "template": "article",
+        "title": "Arthur Samuel's checkers program learned by chasing its own deeper guess",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-17",
+        "tags": ["machine-learning", "arthur-samuel", "checkers", "temporal-difference"],
+        "sources": 9,
+        "words": 1886,
+        "reading_minutes": 9,
+        "dek": "On an IBM 701 with a few thousand words of storage, Samuel's program already separated memorizing positions from generalizing over them, and it never beat the champion the legend later handed it.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">History of AI</div>
+        <h1 class="nb-title">Arthur Samuel's checkers program learned by chasing its own deeper guess</h1>
+        <p class="nb-dekline">
+          On an IBM 701 with a few thousand words of storage, Samuel's program
+          already separated memorizing positions from generalizing over them, and
+          it never beat the champion the legend later handed it.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-17</span>
+        </div>
+      </header>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A program that learned to beat its author</h2>
+        <p>
+          In 1959 Arthur Samuel published a paper in the IBM Journal of Research
+          and Development with a plain, startling claim in its abstract: a
+          computer could be programmed "so that it will learn to play a better
+          game of checkers than can be played by the person who wrote the
+          program," and could learn to do it "in a remarkably short period of
+          time (8 or 10 hours of machine-playing time)."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Abstract">1</a></sup>
+          The phrase in the title was "machine learning." Under it sat something
+          that had until then been mostly a promise: a program that got better
+          from its own experience, running on real hardware, with the results
+          written down.
+        </p>
+        <p>
+          The lineage was already several years old. Samuel wrote the first
+          operating checkers program for the IBM 701 in 1952, recoded it for the
+          IBM 704 in 1954, finished the first version that learned in 1955, and
+          demonstrated it on television on February 24, 1956.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="notes near p. 559">1</a></sup>
+          By one much-repeated account, Thomas J. Watson Sr. predicted the
+          television demonstration would raise IBM's stock fifteen points, and it
+          did.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Samuel was not the first to put checkers on a computer; Christopher
+          Strachey had run a checkers program on the Ferranti Mark I in 1951. His
+          claim was narrower and more durable. It was about learning.<sup
+            class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The paper described two ways the program improved: rote learning, which
+          memorized positions it had seen, and learning by generalization, which
+          adjusted a scoring rule so it applied to positions it had not. The
+          distinction between memorizing and generalizing is one its modern
+          descendants still teach, and Samuel drew it on a machine holding a few
+          thousand words of memory. The famous story that the program later beat a
+          champion outran what the record shows.
+        </p>
+      </section>
+
+      <section data-nb-section="the-machine" id="the-machine">
+        <h2>Packing the board into four words</h2>
+        <p>
+          The design was shaped by what the machine physically was. IBM's own
+          account of the 701 describes its memory as "electrostatic devices called
+          Williams tubes," each holding a charge pattern equivalent to about
+          20,000 digits, backed by magnetic drums and tape.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup>
+          In the units an engineer of the day would quote, that came to 2,048
+          words of 36 bits each, expandable to 4,096, with a memory cycle of 12
+          microseconds.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          A few kilobytes held the whole working state.
+        </p>
+        <p>
+          A checkers position had to fit inside that. Samuel packed one board into
+          four 36-bit machine words, mapping the playable squares onto individual
+          bit positions.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Appendix">1</a></sup>
+          Scoring a position with the fuller evaluation rule took about 7.5
+          milliseconds; making a move and finding the resulting board took another
+          millisecond and a half.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Appendix timing table">1</a></sup>
+          Self-play meant scoring thousands of positions per game at those rates,
+          which is why learning ran in hours rather than seconds, and why every
+          later choice about how much to remember and how far to look was really a
+          choice about milliseconds and machine words.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">2,048</span
+            ><span class="nb-stat-l">36-bit words of 701 memory</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">4 words</span
+            ><span class="nb-stat-l">to store one board position</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">7.5 ms</span
+            ><span class="nb-stat-l">to score a position (16 terms)</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">8–10 hr</span
+            ><span class="nb-stat-l">of self-play to learn</span>
+          </div>
+        </div>
+      </section>
+
+      <section data-nb-section="rote-learning" id="rote-learning">
+        <h2>What memorizing could not reach</h2>
+        <p>
+          The simpler method was to remember. As the program played, it saved each
+          board position it evaluated together with the value it had backed up for
+          that position from a look-ahead search, and it stored the pair on a
+          memory tape. When it met a saved position again, it could substitute the
+          value it had already worked out, in effect recalling the result of a
+          search instead of repeating it.<sup class="nb-cite"><a href="#s1"
+            data-nb-locator="Rote-learning tests">1</a></sup>
+          The tape came to hold "something over 53,000 board positions," which
+          sharpened the program's opening and endgame play where the same
+          situations recurred.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="p. 542">1</a></sup>
+        </p>
+        <p>
+          The ceiling was arithmetic. Memorizing scales with the number of
+          distinct positions, and checkers has far more than a tape can hold.
+          Samuel estimated that master-caliber play by rote alone would require
+          more than a million words of storage, and judged the game "not
+          completely amenable to this treatment on the IBM 704."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Conclusion (3)">1</a></sup>
+          Rote learning was real learning of a narrow kind. It made the program
+          faster and steadier on ground it had already covered. It could do
+          nothing at all with a position it had never stored, and most positions
+          are ones it had never stored. That gap is what the second method was
+          built to close.
+        </p>
+      </section>
+
+      <section data-nb-section="learning-by-generalization" id="learning-by-generalization">
+        <h2>The scoring rule that corrected itself</h2>
+        <p>
+          To act on positions it had never seen, the program needed a rule rather
+          than a table. Samuel scored a board with an evaluation polynomial: a
+          weighted sum of hand-chosen features such as piece advantage, mobility,
+          and control of the center. The rote-era rule used four such terms; the
+          generalization version used 16 active terms selected from a pool of 38
+          parameters, with piece advantage computed separately.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Learning procedure involving generalizations, pp. 542–543">1</a></sup>
+        </p>
+        <div class="nb-callout">
+          <span class="nb-callout-term">Evaluation polynomial</span>
+          A weighted sum of board features that the program maximizes as a
+          stand-in, a proxy, for the thing it cannot compute directly: whether a
+          position ultimately wins.
+        </div>
+        <p>
+          The learning was a way of tuning that proxy against itself. To choose a
+          move, the program looked ahead about three moves, extending some forced
+          lines much deeper, and backed up the best reachable score to the current
+          position under the assumption of good play by both sides.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Ply limitations, p. 538">1</a></sup><sup
+            class="nb-cite"><a href="#s2">2</a></sup>
+          Then came the adjustment. At each of its own moves the program compared
+          the score it had recorded for the board one move earlier against the
+          backed-up score the deeper look-ahead now assigned the current position.
+          It called that difference delta. When delta was positive, the terms that
+          had voted for the earlier position were given more weight and the terms
+          that had voted against it were given less; when it was negative, the
+          reverse.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Polynomial modification procedure, p. 543">1</a></sup>
+          The program was trying, in Samuel's words, "to make the score, calculated
+          for the current board position, look like that calculated for the
+          terminal board position of the chain of moves which most probably will
+          occur during actual play."
+        </p>
+        <p>
+          It trained by playing itself. One copy, Alpha, adjusted its polynomial
+          after every move; the other, Beta, held a fixed polynomial for the length
+          of a game and inherited Alpha's whenever Alpha won.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="pp. 542–543">1</a></sup>
+          Over eight to ten hours the weights settled toward a shallow estimate
+          that agreed with the program's own deeper look. Moving a current estimate
+          toward a later, deeper estimate of the same quantity is what Richard
+          Sutton and Andrew Barto, decades afterward, would identify as an early use
+          of temporal-difference learning.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          That reading is theirs, from a theory Samuel did not have. What he had in
+          1959 was the mechanism, and the reason for it was thrift: he could not
+          afford to search deep on every move, so he made a cheap estimate carry the
+          weight of an expensive one and taught it from the difference.
+        </p>
+      </section>
+
+      <section data-nb-section="the-record" id="the-record">
+        <h2>Whom the program actually beat</h2>
+        <p>
+          Samuel was candid about how well it played. He graded the learning
+          program as "a rather better-than-average novice, but definitely not as an
+          expert," and reported that amateurs who faced it called it "tricky but
+          beatable."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="pp. 542, 548">1</a></sup>
+          The record after that is where the popular telling and the primary
+          documents part ways.
+        </p>
+        <p>
+          In the summer of 1962, running on an IBM 7094 rather than the 1950s
+          701 or 704, the program won a single game against Robert Nealey, a blind
+          checkers master from Connecticut.<sup class="nb-cite"><a href="#s2">2</a></sup><sup
+            class="nb-cite"><a href="#s4">4</a></sup>
+          IBM's contemporary Research News billed Nealey as "a former Connecticut
+          checkers champion, and one of the nation's foremost players." As Jonathan
+          Schaeffer documents, that billing was inflated: Nealey had not won the
+          Connecticut title at the time of the game, he took it only in 1966, four
+          years later; his tournament results "never justified" the master claim;
+          and he had never played the U.S. championship.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup>
+          Martin Fierz reaches the same verdict, that Nealey "was not half as good
+          as was claimed."<sup class="nb-cite"
+            ><a href="#s7" data-nb-url="https://www.fierz.ch/samuel.htm"
+              data-nb-note="the 1962 game score, replayable">7</a></sup>
+          IBM's own present-day history page has quietly retreated to calling him a
+          "self-described 'checkers master.'"<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          Samuel's 1967 sequel supplies the ceiling in his own hand. Its abstract
+          reports the program "still unable to outplay checker masters."<sup
+            class="nb-cite"><a href="#s9" data-nb-locator="Abstract">9</a></sup>
+          A six-game rematch against Nealey ended with the machine achieving five
+          draws and one loss, so it did not beat him again. In 1965 the World
+          Champion, W. F. Hellman, won all four games played by mail, though he was
+          played to a draw in one hurriedly played crossboard game, and Pacific
+          Coast Champion K. D. Hanson beat later versions on two occasions.<sup
+            class="nb-cite"><a href="#s9" data-nb-locator="Footnote 2">9</a></sup>
+          At a 1966 exhibition tied to the world championship the program lost all
+          eight of its crossboard games to Hellman and Derek Oldbury.<sup
+            class="nb-cite"><a href="#s6">6</a></sup><sup class="nb-cite"
+            ><a href="#s7">7</a></sup><sup class="nb-cite"><a href="#s2">2</a></sup>
+          The legend hands the program a champion. The record gives it one win over
+          a strong blind amateur whose reputation had been oversold, and losses to
+          every genuine master it faced.
+        </p>
+      </section>
+
+      <section data-nb-section="what-it-started" id="what-it-started">
+        <h2>The ancestor already understood</h2>
+        <p>
+          What Samuel built on a few thousand words of memory was not a champion. It
+          was the first working case of a program that improved from its own play,
+          and the distinctions it had to draw to do that are the ones the subject
+          still organizes around. Memorizing against generalizing: rote learning
+          was quick but bounded by storage, and generalization was the part that
+          could handle a position never seen before. A proxy objective: the
+          polynomial stood in for winning, which the program could not compute, and
+          the work was keeping that stand-in honest against a deeper search. The
+          delta update, moving a shallow estimate toward a deeper one, was the
+          ancestor of a method taught today under another name.
+        </p>
+        <p>
+          The constraints were the design. Kilobytes of memory forced the choice
+          between remembering positions and generalizing over them. Milliseconds
+          per position forced a shallow search. A shallow search forced the delta
+          update that let the estimate teach itself, because deep look-ahead was
+          not affordable. Judge it as 1959 could: a better-than-average player, no
+          more, and Samuel said so first.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="p. 548">1</a></sup> The value is not in the games it won. It
+          is that the problems its modern catalogue teaches, generalization against
+          memorization and an objective that is only a proxy for the goal, were
+          already built and already understood as problems, on a machine that could
+          barely hold the board.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://people.csail.mit.edu/brooks/idocs/Samuel.pdf"
+              >A. L. Samuel · "Some Studies in Machine Learning Using the Game of
+              Checkers," IBM Journal of Research and Development 3(3):210–229
+              (1959); cited from the reprint in Computers and Thought
+              (Feigenbaum & Feldman, eds., 1963)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://ai.stanford.edu/~nilsson/QAI/qai.pdf"
+              >Nils J. Nilsson · The Quest for Artificial Intelligence (Cambridge,
+              2010), §5.4 "Game-Playing Programs"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.ibm.com/history/700"
+              >IBM · "The 700 series" (IBM corporate history)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://en.wikipedia.org/wiki/IBM_701"
+              >"IBM 701" · Wikipedia</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.incompleteideas.net/book/first/ebook/node109.html"
+              >Richard S. Sutton & Andrew G. Barto · Reinforcement Learning: An
+              Introduction (1st ed.), §11.2 "Samuel's Checkers Player"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://webdocs.cs.ualberta.ca/~chinook/project/legacy.html"
+              >Jonathan Schaeffer (Chinook project) · "Arthur Samuel's Legacy"</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.fierz.ch/history.htm"
+              >Martin Fierz · "A brief history of computer checkers"</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.ibm.com/history/early-games"
+              >IBM · "The games that helped AI evolve" (IBM corporate history)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.cs.virginia.edu/~evans/greatworks/samuel.pdf"
+              >A. L. Samuel · "Some Studies in Machine Learning Using the Game of
+              Checkers. II—Recent Progress," IBM Journal 11(6):601–617 (1967)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
