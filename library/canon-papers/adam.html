@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adam · Canon Papers</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "canon-papers",
+        "slug": "adam",
+        "template": "paper",
+        "title": "Adam's convergence proof was wrong and it still trains deep learning",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-17",
+        "tags": ["optimization", "adam", "gradient-descent"],
+        "sources": 6,
+        "words": 2598,
+        "reading_minutes": 12,
+        "dek": "Kingma and Ba built a nearly hyperparameter-free optimizer from two running averages of the gradient, then proved a convergence bound a simple convex problem would later break.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">Canon Papers</div>
+        <h1 class="nb-title">Adam's convergence proof was wrong and it still trains deep learning</h1>
+        <p class="nb-dekline">
+          Kingma and Ba built a nearly hyperparameter-free optimizer from two
+          running averages of the gradient, then proved a convergence bound a
+          simple convex problem would later break.
+        </p>
+        <div class="nb-byline">
+          <span>12 min read</span><span>2026-07-17</span>
+        </div>
+      </header>
+
+      <section data-nb-section="abstract" id="abstract">
+        <div class="nb-paper-card">
+          <p class="nb-paper-title">
+            Adam: A Method for Stochastic Optimization
+          </p>
+          <p class="nb-paper-meta">
+            Diederik P. Kingma &amp; Jimmy Ba · ICLR 2015 · arXiv:1412.6980
+          </p>
+          <a class="nb-paper-link" href="https://arxiv.org/abs/1412.6980"
+            >Read the paper</a
+          >
+          <blockquote class="nb-paper-abstract">
+            We introduce Adam, an algorithm for first-order gradient-based
+            optimization of stochastic objective functions, based on adaptive
+            estimates of lower-order moments. The method is straightforward to
+            implement, is computationally efficient, has little memory
+            requirements, is invariant to diagonal rescaling of the gradients,
+            and is well suited for problems that are large in terms of data
+            and/or parameters. The method is also appropriate for
+            non-stationary objectives and problems with very noisy and/or sparse
+            gradients. The hyper-parameters have intuitive interpretations and
+            typically require little tuning. Some connections to related
+            algorithms, on which Adam was inspired, are discussed. We also
+            analyze the theoretical convergence properties of the algorithm and
+            provide a regret bound on the convergence rate that is comparable to
+            the best known results under the online convex optimization
+            framework. Empirical results demonstrate that Adam works well in
+            practice and compares favorably to other stochastic optimization
+            methods. Finally, we discuss AdaMax, a variant of Adam based on the
+            infinity norm.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </blockquote>
+        </div>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Every parameter gets its own step size</h2>
+        <p>
+          Plain gradient descent moves every parameter by the same rule: take
+          the gradient, multiply by one step size shared across the whole model,
+          subtract. That single number sets the pace for millions of parameters,
+          and tuning it is where practitioners spend the most effort. Adam keeps
+          the shape of that step and changes what sets its size. Each parameter
+          earns its own step, scaled by how large and how noisy its gradients
+          have recently been, and the model-wide learning rate becomes a knob
+          that, at its default, mostly does not need
+          touching.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The mechanism is two running averages of the gradient and a small
+          correction for how they behave in the first few steps: a direction
+          from one average, a per-parameter scale from the other, and a
+          rescaling so the earliest steps are not dragged toward zero. The paper
+          then proves the method converges and measures it on a handful of
+          models. Two of those claims did not survive contact with later work.
+        </p>
+      </section>
+
+      <section data-nb-section="two-moving-averages" id="two-moving-averages">
+        <h2>Two averages of the gradient</h2>
+        <p>
+          Write <em>g</em>ₜ for the gradient at step <em>t</em>. Adam does not
+          use it raw. It keeps a running average of the gradient and, separately,
+          a running average of the gradient squared, updating both a little on
+          every step.
+        </p>
+        <p>
+          The first is the first moment, <em>m</em>ₜ. Its update is
+          <em>m</em>ₜ = β₁·<em>m</em>ₜ₋₁ + (1−β₁)·<em>g</em>ₜ, with β₁ = 0.9 by
+          default. Read that as a mixture: keep 90% of the old average, fold in
+          10% of the newest gradient, so one noisy gradient barely moves it. If
+          the gradients hold steady at some value <em>g</em>, the average settles
+          at exactly <em>g</em>, because at a fixed point <em>m</em> =
+          0.9·<em>m</em> + 0.1·<em>g</em>. So <em>m</em>ₜ estimates the mean
+          gradient. This is momentum: the step follows where the gradients have
+          been agreeing to point.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The second is the second raw moment, <em>v</em>ₜ, built the same way
+          from the squared gradient: <em>v</em>ₜ = β₂·<em>v</em>ₜ₋₁ +
+          (1−β₂)·<em>g</em>ₜ², with β₂ = 0.999. Squaring throws away the sign and
+          keeps the size, so <em>v</em>ₜ tracks the typical magnitude of a
+          parameter's gradients. If the gradients hold steady at <em>g</em>,
+          <em>v</em>ₜ settles at <em>g</em>², the uncentered variance. That
+          per-parameter size estimate is the idea Adam inherits from AdaGrad,
+          which first scaled each parameter's step by its own accumulated
+          gradient history.<sup class="nb-cite"><a href="#s2">2</a></sup> Adam's
+          twist is to make it a decaying average rather than a running total, so
+          the scale reflects recent gradients, not every gradient since step
+          one.
+        </p>
+      </section>
+
+      <section data-nb-section="bias-correction" id="bias-correction">
+        <h2>Why the first steps need rescaling</h2>
+        <p>
+          Both averages start at zero, because there is no gradient history
+          before the first step. That start biases them. On step one with β₂ =
+          0.999, the second-moment update gives <em>v</em>₁ = 0.001·<em>g</em>₁²,
+          a value a thousand times smaller than the <em>g</em>₁² it is supposed
+          to estimate. The average is technically correct as a weighted sum, but
+          it sits far below the quantity it stands for, and it stays low for
+          many steps while the history fills in.
+        </p>
+        <figure class="nb-excerpt">
+          <blockquote>
+            these moving averages are initialized as (vectors of) 0's, leading
+            to moment estimates that are biased towards zero, especially during
+            the initial timesteps.<sup class="nb-cite"><a href="#s1" data-nb-locator="§2 · p. 2">1</a></sup>
+          </blockquote>
+          <figcaption>
+            <span class="nb-excerpt-loc">§2 · p. 2</span>
+            The paper names the defect it then repairs: the zero start makes both
+            averages read low early, and the fix is a rescaling, not a change to
+            the recurrences themselves.
+          </figcaption>
+        </figure>
+        <p>
+          The repair is division. Adam divides <em>m</em>ₜ by (1 − β₁ᵗ) and
+          <em>v</em>ₜ by (1 − β₂ᵗ), where <em>t</em> is the step number, to get
+          the bias-corrected estimates <em>m̂</em>ₜ and <em>v̂</em>ₜ. On step one
+          the second divisor is (1 − 0.999) = 0.001, so dividing <em>v</em>₁ by
+          it multiplies the estimate back up roughly a thousandfold, undoing the
+          shrinkage exactly. As <em>t</em> grows, β₂ᵗ falls toward zero, the
+          divisor approaches one, and the correction quietly switches
+          off.<sup class="nb-cite"><a href="#s1">1</a></sup> The correction is not
+          cosmetic: without it, an average that starts far too small makes the
+          update's denominator too small and inflates the step, and the paper
+          reports that skipping this correction, as RMSProp does, "leads to very
+          large stepsizes and often divergence."<sup class="nb-cite"><a href="#s1" data-nb-locator="§5 · p. 4">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-update-rule" id="the-update-rule">
+        <h2>Assembling the step</h2>
+        <p>
+          With both corrected averages in hand, the update is one line. The
+          direction comes from the smoothed gradient; the size comes from
+          dividing by the square root of the smoothed squared gradient; a tiny
+          constant keeps the division safe.
+        </p>
+        <pre>
+m_t  = β₁·m_{t−1} + (1−β₁)·g_t          first moment
+v_t  = β₂·v_{t−1} + (1−β₂)·g_t²         second raw moment
+m̂_t = m_t / (1 − β₁ᵗ)                   bias-corrected
+v̂_t = v_t / (1 − β₂ᵗ)                   bias-corrected
+θ_t  = θ_{t−1} − α · m̂_t / (√v̂_t + ε)  parameter update
+
+defaults:  α = 0.001   β₁ = 0.9   β₂ = 0.999   ε = 1e-8</pre>
+        <p>
+          Read the last line against plain gradient descent. There, the update
+          was θ minus one shared step size times the gradient. Here the gradient
+          is replaced by <em>m̂</em>ₜ, the averaged direction, and the single
+          step size is replaced by α divided by (√<em>v̂</em>ₜ + ε), which is
+          different for every parameter. A parameter with large, noisy gradients
+          builds a large <em>v̂</em>ₜ, so its denominator is large and its step
+          shrinks. The constant ε = 1e-8 sits inside the denominator only to stop
+          a division by zero when <em>v̂</em>ₜ is tiny. The stated defaults, α =
+          0.001, β₁ = 0.9, β₂ = 0.999, are the settings the paper recommends
+          across the problems it tested.<sup class="nb-cite"><a href="#s1" data-nb-locator="Algorithm 1 · p. 2">1</a></sup>
+        </p>
+        <p>
+          Each parameter moves in the direction its
+          gradients have been agreeing on, by an amount cut down in proportion to
+          how large those gradients have recently been. One consequence the paper
+          notes is that a step's size is approximately bounded by α regardless of
+          the gradient's scale, so α sets a trust region on how far any parameter
+          can move in one update.<sup class="nb-cite"><a href="#s1" data-nb-locator="§2.1 · p. 2">1</a></sup>
+          Those five lines are Adam's signature: two moving averages of the
+          gradient, two (1 − βᵗ) divisors that undo their early bias, and an ε
+          living under the square root.
+        </p>
+      </section>
+
+      <section data-nb-section="what-the-paper-measured" id="what-the-paper-measured">
+        <h2>What section 6 actually tested</h2>
+        <p>
+          A method this widely trusted invites the assumption that its paper
+          proved it trains better models. It did not test that. The experiments
+          ran three kinds of model: convex logistic regression on MNIST digits
+          and a bag-of-words version of the IMDB reviews, a small network of two
+          hidden layers of 1000 ReLU units each on MNIST, and one modest
+          convolutional stack on
+          CIFAR-10.<sup class="nb-cite"><a href="#s1" data-nb-locator="§6 · pp. 5–7">1</a></sup>
+          Every curve in the section plots training cost against steps or epochs.
+          None of them measures error on held-out test data, so the paper
+          measured how fast Adam drives down the training objective, never how
+          well the model generalizes.
+        </p>
+        <p>
+          On dense MNIST logistic regression Adam matched SGD with momentum and
+          beat AdaGrad; on sparse IMDB bag-of-words, where per-parameter scaling
+          suits sparse features, AdaGrad stayed competitive. On the small network, where the paper's own
+          convergence theory does not apply, it reports that Adam "often
+          outperforms other methods." The convolutional case is where the paper
+          argues against its own headline.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <figure class="nb-excerpt">
+          <blockquote>
+            We notice the second moment estimate v̂_t vanishes to zeros after a
+            few epochs and is dominated by the ε in algorithm 1.<sup class="nb-cite"><a href="#s1" data-nb-locator="§6.3 · p. 7">1</a></sup>
+          </blockquote>
+          <figcaption>
+            <span class="nb-excerpt-loc">§6.3 · p. 7</span>
+            On the convolutional network the second moment collapses, so the
+            per-parameter scaling that is Adam's selling point falls back to a
+            fixed ε and the update degrades toward ordinary momentum. The paper
+            calls the result only a "marginal improvement over SGD with
+            momentum."
+          </figcaption>
+        </figure>
+        <p>
+          The evidence supports a narrow claim: Adam
+          reaches low training loss quickly on these problems, and on the one
+          convolutional case it is barely ahead of a tuned baseline and partly
+          loses the adaptivity it was built for. The broad reputation, that Adam
+          produces models that generalize well, is not what section 6 measured.
+        </p>
+      </section>
+
+      <section data-nb-section="the-refuted-theorem" id="the-refuted-theorem">
+        <h2>The proof a convex problem broke</h2>
+        <p>
+          The paper does not rest on experiments alone. Section 4 offers a
+          theorem: in the online convex setting, Adam's average regret shrinks at
+          the rate O(1/√T), a guarantee "comparable to the best known results."
+          Regret measures how much worse Adam's running choices are than the
+          single best fixed choice in hindsight, so vanishing average regret
+          means its decisions approach optimal over time. That is the claim that
+          failed.<sup class="nb-cite"><a href="#s1" data-nb-locator="§4 · p. 4">1</a></sup>
+        </p>
+        <p>
+          In 2018, Reddi, Kale and Kumar built a problem where Adam's average
+          regret does not vanish. It is as simple as such a problem gets: one
+          dimension, a variable confined to [−1, 1], and a loss that on every
+          third step is <em>Cx</em> for a constant <em>C</em> larger than 2, and
+          −<em>x</em> otherwise. The rare large gradient <em>C</em> points toward
+          the true minimizer at <em>x</em> = −1; the frequent small gradients
+          point the other way. Adam converges to <em>x</em> = +1, the worst point
+          in the set. The reason is the second moment: the one large gradient is
+          scaled down by its own square before it is applied, so the many small
+          gradients outvote it.<sup class="nb-cite"><a href="#s3" data-nb-locator="§3 · p. 4">3</a></sup>
+        </p>
+        <figure class="nb-excerpt">
+          <blockquote>
+            The proof in the original paper of ADAM erroneously assumes that Γ_t
+            is positive semi-definite and is hence, incorrect.<sup class="nb-cite"><a href="#s3" data-nb-locator="§4 · p. 5">3</a></sup>
+          </blockquote>
+          <figcaption>
+            <span class="nb-excerpt-loc">§4 · p. 5</span>
+            The failure is located, not just demonstrated: a quantity the proof
+            assumed was well-behaved for Adam is not, and the same authors flag
+            further problems in two of the original proof's lemmas.
+          </figcaption>
+        </figure>
+        <p>
+          The counterexample holds β₁
+          fixed, while Adam's proof used a β₁ that decays over time, so the
+          settings are not identical. Reddi and colleagues address this: the
+          parameter that drives the failure is β₂, not β₁. So the proof's key
+          assumption is false, and explicit convex problems exist where Adam does
+          not converge. Their fix, AMSGrad, forces the second-moment denominator
+          to never decrease by carrying forward the largest <em>v̂</em> seen so
+          far, restoring the guarantee the original proof only appeared to
+          establish.<sup class="nb-cite"><a href="#s3" data-nb-locator="§4 · p. 5">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-weight-decay-defect" id="the-weight-decay-defect">
+        <h2>What "weight decay" in Adam was not</h2>
+        <p>
+          The second failure is quieter and lives outside the original paper's
+          explicit claims. Practitioners regularize large models by shrinking
+          weights toward zero each step, a technique called weight decay. For
+          plain SGD it is exactly equivalent to adding an L2 penalty to the loss,
+          so the two are used interchangeably. For Adam that equivalence breaks.
+        </p>
+        <figure class="nb-excerpt">
+          <blockquote>
+            L2 regularization and weight decay regularization are equivalent for
+            standard stochastic gradient descent (when rescaled by the learning
+            rate), but as we demonstrate this is not the case for adaptive
+            gradient algorithms, such as Adam.<sup class="nb-cite"><a href="#s4" data-nb-locator="Abstract">4</a></sup>
+          </blockquote>
+          <figcaption>
+            <span class="nb-excerpt-loc">Abstract</span>
+            Loshchilov and Hutter prove the two regularizers, identical under
+            SGD, come apart under adaptive scaling, so the "weight decay" most
+            Adam code applied was not weight decay at all.
+          </figcaption>
+        </figure>
+        <p>
+          The mechanism is the same denominator that broke the proof. When the
+          penalty is added into the loss as L2, its contribution enters the
+          gradient and is then divided by √<em>v̂</em>ₜ. A parameter with large
+          recent gradients has a large denominator, so its decay is scaled down;
+          the parameters that most need shrinking are shrunk least. Loshchilov
+          and Hutter's fix, AdamW, moves the decay term outside the adaptive
+          division, so every weight is pulled toward zero by the same proportion
+          regardless of its gradient history. They report the decoupled version
+          closes much of Adam's generalization gap, reaching about 15% relative
+          improvement in test error and letting Adam compete with SGD and
+          momentum on image classification.<sup class="nb-cite"><a href="#s4" data-nb-locator="§1 · p. 1">4</a></sup>
+          This is a defect in Adam as it was widely implemented rather than in
+          the theorem the original paper stated, and it is why AdamW, not Adam,
+          is the default that trains most large models today.
+        </p>
+      </section>
+
+      <section data-nb-section="verdict" id="verdict">
+        <h2>Indispensable and wrong at once</h2>
+        <p>
+          The two failures are different kinds of object, and the difference is
+          one of evidence. The
+          convergence theorem was refuted by a specific counterexample: a named
+          quantity in the proof does not have the property the proof assumed, and
+          a one-dimensional convex problem shows Adam converging to the worst
+          available point. That is a broken proof, full stop. The weight-decay
+          coupling is not a false theorem but a design choice that quietly
+          handicapped generalization, invisible on training curves and visible
+          only when another team compared held-out error. A refuted proof
+          announces itself; a regularizer that silently works a little worse does
+          not, and the second kind of failure is the harder one to catch.
+        </p>
+        <p>
+          What held up is just as concrete. The two-average update with
+          bias correction became the default first thing to reach for across
+          deep learning, and independent surveys record its exact defaults, β₁ =
+          0.9, β₂ = 0.999, ε = 1e-8, entering the field as common
+          reference.<sup class="nb-cite"><a href="#s5" data-nb-locator="section “Adam”">5</a></sup>
+          The robustness of those defaults is real, and bias correction survived
+          both corrections that followed: AMSGrad and AdamW each keep the two
+          moving averages and the (1 − βᵗ) divisors and change only what happens
+          after. The generalization question the paper never measured was later
+          put to it: Wilson and colleagues found that adaptive methods, Adam
+          among them, tend to generalize worse than plain SGD even when they
+          reach lower training loss.<sup class="nb-cite"><a href="#s6" data-nb-locator="Abstract">6</a></sup>
+          That finding is the outside view the paper's own experiments could not
+          supply, and it is what AdamW partly answered.
+        </p>
+        <p>
+          The reason to spend an evening with the paper is its own section 6.
+          The experiments plotted training cost and nothing more, conceded the
+          convolutional result was marginal, and reported the second moment
+          collapsing on exactly the model type that would come to dominate the
+          field. That candor is what lets one algorithm be indispensable in
+          practice and wrong in its central theorem at the same time: the paper
+          never claimed the ground its proof could not hold. Reading section 6
+          for what it actually reports is how those facts stay separately true
+          instead of dissolving into one convenient story.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1412.6980"
+              >arXiv · Kingma &amp; Ba, "Adam: A Method for Stochastic
+              Optimization" (ICLR 2015)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.jmlr.org/papers/v12/duchi11a.html"
+              >JMLR · Duchi, Hazan &amp; Singer, "Adaptive Subgradient Methods
+              for Online Learning and Stochastic Optimization" (2011)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1904.09237"
+              >arXiv · Reddi, Kale &amp; Kumar, "On the Convergence of Adam and
+              Beyond" (ICLR 2018)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1711.05101"
+              >arXiv · Loshchilov &amp; Hutter, "Decoupled Weight Decay
+              Regularization" (ICLR 2019)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.ruder.io/optimizing-gradient-descent/"
+              >Sebastian Ruder · "An overview of gradient descent optimization
+              algorithms" (2016)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/1705.08292"
+              >arXiv · Wilson et al., "The Marginal Value of Adaptive Gradient
+              Methods in Machine Learning" (NeurIPS 2017)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
