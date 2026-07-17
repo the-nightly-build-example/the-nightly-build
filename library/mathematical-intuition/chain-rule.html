@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A network's gradient is a product of local slopes chained backward · Mathematical Intuition</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "mathematical-intuition",
+        "slug": "chain-rule",
+        "template": "article",
+        "title": "A network's gradient is a product of local slopes chained backward",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-17",
+        "tags": ["calculus", "backpropagation"],
+        "sources": 8,
+        "words": 1673,
+        "reading_minutes": 9,
+        "dek": "The slope a network rolls down is the product of the local slopes along its links, traced from the loss back to any weight in a single backward pass.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">Mathematical Intuition</div>
+        <h1 class="nb-title">A network's gradient is a product of local slopes chained backward</h1>
+        <p class="nb-dekline">
+          The slope a network rolls down is the product of the local slopes along its links, traced from the loss back to any weight in a single backward pass.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-17</span>
+        </div>
+      </header>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The slope gradient descent takes for granted</h2>
+        <p>
+          Training a model means rolling downhill on a computed slope: read the
+          derivative of the error, step against it, repeat. The error is not a
+          plain function of the weights.
+          It is a function of a layer, which is a function of another layer,
+          which is a function of the weights, stacked as deep as the network
+          goes. The slope the method needs is the derivative of that whole
+          stack, and where it comes from is the chain rule, which Rudin calls
+          probably the most important theorem about derivatives.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          The rule has one moving part. The derivative of a composed function is
+          the product of the derivatives of its pieces, each measured at the
+          point the piece receives. A slope through many stacked functions is a
+          slope at each function, multiplied together. Rumelhart, Hinton, and
+          Williams built neural-network training on exactly this in 1986. They
+          computed each weight's effect on the error by applying the chain rule
+          and passing an error signal backward through the layers.<sup
+            class="nb-cite"><a href="#s2">2</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="multiplying-slopes" id="multiplying-slopes">
+        <h2>Two slopes multiplied, checked three ways</h2>
+        <p>
+          Take a chain short enough to check by eye. An inner step triples its
+          input and adds one. An outer step squares whatever it receives. Send
+          the number 2 through:
+          the inner step returns 7, the outer step squares it to 49. Now nudge
+          the input just above 2 and watch how far the output moves in response.
+        </p>
+        <p>
+          Each step has a rate of its own. The inner step moves its output three
+          units for every one unit of input, everywhere, because tripling is all
+          it does to a change. The squaring step is steeper the farther out it
+          sits: at the value 7 it moves fourteen units of output for every one
+          unit it receives, since near a point the square grows at twice that
+          point. So a nudge of one at the input arrives at the middle as a nudge
+          of three, and a nudge of three at the middle arrives at the output as a
+          nudge of three times fourteen. The output moves 42 for every unit the
+          input moves. Multiply the two local rates, 3 and 14, and the whole
+          chain's rate falls out.
+        </p>
+        <p>
+          Now the notation can name what just happened. Write du/dx for the
+          inner rate, read aloud as how the middle quantity moves when the input
+          moves, which is 3. Write dy/du for the outer rate, how the output moves
+          when the middle moves, which is 14. The chain rule says dy/dx equals
+          dy/du times du/dx, or 14 times 3, which is 42. Two other routes confirm
+          the number. Squaring the inner step outright gives nine times the input
+          squared plus six times the input plus one, whose slope is eighteen
+          times the input plus six, and at 2 that is 42. Differentiating the
+          square directly gives six times the inner expression, and at 2 that is
+          42 again.<sup class="nb-cite"><a href="#s1">1</a></sup> The same
+          two-link rate, dz/dx equal to dz/dy times dy/dx, is the scalar case
+          Goodfellow, Bengio, and Courville write down before generalizing it to
+          a network.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="walking-it-back" id="walking-it-back">
+        <h2>The error walks back to a weight</h2>
+        <p>
+          Stack one more link and the same multiplication becomes training. Let a
+          weight of 1 scale an input of 2 to give a hidden value of 2. Let a
+          second weight of 3 scale that to give an output of 6. Measure the error
+          against a target of 4 as half the squared gap, which is half of 2
+          squared, or 2. Three local rates run along this chain. The error moves
+          with the output at the rate of the gap itself, 2. The output moves with
+          the hidden value at the rate of the second weight, 3. The hidden value
+          moves with the first weight at the rate of the input, 2.
+        </p>
+        <p>
+          Start at the error and carry one number back. The error's sensitivity
+          to the output is 2. Multiply by the rate linking output to hidden
+          value, 3, and the error's sensitivity to the hidden value is 6.
+          Multiply by the rate linking hidden value to the first weight, 2, and
+          the error's sensitivity to that weight is 12. One number, 2, walked
+          back through two multiplications to 12. Differentiating the error with
+          respect to the first weight in one shot gives the gap times the second
+          weight times the input, or 2 times 3 times 2, which is 12. The backward
+          walk and the direct slope agree.
+        </p>
+        <p>
+          The reason to walk backward rather than forward is cost, not the chain
+          rule. Propagating rates forward, one input at a time, is also the chain
+          rule, and it lands on the same slopes. But the error is a single
+          number and the weights are many, so starting from the one error and
+          sweeping back reaches every weight's sensitivity in a single pass,
+          where a forward sweep would repeat the work once per weight. Baydin and
+          colleagues call the backward sweep reverse-mode automatic
+          differentiation and show it returns the full gradient of a scalar
+          output in one pass, against one pass per input for the forward
+          direction, which is why it is the mainstay of the field.<sup
+            class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <div class="nb-callout">
+          <span class="nb-callout-term">Reverse-mode differentiation</span>
+          Compute a gradient by carrying one sensitivity number backward through
+          a composition, multiplying it by each link's local rate in turn.
+          Backpropagation is this method applied to a network's error as a
+          function of its weights.
+        </div>
+        <p>
+          Seen this way the network is a graph of simple operations, and the
+          backward pass is local. Each node takes the sensitivity handed down
+          from above and multiplies it by its own rate to pass the right number
+          to each of its inputs, as the Stanford course notes put it, with no
+          node needing to know anything beyond its neighbors.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          > The bookkeeping is cheap. Nielsen puts the price of the whole
+          gradient at about one forward pass through the network followed by one
+          backward pass, so every weight's slope costs roughly what evaluating
+          the network once costs.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <div class="nb-aside">
+          The 1986 paper carried the chain-rule-as-learning idea into neural
+          networks, but the backward computation itself is older. Baydin credits
+          Linnainmaa with the first published reverse mode in 1970.<sup
+            class="nb-cite"><a href="#s4">4</a></sup
+          >
+        </div>
+      </section>
+
+      <section data-nb-section="product-runs-away" id="product-runs-away">
+        <h2>The product that builds the gradient also breaks it</h2>
+        <p>
+          The backward pass multiplies one local rate after another, and nothing
+          holds those rates near one. Suppose each link contributes a rate a
+          little under one. A factor of 0.9 carried back through forty links
+          leaves about 0.015 of the number that started the walk. Suppose instead
+          each rate sits a little over one. A factor of 1.1 through forty links
+          multiplies the starting number by about 45. The multiplication that
+          assembles the gradient is the same multiplication that can drive it to
+          nothing or send it out of range.
+        </p>
+        <figure class="nb-chart">
+          <figcaption>
+            Fig. 1 · One number carried back through forty links, multiplied by a
+            constant local rate at each step, on a log scale: a rate of 0.9
+            decays it to about 0.015, a rate of 1.1 grows it to about 45.<sup class="nb-cite"
+              ><a href="#s7">7</a></sup
+            >
+          </figcaption>
+          <canvas></canvas>
+          <noscript>chart requires JS; data in caption and prose</noscript>
+          <script type="application/json" data-nb-chart>
+            {
+              "type": "line",
+              "labels": ["0", "10", "20", "30", "40"],
+              "series": [
+                { "name": "rate 0.9 (decays)", "values": [1, 0.349, 0.122, 0.0424, 0.0148] },
+                { "name": "rate 1.1 (grows)", "values": [1, 2.594, 6.727, 17.449, 45.259] }
+              ],
+              "y": { "scale": "log", "label": "size of the carried number" },
+              "x": { "label": "links walked back" }
+            }
+          </script>
+        </figure>
+        <p>
+          Pascanu, Mikolov, and Bengio
+          write that a product of many real numbers can shrink to zero or explode
+          to infinity, and so the gradient carried across many steps vanishes or
+          blows up, the vanishing case making it impossible to learn a link
+          between distant events.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Hochreiter and Schmidhuber reach the same result from a separate line
+          of analysis: error signals flowing backward tend to blow up or vanish,
+          growing or decaying exponentially with the number of steps, so that
+          past a depth nothing can be learned in acceptable time.<sup
+            class="nb-cite"><a href="#s8">8</a></sup> The same product that lets
+          one backward pass reach every weight is why very deep and recurrent
+          networks were once hard to train at all.
+        </p>
+        <p>
+          The scalar picture is a faithful guide, but it is a shadow of the real
+          object. A layer carries many numbers at once, so each local rate is not
+          one slope but a grid of them, a Jacobian, and the backward pass is a
+          product of these matrices rather than of single numbers. What decides
+          whether the carried signal grows or shrinks is then not a lone rate but
+          the matrix's largest stretching factor, its top singular value. In the
+          recurrent case, where the same weight matrix repeats at every step, the
+          threshold sharpens to the largest eigenvalue of that matrix: under one
+          and the long-range signal decays, over one and it can explode.<sup
+            class="nb-cite"><a href="#s7">7</a></sup> The single slope below or
+          above one is what that condition looks like with the grid collapsed to
+          a point. The mechanism does not change.
+        </p>
+        <p>
+          So the slope gradient descent rolls down is a product of local rates,
+          multiplied back along the composition from the error to each weight.
+          Read forward, that product is ordinary calculus. Read backward once, it
+          is backpropagation, and the reason a network's whole gradient costs
+          about one extra pass. Run through enough links with rates off one, it
+          is the reason depth had to be earned. Every one of those is the same
+          product, taken in a different direction.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Ch. 5, Theorem 5.5, p. 105"
+              href="https://www.lehman.edu/faculty/rbettiol/lehman_teaching/2020mat320/baby_Rudin.pdf"
+              >Rudin · Principles of Mathematical Analysis (3rd ed.), the chain rule (Theorem 5.5)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="abstract; “The backward pass,” p. 534, eq. 5"
+              href="https://www.cri.minesparis.psl.eu/people/silber/cours/2025/nlp/bib/RumelhartDE1986.pdf"
+              >Nature · Rumelhart, Hinton &amp; Williams, “Learning representations by back-propagating errors” (1986)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="§6.5.2, “Chain Rule of Calculus”"
+              href="https://www.deeplearningbook.org/contents/mlp.html"
+              >Deep Learning (MIT Press) · Goodfellow, Bengio &amp; Courville, §6.5, “Back-Propagation”</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.2 “Reverse Mode”; §4.2"
+              href="https://arxiv.org/abs/1502.05767"
+              >JMLR · Baydin, Pearlmutter, Radul &amp; Siskind, “Automatic Differentiation in Machine Learning: a Survey” (2018)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="“Intuitive understanding of backpropagation”; “Patterns in backward flow”"
+              href="https://cs231n.github.io/optimization-2/"
+              >Stanford CS231n · “Backpropagation, Intuitions” (course notes)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="“The four fundamental equations”; “The backpropagation algorithm”"
+              href="https://neuralnetworksanddeeplearning.com/chap2.html"
+              >Michael Nielsen · Neural Networks and Deep Learning, Ch. 2</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§2; §2.1 “The mechanics”"
+              href="https://arxiv.org/abs/1211.5063"
+              >ICML 2013 · Pascanu, Mikolov &amp; Bengio, “On the difficulty of training Recurrent Neural Networks”</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="abstract; §3; §3.1 “Exponentially Decaying Error”"
+              href="https://deeplearning.cs.cmu.edu/S23/document/readings/LSTM.pdf"
+              >Neural Computation · Hochreiter &amp; Schmidhuber, “Long Short-Term Memory” (1997)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
