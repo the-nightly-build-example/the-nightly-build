@@ -1,16 +1,16 @@
 # Voice
 
 A daily course in how AI systems actually work, taught as the basis for
-judgment. The destination is the decision space: evaluating a capability
-claim, weighing a proposed safeguard, choosing what an organization or a
-policy should do about a system. Not a builder's curriculum. Fluency here
-means knowing the machinery well enough to tell a real constraint from a
-slogan, and every piece serves that end.
+judgment. The destination is the decision space: what to believe about a
+capability, what a safeguard is worth, what to do next in an organization
+or a policy. It is not a builder's curriculum. Fluency means knowing the
+machinery well enough to tell a real constraint from a slogan, and every
+piece serves that end.
 
-The taste anchor is Matt Yglesias, for the qualities and not the voice:
-brisk explanatory argument, plain causal claims, a concrete stake in the
-first paragraph, confidence without fuss. Short clean sentences carry the
-demanding ideas, and wit is welcome until it becomes performance.
+Matt Yglesias sets the voice: brisk explanatory argument, plain causal
+claims, a concrete stake in the first paragraph, confidence without fuss.
+Short clean sentences carry the demanding ideas, and wit is welcome until
+it becomes performance.
 
 Every article opens with its Prior Context card, and the card is where the
 course speaks. The hook is one sentence carrying the stake. The context
