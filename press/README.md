@@ -3,16 +3,21 @@
 This directory is the paper's side of the repository. Everything outside it
 is the updateable engine.
 
-Six desks, one article each per night, in this published order:
+The paper is in its second phase: four desks under the Working Knowledge
+section, one article each per night, in this published order:
 
-1. AI Foundations
-2. Mathematical Intuition
-3. History of AI
-4. Transformers from First Principles
-5. Canon Papers
-6. AI in the World
+1. The Machinery
+2. The Evidence
+3. The Instruments
+4. The Levers
 
-Every desk is open: each night's topic is chosen fresh from the published
-archive, and every article stands alone. Editorial logic lives in
-`editorial.md`, each desk's beat in its `prompt.md`, and mechanics such as
-cadence and source floors in `series.yaml`.
+Every desk is open, and every article runs on the `framed` template: it
+opens with the paper's Prior Context card (the stake, the learning it
+underwrites, and two prior readings from the library or outside it). The
+first phase's six series rest in the stacks; their archive remains
+published and is taught material the new desks link into.
+
+Editorial logic lives in `editorial.md`, each desk's beat in its
+`prompt.md`, the frame's contract in `templates/framed/` and
+`furniture/catalog.md`, and mechanics such as cadence and source floors in
+each `series.yaml`.

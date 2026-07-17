@@ -1,27 +1,44 @@
 # Voice
 
-A daily course in how AI systems actually work and where they can be
-steered. The subject matter runs from the mathematics up through the
-institutions, and the orientation throughout is risk understood by
-mechanism: not whether to worry, but where in the system a worry lives and
-what acts on it.
+A daily course in how AI systems actually work, taught as the basis for
+judgment. The destination is the decision space: evaluating a capability
+claim, weighing a proposed safeguard, choosing what an organization or a
+policy should do about a system. Not a builder's curriculum. Fluency here
+means knowing the machinery well enough to tell a real constraint from a
+slogan, and every piece serves that end.
 
 The taste anchor is Matt Yglesias, for the qualities and not the voice:
 brisk explanatory argument, plain causal claims, a concrete stake in the
 first paragraph, confidence without fuss. Short clean sentences carry the
 demanding ideas, and wit is welcome until it becomes performance.
 
-The archive is the curriculum so far, and each night's commission comes
-from it: the missing prerequisite, the established idea worth deepening,
-or the limit a new case exposes. Tonight's choice is also tomorrow's
-foundation. Every lesson taught makes new subjects teachable, so when gaps
+Every article opens with its Prior Context card, and the card is where the
+course speaks. The hook is one sentence carrying the stake. The context
+motivates the learning ahead: what becomes intelligible once this subject
+is held, and which details go on to matter, each tied to its later stakes,
+so salience comes from consequence rather than instruction. The reading
+rows carry two true prerequisites, from the library or outside it, each
+with what it supplies. A card is never a summary and never a teaser.
+Across one edition the four cards must give four different reasons to
+care; interchangeable cards mean the commissioning failed.
+
+The archive is taught material, and the paper cites its own teaching the
+way it cites any source it trusts: by name, with a link. The Prior Context
+card's reading rows carry the prerequisites. Prose may link a prior
+article at first real use, sparingly and as a plain link, never as a
+numbered source. Never re-teach what a link can carry, and never re-cover
+taught ground as if it were fresh; name it and build past it. Every piece
+still reads whole on its own.
+
+Commissioning is curriculum design, and the whole night is one deliberate
+build. Read the full archive first, the resting desks included; all of it
+is taught material to lean on and link. Each commission states why its
+piece matters now, what it builds on with the candidate links, and what it
+sets up. Tonight's choice is also tomorrow's foundation: when gaps
 compete, close the one that opens the most behind it, in the order a good
-course would teach them. A lesson never runs twice under different names,
-and nothing is re-taught for being elementary. Articles stand on
-what the paper has already taught and stand alone doing it. Use a taught
-concept as freely as arithmetic, and never cite the paper itself; no "as
-an earlier piece showed." The archive governs the choosing, never the
-prose.
+course would teach them. The four pieces of an edition reach the goal by
+four different routes; two articles circling the same subject, or two
+frames making the same argument, are a commissioning failure.
 
 The technical spine is the set of levers where anyone can act on an AI
 system: data, objectives, learned representations, architecture, training,
@@ -43,4 +60,5 @@ or superseded, say exactly how.
 
 Assumed background: algebra, probability, graphs, historical argument, and
 serious reading across fields. No programming and no formal machine
-learning; whatever technical idea a piece needs, it builds on the spot.
+learning; whatever technical idea a piece needs, it builds on the spot or
+links to where the paper already built it.
