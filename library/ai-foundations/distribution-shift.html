@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Move a tumor detector to a new hospital and it loses twenty-three points · AI Foundations</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "ai-foundations",
+        "slug": "distribution-shift",
+        "template": "article",
+        "title": "Move a tumor detector to a new hospital and it loses twenty-three points",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-17",
+        "tags": [],
+        "sources": 8,
+        "words": 1821,
+        "reading_minutes": 9,
+        "dek": "Every benchmark accuracy measures one model against one distribution, and the distance from that distribution to where the model runs decides whether the number means anything.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">AI Foundations</div>
+        <h1 class="nb-title">Move a tumor detector to a new hospital and it loses twenty-three points</h1>
+        <p class="nb-dekline">
+          Every benchmark accuracy measures one model against one distribution, and the distance from that distribution to where the model runs decides whether the number means anything.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-17</span>
+        </div>
+      </header>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The number belonged to the training hospitals</h2>
+        <p>
+          A tumor detector trained on lymph-node scans from a handful of
+          hospitals learns to find cancer in them well. Send it slides from a
+          hospital it never trained on, the same disease prepared and stained on
+          different equipment, and it quietly gets worse at the one thing it
+          does. Nothing was corrupted and no adversary intervened. The tissue is
+          the same disease, and the labels follow the same rule. Only the
+          hospital changed, and that alone erased nearly twenty-three points of
+          accuracy: 93.2% on held-out slides from its training hospitals, 70.3%
+          on the new ones.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Read one way, 93.2% is a property of the model, a measure of how well
+          it finds tumors. Read the way the second number forces, it is a
+          property of the model and the slides together: how well it finds
+          tumors in scans from the specific hospitals that supplied its test
+          set. The first reading is the one a leaderboard invites, and it is the
+          one that fails at the new hospital. Every accuracy is a conditional
+          measurement, accuracy given the distribution it was scored on, and the
+          quantity that decides whether it survives a move is the distance
+          between that distribution and the next one.
+        </p>
+        <p>
+          Distribution shift is the name for that distance. The i.i.d.
+          assumption, that training and test data are drawn independently from
+          the same distribution, is what lets a held-out score stand in for
+          future performance, and it does quiet work under every benchmark. When
+          the deployment distribution differs from the test distribution, the
+          score is still exact, still reproducible, and no longer about the world
+          the model runs in.
+        </p>
+      </section>
+
+      <section data-nb-section="three-motions" id="three-motions">
+        <h2>Three ways a distribution can move</h2>
+        <p>
+          A distribution can move in three places, and the difference matters
+          because each breaks a model for a different reason. The inputs can
+          move: the population of things the model sees shifts while the rule
+          linking an input to its label stays put. Photographs from a newer
+          camera, slides from a different scanner, sentences from a later
+          decade. Amos Storkey's treatment of the taxonomy sets the input-moving
+          case apart as covariate shift,<sup class="nb-cite"><a href="#s2">2</a></sup>
+          and Hidenori Shimodaira named the condition in 2000: the input
+          distribution P(x) differs between the training sample and the target,
+          while the conditional P(y|x) that maps an input to its label is held
+          fixed.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The base rates can move: the mix of labels changes while each label
+          still produces the same kinds of inputs. A disease grows more
+          prevalent, so a clinic sees more positive cases, though a positive case
+          still looks the way it always did under the microscope. This is prior
+          probability shift, where P(y) changes while P(x|y) is held
+          fixed.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The plainer name for it is label shift; the two words point at the
+          same object.
+        </p>
+        <p>
+          The rule itself can move: the same input now warrants a different
+          label. A transaction pattern that meant fraud last year is ordinary
+          this year, the inputs identical and their meaning changed. This is
+          concept shift, where P(y|x) changes while P(x) is held
+          fixed,<sup class="nb-cite"><a href="#s4">4</a></sup>
+          and it is the hardest of the three, because the thing the model was
+          trying to learn is the thing that moved. It is a static difference
+          between two fixed distributions, distinct from concept drift, the
+          version that unfolds over time in a running stream.
+        </p>
+        <p>
+          The tumor detector's failure sits in the first category. The disease
+          and its appearance did not change; the hospitals, their scanners, and
+          their staining did, moving P(x) while the labeling rule held. Keeping
+          the three apart is the first use of the concept, because a correction
+          for one does nothing for another, and a benchmark that mixes them
+          reports a single number for three separate problems.
+        </p>
+      </section>
+
+      <section data-nb-section="what-it-buys" id="what-it-buys">
+        <h2>Shift you can build and watch</h2>
+        <p>
+          Once the motion is named, it can be built on purpose and measured. Dan
+          Hendrycks and Thomas Dietterich took the ImageNet validation images and
+          applied fifteen common corruptions, grouped as noise, blur, weather,
+          and digital artifacts, at five severity levels each, seventy-five
+          conditions in all.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Every corruption is a deliberate move in P(x): the labels are
+          untouched and the pixels degraded the way a real camera or a foggy day
+          would degrade them. Accuracy falls across the board, and it falls
+          further for some corruptions than others, which is why they scored
+          models by an error averaged over corruption types and normalized so
+          that an AlexNet baseline reads 1.00.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          The move need not be synthetic. Benjamin Recht and colleagues rebuilt
+          ImageNet's test set from scratch, following the original collection
+          recipe, and a broad range of models lost eleven to fourteen points on
+          the fresh set with no corruption at all.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The images were new, so nothing had leaked from years of tuning against
+          the old set. The drop was distribution shift, not a test set worn
+          smooth by reuse, and the signature that rules the second explanation
+          out is in the numbers: gains on the old test set carried to the new one
+          along a line steeper than one-to-one, so a model better on the original
+          was reliably better on the replacement.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          The same gap appears in deployment data that no one designed to be
+          hard. The WILDS benchmark collects ten real-world tasks where training
+          and test distributions come apart the way they do in practice, across
+          different hospitals, cameras, countries, and years, and trains standard
+          models on each.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The out-of-distribution score sits below the in-distribution score
+          everywhere.
+        </p>
+        <figure class="nb-chart">
+          <figcaption>
+            Fig. 1 · In-distribution against out-of-distribution score on four
+            WILDS tasks under standard training, each a shift to a held-out
+            domain (new hospitals, camera-trap sites, reviewers, regions). Each
+            task uses its own metric (average accuracy, macro F1, 10th-percentile
+            accuracy, worst-region accuracy); values from WILDS Table
+            1.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </figcaption>
+          <canvas></canvas>
+          <noscript>chart requires JS; data in caption and prose</noscript>
+          <script type="application/json" data-nb-chart>
+            {
+              "type": "bar",
+              "labels": ["Camelyon17", "iWildCam", "Amazon", "FMoW"],
+              "series": [
+                { "name": "in-distribution", "values": [93.2, 47.0, 71.9, 48.6] },
+                { "name": "out-of-distribution", "values": [70.3, 31.0, 53.8, 32.3] }
+              ],
+              "y": { "scale": "linear", "label": "score (0–100)" }
+            }
+          </script>
+        </figure>
+        <p>
+          Species recognition on iWildCam falls from 47.0 to 31.0 in macro F1
+          when the camera traps change location, and land-use classification on
+          FMoW falls from 48.6% to 32.3% in its worst region.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          That gap is what the concept buys: a place to look for failure before
+          deployment finds it, and a procedure for measuring it. Hold out a slice
+          of the world the model has not seen, and score there.
+        </p>
+      </section>
+
+      <section data-nb-section="what-it-costs" id="what-it-costs">
+        <h2>The gap you cannot compute, and the ranking you can</h2>
+        <p>
+          The procedure carries a cost the tumor detector already showed. To
+          measure the gap you need the target distribution, a labeled sample from
+          the deployment world. Without slides from the new hospital the 70.3% is
+          unknowable, the 93.2% is all you have, and the 93.2% is the number that
+          misleads. That is the sense in which a benchmark number stops
+          being knowable: the moment the deployment distribution departs from the
+          test set, the size of the departure is exactly what the test set cannot
+          report.
+        </p>
+        <p>
+          A qualification cuts against the idea that shift is a free
+          predictor of failure. John Miller and colleagues measured
+          out-of-distribution against in-distribution accuracy across many models
+          and many shifts and found them tightly, linearly related: a model's
+          rank under shift is often predictable from its ordinary accuracy alone,
+          more precisely than domain-adaptation theory expected.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The ordering of models is frequently free. You do not need the target
+          distribution to guess which model will lead under shift. What is not
+          free is the magnitude, how far every model falls together, and only the
+          target distribution sets that.
+        </p>
+        <p>
+          The distinction reframes robustness. When a training trick is reported
+          to improve robustness, the question is whether it moved a model above
+          the in-distribution trendline or only along it. Rohan Taori and
+          colleagues evaluated 204 ImageNet models across 213 shifted test
+          conditions and found that most interventions buy no robustness beyond
+          what their in-distribution accuracy already predicts; the main thing
+          that helped was training on larger and more diverse data, and even that
+          did not close the gap.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Purpose-built methods for shift, tested across the WILDS tasks, leave a
+          large gap between in- and out-of-distribution accuracy standing
+          too.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A robustness number that only tracks the trendline is reporting better
+          in-distribution accuracy under another name.
+        </p>
+        <p>
+          The line that makes ordering free also breaks, and where it breaks it
+          breaks hard. Miller's own exceptions include some CIFAR-10-C
+          corruptions and, again, Camelyon17: cases where in-distribution
+          accuracy stops predicting the out-of-distribution score at
+          all.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The tumor detector is both examples at once. It is where the concept
+          pays, since the twenty-three-point gap named a real failure before a
+          patient met it, and it is where the cheap prediction fails, since on
+          this data ordinary accuracy would not have warned that the fall was
+          coming. Knowing which of the two regimes a system is in is the concept's
+          real return, and that knowledge costs a labeled sample of the target
+          like everything else here.
+        </p>
+      </section>
+
+      <section data-nb-section="reading-the-next-number" id="reading-the-next-number">
+        <h2>Two claims inside one accuracy</h2>
+        <p>
+          A benchmark score names one model measured against one distribution, and
+          it carries two claims that come apart under a move. The ordering it
+          implies, that this model beats that one, often travels, and ordinary
+          accuracy can vouch for it without the target distribution in hand. The
+          margin it implies, that the model is this good, travels only as far as
+          the test distribution reaches. The moment the deployment world differs,
+          the margin is not a fact about the model but a fact about the pairing
+          of model and test set that produced it.
+        </p>
+        <p>
+          Which of the two a given number is offering is worth settling before
+          trusting it, and settling it means asking what distribution the model
+          was scored on and how far that sits from the one it will meet. The tumor
+          detector answered 93.2% to the first distribution and 70.3% to the
+          second.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Both are exact. Only one of them is about the hospital where the next
+          scan is read.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Table 1 (ID vs OOD, standard ERM)"
+              href="https://arxiv.org/abs/2012.07421"
+              >Koh et al. (ICML 2021) · WILDS: A Benchmark of in-the-Wild Distribution Shifts</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Opening sections; per-case definitions"
+              href="https://homepages.inf.ed.ac.uk/amos/publications/Storkey2009TrainingTestDifferent.pdf"
+              >Storkey, in Quiñonero-Candela et al., eds. (MIT Press, 2009) · When Training and Test Sets Are Different: Characterizing Learning Transfer</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Sec. 1"
+              href="https://doi.org/10.1016/S0378-3758(00)00115-4"
+              >Shimodaira (J. Statistical Planning and Inference, 2000) · Improving predictive inference under covariate shift by weighting the log-likelihood function</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Sec. 2 (formal definitions)"
+              href="https://doi.org/10.1016/j.patcog.2011.06.019"
+              >Moreno-Torres et al. (Pattern Recognition, 2012) · A unifying view on dataset shift in classification</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; mCE definition"
+              href="https://arxiv.org/abs/1903.12261"
+              >Hendrycks & Dietterich (ICLR 2019) · Benchmarking Neural Network Robustness to Common Corruptions and Perturbations</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Fig. 1 (original vs new, slope > 1)"
+              href="https://arxiv.org/abs/1902.10811"
+              >Recht et al. (ICML 2019) · Do ImageNet Classifiers Generalize to ImageNet?</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Fig. 1 (ID vs OOD scatters, named exceptions)"
+              href="https://arxiv.org/abs/2107.04649"
+              >Miller et al. (ICML 2021) · Accuracy on the Line: On the Strong Correlation Between Out-of-Distribution and In-Distribution Generalization</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Sec. 3–5 (effective robustness trendline)"
+              href="https://arxiv.org/abs/2007.00644"
+              >Taori et al. (NeurIPS 2020) · Measuring Robustness to Natural Distribution Shifts in Image Classification</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
