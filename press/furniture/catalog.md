@@ -38,8 +38,8 @@ card carries no citations.
 
 ## Worked table (`rs-worked`)
 
-Hand-worked numeric material set as compact rows: steps of a computation, a
-record, a mapping, a two-column comparison, per-item deltas. Digits are
+Hand-worked numeric material set as compact rows, whatever shape the rows
+take: steps of a computation, a record, a mapping, a comparison. Digits are
 spaced, never parenthesized, so the table fits a phone. Use it only when the
 material is rows of one shape, three or more rows deep. Two before/after
 numbers belong in a sentence; a worked example whose narration is the

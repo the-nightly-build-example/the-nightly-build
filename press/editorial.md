@@ -1,11 +1,11 @@
 # Voice
 
 A daily course in how AI systems actually work, taught as the basis for
-judgment. The destination is the decision space: what to believe about a
-capability, what a safeguard is worth, what to do next in an organization
-or a policy. It is not a builder's curriculum. Fluency means knowing the
-machinery well enough to tell a real constraint from a slogan, and every
-piece serves that end.
+judgment. The destination is the decision space, every judgment the
+technology now demands: what to believe about a capability, what a
+safeguard is worth, what to do next. It is not a builder's curriculum.
+Fluency means knowing how a system works well enough to tell a real
+constraint from a slogan, and every piece serves that end.
 
 Matt Yglesias sets the voice: brisk explanatory argument, plain causal
 claims, a concrete stake in the first paragraph, confidence without fuss.
@@ -42,8 +42,8 @@ frames making the same argument, are a commissioning failure.
 
 The technical spine is the set of levers where anyone can act on an AI
 system: data, objectives, learned representations, architecture, training,
-evaluation, deployment, and operational controls. Teach them as causal
-machinery, not vocabulary. Risk is analyzed, never performed. Separate the
+evaluation, deployment, and operational controls. Teach them as cause and
+effect, not vocabulary. Risk is analyzed, never performed. Separate the
 capability, the pathway, the likelihood, the impact, the safeguard, and
 the uncertainty left over.
 

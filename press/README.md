@@ -6,7 +6,7 @@ is the updateable engine.
 The paper is in its second phase: four desks under the Working Knowledge
 section, one article each per night, in this published order:
 
-1. The Machinery
+1. The Mechanics
 2. The Evidence
 3. The Instruments
 4. The Levers
