@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A token id is an address into a table the model learned · Transformers from First Principles</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "transformers-first-principles",
+        "slug": "embeddings",
+        "template": "article",
+        "title": "A token id is an address into a table the model learned",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-17",
+        "tags": ["transformers", "embeddings", "representations"],
+        "sources": 11,
+        "words": 2000,
+        "reading_minutes": 9,
+        "dek": "The integer a tokenizer hands over indexes one row of a learned matrix, and where that row sits in space is the only place its meaning lives.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">Transformers from First Principles</div>
+        <h1 class="nb-title">A token id is an address into a table the model learned</h1>
+        <p class="nb-dekline">
+          The integer a tokenizer hands over indexes one row of a learned
+          matrix, and where that row sits in space is the only place its meaning
+          lives.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-07-17</span>
+        </div>
+      </header>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What the tokenizer hands the model</h2>
+        <p>
+          The previous step left the model holding integers. A tokenizer cut the
+          text, matched each piece against its merge table, and handed back a
+          sequence of token ids, nothing more. An id carries no numbers of its
+          own; it is a position in a list. The step that turns that position into
+          something a transformer can compute with is a single table lookup.
+        </p>
+        <p>
+          That table is a matrix. Call it E. It holds one row for every token in
+          the vocabulary and one column for every dimension the model works in,
+          so its shape is vocabulary size by model width. A transformer uses
+          learned embeddings to convert each token into a vector of that
+          width.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Voita states the mechanism plainly: for each vocabulary word a look-up
+          table holds its embedding, and it is found using the word's index in
+          the vocabulary.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Token id 2 means row 2 of E.
+        </p>
+        <div class="nb-objectives">
+          <div class="nb-objectives-label">In this article</div>
+          <ul>
+            <li>Trace one token id to one row of a small embedding table, by hand.</li>
+            <li>Reach that same row the long way, through a one-hot vector times the matrix.</li>
+            <li>See why the row's geometry is learned and never designed.</li>
+            <li>Keep the embedding apart from the tokenizer, the output layer, and the position signal.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section data-nb-section="reading-a-row" id="reading-a-row">
+        <h2>Reading row 2 by hand</h2>
+        <p>
+          To make the lookup concrete, shrink everything. Take a vocabulary of
+          six tokens and a model width of four. The numbers below are chosen by
+          hand to be small enough to check, not values any model produced. A real
+          embedding row is learned; this one is invented for the arithmetic.
+        </p>
+        <table>
+          <thead>
+            <tr><th>id</th><th>token</th><th>col 0</th><th>col 1</th><th>col 2</th><th>col 3</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0</td><td><code>[low]</code></td><td>0.2</td><td>&minus;0.4</td><td>0.1</td><td>0.5</td></tr>
+            <tr><td>1</td><td><code>[est]</code></td><td>&minus;0.3</td><td>0.8</td><td>0.0</td><td>&minus;0.2</td></tr>
+            <tr><td>2</td><td><code>[new]</code></td><td>0.6</td><td>0.1</td><td>&minus;0.5</td><td>0.3</td></tr>
+            <tr><td>3</td><td><code>[wid]</code></td><td>0.5</td><td>0.2</td><td>&minus;0.4</td><td>0.1</td></tr>
+            <tr><td>4</td><td><code>[lo]</code></td><td>0.1</td><td>&minus;0.3</td><td>0.2</td><td>0.4</td></tr>
+            <tr><td>5</td><td><code>[es]</code></td><td>&minus;0.2</td><td>0.7</td><td>0.1</td><td>&minus;0.1</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Token id 2 is the token <code>[new]</code>. Its embedding is row 2,
+          read straight across: 0.6, 0.1, &minus;0.5, 0.3, one number per column.
+          Token id 0, the token <code>[low]</code>, is row 0: 0.2,
+          &minus;0.4, 0.1, 0.5. There is no computation. The id is an address and
+          the row is what sits at it.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          There is a longer way to reach the same four numbers, and it is what
+          the linear-algebra picture means. Write id 2 as a one-hot vector, a
+          length-six row that is 0 everywhere except a single 1 in position 2.
+          Multiply it by E and each
+          row is weighted by the matching entry of that vector, so every row but
+          row 2 is multiplied by 0 and drops out, leaving row 2
+          exactly.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The matrix multiply and the lookup return the identical vector. No
+          implementation performs the multiply. It reads the row.
+        </p>
+        <p>
+          One transformer-specific detail rides on top. Before the row enters the
+          rest of the stack, every weight in it is multiplied by the square root
+          of the model width.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          On the toy that factor is the square root of four, which is two, so
+          <code>[new]</code> enters as 1.2, 0.2, &minus;1.0, 0.6. In the base
+          transformer the width is 512 and the factor is about 22.6, so a real
+          row is 128 times longer than this one. The scaling changes the size of
+          the numbers, never which row was chosen.
+        </p>
+        <div class="nb-callout">
+          <span class="nb-callout-term">Embedding matrix</span>
+          E, with one learned row per vocabulary token and one column per model
+          dimension. A token id selects its row; that row is the token's vector.
+        </div>
+      </section>
+
+      <section data-nb-section="nobody-arranged-the-rows" id="nobody-arranged-the-rows">
+        <h2>Nobody arranged the rows</h2>
+        <p>
+          Those six rows were invented for the example. In a real model they begin
+          as random numbers and are changed by training. The embedding matrix is
+          parameters, adjusted by the same gradient signal that tunes every other
+          weight in the network, and the rows that improve its predictions get
+          reinforced. Olah, describing exactly this learned table, is careful
+          about what the process produces.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          After enough training, a pattern appears in where the rows land. Tokens
+          that show up in similar contexts end up with similar rows. This was
+          never requested. In Olah's account the useful structure is a side
+          effect: the training did not try to place similar words close together,
+          and the arrangement more or less fell out of the optimization
+          process.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The rows in the toy table learned nothing, so any resemblance between
+          two of them is coincidence. The claim about geometry rests on the
+          trained models the sources measured, not on hand-picked numbers.
+        </p>
+        <p>
+          The most repeated illustration of that structure is an offset: the
+          direction from one word's row to another can line up with a
+          relationship. Mikolov's word2vec reported that the vector for
+          king, minus the vector for man, plus the vector for woman, results in a
+          vector closest to the one for queen.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The result is closest to queen, not equal to it. Alammar, working the same example,
+          records that king minus man plus woman does not exactly equal queen;
+          queen is merely the nearest of the 400,000 vectors in his
+          collection.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The offset is a tendency the vectors exhibit, not an identity they
+          satisfy.
+        </p>
+        <p>
+          The structure is real enough that it can be built on purpose, and seeing
+          who builds it settles how much to trust it. Mikolov's later work found
+          the space carried a linear structure, so that adding two vectors
+          combined their meanings: the vector for Russia plus the vector for river
+          lands near the vector for Volga River.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          GloVe, an independent construction from a different group, made the
+          geometry an explicit goal, designing its vectors so that their
+          differences capture the meaning set by a pair of
+          words.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          In word2vec the geometry falls
+          out of training on its own; in GloVe it is an objective the model is
+          built to satisfy; and both are dedicated word-vector models, cleaner
+          than a large model's input matrix, whose rows also feed everything above
+          them. Gao and colleagues showed that a big model's learned embeddings
+          tend to degenerate into a narrow cone, with low-frequency tokens crowded
+          into one region.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The tidy map of well-separated meanings is truest in the models made to
+          produce it.
+        </p>
+      </section>
+
+      <section data-nb-section="what-the-row-is-not" id="what-the-row-is-not">
+        <h2>What the row is not</h2>
+        <p>
+          Holding the embedding apart from the things next to it matters as much
+          as the lookup itself.
+        </p>
+        <p>
+          It is not the tokenizer. The tokenizer maps text to ids by counting
+          merges in a corpus, a procedure fixed once and then frozen. The
+          embedding maps ids to vectors by gradient descent, and its numbers keep
+          moving throughout training.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          One turns letters into integers by consulting a merge table; the other
+          turns integers into vectors by consulting a learned one. Believing the
+          embedding is part of the tokenizer fuses two tables built by different
+          means, at different times, for different jobs.
+        </p>
+        <p>
+          It is not the output projection. The matrix that turns an id into a
+          vector at the bottom of the model and the matrix that scores every
+          vocabulary word at the top are different objects. Press and Wolf name
+          them the input embedding and the output embedding, and their proposal is
+          to tie the two, setting them equal so the model stores one matrix
+          instead of two.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          Tying is a choice with a measured payoff: on their large model it cut
+          parameters from 66 million to 51 million and lowered test perplexity
+          from 78.4 to 74.3.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          The transformer adopts the same tie, sharing one weight matrix between
+          the two embedding layers and the pre-softmax
+          projection.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Shared weights do not collapse them into one layer. They sit at opposite
+          ends of the network and do opposite work.
+        </p>
+        <p>
+          It does not carry position. The row for <code>[new]</code> is the same
+          whether <code>[new]</code> is the first token in the line or the last.
+          Word order reaches the model through a separate signal added on top.
+          Vaswani's transformer gives its positional encoding the
+          same width as the embedding precisely so the two can be summed, and adds
+          it at the bottom of the stack.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A token's identity and its place in the sequence are two different
+          vectors that happen to be added together, and separating them is the
+          next piece of the machinery.
+        </p>
+      </section>
+
+      <section data-nb-section="rows-training-barely-touched" id="rows-training-barely-touched">
+        <h2>The rows training barely touched</h2>
+        <p>
+          The failure mode deserves the same care as the success, and it comes
+          from the same mechanism. Gradient reaches a row only when its token
+          appears in training. A token that sits in the vocabulary but almost
+          never occurs in the training text keeps a row close to its random
+          start, because little signal ever arrived to move it. Land and Bartolo,
+          cataloguing these systematically,
+          define them as tokens present in the tokenizer's vocabulary but nearly
+          or entirely absent during model training, whose under-optimized
+          embeddings can trigger anomalous or unintended
+          behavior.<sup class="nb-cite"><a href="#s10">10</a></sup>
+        </p>
+        <p>
+          The phenomenon was first noticed by accident. Rumbelow and Watkins,
+          running k-means clustering on the embedding space of a GPT model, hit a
+          set of strings sitting near the centroid of all 50,257 tokens that made
+          no semantic sense as a group, among them the now-notorious
+          <code>SolidGoldMagikarp</code>.<sup class="nb-cite"><a href="#s11">11</a></sup>
+          Asked to repeat these tokens, the model evaded, substituted other words,
+          or produced different output on repeated tries at its most deterministic
+          setting. Their explanation matches the mechanism: the
+          strings had almost no involvement in training, so the model has no
+          settled row to work from and does not know what to
+          do.<sup class="nb-cite"><a href="#s11">11</a></sup>
+          This is the same rarity that bends the geometry. Gao's narrow cone is
+          driven by low-frequency tokens crowding together, so the tokens the model
+          saw least are both the strangest to prompt and the most distorted in the
+          space.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="a-row-with-a-place" id="a-row-with-a-place">
+        <h2>A row of numbers with a place</h2>
+        <p>
+          Follow the whole path once more. A tokenizer hands over an integer. The
+          integer is an address into a matrix, and the row at that address is the
+          token's embedding, four numbers in the toy and 512 in the base
+          transformer. Nobody wrote those numbers down. They started random and
+          were moved by training until, across the whole vocabulary, tokens used
+          alike came to sit near one another, an arrangement no one designed,
+          cleanest in the models built to produce
+          it.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The embedding is where a discrete symbol becomes a point in a
+          continuous space, and the token's meaning is nothing more than where
+          that point sits relative to the others. What it is not is the tokenizer
+          that produced the id, the output layer that will later score the
+          vocabulary, or the position signal added a step afterward. It is one
+          learned row, and reading it is a memory access. Everything the
+          transformer does next runs on those rows.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.4 Embeddings and Softmax; §3.5 Positional Encoding"
+              href="https://arxiv.org/abs/1706.03762"
+              >Vaswani et al. · Attention Is All You Need (NeurIPS 2017)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Look-up Table; One-hot Vectors"
+              href="https://lena-voita.github.io/nlp_course/word_embeddings.html"
+              >Lena Voita · Word Embeddings (NLP Course | For You)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="§ Word Embeddings"
+              href="https://colah.github.io/posts/2014-07-NLP-RNNs-Representations/"
+              >Christopher Olah · Deep Learning, NLP, and Representations (2014)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§1.1 Goals of the Paper"
+              href="https://arxiv.org/abs/1301.3781"
+              >Mikolov et al. · Efficient Estimation of Word Representations in Vector Space (word2vec, 2013)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="§ Analogies"
+              href="https://jalammar.github.io/illustrated-word2vec/"
+              >Jay Alammar · The Illustrated Word2vec</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§5 Additive Compositionality"
+              href="https://arxiv.org/abs/1310.4546"
+              >Mikolov et al. · Distributed Representations of Words and Phrases and their Compositionality (2013)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Highlights · Linear substructures"
+              href="https://nlp.stanford.edu/projects/glove/"
+              >Pennington, Socher &amp; Manning · GloVe: Global Vectors for Word Representation (Stanford NLP)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.2; §4.2"
+              href="https://arxiv.org/abs/1907.12009"
+              >Gao et al. · Representation Degeneration Problem in Training Natural Language Generation Models (ICLR 2019)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3; §4.2 Table 5"
+              href="https://arxiv.org/abs/1608.05859"
+              >Press &amp; Wolf · Using the Output Embedding to Improve Language Models (2017)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2405.05417"
+              >Land &amp; Bartolo · Fishing for Magikarp: Automatically Detecting Under-trained Tokens in Large Language Models (EMNLP 2024)</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-note="Full text read via the GreaterWrong mirror; the canonical LessWrong URL returns nav-only to fetchers."
+              href="https://www.lesswrong.com/posts/aPeJE8bSo6rAFoLqg/solidgoldmagikarp-plus-prompt-generation"
+              >Rumbelow &amp; Watkins · SolidGoldMagikarp (plus, prompt generation) (LessWrong, 2023)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
