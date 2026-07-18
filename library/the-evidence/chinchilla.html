@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chinchilla beat a model four times its size · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "chinchilla",
+        "template": "framed",
+        "title": "Chinchilla beat a model four times its size on the same compute",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-18",
+        "tags": [],
+        "sources": 8,
+        "words": 1694,
+        "reading_minutes": 8,
+        "dek": "The paper's tables buy a training-compute-optimal ratio near twenty tokens per parameter, evidenced three ways, but not the settled law the field now quotes or the inference cost that makes everyone train past it.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">
+          Chinchilla beat a model four times its size on the same compute
+        </h1>
+        <p class="nb-dekline">
+          The paper's tables buy a training-compute-optimal ratio near twenty
+          tokens per parameter, evidenced three ways, but not the settled law
+          the field now quotes or the inference cost that makes everyone train
+          past it.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-07-18</span>
+        </div>
+      </header>
+
+      <section class="rs-prior" data-nb-section="prior" id="prior">
+        <p class="rs-prior-name">Prior Context</p>
+        <p class="rs-prior-context">
+          How large to make a model and how long to train it is the most
+          expensive decision in building one, and for two years the field
+          answered it with the wrong rule. The answer turns on a single
+          quantity, the number of training tokens spent per parameter, and that
+          quantity is the minimum of a fitted curve rather than a constant of
+          nature, so it moves the moment the thing being minimized changes from
+          training cost to serving cost. What those curves measure is held-out
+          loss, which means a scaling rule is only ever as trustworthy as the
+          gap between training and test data it was fit across. The
+          tokens-per-parameter number returns whenever the price of a model is
+          questioned, and the fitted-curve caveat returns whenever a measured
+          optimum gets quoted as a law.
+        </p>
+        <ul class="rs-prior-reading">
+          <li>
+            <span class="rs-prior-chip">Prior</span>
+            <a href="../mathematical-intuition/gradient-descent.html"
+              >Every trained model is rolling downhill on a computed slope</a
+            >: training is loss minimization by stepping down a computed slope,
+            and the scaling curves fit that same loss against compute.
+          </li>
+          <li>
+            <span class="rs-prior-chip">Prior</span>
+            <a href="../ai-foundations/generalization.html"
+              >Rebuild ImageNet's test set and the top model loses eleven
+              points</a
+            >: how much of a measured number belongs to the data it was scored
+            on, since a scaling law is a claim about held-out loss.
+          </li>
+        </ul>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A 70B model wins the controlled run</h2>
+        <p>
+          In 2022 a DeepMind team trained two language models on the same
+          compute budget and let the smaller one win. Chinchilla had 70 billion
+          parameters and saw 1.4 trillion training tokens; Gopher, built a year
+          earlier, had 280 billion parameters and saw 300 billion tokens. On
+          MMLU, a 57-subject multiple-choice exam, Chinchilla scored 67.5%
+          against Gopher's roughly 60%, better by more than seven points, from a
+          model four times smaller.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 4 · abstract">1</a></sup
+          >
+        </p>
+        <p>
+          That head-to-head is one controlled comparison at one compute budget,
+          and nobody disputes the measurement. Its limit is scope, not validity:
+          one budget, one model family. What it demonstrates is not that small
+          models are better but that Gopher was built wrong for its budget.
+          Gopher saw about 1.07 tokens for every parameter; Chinchilla saw
+          twenty.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table A9">1</a></sup
+          >
+          The result the paper cares about is the allocation rule behind that
+          number: for a fixed budget of training compute, how should you split
+          it between making the model larger and training it on more data?
+        </p>
+        <div class="nb-callout">
+          <span class="nb-callout-term">Compute-optimal</span>
+          the split of a fixed training-compute budget between model size and
+          training tokens that minimizes training loss. It counts the cost of
+          training the model and nothing that happens after.
+        </div>
+      </section>
+
+      <section data-nb-section="the-ratio" id="the-ratio">
+        <h2>Where twenty-to-one comes from</h2>
+        <p>
+          The twenty is the agreement of three estimates the paper ran
+          separately and then stacked. Each asks the same question. As the
+          compute budget C grows, how fast should the optimal parameter count N
+          and token count D grow with it? Each answers with an exponent:
+          N<sub>opt</sub> ∝ C<sup>a</sup> and D<sub>opt</sub> ∝
+          C<sup>b</sup>.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 2 · §3.4">1</a></sup
+          >
+          Approach one reads the minimum off each training curve, held-out loss
+          plotted against compute. Approach two builds isoFLOP profiles, an
+          equal-compute slice in which model size is varied and the loss minimum
+          is read off. Approach three fits a parametric surface, a formula
+          L(N,D) with a handful of constants, to every run and minimizes it.
+        </p>
+        <table class="rs-worked">
+          <caption>
+            The three approaches' fitted exponents, where the optimum scales as
+            N ∝ C<sup>a</sup> and D ∝ C<sup>b</sup>.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Table 2">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Approach</th>
+              <th>a (params)</th>
+              <th>b (tokens)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="rs-token">Training curves</span></td>
+              <td>0.50</td>
+              <td>0.50</td>
+            </tr>
+            <tr>
+              <td><span class="rs-token">IsoFLOP profiles</span></td>
+              <td>0.49</td>
+              <td>0.51</td>
+            </tr>
+            <tr>
+              <td><span class="rs-token">Parametric fit</span></td>
+              <td>0.46</td>
+              <td>0.54</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          All three land near a = b = 0.5, and one-half on each exponent has a
+          plain meaning: the two should grow together, so every doubling of the
+          budget should roughly double the model and double the data.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§1 · §3.4">1</a></sup
+          >
+          At Gopher's budget of 5.76×10²³ floating-point operations, the fitted
+          rule prescribes about 67 billion parameters trained on 1.5 trillion
+          tokens, almost exactly the 70-billion-on-1.4-trillion model the team
+          then built and ran.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 3">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="kaplan" id="kaplan">
+        <h2>Why Kaplan pointed the other way</h2>
+        <p>
+          Two years earlier, Kaplan and coauthors had read the same kind of
+          curves and reached the opposite prescription: put almost every new
+          floating-point operation into model size. Their exponents were N ∝
+          C<sup>0.73</sup> and D ∝ C<sup>0.27</sup>, model size growing more than
+          twice as fast as data, with the explicit advice to train very large
+          models on a relatively modest amount of data and stop well short of
+          convergence.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="§6.1 · abstract">2</a></sup
+          >
+          Chinchilla, trained the Kaplan way, would have been enormous and
+          starved of data.
+        </p>
+        <p>
+          The disagreement is not about data. It is about a hyperparameter.
+          Kaplan held a single cosine learning-rate schedule fixed across every
+          run, whatever its length. A cosine schedule decays the step size that
+          <a href="../canon-papers/adam.html">the optimizer</a> takes toward
+          near zero over a preset horizon, so a model stopped early was measured
+          in the middle of that decay. Its intermediate loss overstates what an
+          equally sized model would reach under a matching, shorter schedule.
+          Overstate the loss of the short runs and you understate the value of
+          training on less data, which tilts the optimum toward size.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§2">1</a></sup
+          >
+          The charge is checkable against Kaplan's own tables: the C<sup>0.73</sup>
+          split is exactly the size-over-data conclusion the schedule artifact
+          predicts, and it comes from the same compute-constrained arithmetic
+          both papers use.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="§6.1 · Fig. 14">2</a></sup
+          >
+          Judged by what 2020 could have known, this is a methodology error, not
+          a lucky guess corrected.
+        </p>
+      </section>
+
+      <section data-nb-section="replication" id="replication">
+        <h2>The leg that did not reproduce</h2>
+        <p>
+          The clean "three methods agree" story has one seam. In 2024, Besiroglu
+          and coauthors re-extracted the paper's own data and tried to reproduce
+          the third approach, the parametric fit, and could not.<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="abstract">3</a></sup
+          >
+          The reported exponents were a ≈ 0.454 and b ≈ 0.542, carrying
+          confidence intervals about a thousandth wide. Intervals that tight
+          would demand on the order of 600,000 training runs; the authors had
+          between 400 and 500 data points to fit.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="§3">3</a></sup
+          >
+          The reported point estimate implied about 70 tokens per parameter, not
+          20, out of step with the other two approaches and with the model that
+          was actually trained. Besiroglu's refit of the same surface gave a ≈
+          0.512 and b ≈ 0.488, with an interval roughly fifty times wider, and
+          landed back near 20:1.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="§3 · results">3</a></sup
+          >
+        </p>
+        <p>
+          The correction is narrower than it sounds. It does not move the ratio. The twenty-to-one figure never
+          rested on the parametric surface; it rested on the isoFLOP minima, the
+          training-curve minima, and the Gopher run, and those are untouched.
+          What Besiroglu removes is the paper's claim that all three legs agreed
+          on their own. As published, one leg was propped up by intervals too
+          narrow to believe. Repaired, it leans the same way as the other two,
+          which is the honest version of the convergence the paper advertised.
+        </p>
+      </section>
+
+      <section data-nb-section="inference" id="inference">
+        <h2>Compute-optimal was never cost-optimal</h2>
+        <p>
+          The paper's word for its result is "compute-optimal," and the word is
+          exact: optimal for the one quantity it chose to minimize, training
+          compute. The authors say so plainly.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§1">1</a></sup
+          >
+          The objective counts the operations needed to train the model and
+          stops there. It does not count the cost of running the model
+          afterward, which is where most of the spending goes once a model
+          serves millions of requests. That gap is not a flaw in the paper; it
+          is a different question the paper did not ask.
+        </p>
+        <p>
+          LLaMA raised it first. Its objective "disregards the inference budget,
+          which becomes critical when serving a language model at scale," and
+          the team found a 7B model still improving past a trillion tokens,
+          about 143 tokens per parameter, seven times Chinchilla's ratio.<sup
+            class="nb-cite"
+            ><a href="#s4" data-nb-locator="§1 · Table 2">4</a></sup
+          >
+          Llama 3 pushed an 8B model to 15 trillion tokens, 1,875 tokens per
+          parameter, ninety-four times the ratio, and reported it still
+          improving log-linearly, against a Chinchilla-optimal figure Meta put
+          at roughly 200 billion tokens for that size.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Sardana and coauthors made the logic formal: fold serving cost into
+          the objective and the optimum slides to models smaller and
+          longer-trained than Chinchilla prescribes.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <figure class="nb-chart">
+          <figcaption>
+            Fig. 1 · Training tokens per parameter, four models, log scale. The
+            compute-optimal ratio is twenty; deployed models sit far above
+            it.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            ><sup class="nb-cite"><a href="#s4">4</a></sup
+            ><sup class="nb-cite"><a href="#s5">5</a></sup>
+          </figcaption>
+          <canvas></canvas>
+          <noscript>chart requires JS; data in caption and prose</noscript>
+          <script type="application/json" data-nb-chart>
+            {
+              "type": "bar",
+              "labels": ["Gopher", "Chinchilla", "LLaMA 7B", "Llama 3 8B"],
+              "series": [
+                {
+                  "name": "training tokens per parameter",
+                  "values": [1.07, 20, 143, 1875]
+                }
+              ],
+              "y": { "scale": "log", "label": "tokens per parameter" }
+            }
+          </script>
+        </figure>
+        <p>
+          The reputation grew from the weakest part. When nostalgebraist read
+          the paper as an argument that data, not size, was the binding
+          constraint, the extrapolation ran directly on the fitted L(N,D)
+          surface, the one leg a replication would later fail to
+          reproduce.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Downstream the ratio hardened into a plain rule of thumb, quoted as
+          "15 to 25 tokens per parameter" with no mention of the interval it
+          carried or the runs it was read off.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          A fitted optimum was promoted to a settled law somewhere between the
+          tables and the citation.
+        </p>
+        <p>
+          So "Chinchilla-optimal" carries two different claims. Inside the
+          paper's evidence: at a fixed training-compute budget, spend it near
+          twenty tokens per parameter, and a controlled run backs the number.
+          Outside it sits everything about serving cost, about whether 20:1 is a
+          law rather than one surface's minimum over one set of runs, and about
+          model families the paper never trained. The next time the phrase is
+          offered as the reason a model is the size it is, the useful question
+          is which of the two is meant, and whether the person quoting it is
+          paying to train the model or to run it.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.15556"
+              >arXiv · Hoffmann et al., "Training Compute-Optimal Large Language
+              Models" (2022)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2001.08361"
+              >arXiv · Kaplan et al., "Scaling Laws for Neural Language Models"
+              (2020)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.10102"
+              >arXiv · Besiroglu et al., "Chinchilla Scaling: A replication
+              attempt" (2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2302.13971"
+              >arXiv · Touvron et al., "LLaMA: Open and Efficient Foundation
+              Language Models" (2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://ai.meta.com/blog/meta-llama-3/"
+              >Meta AI · "Introducing Meta Llama 3" (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2401.00448"
+              >arXiv · Sardana et al., "Beyond Chinchilla-Optimal: Accounting for
+              Inference in Language Model Scaling Laws" (2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.lesswrong.com/posts/6Fpvch8RR29qLEWNH/chinchilla-s-wild-implications"
+              >nostalgebraist · "chinchilla's wild implications" (2022)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.educatingsilicon.com/2024/04/29/revised-chinchilla-scaling-laws-impact-on-llm-compute-and-token-requirements/"
+              >Educating Silicon · "Revised Chinchilla scaling laws" (2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
