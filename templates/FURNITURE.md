@@ -27,13 +27,13 @@ sample data: replace it.
 
 The families, and how to choose within them: **evidence** — a couple of
 heterogeneous headline numbers are a stat strip; rows of one shape, three or
-more deep, are a table; a trend whose shape is the point is a chart; an
-exact visual from a cited document is a source asset. **Voice** — a labeled
-passage of any kind is the note; the article's own best sentence, promoted,
-is a pull quote. **Structure** — stages in order are steps, events in time a
-timeline, stances in a disagreement position blocks, strengths against
-caveats the holds-up grid. **Accountability** — a prediction is a claim
-card; its judgment later is a grade row.
+more deep, are a table; anything the reader must see is a figure, drawn from
+data or captured from a source. **Voice** — a labeled passage of any kind is
+the note; the article's own best sentence, promoted, is a pull quote.
+**Structure** — stages in order are steps, events in time a timeline,
+stances in a disagreement position blocks, strengths against caveats the
+holds-up grid. **Judgment** — scored criteria are a rubric; a prediction is
+a claim card; its judgment later is a grade row.
 
 ## Stat strip
 
@@ -82,14 +82,19 @@ caption states what the rows show and carries the citation.
 </table>
 ```
 
-## Chart
+## Figure
 
-A production-rendered PNG from the chart's committed plotly script. Render
-with `uv run --group charts engine/render_chart.py` (docs/charts.md); the
-script `chart-N.py` ships beside `chart-N.png` as the chart's provenance —
-the `chart-` name is reserved for it. Label axes, note a non-linear scale,
-and cite the data source in the caption. Restate the data in caption and
-prose.
+An image the argument needs, in one component with two kinds, told apart by
+filename. A **chart** is drawn from data at production time: render with
+`uv run --group charts engine/render_chart.py` (docs/charts.md), commit the
+`chart-N.py` script beside `chart-N.png` as its provenance (the `chart-`
+name is reserved), label axes, note a non-linear scale, and cite the data
+source in the caption. A **source asset** (`asset-N.png`/`.jpg`/`.webp`) is
+an exact visual captured from a cited primary or public document — a figure,
+photograph, or document detail; crop away page furniture and printed
+captions unless that text is itself evidence, and cite the document. Both
+live beside the article in `library/<series>/<slug>/`, need useful
+alternative text, and restate what matters in caption and prose.
 
 ```html
 <figure class="nb-figure">
@@ -98,23 +103,11 @@ prose.
     Fig. 1 · CAPTION.<sup class="nb-cite"><a href="#s1">1</a></sup>
   </figcaption>
 </figure>
-```
 
-## Source asset
-
-An exact image from a cited primary or public document. It may be a figure,
-photograph, document detail, or other visual evidence. Store it beside the
-article at `library/<series>/<slug>/asset-N.png` (or `.jpg`/`.webp`), give it
-useful alternative text, and cite the source in a short factual caption. Crop
-away surrounding page furniture and printed source captions unless that text is
-itself evidence. Capture a direct source image when possible; use a precise PDF
-crop or a web screenshot only when the source cannot export the visual.
-
-```html
 <figure class="nb-figure">
   <img src="ARTICLE-SLUG/asset-1.png" alt="WHAT THE ASSET SHOWS" />
   <figcaption>
-    Fig. 1 · A SHORT FACTUAL LABEL FOR THE ASSET.<sup class="nb-cite"
+    Fig. 2 · A SHORT FACTUAL LABEL.<sup class="nb-cite"
       ><a
         href="#s1"
         data-nb-locator="Fig. 1 · p. 4"
@@ -246,6 +239,31 @@ Strengths against caveats, side by side. Its summary row is a "Verdict" note
     <ul>
       <li>LIMITATION.</li>
     </ul>
+  </div>
+</div>
+```
+
+## Rubric
+
+Scored criteria for a review: each row a criterion, an integer score 0–5,
+and one cited line the score stands on. A series may pin criteria every
+review must score (`rubric:` in series.yaml, docs/series.md § Rubrics); add
+rows the subject demands. The rendered score text must agree with
+`data-score`, and the meter colors itself from the score.
+
+```html
+<div class="nb-rubric">
+  <div class="nb-rubric-row" data-nb-criterion="CRITERION-SLUG" data-score="4">
+    <div class="nb-rubric-head">
+      <span class="nb-rubric-name">CRITERION</span>
+      <span class="nb-rubric-gauge"
+        ><span class="nb-rubric-meter"><i></i></span
+        ><span class="nb-rubric-score">4/5</span></span
+      >
+    </div>
+    <p class="nb-rubric-note">
+      THE LINE THE SCORE STANDS ON.<sup class="nb-cite"><a href="#s2">2</a></sup>
+    </p>
   </div>
 </div>
 ```

@@ -1248,6 +1248,103 @@ figure.nb-chart noscript {
   border-radius: 0 var(--radius) var(--radius) 0;
 }
 
+/* the rubric — scored criteria for a review (engine contract: an integer
+   data-score 0-5, the rendered nb-rubric-score agreeing, the note cited).
+   Meter width and color follow data-score via the semantic tokens. */
+.nb-rubric {
+  background: var(--wash);
+  border-left: 3px solid var(--accent-2);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  padding: 14px 16px 6px;
+  margin: 14px 0;
+}
+
+.nb-rubric-row {
+  padding: 8px 0 10px;
+  border-top: 1px solid var(--line);
+}
+
+.nb-rubric-row:first-child {
+  border-top: none;
+}
+
+.nb-rubric-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nb-rubric-name {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.nb-rubric-gauge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.nb-rubric-meter {
+  width: 84px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+  flex: none;
+}
+
+.nb-rubric-meter i {
+  display: block;
+  height: 100%;
+  background: var(--warn);
+}
+
+.nb-rubric-score {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.nb-rubric-row[data-score="0"] .nb-rubric-meter i {
+  width: 0%;
+  background: var(--bad);
+}
+
+.nb-rubric-row[data-score="1"] .nb-rubric-meter i {
+  width: 20%;
+  background: var(--bad);
+}
+
+.nb-rubric-row[data-score="2"] .nb-rubric-meter i {
+  width: 40%;
+  background: var(--warn);
+}
+
+.nb-rubric-row[data-score="3"] .nb-rubric-meter i {
+  width: 60%;
+  background: var(--warn);
+}
+
+.nb-rubric-row[data-score="4"] .nb-rubric-meter i {
+  width: 80%;
+  background: var(--ok);
+}
+
+.nb-rubric-row[data-score="5"] .nb-rubric-meter i {
+  width: 100%;
+  background: var(--ok);
+}
+
+.nb-rubric-note {
+  margin: 3px 0 0;
+  font-size: 15.5px;
+  color: var(--ink-soft);
+}
+
 /* the table — compact worked rows (design adopted from the example press's
    rs-worked): mono numerals, spaced digits fit a phone, the caption carries
    the citation. A `txt` cell drops to serif, left-aligns, and wraps. */
