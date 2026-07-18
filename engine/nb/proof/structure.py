@@ -215,16 +215,19 @@ def check_figures(ed, *, html_path, rep):
     expected = re.compile(
         rf"^{re.escape(slug)}/[a-z0-9][a-z0-9._-]*\.(?:png|jpe?g|webp)$"
     )
+    # One figure component; the filename carries the contract. chart-N.* is
+    # the reserved name for a generated chart, which must ship its committed
+    # script; any other name is a captured source asset.
     chart_expected = re.compile(rf"^{re.escape(slug)}/(chart-\d+)\.png$")
+    chart_named = re.compile(rf"^{re.escape(slug)}/chart-")
     seen = set()
     for image in ed.images:
         figure = image["figure"]
         if figure is None:
-            rep.block(
-                "B-FIGURE", "images must sit inside figure.nb-figure or figure.nb-chart"
-            )
+            rep.block("B-FIGURE", "images must sit inside figure.nb-figure")
             continue
-        is_chart = figure.get("chart", False)
+        src = image["src"]
+        is_chart = bool(chart_named.match(src))
         key = id(figure)
         if key not in seen:
             seen.add(key)
@@ -235,7 +238,6 @@ def check_figures(ed, *, html_path, rep):
                     if is_chart
                     else "each figure needs a caption citation to a source entry",
                 )
-        src = image["src"]
         if is_chart:
             chart_name = chart_expected.fullmatch(src)
             if not chart_name:
@@ -244,8 +246,6 @@ def check_figures(ed, *, html_path, rep):
                     f"a chart image must be '{slug}/chart-N.png': {src!r}",
                 )
                 continue
-            # The committed script is the chart's provenance: the numbers
-            # behind the pixels publish with the article.
             sibling = os.path.join(parent, slug, f"{chart_name.group(1)}.py")
             if not os.path.isfile(sibling):
                 rep.block(

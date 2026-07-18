@@ -105,10 +105,8 @@ class Article(HTMLParser):
             # a meta-refresh redirects the reader off-site the instant the page loads
             self.forbidden_tags.append("meta[http-equiv=refresh]")
 
-        if tag == "figure":
-            classes = a.get("class", "").split()
-            if "nb-figure" in classes or "nb-chart" in classes:
-                el["figure"] = {"cites": [], "chart": "nb-chart" in classes}
+        if tag == "figure" and "nb-figure" in a.get("class", "").split():
+            el["figure"] = {"cites": []}
 
         if tag == "script":
             self.script_tags.append(a)

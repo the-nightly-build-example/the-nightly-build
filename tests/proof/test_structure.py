@@ -71,7 +71,7 @@ def test_invalid_figures_block(
 
 
 def chart_figure(*, src: str = "micron/chart-1.png") -> str:
-    return f'''<figure class="nb-chart">
+    return f'''<figure class="nb-figure">
   <img src="{src}" alt="Demand rising by year" />
   <figcaption>Fig. 1 · Demand.<sup class="nb-cite"><a href="#s1">1</a></sup></figcaption>
 </figure>'''
@@ -105,9 +105,9 @@ def test_a_generated_chart_with_its_script_passes(
             id="missing-provenance-script",
         ),
         pytest.param(
-            chart_figure(src="micron/asset-1.png"),
-            {"micron/asset-1.png": PNG},
-            id="source-asset-name-in-a-chart-figure",
+            chart_figure(src="micron/chart-1.webp"),
+            {"micron/chart-1.webp": PNG},
+            id="chart-named-asset-that-is-not-a-png",
         ),
         pytest.param(
             chart_figure().replace(
