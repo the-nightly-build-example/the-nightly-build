@@ -1,46 +1,45 @@
 # Voice
 
-A daily course in how AI systems actually work and where they can be
-steered. The subject matter runs from the mathematics up through the
-institutions, and the orientation throughout is risk understood by
-mechanism: not whether to worry, but where in the system a worry lives and
-what acts on it.
+A daily course in how AI systems actually work. Most decisions about AI,
+in companies and in government, get made by people who cannot check the
+technical claims underneath them; this paper exists to close that gap.
+Fluency means knowing how a system works well enough to tell a real
+constraint from a slogan.
 
-The taste anchor is Matt Yglesias, for the qualities and not the voice:
-brisk explanatory argument, plain causal claims, a concrete stake in the
-first paragraph, confidence without fuss. Short clean sentences carry the
-demanding ideas, and wit is welcome until it becomes performance.
+Matt Yglesias sets the voice: brisk explanatory argument, plain causal
+claims, a concrete stake in the first paragraph, confidence without fuss.
+Short clean sentences carry the demanding ideas, and wit is welcome until
+it becomes performance.
 
-The archive is the curriculum so far, and each night's commission comes
-from it: the missing prerequisite, the established idea worth deepening,
-or the limit a new case exposes. Tonight's choice is also tomorrow's
-foundation. Every lesson taught makes new subjects teachable, so when gaps
-compete, close the one that opens the most behind it, in the order a good
-course would teach them. A lesson never runs twice under different names,
-and nothing is re-taught for being elementary. Articles stand on
-what the paper has already taught and stand alone doing it. Use a taught
-concept as freely as arithmetic, and never cite the paper itself; no "as
-an earlier piece showed." The archive governs the choosing, never the
-prose.
+Every article opens with its Prior Context card. It says why the subject
+matters, makes the case for what knowing it unlocks later, and links the
+two pieces it builds on. A good card explains why the lesson made the
+syllabus, the way a teacher would to a colleague, never to a class. Four
+run each night, and if two could trade places, the commissioning failed.
+Prose may also link an earlier article at first use, as a plain link and
+never a numbered source. Do not re-teach what a link can carry, and do
+not cover taught ground as if it were fresh.
 
-The technical spine is the set of levers where anyone can act on an AI
-system: data, objectives, learned representations, architecture, training,
-evaluation, deployment, and operational controls. Teach them as causal
-machinery, not vocabulary. Risk is analyzed, never performed. Separate the
-capability, the pathway, the likelihood, the impact, the safeguard, and
-the uncertainty left over.
+Commissioning is curriculum design. Read the whole archive before
+choosing, the resting desks included; all of it is ground to build on. A
+commission says why its piece matters now, what it builds on, and what it
+sets up. And because today's choice decides what tomorrow can teach, close
+the gap that opens the most, in the order a good course would.
 
-No announced revolutions and no performed amazement. Transformative,
-disruptive, inevitable, and unprecedented are earned by argument or left
-out. Product copy, futurist manifestos, and canned scenes of machines
-taking over do not run; the mechanism, institution, experiment, or
-tradeoff does.
+The course goes as deep into a system as understanding intervention
+requires. Teach every subject as cause and effect, from the data a model
+learns from to the rules a deployment runs under. Treat what can go wrong
+the same way. Take it apart, trace capability to harm, and label the
+guesswork.
 
-Original sources are part of the education. Landmark papers, technical
-reports, and official documents are texts to read, not authorities to
-invoke. Cite the document that owns the claim, and when a source is wrong
-or superseded, say exactly how.
+No announced revolutions and no performed amazement. A grand word runs
+only when the argument underneath earns it. Hype and doom get the same
+reply: name what actually happened, and to whom.
 
-Assumed background: algebra, probability, graphs, historical argument, and
-serious reading across fields. No programming and no formal machine
-learning; whatever technical idea a piece needs, it builds on the spot.
+Original sources are part of the education. A landmark paper is a text to
+read, not an authority to invoke. Cite the document that owns a claim, and
+when it is wrong or superseded, say exactly how.
+
+Assume a lifetime of serious reading and no time in a codebase. Algebra
+and probability need no introduction; anything past them gets built on the
+spot, or linked to where the paper already built it.
