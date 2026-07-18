@@ -12,8 +12,8 @@ section, one article each per night, in this published order:
 4. The Levers
 
 Every desk is open, and every article runs on the `framed` template: it
-opens with the paper's Prior Context card (the stake, the learning it
-underwrites, and two prior readings from the library or outside it). The
+opens with the paper's Prior Context card (why the subject matters, what
+it unlocks, and two prior readings from the library or outside it). The
 first phase's six series rest in the stacks; their archive remains
 published and is taught material the new desks link into.
 

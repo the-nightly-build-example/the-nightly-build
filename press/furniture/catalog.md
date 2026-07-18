@@ -2,25 +2,22 @@
 
 ## Prior Context card (`rs-prior`)
 
-Opens every framed article. Three parts, written last, from the finished
-piece. The hook is one sentence carrying the stake: the judgment or decision
-the subject decides. The context motivates the learning ahead, never the
-piece itself: what becomes intelligible once this subject is held, and which
-details go on to matter, each tied to its later stakes. It is never a
-summary, never an instruction about what to notice, and never mentions the
-paper or any reader. The reading rows hold two true prerequisites, internal
-(relative library link) or external (a lasting public text): the link, then
-what from that text is needed here. Drop the list only when nothing honest
-qualifies. The "Prior Context" name and "Prior" chips are fixed chrome. The
-card carries no citations.
+Opens every framed article, written last, from the finished piece. One
+passage under the card's name: why the subject matters, what knowing it
+unlocks later, and which details return, each given its consequence. It is
+never a summary, never an instruction about what to notice, and never
+mentions the paper or any reader. The reading rows hold two true
+prerequisites, internal (relative library link) or external (a lasting
+public text): the link, then what from that text is needed here. Drop the
+list only when nothing honest qualifies. The "Prior Context" name and
+"Prior" chips are fixed chrome. The card carries no citations.
 
 ```html
 <section class="rs-prior" data-nb-section="prior" id="prior">
   <p class="rs-prior-name">Prior Context</p>
-  <p class="rs-prior-hook">ONE SENTENCE CARRYING THE STAKE.</p>
   <p class="rs-prior-context">
-    WHAT BECOMES INTELLIGIBLE AFTER THIS SUBJECT, AND WHICH DETAILS GO ON TO
-    MATTER, EACH TIED TO ITS LATER STAKES.
+    WHY THE SUBJECT MATTERS, WHAT KNOWING IT UNLOCKS LATER, AND WHICH
+    DETAILS RETURN, EACH GIVEN ITS CONSEQUENCE.
   </p>
   <ul class="rs-prior-reading">
     <li>

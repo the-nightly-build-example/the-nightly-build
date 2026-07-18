@@ -1,29 +1,25 @@
 # framed
 
-An article that does original analysis and opens with the paper's Prior
-Context card. Build the body exactly as an article: sections as an argument,
-a concrete opening fact, a close on the earned conclusion. The body stands
-alone with the card covered.
+The body is an article. Read `templates/article/identity.md` and build the
+body by it. This template adds one thing: the Prior Context card,
+`rs-prior`, documented in `press/furniture/catalog.md`. The body must read
+whole with the card covered.
 
-Write the card last, from the finished piece, in three parts. The hook is
-one sentence carrying the stake: the judgment or decision the subject
-decides. The context motivates the learning ahead, not the piece: name what
-becomes intelligible once this subject is held, and tie each detail that
-goes on to matter to its later stakes, so salience comes from consequence
-rather than instruction. It is never a summary of the body, never an
-instruction about what to notice, and never mentions the paper, the course,
-or any reader. The reading rows hold two true prerequisites, internal or
-external: the link, then what from that text is needed here. Drop the rows
-only when nothing honest qualifies.
+The card comes last, written from the finished piece. It is one passage
+under the card's name, opening on why the subject matters and reasoned the
+way a teacher explains to a colleague why the lesson made the syllabus:
+what it unlocks, and which details return later, each given its
+consequence. It never summarizes the body, never points at what to notice,
+and never mentions the paper or anyone reading it. Two reading rows close
+the card, each a real prerequisite from the library or outside it, with a
+link and what that text supplies here. Drop the rows only when nothing
+honest qualifies.
 
-Calibration, from a piece on attention: "Attention is the piece that makes
-the rest of the transformer intelligible: the stack of layers, training at
-scale, and the interpretability methods that try to see inside a model all
-treat this weighing as given. It is also where two bigger questions first
-get their teeth. What a 128,000-token context actually costs is set here,
-by every-pair scoring that squares as documents lengthen, and it shapes how
-long-document products get built and priced. And whether a model's
-decisions can be audited from the inside starts here too, because the
-finished weights look like an account of what the model considered, and the
-fight over whether they are one is the first taste of how hard
-interpretability gets."
+Calibration, from a piece on attention: "Understanding a transformer
+starts with attention, because the rest of the model is mostly attention
+repeated. The arithmetic settles two things. Every-pair scoring makes the
+work grow with the square of a document's length, and that square is what
+a context-window number prices. The finished weights look like the model's
+reasoning, and they fail as explanations under careful tests. The scoring
+returns when serving costs come up, and the weights return when
+interpretability does."
