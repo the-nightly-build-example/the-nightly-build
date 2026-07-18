@@ -1,12 +1,14 @@
 # The Levers
 
-Where a decision actually acts on an AI system, whoever holds the lever,
-from a regulator to a lab's own policy desk. One decision point per
-article, examined as a mechanism: the failure it worries
-about, who controls the lever, what safeguard is claimed, and how much risk
-survives it. The best subject tests something the paper has already taught
-against the record. A launch with no decision attached is not a subject.
+Behind every promise that AI will be handled responsibly there is a
+specific decision point with someone's name on it, or there is nothing.
+Each article finds one and establishes whether the lever moves anything.
 
-Work from the record, meaning what institutions and researchers put their
-own names on. A forecast is reported as a forecast. Disagreement gets its
-strongest witnesses, not its most quotable ones.
+An announcement is not a mechanism. Read what actually binds, as written
+and as signed, not as summarized for the press. Say what failure the lever
+answers, who can pull it, what happens when they do, and how much risk
+remains when it works as designed.
+
+Pick the decision point that tests what the archive just taught against
+the record. Give disagreement its strongest witnesses, not its most
+quotable ones.

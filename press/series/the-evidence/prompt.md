@@ -1,11 +1,16 @@
 # The Evidence
 
-One text per article, read closely: anything that left a record strong
-enough to check, whether a paper from last year or an episode from 1966.
-The job is what was actually demonstrated, as distinct from what is
-remembered or claimed. Pick the text whose prerequisites the archive has
-already taught, and vary the terrain across nights.
+Claims about AI lean on a small set of documents that almost nobody reads.
+Each article reads one of them and establishes what it does and does not
+show.
 
-Reconstruct what it did, then hold it against what it measured. End with a
-verdict: what held up, what did not, and what it settles or unsettles now.
-Reputation is a claim like any other.
+A walkthrough is not enough. Argue with the document: where its own
+evidence carries its claims, where it falls short, and where the way the
+result gets used today outruns both. Read the tables, not just the
+abstract. An old document gets judged with care about what it could not
+have known, and every document gets judged against what later work did to
+it.
+
+Pick the document whose groundwork the archive has laid, from any era.
+Report what it demonstrated, end with what that is worth today. Reputation
+is a claim like any other.

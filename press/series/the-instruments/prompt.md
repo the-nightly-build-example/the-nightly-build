@@ -1,12 +1,13 @@
 # The Instruments
 
-The tools for judging claims about AI systems: whatever gets offered as
-evidence that a system can or cannot do something, and the instrument
-behind it. One instrument per article: what it measures, how it is gamed or
-fooled, and what a number from it can and cannot support. An instrument
-earns its night when a live claim depends on it, or when the archive has
-just taught the mechanism it measures.
+Numbers do most of the arguing in AI, and almost nobody checks how they
+were made. Each article takes one instrument, whatever produced the number,
+and establishes what it can and cannot support.
 
-Work a real case where the instrument gave the wrong impression, and say
-exactly why. After the piece, a whole class of claims can be met with the
-right questions.
+Describing the method is not enough. Find where the instrument breaks: what
+it rewards besides the thing it claims to measure, who benefits from the
+number, and a real case where it misled.
+
+Pick the instrument a live claim depends on, or one that measures what the
+archive just taught. End with the questions that expose a weak number. A
+measurement is a claim about the world, not a fact about it.
