@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>An attention head is a weighted average that computes its own weights · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "attention",
+        "template": "framed",
+        "title": "An attention head is a weighted average that computes its own weights",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-18",
+        "tags": ["transformers", "attention", "self-attention", "context-length", "interpretability"],
+        "sources": 13,
+        "words": 2185,
+        "reading_minutes": 9,
+        "dek": "Nine dot products across three tokens compute one attention head's output, and the same nine show why long context costs what it does and why the softmax weights are not, by themselves, an explanation.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">An attention head is a weighted average that computes its own weights</h1>
+        <p class="nb-dekline">
+          Nine dot products across three tokens compute one attention head's
+          output, and the same nine show why long context costs what it does and
+          why the softmax weights are not, by themselves, an explanation.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-18</span>
+        </div>
+      </header>
+
+      <section class="rs-prior" data-nb-section="prior" id="prior">
+        <p class="rs-prior-name">Prior Context</p>
+        <p class="rs-prior-context">
+          Everything a transformer does above its input layer is attention run
+          many times over, so this one operation, understood once, unlocks the
+          rest of the stack. Three facts fall out of its arithmetic and nowhere
+          else, two of them deciding real money and real trust. Every token's query is scored
+          against every token's key, and that all-pairs count sets the price of a
+          long context window; it returns whenever serving cost or a token limit
+          comes up. The scores are then squeezed into weights that read like the
+          model reporting what it looked at, and whether that reading holds is a
+          live argument in interpretability. The mixing carries no sense of order
+          either, which is why position must be supplied from outside, a thread
+          the next part of the course picks up.
+        </p>
+        <ul class="rs-prior-reading">
+          <li>
+            <span class="rs-prior-chip">Prior</span>
+            <a href="../transformers-first-principles/tokenization.html">A transformer never reads the letters in strawberry</a>:
+            where the integer tokens come from, the sequence whose length the
+            quadratic cost here is measured in.
+          </li>
+          <li>
+            <span class="rs-prior-chip">Prior</span>
+            <a href="../transformers-first-principles/embeddings.html">A token id is an address into a table the model learned</a>:
+            the vectors this head projects into queries, keys, and values are
+            exactly those embedding rows.
+          </li>
+        </ul>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The whole operation is an average</h2>
+        <p>
+          A self-attention head takes a set of token vectors and, for each one,
+          returns a weighted average of value vectors drawn from all of them.
+          The weights are not fixed. They are computed on the spot from how well
+          the token doing the asking matches each of the others. That is the
+          entire operation, written by Vaswani and colleagues as one line,
+          <code>softmax(QK<sup>T</sup>/&radic;d<sub>k</sub>)V</code>: score
+          every query against every key, turn the scores into weights with a
+          softmax, and mix the values by those weights.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Two consequences already sit in that sentence. Scoring every query
+          against every key means the work climbs with the square of the number
+          of tokens, and that growth is the real content of a context-window
+          limit. The
+          weights, once computed, look like a confession of what the model paid
+          attention to, and that appearance does not survive a careful test.
+        </p>
+        <div class="nb-objectives">
+          <div class="nb-objectives-label">In this article</div>
+          <ul>
+            <li>Project three token vectors into queries, keys, and values by hand.</li>
+            <li>Fill a three-by-three score grid, scale it, and mix the values into one output.</li>
+            <li>Count the grid to price context length; reorder the tokens to expose the missing position.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section data-nb-section="a-weighted-average-first" id="a-weighted-average-first">
+        <h2>A weighted average, before the weights are learned</h2>
+        <p>
+          The idea predates transformers. Bahdanau, Cho, and Bengio built a
+          translation model whose context vector was a weighted sum of the source
+          annotations, with weights produced by a softmax over alignment
+          scores.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          They read those weights as a probability that a target word aligns to a
+          source word, the earliest version of the tempting idea that the weights
+          say what the model is looking at.
+        </p>
+        <p>
+          The only open question is where the weights come from. They come from a
+          similarity score between the token asking and each token available. The
+          dot product is that score: two vectors pointing the same way have a
+          large one, two at right angles have zero. Bahdanau computed it with a
+          small trained network. Luong, Pham, and Manning showed the simpler
+          alternative, a plain dot product, set beside the additive form as the
+          multiplicative one.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The transformer uses that dot product with one addition, a division by
+          the square root of the vector's dimension, which is why the mechanism is
+          named scaled dot-product attention.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Three small projections turn a token vector into the parts of this
+          score: the query is what it asks for, the key is what each token offers
+          to a match, the value is the content that gets averaged. Query against
+          key gives the weight; the weight multiplies the value. The projections
+          are the learned part, and they are the last thing to add, not the first.
+        </p>
+      </section>
+
+      <section data-nb-section="one-head-worked" id="one-head-worked">
+        <h2>One head, three tokens, worked</h2>
+        <p>
+          Shrink everything to two dimensions. Take three token vectors,
+          <code>t1 = 1 0</code>, <code>t2 = 0 1</code>, and
+          <code>t3 = 1 1</code>, standing in for three embedding rows; the digits
+          are invented to be legible, not produced by any model. Give the head
+          three weight matrices, one each for query, key, and value:
+          <code>W<sub>Q</sub></code> with rows <code>1 0</code> and
+          <code>1 1</code>, <code>W<sub>K</sub></code> with rows
+          <code>1 1</code> and <code>0 1</code>, and <code>W<sub>V</sub></code>
+          with rows <code>0 1</code> and <code>1 0</code>. These are given,
+          already trained; where a real head's numbers come from is gradient
+          descent over a corpus, a step that has already happened. This is one
+          forward pass through the finished weights.
+        </p>
+        <p>
+          Each projection is a single row-vector-times-matrix multiply. Token
+          <code>t3 = 1 1</code> projects to a query of <code>2 1</code>, the
+          first matrix row plus the second. All three tokens through all three
+          matrices fill one table.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <table class="rs-worked">
+          <caption>
+            Each token vector projected into a query, key, and value by the three
+            given matrices.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          </caption>
+          <thead>
+            <tr><th>token</th><th>vector</th><th>query</th><th>key</th><th>value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="rs-token">t1</span></td><td>1 0</td><td>1 0</td><td>1 1</td><td>0 1</td></tr>
+            <tr><td><span class="rs-token">t2</span></td><td>0 1</td><td>1 1</td><td>0 1</td><td>1 0</td></tr>
+            <tr><td><span class="rs-token">t3</span></td><td>1 1</td><td>2 1</td><td>1 2</td><td>1 1</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Now score. The recipe every tutorial repeats is the dot product of a
+          query with a key.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Dot each query against all three keys to fill a three-by-three grid.
+          The query for <code>t3</code>, <code>2 1</code>, against the key for
+          <code>t3</code>, <code>1 2</code>, scores
+          <code>2&times;1 + 1&times;2 = 4</code>. Every cell is one such sum.
+        </p>
+        <table>
+          <thead>
+            <tr><th>score</th><th>key t1 = 1 1</th><th>key t2 = 0 1</th><th>key t3 = 1 2</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>query t1 = 1 0</td><td>1</td><td>0</td><td>1</td></tr>
+            <tr><td>query t2 = 1 1</td><td>2</td><td>1</td><td>3</td></tr>
+            <tr><td>query t3 = 2 1</td><td>3</td><td>1</td><td>4</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Follow the last row, the query for <code>t3</code>, the rest of the
+          way. First divide each score by the square root of the vector's
+          dimension, here <code>&radic;2 &asymp; 1.41</code>, so <code>3 1 4</code> becomes
+          <code>2.12 0.71 2.83</code>. The division is not decoration. Vaswani's
+          team added it because, for long vectors, raw dot products grow large
+          enough to push the softmax into a region where its gradients nearly
+          vanish, which stalls learning.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Weng restates the reason plainly: without the scale, a large input can
+          leave the softmax with an extremely small
+          gradient.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          The softmax turns those scaled scores into weights that sum to one,
+          exponentiating each and dividing by the total. This is the one step a
+          pencil cannot finish, because <code>e<sup>x</sup></code> is irrational;
+          a calculator gives <code>8.34</code>, <code>2.03</code>, and
+          <code>16.92</code>, summing to <code>27.29</code>. Dividing through
+          gives weights of <code>0.31</code>, <code>0.07</code>, and
+          <code>0.62</code>, which add to <code>1.00</code>. The output for
+          <code>t3</code> is those weights times the value vectors,
+          <code>0.31&times;(0 1) + 0.07&times;(1 0) + 0.62&times;(1 1)</code>,
+          which comes to <code>0.69 0.93</code>.
+        </p>
+        <p>
+          The output is a blend of the three value vectors, every weight set by
+          content similarity, the query-key scores, and nothing else. The value
+          for <code>t3</code> dominates because <code>t3</code>'s query matched
+          <code>t3</code>'s key best, the top score of four. Phuong and Hutter
+          write this same procedure as a formal algorithm, projection to score to
+          softmax to weighted sum; the numbers above are that algorithm run once
+          by hand.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="nine-then-thirty-six" id="nine-then-thirty-six">
+        <h2>Nine scores, then thirty-six</h2>
+        <p>
+          The score grid has nine cells, because each of three queries met each
+          of three keys. Feed the head six tokens and the grid is six by six,
+          thirty-six cells: doubling the tokens quadrupled the scoring work. The
+          number of dot products is the square of the sequence length, and
+          Vaswani's complexity table lists the per-layer cost of self-attention
+          as <code>O(n<sup>2</sup>&middot;d)</code> for a sequence of length
+          <code>n</code>.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          This square is the concrete thing behind a context-window number. A
+          model advertised for a longer context must hold that same grid at, say,
+          a hundred thousand tokens by a hundred thousand, and computing it grows
+          as the second power of the length. That growth is the bottleneck two
+          well-known lines of work were built to cut. Child and colleagues
+          introduced sparse factorizations precisely because a dense transformer
+          needs time and memory that grow quadratically with sequence length,
+          reducing the attention term toward
+          <code>O(n&radic;n)</code>.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Kitaev, Kaiser, and Levskaya attacked the same term with
+          locality-sensitive hashing, changing it from
+          <code>O(L<sup>2</sup>)</code> to <code>O(L&middot;log L)</code> in the
+          length <code>L</code>.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Both papers spend their length reducing exactly this grid.
+        </p>
+      </section>
+
+      <section data-nb-section="weights-that-look-like-a-reason" id="weights-that-look-like-a-reason">
+        <h2>The weights look like a reason but the arithmetic alone does not make one</h2>
+        <p>
+          The three weights for <code>t3</code>, <code>0.31</code>,
+          <code>0.07</code>, and <code>0.62</code>, invite a story: the token
+          mostly read <code>t3</code>, glanced at <code>t1</code>, ignored
+          <code>t2</code>. Bahdanau's alignment reading encouraged exactly this,
+          treating the weights as where the model
+          looks.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          But nothing in the arithmetic ties the size of a weight to how much
+          that token changed the answer. The weight is a normalized similarity
+          score. Whether it is also a faithful account of the model's reasoning is
+          a separate question the mixing does not settle, and it is genuinely
+          disputed.
+        </p>
+        <div class="nb-position">
+          <span class="nb-position-who">Jain and Wallace</span>
+          <span class="nb-position-stance">The weights do not explain the prediction.</span>
+          <p>
+            They found learned attention weights frequently uncorrelated with
+            gradient-based measures of feature importance, and built very
+            different distributions that yielded equivalent
+            predictions.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          </p>
+        </div>
+        <div class="nb-position">
+          <span class="nb-position-who">Serrano and Smith</span>
+          <span class="nb-position-stance">The weights carry a noisy signal, not a reliable one.</span>
+          <p>
+            Higher weights correlated with greater impact in some cases and not
+            others, and gradient-based rankings predicted a weight's effect
+            better than its magnitude did; attention is no fail-safe indicator of
+            importance.<sup class="nb-cite"><a href="#s10">10</a></sup>
+          </p>
+        </div>
+        <div class="nb-position">
+          <span class="nb-position-who">Wiegreffe and Pinter</span>
+          <span class="nb-position-stance">The strong dismissal is too strong.</span>
+          <p>
+            The claim depends on one's definition of explanation, and one
+            adversarial distribution does not prove the trained weights explain
+            nothing; they separate a plausible explanation from a faithful one
+            and keep the door open for the latter.<sup class="nb-cite"><a href="#s11">11</a></sup>
+          </p>
+        </div>
+        <p>
+          The honest reading is the narrow one all three sides support. The
+          arithmetic that produces the softmax weights does not, by itself,
+          license treating them as the model's reasoning. It computes a
+          similarity-weighted average; a faithful account of what drove the
+          output is an extra claim the numbers neither make nor forbid. An
+          attention map is a picture of that similarity, not yet a picture of a
+          reason.
+        </p>
+      </section>
+
+      <section data-nb-section="reorder-and-nothing-moves" id="reorder-and-nothing-moves">
+        <h2>Reorder the tokens and nothing moves but the labels</h2>
+        <p>
+          One more fact hides in the same nine numbers. Feed the head those three
+          tokens in a different order, say <code>t3</code>, <code>t1</code>,
+          <code>t2</code>. Each still projects to the same query, key, and value,
+          because the projection depends on the token, not its slot, so every
+          pairwise score is one of the same nine. Each token's output vector is
+          identical to before; only the row it lands in has moved. The head
+          cannot tell the two orderings apart.
+        </p>
+        <p>
+          That invariance is a property, not an accident of the toy numbers. Yun
+          and colleagues state it formally: without positional information the
+          operation is permutation equivariant, and positional encodings are what
+          circumvent that restriction.<sup class="nb-cite"><a href="#s12">12</a></sup>
+          Shaw, Uszkoreit, and Vaswani put the plain version alongside it: the
+          mechanism does not model position in its structure and instead requires
+          adding representations of position to its
+          inputs.<sup class="nb-cite"><a href="#s13">13</a></sup>
+          Vaswani injects that signal at the bottom of the stack for the same
+          reason, since a model with no recurrence and no convolution has no other
+          way to use word order.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Where the position vectors come from is the next part of the course.
+        </p>
+        <p>
+          One weighted average carried all of it. Its weights, read off the
+          content by dot products, produced the output. Counting those dot
+          products priced the context window. Reordering the inputs showed the
+          head blind to sequence until position is added from outside. Inspecting
+          the weights showed a distribution of similarity, not a record of
+          reasoning. The equation is short and the head is one of hundreds in a
+          real model, but each consequence is visible in the arithmetic and
+          invisible in the slogan.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.2.1; Table 1; §3.5"
+              href="https://arxiv.org/abs/1706.03762"
+              >Vaswani et al. · Attention Is All You Need (NeurIPS 2017)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Eq. 5–6"
+              href="https://arxiv.org/abs/1409.0473"
+              >Bahdanau, Cho &amp; Bengio · Neural Machine Translation by Jointly Learning to Align and Translate (2014)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.1, score functions"
+              href="https://arxiv.org/abs/1508.04025"
+              >Luong, Pham &amp; Manning · Effective Approaches to Attention-based Neural Machine Translation (2015)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Algorithm 3"
+              href="https://arxiv.org/abs/2207.09238"
+              >Phuong &amp; Hutter · Formal Algorithms for Transformers (2022)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Self-Attention in Detail"
+              href="https://jalammar.github.io/illustrated-transformer/"
+              >Jay Alammar · The Illustrated Transformer</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Scaled dot-product attention"
+              href="https://lilianweng.github.io/posts/2018-06-24-attention/"
+              >Lilian Weng · Attention? Attention! (2018)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/1904.10509"
+              >Child, Gray, Radford &amp; Sutskever · Generating Long Sequences with Sparse Transformers (2019)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2001.04451"
+              >Kitaev, Kaiser &amp; Levskaya · Reformer: The Efficient Transformer (2020)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/1902.10186"
+              >Jain &amp; Wallace · Attention is not Explanation (2019)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/1906.03731"
+              >Serrano &amp; Smith · Is Attention Interpretable? (2019)</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; plausible vs faithful"
+              href="https://arxiv.org/abs/1908.04626"
+              >Wiegreffe &amp; Pinter · Attention is not not Explanation (2019)</a
+            >
+          </li>
+          <li id="s12">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/1912.10077"
+              >Yun et al. · Are Transformers Universal Approximators of Sequence-to-Sequence Functions? (2020)</a
+            >
+          </li>
+          <li id="s13">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/1803.02155"
+              >Shaw, Uszkoreit &amp; Vaswani · Self-Attention with Relative Position Representations (2018)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
