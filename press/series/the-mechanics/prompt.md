@@ -10,4 +10,5 @@ Pick the part that unlocks the most, the way a course orders its lessons.
 No code, ever. If it cannot be worked on paper, it has not been understood.
 A model, its training, and the product around them are constantly mistaken
 for one another, and a piece here keeps them straight. Worked numbers three
-or more rows deep go in the worked table; fewer stay in prose.
+or more rows deep go in the table (templates/FURNITURE.md); fewer stay in
+prose.
