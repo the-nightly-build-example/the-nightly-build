@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The lab that ships an MMLU score rarely says how it was measured · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "mmlu",
+        "template": "framed",
+        "title": "The lab that ships an MMLU score rarely says how it was measured",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-18",
+        "tags": [],
+        "sources": 10,
+        "words": 1735,
+        "reading_minutes": 9,
+        "dek": "GPT-4's headline 86.4% on MMLU shipped with its five-shot count and little else — not the prompt template, not the scoring rule, not the harness that turned 57 subjects of multiple choice into a single number.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">The lab that ships an MMLU score rarely says how it was measured</h1>
+        <p class="nb-dekline">
+          GPT-4's headline 86.4% on MMLU shipped with its five-shot count and
+          little else — not the prompt template, not the scoring rule, not the
+          harness that turned 57 subjects of multiple choice into a single number.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-18</span>
+        </div>
+      </header>
+
+      <section class="rs-prior" data-nb-section="prior" id="prior">
+        <p class="rs-prior-name">Prior Context</p>
+        <p class="rs-prior-context">
+          A single benchmark number decides which model a company buys and which
+          one a headline crowns, and almost no one who repeats the number can say
+          how it was produced. MMLU is the number that does this most often, so
+          knowing how it is scored is the difference between reading a capability
+          and reading a measurement. The four-option format returns wherever a
+          score jumps on reformatting, because the format is what a paraphrase or
+          a shuffle disturbs. The training cutoff returns wherever a clean number
+          hides a dirty one, because contamination is the test set crossing into
+          the data the model learned from. The keyed answer returns wherever a
+          benchmark's own errors reshuffle a ranking, because a wrong key scores
+          knowledge as ignorance and ignorance as knowledge.
+        </p>
+        <ul class="rs-prior-reading">
+          <li>
+            <span class="rs-prior-chip">Prior</span>
+            <a href="../ai-foundations/generalization.html">Rebuild ImageNet's test set and the top model loses eleven points</a>:
+            the distinction between what belongs to a fixed test set and what
+            belongs to the model, which MMLU is one instance of.
+          </li>
+          <li>
+            <span class="rs-prior-chip">Prior</span>
+            <a href="../ai-foundations/distribution-shift.html">Move a tumor detector to a new hospital and it loses twenty-three points</a>:
+            the distance between the test distribution and where the model runs,
+            which contamination collapses to zero in the wrong direction.
+          </li>
+        </ul>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The shipped score without its method</h2>
+        <p>
+          OpenAI's 2023 technical report for GPT-4 leads its capabilities table
+          with one figure: 86.4% on MMLU, measured five-shot.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The table sets that number beside GPT-3.5's 70.0%, and the gap between
+          them is the headline.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Grant it. The score is real, reproducible in principle, and it did what
+          such a number is built to do, moving procurement shortlists and press
+          coverage before most readers could name the test. MMLU is the Massive
+          Multitask Language Understanding benchmark, and its one accuracy figure
+          headlines announcement after announcement.
+        </p>
+        <p>
+          What the report states about how that figure was made is the few-shot
+          count, five-shot, and little else in the main text.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          It does not give the prompt template, whether scoring read the model's
+          log-likelihood over the four option letters or parsed a letter out of
+          generated text, or the harness that ran it.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          None of that is bad faith. The same report runs contamination checks and
+          reports the lower score when exam questions were seen in training.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The trouble starts one step later, when a reader treats 86.4% as a
+          property of the model rather than the output of one measurement procedure
+          among many.
+        </p>
+      </section>
+
+      <section data-nb-section="scoring-one-item" id="scoring-one-item">
+        <h2>How one four-option item is graded</h2>
+        <p>
+          The instrument is a fixed list. Hendrycks and co-authors assembled 15,908
+          multiple-choice questions across 57 subjects, split into a five-per-subject
+          development set, a 1,540-item validation set, and a 14,079-item test
+          set.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Every item has four options, A through D, and exactly one is keyed
+          correct, so blind guessing scores 25%.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          To grade one item, the harness prepends up to five solved examples drawn
+          from the development set, the five shots, then presents the new question
+          with its four options.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          One common scoring method reads the model's probability for each option
+          letter and takes the highest; another parses a letter out of generated
+          text. The keyed letter is then right or wrong, and accuracy is the
+          fraction of items right. The largest GPT-3 model scored 43.9% this way,
+          against 34.5% for non-expert humans hired online and about 89.8% for
+          subject experts.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          For roughly three years the number sorted models sensibly, which is why
+          it spread. Its trouble is in the reading of a bare figure, not in the
+          test itself.
+        </p>
+      </section>
+
+      <section data-nb-section="what-the-format-pays-for" id="what-the-format-pays-for">
+        <h2>What the grading pays for besides knowledge</h2>
+        <p>
+          Four options with one key rewards more than subject knowledge; it also
+          pays out for reading the options. Move the correct answer to a fixed
+          position and scores move with it. In one controlled remap, sending every
+          correct answer to slot D dropped gpt-3.5-turbo by 6.3 points, from 67.2 to
+          60.9, while sending them to slot A lifted a 30-billion-parameter LLaMA by
+          15.2 points, from 53.1 to 68.2.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The models carry a standing preference among the letters, that LLaMA
+          picking A far more often than D regardless of content, so part of any
+          score is a bet on where the answer tends to sit.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The options can also carry the answer with the question deleted. Balepur
+          and co-authors fed models only the answer choices, no question at all, and
+          the choices-only prompt beat a majority-class baseline in 11 of 12
+          model-and-dataset cases, with accuracy gains up to 0.33.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The effect is partly inference from the options rather than pure
+          memorization, which is worse for the reading of the score, not better: the
+          four choices leak enough about the answer to beat guessing on their
+          own.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The reverse mask, question shown and options hidden, cannot be scored the
+          same way, because with no options the task is open generation and "above
+          chance" has no meaning. The documented shortcut runs through the choices.
+        </p>
+      </section>
+
+      <section data-nb-section="two-scores" id="two-scores">
+        <h2>Why two MMLU numbers rarely mean the same thing</h2>
+        <p>
+          If the format rewards position and option-reading, then the exact format
+          decides the score, and two labs rarely run the exact same format.
+          Alzahrani and colleagues perturbed only the evaluation format, shuffling
+          the choice order and changing how the answer is extracted, and watched
+          models move up to eight places on a leaderboard.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Yi-6b lost 8.3 points and fell from third to ninth under choice shuffling
+          alone.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Scoring by the option letter and scoring by matching the option text
+          disagreed sharply on MMLU, while the few-shot count mattered less, with
+          rankings holding fairly stable as it changed.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          Set that swing beside the numbers it competes with. Wang and co-authors
+          found that prompt-format changes alone moved MMLU scores by 4 to 5 percent
+          on average, and by as much as 10.98 percent at the extreme.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Frontier models had meanwhile bunched at 86 to 87 percent, where GPT-4
+          landed in early 2023 and where progress stalled.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          A formatting choice worth several points is larger than the gap between two
+          announcements clustered a point apart, so the format can reorder them
+          before any capability does.
+        </p>
+        <p>
+          The percent measures accuracy on a fixed
+          item set under one harness and one few-shot count. It is offered as
+          evidence of understanding across the 57 subjects the name lists. For the
+          second to follow from the first, the format would have to be neutral to
+          everything but knowledge, and it is not. As Melanie Mitchell writes,
+          surpassing humans on a benchmark named after a general ability is not the
+          same as surpassing them on that ability.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="real-case" id="real-case">
+        <h2>When the number was real and the knowledge was not</h2>
+        <p>
+          Two documented cases show a genuine MMLU number scored on something other
+          than the knowledge it advertises. The first is the instrument's own
+          errors. Gema and colleagues re-annotated MMLU with 14 experts and estimated
+          that 6.49% of its questions contain errors: wrong keys, no correct option,
+          several correct options, or unanswerable phrasing.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The rate is far from even. In Virology, 57% of the sampled items were
+          faulty.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="mmlu/asset-1.png"
+            alt="Stacked bars for the 30 most error-prone MMLU subjects. Virology's correct share drops to about 43 percent, with a large wrong-ground-truth band; most other subjects sit near 96 percent correct, with small bands for bad question clarity, no correct answer, and multiple correct answers."
+          />
+          <figcaption>
+            Fig. 1 · Per-subject error rates for the 30 most error-prone MMLU
+            subjects; Virology about 57% faulty, most subjects near 3-4%. Y-axis
+            starts at 40%.<sup class="nb-cite"><a
+              href="#s8"
+              data-nb-locator="Fig. 3 · Sec. 3.1"
+              data-nb-url="https://arxiv.org/html/2406.04127"
+              data-nb-note="Per-subject error-type breakdown; grounds the claim that MMLU's errors concentrate in a few subjects."
+              >8</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Correcting the keys does not simply lower everyone's score. On the
+          re-annotated set some models climb and others fall: a 405-billion-parameter
+          Llama moved from 16th to 1st on Virology once the bad items were fixed,
+          while GPT-4 fell from 0.91 to 0.43 exact-match on Human
+          Sexuality.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Rankings are unstable to the benchmark's own
+          mistakes, not lowered by one fixed amount.
+        </p>
+        <p>
+          The second case is contamination: test items sitting in the training data,
+          so the model has already seen the answer. Narayanan and Kapoor made the
+          mechanism visible on a different benchmark by splitting problems at the
+          training cutoff, near-perfect before it and near-zero after at the same
+          difficulty, the signature of memorization rather than skill.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          On MMLU itself, Microsoft's decontaminated rebuild sized the effect in one
+          comparison: GPT-4o scored 88.0% on the original MMLU and 73.4% on MMLU-CF, a
+          20,000-item test drawn from documents published after the model's cutoff, a
+          five-shot gap of 14.6 points.<sup class="nb-cite"><a href="#s10">10</a></sup>
+          That gap comes from a rebuilt test, not a direct count of leaked items, and
+          third-party leakage estimates for MMLU range widely by method, so 14.6 is
+          this method's figure rather than a constant.<sup class="nb-cite"><a href="#s10">10</a></sup>
+          The direction is not in doubt. Part of the original 88 was scored on
+          questions the model had read before.
+        </p>
+      </section>
+
+      <section data-nb-section="four-questions" id="four-questions">
+        <h2>The four questions that price a percent</h2>
+        <p>
+          An MMLU percentage is worth what its measurement conditions are worth, and
+          four questions recover them. Which harness and how many shots produced it,
+          since format and answer-extraction can move a model eight leaderboard places
+          and two numbers measured differently are not comparable.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Is the evaluation set contaminated, since a clean rebuild cut a frontier
+          model by more than 14 points.<sup class="nb-cite"><a href="#s10">10</a></sup>
+          How far does the score travel under paraphrase and option-shuffling, since a
+          reformatting swing can outweigh the reported gap between two
+          models.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          And what does the model score on the answer choices alone, with the question
+          hidden, since the options by themselves already beat a naive
+          baseline.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          A score that arrives with all four answers can be compared, and trusted to
+          the degree they hold. A score reported without them is not yet a measurement
+          anyone else can check.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Table 2, Sec. 4 (Capabilities)"
+              href="https://arxiv.org/abs/2303.08774"
+              >OpenAI · GPT-4 Technical Report (2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Sec. 3 & 4.1; Table 1"
+              href="https://arxiv.org/abs/2009.03300"
+              >Hendrycks et al. · Measuring Massive Multitask Language Understanding (2020/2021)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Table 1 (answer-moving attack)"
+              href="https://arxiv.org/abs/2309.03882"
+              >Zheng et al. · Large Language Models Are Not Robust Multiple Choice Selectors (2023/2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Fig. 2"
+              href="https://arxiv.org/abs/2402.12483"
+              >Balepur, Ravichander & Rudinger · Artifacts or Abduction: How Do LLMs Answer Multiple-Choice Questions Without the Question? (2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Fig. 1; Table 1; Sec. 5.4"
+              href="https://arxiv.org/abs/2402.01781"
+              >Alzahrani et al. · When Benchmarks are Targets: Revealing the Sensitivity of LLM Leaderboards (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Sec. 1; Sec. 6.3 / Fig. 5"
+              href="https://arxiv.org/abs/2406.01574"
+              >Wang et al. · MMLU-Pro (2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://aiguide.substack.com/p/ai-now-beats-humans-at-basic-tasks"
+              >Melanie Mitchell · "AI now beats humans at basic tasks": Really? (2024)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Sec. 3.1; Table 5; Fig. 3; Table 2"
+              href="https://arxiv.org/abs/2406.04127"
+              >Gema et al. · Are We Done with MMLU? (2024/2025)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.aisnakeoil.com/p/gpt-4-and-professional-benchmarks"
+              >Narayanan & Kapoor · GPT-4 and professional benchmarks: the wrong answer to the wrong question (2023)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; GPT-4o 5-shot result"
+              href="https://arxiv.org/abs/2412.15194"
+              >Zhao et al. (Microsoft) · MMLU-CF: A Contamination-free Multi-task Language Understanding Benchmark (2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
