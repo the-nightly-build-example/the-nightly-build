@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbot Arena's Elo is a preference vote that pays out for style · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "chatbot-arena-elo",
+        "template": "framed",
+        "title": "Chatbot Arena's Elo is a preference vote that pays out for style",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-19",
+        "tags": [],
+        "sources": 10,
+        "words": 1992,
+        "reading_minutes": 10,
+        "dek": "The rating is a Bradley-Terry regression over anonymous head-to-head votes. The Llama 4 model Meta cited at an Elo of 1417 was a chat variant tuned for exactly what those votes reward.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">Chatbot Arena's Elo is a preference vote that pays out for style</h1>
+        <p class="nb-dekline">
+          The rating is a Bradley-Terry regression over anonymous head-to-head
+          votes. The Llama 4 model Meta cited at an Elo of 1417 was a chat
+          variant tuned for exactly what those votes reward.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-19</span>
+        </div>
+      </header>
+
+      <section class="rs-prior" data-nb-section="prior" id="prior">
+        <p class="rs-prior-name">Prior Context</p>
+        <p class="rs-prior-context">
+          A rank on the Arena travels further than any number a model launches
+          with: onto the slide, into the headline, under the phrase state of the
+          art. What it measures is one procedure's fit to one crowd's votes, and
+          holding onto that, a regression over votes rather than a property of the
+          model, is what lets the rank be questioned instead of quoted. The
+          style coefficients return wherever a model climbs by writing longer and
+          formatting more, because length is the channel the vote pays out for
+          most. The confidence interval returns wherever two adjacent ranks are
+          read as a real gap, because the intervals often overlap. The word
+          "experimental" returns wherever a headline rating belongs to a variant no
+          one can download, because the model that earns the number and the model
+          that ships need not be the same.
+        </p>
+        <ul class="rs-prior-reading">
+          <li>
+            <span class="rs-prior-chip">Prior</span>
+            <a href="../the-instruments/mmlu.html">The lab that ships an MMLU score rarely says how it was measured</a>:
+            the opposite instrument, a fixed multiple-choice test scored once,
+            set against this live human-preference board.
+          </li>
+          <li>
+            <span class="rs-prior-chip">Prior</span>
+            <a href="https://arxiv.org/abs/2403.04132">Chiang et al., "Chatbot Arena: An Open Platform for Evaluating LLMs by Human Preference"</a>:
+            the paper that defines the estimator, the sampling, and the intervals.
+          </li>
+        </ul>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The label says chess, the estimator says regression</h2>
+        <p>
+          Chatbot Arena, run by LMArena and begun as the LMSYS project, pits two
+          unnamed models against each other: a user types a prompt, reads two
+          anonymous answers side by side, and votes for the winner or a tie. The
+          platform reported over 240,000 such votes by the time its authors wrote
+          the method up,<sup class="nb-cite"><a href="#s1">1</a></sup>
+          and from them it prints a leaderboard headed by a column it labels Elo,
+          after competitive chess.
+        </p>
+        <p>
+          The label is a holdover. The founding paper does not run chess Elo,
+          which nudges a rating after each game by a fixed step. It fits a
+          Bradley-Terry model: the probability that model
+          <span class="nb-math-in">m</span> beats model
+          <span class="nb-math-in">m'</span> is a logistic function of the gap
+          between their ratings, and the ratings are estimated by maximum
+          likelihood over all the pairwise votes at once, ordinary logistic
+          regression.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The authors are explicit: earlier versions "reported different ranking
+          scores, such as the Elo score," and they moved to Bradley-Terry
+          coefficients because those "are better for the purpose of statistical
+          estimation."<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            P(m \text{ beats } m') = \frac{1}{1 + e^{\,\xi_{m'} - \xi_{m}}}
+          </div>
+          <figcaption>
+            The Bradley-Terry model behind the "Elo" column:
+            <span class="nb-math-in">\xi_m</span> is model
+            <span class="nb-math-in">m</span>'s rating, and the ratings are fit by
+            maximum likelihood, not updated game by game.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Grant the instrument its due first: the paper reports that its
+          crowdsourced questions are diverse and discriminating and that the
+          crowd's votes agree with those of expert raters.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A rank that falls out of this is a real quantity, a summary of which
+          answers a population of voters preferred, fit by a sound estimator. The
+          trouble is what that quantity quietly folds together.
+        </p>
+      </section>
+
+      <section data-nb-section="interval-and-crowd" id="interval-and-crowd">
+        <h2>The interval the board prints, and the crowd that fills it</h2>
+        <p>
+          Here the paper and the deployed board diverge. The paper works out two
+          ways to put error bars on a coefficient, the pivot bootstrap and the
+          sandwich robust standard error, and prefers the sandwich intervals for
+          coming out smaller in large samples.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The live board has long reported plus-or-minus intervals of the
+          bootstrap kind, so the shorthand that "the Arena uses bootstrap
+          confidence intervals" describes the board, not the estimator the paper
+          recommends.
+        </p>
+        <p>
+          Either way, the intervals are wide enough to matter. In its own defense,
+          LMArena notes that scores like 1069 (±27) and 1054 (±18/22) have
+          overlapping intervals, so adjacent ranks can be statistically
+          tied.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          A single place can be noise. Nor are votes spread evenly: the platform
+          samples pairs actively, steering battles toward the least certain
+          comparisons, so which models met, and how often, is itself a
+          choice.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Then there is who votes, and on what. There is no fixed test set: the
+          prompts are whatever a self-selected, largely technical crowd types, and
+          both the crowd and the field drift over time.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A rating over one population is a claim about that population's tastes,
+          which is worth knowing and not the same as which model is more capable.
+        </p>
+      </section>
+
+      <section data-nb-section="what-the-vote-buys" id="what-the-vote-buys">
+        <h2>What a vote quietly buys</h2>
+        <p>
+          If the rating tracks preference, the next question is what preference
+          tracks, and the operators have measured part of the answer. LMArena runs
+          the same logistic regression a second time with additive terms for
+          style: an answer's length, and its use of markdown headers, bold text,
+          and lists.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Length dominates, at 0.249 when length and markdown are controlled
+          together and 0.267 for length alone; the markdown elements are small,
+          0.019 to 0.056.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Longer, better-formatted answers win votes at a measurable rate that has
+          nothing to do with being correct. Subtract that premium and the board
+          reorders, two numbers from the same instrument that disagree.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Raw versus style-controlled rank on LMArena's overall leaderboard,
+            August 2024. Removing the length-and-formatting premium lifts some
+            models and drops others.<sup class="nb-cite"><a href="#s3">3</a></sup>
+            These are LMArena's confidence-interval ranks, which tie models whose
+            intervals overlap rather than putting them in strict order, so three
+            share rank 6.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th>Raw rank</th>
+              <th>Style-controlled</th>
+              <th class="txt">Control applied</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Claude 3.5 Sonnet</span></td>
+              <td>6</td>
+              <td>4</td>
+              <td class="txt">length and markdown</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Claude 3 Opus</span></td>
+              <td>16</td>
+              <td>10</td>
+              <td class="txt">length and markdown</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Grok-2-mini</span></td>
+              <td>6</td>
+              <td>18</td>
+              <td class="txt">length and markdown</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GPT-4o-mini</span></td>
+              <td>6</td>
+              <td>11</td>
+              <td class="txt">markdown only</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Grok-2-mini falls twelve places once length and formatting are held
+          fixed; Claude 3 Opus climbs six.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          LMArena's own summary: "it's not just what you say, but how you say
+          it."<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The vote pays out for a subtler thing too, agreement. Studying
+          sycophancy, Anthropic researchers found that "both humans and
+          preference models prefer convincingly-written sycophantic responses over
+          correct ones a non-negligible fraction of the time."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          A voter is a human preference model, so part of what moves a vote is a
+          confident, agreeable tone rather than a right answer.
+        </p>
+      </section>
+
+      <section data-nb-section="anonymity-you-can-break" id="anonymity-you-can-break">
+        <h2>The anonymity you can break</h2>
+        <p>
+          Anonymity is what turns a battle into a preference instead of a brand
+          survey, and it does not hold as firmly as it looks. Researchers studying
+          vote manipulation analyzed roughly 1.7 million historical Arena votes and
+          built a de-anonymizing classifier that identifies the hidden model from
+          the wording of its response.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Once it can be picked out, votes can be aimed at a chosen target, and the
+          same work shows that rigging only hundreds of fresh votes moves a
+          ranking.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The defense against a determined provider is the cost of the effort, not
+          a property of the estimator.
+        </p>
+        <p>
+          Stuffing the ballot is not even required. Because length, formatting,
+          and agreeableness reliably win battles, a provider can simply train
+          toward them, a legitimate optimization against what the Arena measures
+          and a model built to win preference under these incentives rather than to
+          be more useful.
+        </p>
+      </section>
+
+      <section data-nb-section="the-1417-case" id="the-1417-case">
+        <h2>The 1417 that shipped as a different model</h2>
+        <p>
+          The clearest case came in spring 2025. Meta's Llama 4 launch post
+          advertised "an experimental chat version scoring ELO of 1417 on
+          LMArena,"<sup class="nb-cite"><a href="#s6">6</a></sup>
+          a variant that ranked second at submission, behind Google's Gemini 2.5
+          Pro.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The weight sits in two words: <em>experimental chat version</em>. The
+          1417 belonged to a model built for the battle, not the weights anyone
+          could download.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">1417</span><span class="nb-stat-l">experimental variant Elo</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">#2</span><span class="nb-stat-l">rank at submission</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">~#32</span><span class="nb-stat-l">released weights, reported</span>
+          </div>
+        </div>
+        <p>
+          The experimental version produced verbose answers with frequent emoji;
+          the released Maverick gave concise, emoji-free replies, and once run
+          through the same battles the open-weight model was reported around
+          32nd.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          That rank comes from the public battle record, not a figure Meta or
+          LMArena published, so it stands as reported. The exact place is soft,
+          the size of the gap is not: the launch post and the download sat about
+          thirty places apart.
+        </p>
+        <p>
+          LMArena released more than two thousand battle results for review and
+          said Meta "should have made it clearer that
+          Llama-4-Maverick-03-26-Experimental was a customized model to optimize
+          for human preference," and that "Meta's interpretation of our policy did
+          not match what we expect from model providers."<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The statement ran on a platform that blocks automated readers; an
+          unaffiliated engineer quoted it in full the same
+          day.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          This is a disclosure failure, not proven cheating: Meta's post did use
+          the word experimental, its policy then permitted variants, and a
+          spokesperson said the company routinely tests custom
+          ones.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          What the episode demonstrates is narrower and more useful: the metric
+          rewards style strongly enough that a variant tuned for the vote earns a
+          headline rank the shipped weights do not.
+        </p>
+        <p>
+          A broader critique tried to make that pattern systemic. "The Leaderboard
+          Illusion," by researchers at Cohere Labs, Princeton, MIT and elsewhere,
+          charged that a few providers get privileged access: 27 private Llama
+          variants tested before the Llama 4 release, and an estimated 19.2% of
+          test prompts going to Google and 20.4% to OpenAI against 8.9% for 41
+          open-source models combined. It argued that lifting a model's share of
+          Arena data from 0% to 70% more than doubled its win rate on a static
+          benchmark, a 112% relative gain, and that 205 of 243 public models had
+          been silently retired.<sup class="nb-cite"><a href="#s10">10</a></sup>
+          LMArena rejected the core point by point: its own figures put open
+          models at 40.9% of data, not 8.9%, and it called the overfitting chart
+          a simulation drawn from Gaussians with "an arbitrarily chosen variance"
+          and the 112% figure an artifact measured on a static set rather than the
+          live board.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          It did concede governance ground: it would state that providers may test
+          multiple variants, clarify how models are retired, and mark some scores
+          provisional until 2,000 fresh votes arrive.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The asymmetry is contested; the concessions are real.
+        </p>
+      </section>
+
+      <section data-nb-section="reading-a-rank" id="reading-a-rank">
+        <h2>Reading a rank you did not compute</h2>
+        <p>
+          A rank on Chatbot Arena summarizes one crowd's votes under one set of
+          incentives, and reading it means recovering them. Two are visible on the
+          board: whether the figure has had length and formatting subtracted, which
+          moved models as much as twelve places under the operators' own
+          control,<sup class="nb-cite"><a href="#s3">3</a></sup>
+          and whether its interval swallows the model just above, which LMArena's
+          figures show it often does.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The rest sit behind the number. It was earned by some particular variant
+          that may not be the model on offer, the way the 1417 belonged to a Llama
+          4 chat version that never shipped;<sup class="nb-cite"><a href="#s6">6</a></sup>
+          and it rests on however many votes a self-selected crowd chose to cast,
+          on prompts no one fixed.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Preference measured this way is a genuine quantity, narrower than the
+          leaderboard's fame suggests: which answers this crowd liked, formatting
+          and confidence included. A launch slide reports a place; the paper behind
+          it reports an estimator, an interval, and a style term the place omits.
+          Carrying all three turns "Model X is first on the Arena" from a slogan
+          into a claim with a known method, a known population, and a margin.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Rating-model & statistical-inference sections; efficient approximate ranking (Sec. 5); abstract"
+              href="https://arxiv.org/abs/2403.04132"
+              >Chiang et al. · Chatbot Arena: An Open Platform for Evaluating LLMs by Human Preference (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arena.ai/blog/our-response/"
+              >LMArena · Our response to "The Leaderboard Illusion" (2025)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Style coefficients; overall ranking-shift table"
+              href="https://www.lmsys.org/blog/2024-08-28-style-control/"
+              >LMSYS / LMArena · Does style matter? Disentangling style and substance in Chatbot Arena (28 Aug 2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2310.13548"
+              >Sharma et al. · Towards Understanding Sycophancy in Language Models (2023/2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="~1.7M votes; de-anonymizing function; rigging with hundreds of votes"
+              href="https://arxiv.org/abs/2501.17858"
+              >Min et al. · Improving Your Model Ranking on Chatbot Arena by Vote Rigging (2025)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Maverick / experimental chat version, ELO 1417"
+              href="https://ai.meta.com/blog/llama-4-multimodal-intelligence/"
+              >Meta AI · The Llama 4 herd (5 Apr 2025)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.theregister.com/2025/04/08/meta_llama4_cheating/"
+              >Thomas Claburn, The Register · Meta accused of Llama 4 bait-n-switch to juice LMArena rank (8 Apr 2025)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="@lmarena_ai status 1909397817434816562 (gated; quoted via s9)"
+              href="https://x.com/lmarena_ai/status/1909397817434816562"
+              >LMArena · Public statement on the Llama-4 experimental variant (Apr 2025)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://simonwillison.net/2025/Apr/8/lmaren/"
+              >Simon Willison · A quote from lmarena.ai (8 Apr 2025)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Private testing; data-access shares; overfitting gain; deprecation"
+              href="https://arxiv.org/abs/2504.20879"
+              >Singh et al. · The Leaderboard Illusion (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
