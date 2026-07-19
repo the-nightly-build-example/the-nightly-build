@@ -392,7 +392,9 @@ const KATEX_STUB =
   "} };</script>";
 
 test("math typesets display and inline TeX, trusting only \\htmlClass", async () => {
-  const w = await loadNb(articlePage(KATEX_STUB + "<article>" + MATH_FIGURE + "</article>"));
+  const w = await loadNb(
+    articlePage(KATEX_STUB + "<article>" + MATH_FIGURE + "</article>"),
+  );
 
   const calls = w.__mathCalls;
   assert.equal(calls.length, 2);
@@ -418,8 +420,13 @@ test("math on a page without KaTeX loads the pinned engine copy; a page without 
   assert.match(css.integrity, /^sha384-/, "stylesheet is SRI-pinned");
   assert.equal(js.crossOrigin, "anonymous");
 
-  const bare = await loadNb(articlePage("<article><p>No math here.</p></article>"));
-  assert.equal(bare.document.querySelectorAll('script[src*="katex"]').length, 0);
+  const bare = await loadNb(
+    articlePage("<article><p>No math here.</p></article>"),
+  );
+  assert.equal(
+    bare.document.querySelectorAll('script[src*="katex"]').length,
+    0,
+  );
   assert.equal(bare.document.querySelectorAll('link[href*="katex"]').length, 0);
 });
 
@@ -491,5 +498,9 @@ test("a press-pinned Prism is left to highlight on its own", async () => {
     1,
     "no engine components are fetched beside the press copy",
   );
-  assert.equal(w.Prism, undefined, "the press copy's own bootstrap is untouched");
+  assert.equal(
+    w.Prism,
+    undefined,
+    "the press copy's own bootstrap is untouched",
+  );
 });

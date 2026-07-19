@@ -252,11 +252,13 @@
      Chrome refuses for font loads. jsdelivr serves font/woff2. */
   var KATEX_CSS = {
     url: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
-    integrity: "sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+",
+    integrity:
+      "sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+",
   };
   var KATEX_JS = {
     url: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js",
-    integrity: "sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg",
+    integrity:
+      "sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg",
   };
   var PRISM_JS = [
     {
@@ -358,9 +360,7 @@
   }
 
   function highlightCode() {
-    var blocks = document.querySelectorAll(
-      '.nb-code code[class*="language-"]',
-    );
+    var blocks = document.querySelectorAll('.nb-code code[class*="language-"]');
     if (!blocks.length) return;
     if (pressCopy("prism")) return; /* the press's Prism highlights itself */
     window.Prism = window.Prism || {};
