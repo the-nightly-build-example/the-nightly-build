@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>One gradient step drops the loss from 7.0 to 0.225 · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "gradient-descent",
+        "template": "framed",
+        "title": "One gradient step drops the loss from 7.0 to 0.225",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-19",
+        "tags": ["gradient-descent", "backpropagation", "training", "loss-function", "learning-rate"],
+        "sources": 9,
+        "words": 1869,
+        "reading_minutes": 8,
+        "dek": "The rule subtracts from each weight a fraction of its share of the error, and that same rule, threaded back through the layers, is what sets every weight in a trained network.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">One gradient step drops the loss from 7.0 to 0.225</h1>
+        <p class="nb-dekline">
+          The rule subtracts from each weight a fraction of its share of the
+          error, and that same rule, threaded back through the layers, is what
+          sets every weight in a trained network.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-07-19</span>
+        </div>
+      </header>
+
+      <section class="rs-prior" data-nb-section="prior" id="prior">
+        <p class="rs-prior-name">Prior Context</p>
+        <p class="rs-prior-context">
+          A model's weights are the whole of what it has learned, and they
+          arrive from one operation repeated until it stops changing them.
+          Seeing that operation once, on numbers small enough to check by hand,
+          is what separates training as a mechanism from the model it produces
+          and from the product built around that model, a distinction most
+          arguments about these systems get wrong. Its pieces return with
+          consequence. The residual, the signed amount a prediction misses its
+          target, is the signal every gradient is built from. The learning
+          rate, the size of one step, decides whether a loss falls smoothly or
+          not at all, and it reappears wherever training cost and instability
+          come up. The chain rule, which threads a single step's gradient back
+          through stacked layers, is backpropagation, and it is why the
+          finished weights of an attention head can be accounted for rather
+          than only used.
+        </p>
+        <ul class="rs-prior-reading">
+          <li>
+            <span class="rs-prior-chip">Prior</span>
+            <a href="../the-mechanics/attention.html">An attention head is a weighted average that computes its own weights</a>:
+            the query, key, and value matrices it took as given are exactly what
+            a run of this step settles.
+          </li>
+          <li>
+            <span class="rs-prior-chip">Prior</span>
+            <a href="https://colah.github.io/posts/2015-08-Backprop/">Calculus on Computational Graphs: Backpropagation</a>:
+            reading a derivative as a rate a quantity moves at, the picture the
+            gradient here puts to work.
+          </li>
+        </ul>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The loss three points cost</h2>
+        <p>
+          A single linear unit predicts
+          <span class="nb-math-in">\hat{y} = w x + b</span>. Start it at
+          <span class="nb-math-in">w = 1</span> and
+          <span class="nb-math-in">b = 0</span>, and give it three points,
+          <span class="nb-math-in">(1, 2)</span>,
+          <span class="nb-math-in">(2, 4)</span>, and
+          <span class="nb-math-in">(3, 6)</span>. Its predictions are 1, 2, and
+          3, each short of its target by 1, 2, and 3. Squared, summed, and
+          halved, those misses cost a loss of 7.0. The half is a convention: the
+          sum-of-squares error carries a factor of one-half so that
+          differentiating the square leaves a clean sum with no stray factor of
+          two, and every number below uses it.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          One step of gradient descent exists to lower that 7.0. The rule is to
+          subtract from each weight a fraction of the gradient of the loss with
+          respect to that weight.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The step is four operations worked in order: predict, price the error,
+          measure each weight's share of it, and adjust. The three points were
+          chosen to keep the arithmetic legible, not drawn from any trained
+          model; they happen to lie on the line
+          <span class="nb-math-in">y = 2x</span>, so the target the step moves
+          toward is <span class="nb-math-in">w = 2</span>,
+          <span class="nb-math-in">b = 0</span>.
+        </p>
+      </section>
+
+      <section data-nb-section="forward-and-loss" id="forward-and-loss">
+        <h2>The forward pass and the loss it prices</h2>
+        <p>
+          The forward pass runs each input through
+          <span class="nb-math-in">\hat{y} = 1 \cdot x + 0</span> and subtracts
+          the target to get the residual, the signed amount by which the
+          prediction misses. Dive into Deep Learning sets out exactly this
+          squared loss for a single linear unit, carrying the same one-half,
+          and its presentation is the convention used here.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            The starting unit (<span class="nb-math-in">w = 1</span>,
+            <span class="nb-math-in">b = 0</span>) at each point: its prediction
+            and the residual, the signed miss.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>x</th>
+              <th>y</th>
+              <th>prediction ŷ</th>
+              <th>residual ŷ − y</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>2</td><td>1</td><td>−1</td></tr>
+            <tr><td>2</td><td>4</td><td>2</td><td>−2</td></tr>
+            <tr><td>3</td><td>6</td><td>3</td><td>−3</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Each residual squared, the three summed, the total halved:
+          <span class="nb-math-in">\tfrac12\,[\,(-1)^2 + (-2)^2 + (-3)^2\,] = \tfrac12\,[\,1 + 4 + 9\,] = \tfrac12 \cdot 14 = 7.0</span>.
+        </p>
+      </section>
+
+      <section data-nb-section="gradient-as-blame" id="gradient-as-blame">
+        <h2>Each weight's share of the error</h2>
+        <p>
+          A gradient is a set of rates: for each weight, how fast the loss
+          changes as that weight alone moves. Read that rate off the loss and it
+          is an accounting of blame. Because the loss is
+          <span class="nb-math-in">L = \tfrac12 \sum_i (w x_i + b - y_i)^2</span>,
+          differentiating with respect to <span class="nb-math-in">w</span>
+          brings the square's exponent down and cancels the one-half, leaving a
+          sum over the three points.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <figure class="nb-math nb-math-annotated">
+          <div class="nb-math-eq">
+            \frac{\partial L}{\partial w} = \sum_i \htmlClass{nb-mc1}{(\hat{y}_i - y_i)}\,\htmlClass{nb-mc2}{x_i}
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">(\hat{y}_i - y_i)</span
+              ><span>the residual: how far point i's prediction misses its target.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">x_i</span
+              ><span>the input: how strongly that point's error is tied to w.</span>
+            </li>
+          </ul>
+          <figcaption>
+            The w-gradient is a plain sum over the three points, each point's
+            residual times its input.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          The partial with respect to <span class="nb-math-in">b</span> is the
+          same sum without the input factor,
+          <span class="nb-math-in">\partial L / \partial b = \sum_i (\hat{y}_i - y_i)</span>,
+          because <span class="nb-math-in">b</span> enters every prediction with
+          a coefficient of one. Both are consequences of the chain rule, the
+          rule backpropagation runs.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Evaluate them as plain sums.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Each point's contribution to the two gradients: its residual times
+            its input for w, its residual alone for b. The sums are the
+            gradients.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>point</th>
+              <th>residual r</th>
+              <th>input x</th>
+              <th>r·x → ∂L/∂w</th>
+              <th>r → ∂L/∂b</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="nb-table-token">1</span></td><td>−1</td><td>1</td><td>−1</td><td>−1</td></tr>
+            <tr><td><span class="nb-table-token">2</span></td><td>−2</td><td>2</td><td>−4</td><td>−2</td></tr>
+            <tr><td><span class="nb-table-token">3</span></td><td>−3</td><td>3</td><td>−9</td><td>−3</td></tr>
+            <tr><td><span class="nb-table-token">sum</span></td><td class="txt"></td><td class="txt"></td><td>−14</td><td>−6</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Point three, with the largest input and the largest miss, contributes
+          −9 of the −14 in the w-gradient: it is the point most answerable for
+          the error the step is about to correct. Reading a gradient this way,
+          as credit assigned for the error, is the standard
+          one.<sup class="nb-cite"><a href="#s4">4</a></sup><sup class="nb-cite"><a href="#s5">5</a></sup>
+          Nudge
+          <span class="nb-math-in">w</span> up by a hair and the loss falls at a
+          rate of 14; nudge <span class="nb-math-in">b</span> up by a hair and it
+          falls at a rate of 6.
+        </p>
+      </section>
+
+      <section data-nb-section="the-update" id="the-update">
+        <h2>The update that lowers the loss</h2>
+        <p>
+          The update rule subtracts from each weight the learning rate times its
+          gradient.<sup class="nb-cite"><a href="#s2">2</a></sup> Pick a learning
+          rate <span class="nb-math-in">\eta = 0.05</span>. Then
+          <span class="nb-math-in">w \leftarrow 1 - 0.05 \cdot (-14) = 1 + 0.70 = 1.7</span>
+          and
+          <span class="nb-math-in">b \leftarrow 0 - 0.05 \cdot (-6) = 0 + 0.30 = 0.30</span>.
+          Both weights rose, because both gradients were negative and the rule
+          steps against them. The learning rate is the one free choice, the size
+          of the step, and it is among the most consequential settings in
+          training: too small and the loss crawls down, too large and the step
+          overshoots the valley it was aiming at.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          Recompute the predictions with the new weights,
+          <span class="nb-math-in">\hat{y} = 1.7 x + 0.3</span>, and price the
+          error again.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The same three points after the step
+            (<span class="nb-math-in">w = 1.7</span>,
+            <span class="nb-math-in">b = 0.3</span>): predictions closer,
+            residuals smaller.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>x</th>
+              <th>y</th>
+              <th>prediction ŷ</th>
+              <th>residual ŷ − y</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>2</td><td>2.0</td><td>0.0</td></tr>
+            <tr><td>2</td><td>4</td><td>3.7</td><td>−0.3</td></tr>
+            <tr><td>3</td><td>6</td><td>5.4</td><td>−0.6</td></tr>
+          </tbody>
+        </table>
+        <p>
+          The loss is now
+          <span class="nb-math-in">\tfrac12\,[\,0 + 0.09 + 0.36\,] = \tfrac12 \cdot 0.45 = 0.225</span>.
+          It fell from 7.0 to 0.225 in one step, checked on a calculator.
+        </p>
+        <p>
+          One number in the update looks wrong and is not.
+          <span class="nb-math-in">b</span> rose to 0.3, though the three points
+          sit exactly on <span class="nb-math-in">y = 2x</span>, where the best
+          bias is zero. With <span class="nb-math-in">w</span> still short of 2
+          the unit under-predicts every point, and raising
+          <span class="nb-math-in">b</span> lifts all three predictions toward
+          their targets, so its gradient is negative and the step raises it. The
+          gradient descends the joint loss over both weights at once, not each
+          weight toward its own answer; once a later step brings
+          <span class="nb-math-in">w</span> near 2,
+          <span class="nb-math-in">b</span>'s gradient reverses and pulls it back
+          down.<sup class="nb-cite"><a href="#s2">2</a></sup> The gradient is also
+          a local rate, exact only for an infinitesimal move, so the predicted
+          fall overstates the real one and the rule is a small step, recomputed
+          and repeated, rather than a single leap to the answer.
+        </p>
+      </section>
+
+      <section data-nb-section="an-old-method" id="an-old-method">
+        <h2>An old method, sampled</h2>
+        <p>
+          The step just worked is not new. Deep Learning attributes the method,
+          repeatedly moving opposite the gradient to lower a function of several
+          unknowns, to Cauchy in 1847, and names it steepest
+          descent.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The move against the gradient is the same one hundred and seventy-nine
+          years on.
+        </p>
+        <p>
+          Two things separate that worked step from how a real unit is trained.
+          The first is scale. The example summed the gradient over all three
+          points, which Ruder names batch gradient descent, and a real training
+          set is too large to sum in full for every step, so training samples
+          it, taking the gradient from one example or a small batch at a
+          time.<sup class="nb-cite"><a href="#s7">7</a></sup> The second is what
+          sampling does to the signal. Robbins and Monro set out the scheme in
+          1951: a sequence of steps of shrinking size, taken against a noisy
+          measurement of the target,
+          <span class="nb-math-in">x_{n+1} - x_n = a_n(\alpha - y_n)</span>,
+          which converges even though each step reads the error
+          imperfectly.<sup class="nb-cite"><a href="#s8">8</a></sup> A sampled
+          gradient is such a noisy measurement, and that version, stochastic
+          gradient descent, is what trains the unit.
+        </p>
+      </section>
+
+      <section data-nb-section="chain-rule" id="chain-rule">
+        <h2>The chain rule settles the weights</h2>
+        <p>
+          One unit has one layer, so its gradient was a single sum. A network
+          stacks layers, and the loss depends on an early weight only through
+          everything the later layers compute from it. Backpropagation is the
+          same step under that condition: it applies the chain rule to carry the
+          gradient backward from the loss to each weight, one layer at a time,
+          reusing the work at each stage.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Rumelhart, Hinton, and Williams named it in 1986 as repeated weight
+          adjustment that shrinks the difference between a network's output and
+          the desired one.<sup class="nb-cite"><a href="#s3">3</a></sup> Olah
+          frames the same computation as reverse-mode differentiation on a graph,
+          each derivative a product the chain rule assembles as the calculation
+          moves back from the output.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          Backpropagation is only the method for computing the gradient; a
+          separate algorithm, gradient descent on that gradient, does the
+          learning.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          That distinction keeps three things apart that are constantly
+          confused. The weights are the model: the numbers
+          <span class="nb-math-in">\hat{y} = w x + b</span> uses, or the
+          projection matrices an attention head uses. Training is the loop just
+          worked, the one that set those numbers by pushing the loss down step
+          after step. The product is neither the weights nor the loop; it is the
+          interface, the serving system, and the company built around the
+          numbers. The first two of these are drawn straight from how the
+          gradient is computed and then applied.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The third is a synthesis, not a sourced fact.
+        </p>
+        <p>
+          That loop is the answer the
+          <a href="../the-mechanics/attention.html">attention piece</a> left
+          open. The weights it took as given, the query, key, and value matrices
+          whose numbers arrived without a source, are what a run of this step
+          settles to: a small correction at a time, until the gradient over the
+          training set is near zero and the weights stop moving. Training is a
+          mechanism, not a magic word. The proof is that its smallest instance
+          runs on paper and the loss falls, from 7.0 to 0.225, in one checked
+          step.
+        </p>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.1 Linear Regression"
+              href="https://d2l.ai/chapter_linear-regression/linear-regression.html"
+              >Zhang, Lipton, Li &amp; Smola · Dive into Deep Learning, §3.1</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§4.3 Gradient-Based Optimization"
+              href="https://www.deeplearningbook.org/contents/numerical.html"
+              >Goodfellow, Bengio &amp; Courville · Deep Learning (2016)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Parallel Distributed Processing, vol. 1, ch. 8, pp. 322–325"
+              href="https://gwern.net/doc/ai/nn/1986-rumelhart.pdf"
+              >Rumelhart, Hinton &amp; Williams · Learning Internal Representations by Error Propagation (1986)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://karpathy.medium.com/yes-you-should-understand-backprop-e2f06eab496b"
+              >Karpathy · Yes you should understand backprop (2016)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.3blue1brown.com/lessons/gradient-descent"
+              >Sanderson (3Blue1Brown) · Gradient descent, how neural networks learn</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://cs231n.github.io/optimization-1/"
+              >Stanford CS231n · Optimization: Stochastic Gradient Descent</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.ruder.io/optimizing-gradient-descent/"
+              >Ruder · An overview of gradient descent optimization algorithms (2016)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Vol. 22, No. 3, pp. 400–407"
+              href="https://projecteuclid.org/journals/annals-of-mathematical-statistics/volume-22/issue-3/A-Stochastic-Approximation-Method/10.1214/aoms/1177729586.full"
+              >Robbins &amp; Monro · A Stochastic Approximation Method (1951)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://colah.github.io/posts/2015-08-Backprop/"
+              >Olah · Calculus on Computational Graphs: Backpropagation (2015)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
