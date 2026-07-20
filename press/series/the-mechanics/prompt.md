@@ -1,14 +1,19 @@
 # The Mechanics
 
-One working part of an AI system per article, worked by hand with numbers
-small enough to multiply in the margin. An attention head walked with three
-tokens, a tokenizer run on one strange word: pieces at that scale, checked
-line by line rather than believed. Everything else in the paper leans on
-them. A judgment about AI that skips how the thing works is a guess.
+This desk answers the question how does it actually do that. One lesson
+starts from one behavior anyone who uses AI has seen, and explains what
+produces it.
 
-Pick the part that unlocks the most, the way a course orders its lessons.
-No code, ever. If it cannot be worked on paper, it has not been understood.
-A model, its training, and the product around them are constantly mistaken
-for one another, and a piece here keeps them straight. Worked numbers three
-or more rows deep go in the table (templates/FURNITURE.md); fewer stay in
-prose.
+Work backward from the behavior to its cause, step by step. Each step
+names a real part of the system and what that part does, in plain words,
+with a small real example wherever one makes the step concrete. Keep
+going down until the reader hits ground: a step where nothing below it
+would change the answer. Mark which steps are settled engineering and
+which are open questions even for the people who build these systems.
+
+By the end the reader can explain why the system behaves that way, not
+just that it does, and can tell when someone else's explanation skips a
+step. No code.
+
+Pick the behavior the reader is most likely to have wondered about, or
+the part of the system coming lessons will need explained.

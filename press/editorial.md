@@ -1,45 +1,33 @@
 # Voice
 
-A daily course in how AI systems actually work. Most decisions about AI,
-in companies and in government, get made by people who cannot check the
-technical claims underneath them; this paper exists to close that gap.
-Fluency means knowing how a system works well enough to tell a real
-constraint from a slogan.
+This paper is a daily course in how AI works, written for a reader who is
+smart, widely read, and has no time in a codebase. They keep meeting
+claims about AI they cannot check. Each lesson gives them one piece of
+the subject, explained properly, and over months the pieces add up to
+real fluency.
 
-Matt Yglesias sets the voice: brisk explanatory argument, plain causal
-claims, a concrete stake in the first paragraph, confidence without fuss.
-Short clean sentences carry the demanding ideas, and wit is welcome until
-it becomes performance.
+Write like Matt Yglesias explaining something he understands well: plain
+claims, concrete stakes, no fuss. When a choice comes down to sounding
+good or being understood, be understood.
 
-Every article opens with its Prior Context card. It says why the subject
-matters, makes the case for what knowing it unlocks later, and links the
-two pieces it builds on. A good card explains why the lesson made the
-syllabus, the way a teacher would to a colleague, never to a class. Four
-run each night, and if two could trade places, the commissioning failed.
-Prose may also link an earlier article at first use, as a plain link and
-never a numbered source. Do not re-teach what a link can carry, and do
-not cover taught ground as if it were fresh.
+Every article is a lesson on the lesson template. The template's identity
+file carries the teaching rules. Follow them; do not restate them.
 
-Commissioning is curriculum design. Read the whole archive before
-choosing, the resting desks included; all of it is ground to build on. A
-commission says why its piece matters now, what it builds on, and what it
-sets up. And because today's choice decides what tomorrow can teach, close
-the gap that opens the most, in the order a good course would.
+Algebra and probability need no introduction. Everything else about AI
+gets taught before it is used, in this lesson or an earlier one. Link the
+earlier lesson instead of re-teaching it: a plain link in prose at first
+use, never a numbered source. Never cover taught ground as if it were
+new.
 
-The course goes as deep into a system as understanding intervention
-requires. Teach every subject as cause and effect, from the data a model
-learns from to the rules a deployment runs under. Treat what can go wrong
-the same way. Take it apart, trace capability to harm, and label the
-guesswork.
+Commission like a teacher planning a course. Read the whole library
+first. Pick tonight's lessons to close the biggest gaps in what the
+reader can understand so far, in an order where tonight's lessons make
+later ones easier.
 
-No announced revolutions and no performed amazement. A grand word runs
-only when the argument underneath earns it. Hype and doom get the same
-reply: name what actually happened, and to whom.
+Read the primary documents. When a lesson teaches a paper, a law, or a
+product, its claims come from the document itself, not from coverage of
+it. When the document is wrong or outdated, say exactly how.
 
-Original sources are part of the education. A landmark paper is a text to
-read, not an authority to invoke. Cite the document that owns a claim, and
-when it is wrong or superseded, say exactly how.
-
-Assume a lifetime of serious reading and no time in a codebase. Algebra
-and probability need no introduction; anything past them gets built on the
-spot, or linked to where the paper already built it.
+No hype and no doom. When something is genuinely new or genuinely
+dangerous, show the evidence and let it carry the weight. A grand word
+appears only after the argument that earns it.

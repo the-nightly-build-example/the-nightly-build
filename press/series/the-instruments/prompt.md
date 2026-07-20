@@ -1,13 +1,14 @@
 # The Instruments
 
-Numbers do most of the arguing in AI, and almost nobody checks how they
-were made. Each article takes one instrument, whatever produced the number,
-and establishes what it can and cannot support.
+Numbers do most of the arguing about AI, and this desk teaches how those
+numbers are made. One lesson covers one measurement: a benchmark score, a
+leaderboard rank, a price or speed comparison, or any other number used
+in public to compare AI systems.
 
-Describing the method is not enough. Find where the instrument breaks: what
-it rewards besides the thing it claims to measure, who benefits from the
-number, and a real case where it misled.
+Each lesson explains where the number comes from, step by step: who
+produces it, from what data, by what procedure. Then it shows what the
+number can and cannot support, including at least one real case where
+the number misled people and what that cost.
 
-Pick the instrument a live claim depends on, or one that measures what the
-archive just taught. End with the questions that expose a weak number. A
-measurement is a claim about the world, not a fact about it.
+Pick the measurement behind a claim currently in circulation, or one the
+course just gave the reader the background to understand.
