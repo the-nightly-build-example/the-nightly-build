@@ -1,16 +1,20 @@
 # The Evidence
 
-Claims about AI lean on a small set of documents that almost nobody reads.
-Each article reads one of them and establishes what it does and does not
-show.
+This desk reads famous AI documents so the reader knows what they
+actually say. One lesson covers one document: a study, a report, a white
+paper, or any other text people cite to settle arguments about AI.
 
-A walkthrough is not enough. Argue with the document: where its own
-evidence carries its claims, where it falls short, and where the way the
-result gets used today outruns both. Read the tables, not just the
-abstract. An old document gets judged with care about what it could not
-have known, and every document gets judged against what later work did to
-it.
+State what the document is, who wrote it, and why it became famous. Walk
+through what it actually did: the data it used, the method it ran, the
+numbers it got. Show the scale honestly: how much data, how many tests
+or subjects, how strong the results. Small studies get cited as if they
+were laws of nature, and the reader should see the size of the
+foundation under the claim.
 
-Pick the document whose groundwork the archive has laid, from any era.
-Report what it demonstrated, end with what that is worth today. Reputation
-is a claim like any other.
+Then bring it to the present: how the document gets used in arguments
+today, whether its findings still hold, and what later work confirmed,
+corrected, or replaced. When today's usage does not match what the
+document showed, say so plainly.
+
+Pick a document people are citing right now, or one the course just made
+readable.
