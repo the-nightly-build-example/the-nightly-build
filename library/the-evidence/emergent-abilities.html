@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The sudden jump in AI benchmarks was mostly in the scoring · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "emergent-abilities",
+        "template": "lesson",
+        "title": "The sudden jump in AI benchmarks was mostly in the scoring",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-20",
+        "tags": ["benchmarks", "evaluation", "scaling"],
+        "sources": 6,
+        "words": 2147,
+        "reading_minutes": 10,
+        "dek": "Wei's 2022 catalog of abilities that appear only past a scale threshold met a 2023 rebuttal that re-scored the same model outputs for partial credit and found most of the threshold in the ruler.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">
+          The sudden jump in AI benchmarks was mostly in the scoring
+        </h1>
+        <p class="nb-dekline">
+          Wei's 2022 catalog of abilities that appear only past a scale
+          threshold met a 2023 rebuttal that re-scored the same model outputs
+          for partial credit and found most of the threshold in the ruler.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-20</span>
+        </div>
+      </header>
+
+      <section class="rs-bookend" data-nb-section="why" id="why">
+        <p class="rs-bookend-name">Why this matters</p>
+        <div class="rs-bookend-rule"></div>
+        <p>
+          People now argue about AI on the strength of a single idea: that new
+          abilities appear in large models suddenly and without warning, so we
+          cannot know what the next model will do until we build it. That idea
+          has a name, "emergent abilities," and a famous rebuttal. This lesson
+          walks through both. You will see one arithmetic answer scored two
+          ways, watch a sudden jump turn into a smooth climb when the scoring
+          rule changes, and come away able to explain why the choice of metric,
+          and not only the model, decides whether an ability looks like it
+          switched on. You will also see what the rebuttal does not overturn.
+        </p>
+        <div class="rs-bookend-band">
+          <span class="rs-bookend-label">Background</span>
+          <span class="rs-bookend-note">optional reading</span>
+        </div>
+        <dl class="rs-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/gpt-3-few-shot.html"
+              >Few-shot GPT-3 beat fine-tuning on a handful of tasks and trailed
+              it on most</a
+            >
+            — the few-shot curves that became the founding evidence for emergent
+            abilities.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/chinchilla.html"
+              >Chinchilla beat a model four times its size on the same compute</a
+            >
+            — how model scale is measured in parameters and training compute,
+            the horizontal axis of every emergence plot.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Two papers scored the same model outputs</h2>
+        <p>
+          In 2022 a team led by Jason Wei gave a name to something the field had
+          been noticing: some abilities seem to appear all at once. A small
+          model cannot do a task at all, scoring no better than chance. Make the
+          model larger and, past some size, the score climbs sharply. Wei and
+          his coauthors called these emergent abilities, and defined the term
+          precisely: "We consider an ability to be emergent if it is not present
+          in smaller models but is present in larger models," so that "emergent
+          abilities cannot be predicted simply by extrapolating the performance
+          of smaller models."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Abstract · §1">1</a></sup
+          >
+          They charted eight such abilities from few-shot prompting, each a flat
+          line near chance that bends upward at a threshold of scale.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Fig. 2">1</a></sup
+          >
+          Three-digit addition, in their tables, appears at 13 billion
+          parameters; two-digit multiplication and a 57-subject exam called MMLU
+          appear only at 175 billion.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 1">1</a></sup
+          >
+        </p>
+        <p>
+          In 2023 Rylan Schaeffer, Brando Miranda, and Sanmi Koyejo at Stanford
+          looked again. They did not dispute a single number. They took the same
+          fixed model outputs and scored them differently, and argued that "for
+          a particular task and model family, when analyzing fixed model
+          outputs, emergent abilities appear due to the researcher's choice of
+          metric rather than due to fundamental changes in model behavior with
+          scale."<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Abstract">2</a></sup
+          >
+          Their paper, "Are Emergent Abilities of Large Language Models a
+          Mirage?", won an Outstanding Main Track Paper Award at NeurIPS
+          2023.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Both accept that
+          small models score low and large models score high. The whole dispute
+          is about the shape of the line between those two points: whether it
+          jumps or whether it rises smoothly. And a benchmark score is not the
+          ability itself. It is a proxy, a number standing in for a capability
+          no one can measure directly. The word "emergent" lives in the space
+          between what a metric counted and what a reader takes it to have
+          counted.
+        </p>
+      </section>
+
+      <section data-nb-section="exact-match" id="exact-match">
+        <h2>What exact-match accuracy does to a near-miss</h2>
+        <p>
+          Take a single arithmetic problem whose answer is the five-digit number
+          74510. A benchmark scores a model's answer with a rule, and the
+          standard rule for arithmetic is exact-match accuracy: the answer
+          scores 1 if every digit matches the target, and 0 otherwise.<sup
+            class="nb-cite"
+            ><a href="#s2" data-nb-locator="§2">2</a></sup
+          >
+          There is nothing in between. A model that writes 74513, correct in
+          four of its five digits, does not score four-fifths. It scores 0,
+          exactly what a model that writes 29563 scores, because neither string
+          is the target string.
+        </p>
+        <p>
+          Call a metric like this discontinuous: its output can only be 0 or 1,
+          with no value between, however close the answer came. Now picture
+          three models of increasing size, each a little better at the last
+          digit than the one before. Under exact-match, every one that falls
+          short scores 0, and the first that gets all five digits scores 1. Plot
+          those scores against model size and you get a flat line that suddenly
+          snaps to the top. That is the hockey stick. And here is the exact place
+          a reader's intuition slips. The curve jumped, so it feels as though an
+          ability switched on at that size. What actually happened is that a rule
+          which reports nothing until an answer is perfect finally had a perfect
+          answer to report.
+        </p>
+      </section>
+
+      <section data-nb-section="partial-credit" id="partial-credit">
+        <h2>Score the same answers for how close they got</h2>
+        <p>
+          Keep the same model outputs. Change only the ruler. Instead of
+          exact-match, score each answer by token edit distance: count the
+          single-character changes needed to turn the answer into the target,
+          and give credit for the characters already right.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="§2">2</a></sup
+          >
+          Now 74513 is one change away from 74510, so it keeps four-fifths of the
+          credit. The answer 29563, four changes away, keeps one-fifth. The two
+          models that scored an identical 0 a moment ago are now cleanly
+          separated, and the separation matches how close each came.
+        </p>
+        <table class="nb-table">
+          <caption>
+            One five-digit answer, four models of rising accuracy, scored two
+            ways. Exact-match holds at 0 until the answer is perfect; the
+            token-edit score rises with every digit. Illustrative of the
+            mechanism, not a data series from the paper.<sup class="nb-cite"
+              ><a href="#s2" data-nb-locator="§2 · Fig. 3">2</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Model output</th>
+              <th>Digits right</th>
+              <th>Exact-match</th>
+              <th>Token-edit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>29 563</td>
+              <td>1 of 5</td>
+              <td>0</td>
+              <td>0.2</td>
+            </tr>
+            <tr>
+              <td>79 563</td>
+              <td>2 of 5</td>
+              <td>0</td>
+              <td>0.4</td>
+            </tr>
+            <tr>
+              <td>74 513</td>
+              <td>4 of 5</td>
+              <td>0</td>
+              <td>0.8</td>
+            </tr>
+            <tr>
+              <td>74 510</td>
+              <td>5 of 5</td>
+              <td>1</td>
+              <td>1.0</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Read the two score columns down the page. Exact-match sits at 0 through
+          three improving models and then leaps to 1. The token score climbs at
+          every step: 0.2, 0.4, 0.8, 1.0. Same outputs, same models, same
+          underlying improvement. One ruler hides it until the final step, and
+          the other shows it all along.
+        </p>
+        <p>
+          There is a reason the shapes differ so sharply, and it is arithmetic,
+          not opinion. Suppose the model's chance of getting any one digit wrong
+          is <span class="nb-math-in">\varepsilon</span>, and that it falls
+          smoothly as the model grows. An answer of
+          <span class="nb-math-in">L</span> digits is scored correct by
+          exact-match only if every digit is right, so its expected accuracy is
+          about <span class="nb-math-in">(1-\varepsilon)^{L}</span>. Raising a
+          number below one to the fifth or tenth power drives it toward zero and
+          holds it there while
+          <span class="nb-math-in">\varepsilon</span> is still large, then lets
+          it shoot up once the per-digit error gets small: a curve that looks
+          flat, then sudden. Token edit distance instead adds up the per-digit
+          successes, so it tracks
+          <span class="nb-math-in">1-\varepsilon</span> in a near-straight line.
+          The same smoothly falling error rate produces a sudden curve under one
+          metric and a gradual one under the other.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="§2">2</a></sup
+          >
+          A later account of the debate put the intuition plainly: ask how well a
+          model predicts the first digit, then the second, then the third, and
+          for the sum 100 + 278 the answer 376 is much closer than −9.34, a
+          difference that all-or-nothing grading throws away.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="the-audit" id="the-audit">
+        <h2>Most of the jumps lived in two metrics</h2>
+        <p>
+          One worked example is not a proof about the field. Schaeffer and his
+          coauthors went to the source most of Wei's emergent tasks were drawn
+          from: BIG-Bench, a community benchmark of 204 tasks assembled by 450
+          authors across 132 institutions, each task shipped with its own
+          preferred scoring metric.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          They counted where emergence showed up. More than 92% of the abilities
+          anyone had called emergent appeared under just two of those metrics,
+          Multiple Choice Grade and Exact String Match, both discontinuous.<sup
+            class="nb-cite"
+            ><a href="#s2" data-nb-locator="§4">2</a></sup
+          >
+          Of the 39 preferred metrics in BIG-Bench, at most 5 produced any
+          emergence at all.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="§4">2</a></sup
+          >
+          When they took a task that looked emergent under Multiple Choice Grade
+          and rescored it under Brier score, a continuous metric for the same
+          predictions, the jump flattened into a ramp.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Fig. 6">2</a></sup
+          >
+        </p>
+        <p>
+          The original authors had seen this coming. Wei's own paper, in its
+          discussion, warns that "using exact string match as the evaluation
+          metric for long-sequence targets may disguise compounding incremental
+          improvements as emergence."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Discussion">1</a></sup
+          >
+          The mirage paper did not catch the field off guard so much as measure a
+          caveat the field had already written down and moved past. That history
+          matters for how much weight to give the correction: it is a sharpening
+          of a known problem, not the exposure of a hidden one.
+        </p>
+      </section>
+
+      <section data-nb-section="what-survives" id="what-survives">
+        <h2>What the swap leaves standing</h2>
+        <p>
+          It would be easy to read all this as: emergence was fake. That is not
+          what the evidence says, and Schaeffer's own words are careful about the
+          boundary. The claim is scoped to "a particular task and model family,
+          when analyzing fixed model outputs."<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Abstract">2</a></sup
+          >
+          It does not assert that nothing ever changes qualitatively with scale,
+          and it does not cover what happens during training. Three things
+          survive the metric swap.
+        </p>
+        <p>
+          The first is the ability itself. Showing that a curve was smooth all
+          along does not make the capability absent. It restores the opposite
+          conclusion: the underlying skill was improving predictably with scale,
+          and the sudden-onset story was hiding that. The models were never at
+          zero capability; a metric that reports zero until an answer is perfect
+          only made them look that way.
+        </p>
+        <p>
+          The second is the jump a user actually feels. If you need the sum and
+          will accept only the correct sum, then a model that reaches 74513 has
+          given you nothing, and the one that finally reaches 74510 has given you
+          everything. Smooth improvement in the per-digit error rate still
+          produces a sharp jump in useful behavior, because usefulness here is
+          itself all-or-nothing. Wei's camp makes exactly this point: for a task
+          like arithmetic, the right answer is all a user wants, so the
+          discontinuous metric is the one that counts.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The metric swap explains the mechanism and restores predictability of
+          the skill. It does not make a near-miss useful.
+        </p>
+        <p>
+          The third is what we still cannot predict. Alex Tamkin, a researcher at
+          Anthropic, cautions that this "is not the full story," that "we can't
+          say that all of these jumps are a mirage," and that "you still have
+          discontinuities."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Even where the underlying skill is smooth, no one has shown how to say
+          in advance which capability will cross the threshold of usefulness at
+          which scale. That gap was named before the emergence debate began.
+          Ganguli and coauthors at Anthropic described large models in 2022 as
+          having "an unusual combination of predictable loss ... and
+          unpredictable specific capabilities, inputs, and outputs."<sup
+            class="nb-cite"
+            ><a href="#s6" data-nb-locator="Abstract">6</a></sup
+          >
+          The mirage paper narrows the mystery by making the skill curves
+          predictable. It does not close the surprise at deployment.
+        </p>
+        <div class="nb-note nb-note-strong">
+          <span class="nb-note-label">Verdict</span>
+          <p>
+            The sharp onset in the emergence charts is largely an artifact of
+            all-or-nothing scoring: swap in a metric that gives partial credit
+            and the same model outputs improve smoothly and predictably.<sup
+              class="nb-cite"
+              ><a href="#s2">2</a></sup
+            >
+            That does not make the abilities absent, and it does not erase the
+            jump a user feels when only a fully correct answer will do.<sup
+              class="nb-cite"
+              ><a href="#s4">4</a></sup
+            >
+            What remains genuinely open is prediction: which skill becomes useful
+            at which scale, a question no change of ruler has answered.<sup
+              class="nb-cite"
+              ><a href="#s6">6</a></sup
+            >
+          </p>
+        </div>
+      </section>
+
+      <section class="rs-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="rs-bookend-name">The takeaway</p>
+        <div class="rs-bookend-rule"></div>
+        <p>
+          An emergent ability was supposed to be a capability that switches on
+          past a threshold of scale, invisible in smaller models and
+          unpredictable from them. Most of that suddenness turned out to live in
+          the scoring. Grade an answer all-or-nothing and a smoothly improving
+          model looks like it jumps. Grade the same answer for how close it came
+          and the jump becomes a climb you could have seen coming. Two things
+          keep the story honest. The abilities are real and improving the whole
+          time, not absent and then present. And the person who needs a correct
+          answer still feels a jump, because a near-miss is no use to them. What
+          no one can yet do is say which ability will become useful at which
+          size. That is the part of the surprise the rebuttal left standing.
+        </p>
+        <div class="rs-bookend-band">
+          <span class="rs-bookend-label">Go deeper</span>
+          <span class="rs-bookend-note">optional reading</span>
+        </div>
+        <dl class="rs-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.fast.ai/posts/2019-09-24-metrics.html"
+              >Rachel Thomas, "The problem with metrics is a big problem for
+              AI"</a
+            >
+            — why a proxy metric can be wrong on its own terms, apart from the
+            system it scores.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://ar5iv.labs.arxiv.org/abs/2304.15004"
+              >Schaeffer, Miranda &amp; Koyejo, "Are Emergent Abilities a
+              Mirage?" (full text)</a
+            >
+            — the re-scoring in full, including the induced-emergence experiment
+            on non-language models.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2206.07682"
+              >arXiv · Wei et al., "Emergent Abilities of Large Language Models"
+              (2022)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2304.15004"
+              >arXiv · Schaeffer, Miranda &amp; Koyejo, "Are Emergent Abilities
+              of Large Language Models a Mirage?" (2023)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://aihub.org/2023/12/12/neurips2023-outstanding-papers/"
+              >AIhub · "#NeurIPS2023 outstanding papers" (2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.quantamagazine.org/how-quickly-do-large-language-models-learn-unexpected-skills-20240213/"
+              >Quanta Magazine · Ornes, "How Quickly Do Large Language Models
+              Learn Unexpected Skills?" (2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2206.04615"
+              >arXiv · Srivastava et al., "Beyond the Imitation Game" (BIG-Bench,
+              2022)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2202.07785"
+              >arXiv · Ganguli et al., "Predictability and Surprise in Large
+              Generative Models" (2022)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
