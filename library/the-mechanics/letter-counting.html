@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A model can recognize strawberry's letters and still miscount them · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "letter-counting",
+        "template": "lesson",
+        "title": "A model can recognize strawberry's letters and still miscount them",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-20",
+        "tags": ["tokenization", "byte-pair-encoding", "character-level", "counting", "chain-of-thought"],
+        "sources": 9,
+        "words": 1808,
+        "reading_minutes": 8,
+        "dek": "The word arrives as the three integers 496, 675, and 15717, and counting its r's would mean recovering the spelling from those numbers and then running a tally the model was never built to run.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A model can recognize strawberry's letters and still miscount them</h1>
+        <p class="nb-dekline">
+          The word arrives as the three integers 496, 675, and 15717, and
+          counting its r's would mean recovering the spelling from those numbers
+          and then running a tally the model was never built to run.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-07-20</span>
+        </div>
+      </header>
+
+      <section class="rs-bookend" data-nb-section="why" id="why">
+        <p class="rs-bookend-name">Why this matters</p>
+        <div class="rs-bookend-rule"></div>
+        <p>
+          Ask a strong model how many r's are in <em>strawberry</em> and it will
+          often say two. The same model can draft a legal brief and pass a coding
+          exam, so the miss looks like a glitch in something simple. It is not a
+          glitch. It is the clearest window onto a boundary that sits under every
+          answer these systems give: the model never receives the letters you
+          typed. It receives numbers that stand for chunks of the word. This
+          lesson walks the miss backward to that boundary, one step at a time,
+          until the wrong answer is the only answer the machine could have given.
+          By the end you will be able to spot any explanation that skips the
+          boundary, and there are many of them in circulation.
+        </p>
+        <div class="rs-bookend-band">
+          <span class="rs-bookend-label">Background</span>
+          <span class="rs-bookend-note">optional reading</span>
+        </div>
+        <dl class="rs-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../transformers-first-principles/tokenization.html">A transformer never reads the letters in strawberry</a>
+            — how the tokenizer builds its vocabulary by counting letter pairs
+            across a corpus, and where the token numbers come from.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://simonwillison.net/2023/Jun/8/gpt-tokenizers/">Understanding GPT tokenizers</a>
+            — a hands-on tool for watching any word split into its tokens, with
+            the integer ids shown on the page.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The wrong answer is not a spelling mistake</h2>
+        <p>
+          Treat the miss as a fact to be explained rather than a lapse to be
+          scolded. It is not random. Fu and colleagues tested the behavior
+          directly and found it systematic: models could recognize the letters in
+          a word yet fail to count them, and they used <em>strawberry</em> as the
+          motivating case.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A random slip would come and go. This one has a structure, and the
+          structure points at how the word reaches the model in the first place.
+        </p>
+        <p>
+          So start where the word enters and work down. Each step names one real
+          part of the system and asks what that part can and cannot do. The
+          descent ends at a step where nothing below it would change the answer.
+          That is the ground the lesson is after.
+        </p>
+      </section>
+
+      <section data-nb-section="what-the-model-receives" id="what-the-model-receives">
+        <h2>What the model receives instead of letters</h2>
+        <p>
+          Run <em>strawberry</em> through the tokenizer that GPT-3.5 and GPT-4
+          actually use, and the word comes back as three pieces:
+          <code>str</code>, <code>aw</code>, <code>berry</code>. Each piece is
+          then swapped for a fixed number from a lookup table. The three numbers
+          are <code>496</code>, <code>675</code>, and
+          <code>15717</code>.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          That triple is the whole of what the model gets. The ten letters
+          never arrive.
+        </p>
+        <p>
+          You do not have to take the split on faith. Willison, walking through
+          the same tokenizer, shows that any word can be dropped into a tool that
+          prints its pieces and their numbers, and he points at the small
+          surprise that teaches the most: many tokens carry a leading space, so
+          the same word spelled with a space in front becomes a different, often
+          shorter, sequence.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          <em>strawberry</em> is a sharp case of that. Written with a leading
+          space, <code>&nbsp;strawberry</code> stops being three pieces and
+          becomes a single number, <code>73700</code>, in that same tokenizer.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          One common word, one opaque integer, no seam where the letters were.
+        </p>
+        <p>
+          The method behind the split has a name and an origin. Sennrich, Haddow,
+          and Birch introduced byte-pair encoding for language models: rather than
+          keep a word for every word, encode text as a sequence of subword units
+          built by merging the most frequent adjacent pairs.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          GPT-2's authors put a version of it at the mouth of the model and
+          described what it does to a word. Frequent strings survive as one token;
+          infrequent ones get broken toward smaller pieces, so the scheme sits
+          between whole words and bare characters.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          <a href="../transformers-first-principles/tokenization.html">An earlier lesson</a>
+          walks through how that table is built. What matters here is the output:
+          the model reads a row of integers, each an index into a vocabulary, and
+          begins its work from there.
+        </p>
+      </section>
+
+      <section data-nb-section="counting-from-a-token-id" id="counting-from-a-token-id">
+        <h2>Counting the r's with only the token in hand</h2>
+        <p>
+          Now do the model's job yourself, with only what the model has. You are
+          handed <code>15717</code> and asked how many r's it contains. The number
+          does not contain letters. It is an index, an arbitrary address in a
+          table, no more spelled than a page number is. To answer at all you must
+          already know that <code>15717</code> stands for the piece
+          <code>berry</code>, and then that <code>berry</code> is written
+          b-e-r-r-y. Both are facts about the number, not contents you can read
+          off it.
+        </p>
+        <p>
+          A part number in a warehouse catalog works the same way. You can learn,
+          from handling orders long enough, that part 15717 is the strawberry-jam
+          refill and even that its label carries a double r, but the digits
+          <code>15717</code> hold none of that. The knowledge rides alongside the
+          number, gathered from every time you saw the part and its label
+          together. Set the catalog down before it misleads: the point is only
+          that the spelling is a learned association attached to the token, never
+          a string the token exposes.
+        </p>
+        <p>
+          The model does hold that association, and better than you might guess.
+          Kaushal and Mahowald probed token representations and found they
+          reliably encode which characters a token contains, with larger models
+          encoding it more accurately, learned from the times training text
+          happened to spell things out or vary how a word was cut.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          So the model is not blind to letters. It is statistically sighted: it
+          can usually recover that <code>berry</code> has two r's. This is why a
+          clean story of the failure has to be careful. The model often can tell
+          you the spelling.
+        </p>
+        <p>
+          Which is exactly what Fu and colleagues found. Their models could
+          recognize the letters in a word and
+          still miscount them.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Recovering the spelling is one job. Walking the recovered letters in
+          order and keeping a running tally is a second job, and nothing in the
+          system runs it by default. A person counts r's with a loop: eyes move
+          left to right, a finger holds the place, a count ticks up. The model has
+          no such loop over characters. It has learned associations, produced in
+          one pass, and a count that lives inside a piece rather than across it.
+          Two r's sit together inside <code>berry</code> and one more inside
+          <code>str</code>; none of the three tokens is a bare
+          <code>r</code>.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The miss is what a system without a counting loop does when asked to
+          count.
+        </p>
+      </section>
+
+      <section data-nb-section="the-cut-runs-through-the-digits" id="the-cut-runs-through-the-digits">
+        <h2>The same cut runs through the digits</h2>
+        <p>
+          If the boundary is real it should show up away from spelling, and it
+          does. Singh and Strouse looked at how models tokenize numbers and how
+          that changes arithmetic. GPT-3.5 and GPT-4 assign separate tokens to
+          one-, two-, and three-digit chunks, so a long number arrives already
+          grouped, while some other models split every digit on its own. Forcing
+          the digits to be grouped from the right, the way people add, measurably
+          improved addition accuracy.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The same cut that hides letters inside a piece hides digits inside a
+          chunk, and moving the cut moves the answer. The failure is a property of
+          the boundary, not a quirk of one word.
+        </p>
+        <p>
+          It is tempting to push that further and say the miss must be worse for
+          rare words, since those seem more alien to the model. The evidence does
+          not support it. Fu and colleagues measured it and reported that the
+          frequency of the word, and of its tokens, had no significant effect on
+          the errors.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The tokenizer's own logic cuts the other way: a rare word falls toward
+          smaller pieces, closer to bare characters, which exposes more of its
+          letters, not fewer.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The defensible claim is the structural one. The failure is systematic
+          because it comes from the boundary itself, and it does not need the word
+          to be rare.
+        </p>
+      </section>
+
+      <section data-nb-section="where-the-explanation-stops-being-settled" id="where-the-explanation-stops-being-settled">
+        <h2>Where the explanation stops being settled</h2>
+        <p>
+          Two things in this lesson are settled engineering. Text is turned into
+          tokens before the model sees it, and the model operates on those tokens,
+          not on characters. Everything above rests on those two facts, and they
+          are not in dispute.
+        </p>
+        <p>
+          One thing is not settled: why newer models miss less often. The easy
+          guess is that the tokenizer was fixed. For this word it was not. GPT-4o
+          uses a newer tokenizer than GPT-2, and both split <em>strawberry</em>
+          the same way, into <code>st</code>, <code>raw</code>,
+          <code>berry</code>; only the specific numbers differ.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The letters are buried in the same places they always were. So the
+          improvement, where it is real, has to come from somewhere else, and here
+          the honest answer is a list of candidates rather than a cause. More
+          training text that spells words out would strengthen the association the
+          model already has. And a model can be prompted or trained to spell the
+          word out first, one piece at a time, before it counts, which is a form
+          of the intermediate-steps method Wei and colleagues showed lifts
+          multi-step and arithmetic performance.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Spelling the word out builds, in the open, the ordered list the model
+          could not walk internally.
+        </p>
+        <p>
+          Even that is not a clean fix. Liberman tested reasoning models on a
+          harder counting task and watched them fail, which is the honest brake on
+          any claim that the newest systems have put this behind them; his advice
+          is to distrust any current system on a task that comes down to counting.
+          That models learn to spell at all, from text that never taught them
+          letters directly, is striking enough that the field has a half-joking
+          name for it, the spelling miracle.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          The miracle is that the association exists. The miss is what happens when
+          you ask it to do a job an association cannot do.
+        </p>
+      </section>
+
+      <section class="rs-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="rs-bookend-name">The takeaway</p>
+        <div class="rs-bookend-rule"></div>
+        <p>
+          The model miscounts the r's in <em>strawberry</em> because it never
+          receives the letters. It receives a few numbers standing for chunks of
+          the word, and a question that looks like spelling is really a question
+          about numbers that hold no spelling. It can usually recover the letters,
+          because it learned which letters ride with which token, but recovering
+          the spelling and counting the letters are two different jobs, and it has
+          no built-in loop for the second. That is the ground: no character
+          access by default, and no counter over characters even once the spelling
+          is back. Hold it, and you can weigh any explanation you meet. If someone
+          says the model is bad at arithmetic, or was never shown how the word is
+          spelled, they have skipped the step where the word became numbers. That
+          step is where the answer was decided.
+        </p>
+        <div class="rs-bookend-band">
+          <span class="rs-bookend-label">Go deeper</span>
+          <span class="rs-bookend-note">optional reading</span>
+        </div>
+        <dl class="rs-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://aclanthology.org/2022.naacl-main.179/">What do tokens know about their characters and how do they know it?</a>
+            — the probing study behind the claim that spelling is encoded
+            statistically, and better in larger models.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://languagelog.ldc.upenn.edu/nll/?p=68167">AI systems still can't count</a>
+            — a linguist's test of reasoning models on a harder counting task, and
+            the field's name for how models learn to spell at all.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; intro (strawberry example)"
+              href="https://arxiv.org/abs/2412.18626"
+              >Fu, Ferrando, Conde, Arriaga &amp; Reviriego · Why Do Large Language Models Struggle to Count Letters? (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="encode(&quot;strawberry&quot;) under gpt2, cl100k_base, o200k_base"
+              href="https://github.com/openai/tiktoken"
+              >OpenAI · tiktoken (production BPE tokenizer; splits and ids reproduced)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="token examples; leading-space section"
+              href="https://simonwillison.net/2023/Jun/8/gpt-tokenizers/"
+              >Simon Willison · Understanding GPT tokenizers (2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; §3 (BPE segmentation)"
+              href="https://arxiv.org/abs/1508.07909"
+              >Sennrich, Haddow &amp; Birch · Neural Machine Translation of Rare Words with Subword Units (2016)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§2.2 Input Representation, p.3"
+              href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf"
+              >Radford et al. · Language Models are Unsupervised Multitask Learners (GPT-2, 2019)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; NAACL 2022, pp.2487–2507"
+              href="https://aclanthology.org/2022.naacl-main.179/"
+              >Kaushal &amp; Mahowald · What do tokens know about their characters and how do they know it? (2022)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Fig. 1; single- vs multi-digit tokenization"
+              href="https://arxiv.org/abs/2402.14903"
+              >Singh &amp; Strouse · Tokenization counts: the impact of tokenization on arithmetic in frontier LLMs (2024)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; GSM8K arithmetic results"
+              href="https://arxiv.org/abs/2201.11903"
+              >Wei et al. · Chain-of-Thought Prompting Elicits Reasoning in Large Language Models (2022)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="post body; comment thread (spelling miracle)"
+              href="https://languagelog.ldc.upenn.edu/nll/?p=68167"
+              >Mark Liberman · Language Log: AI systems still can't count (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
