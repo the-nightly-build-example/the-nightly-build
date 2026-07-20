@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Change which SWE-bench tasks are counted and GPT-4o's score doubles · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "swe-bench",
+        "template": "lesson",
+        "title": "Change which SWE-bench tasks are counted and GPT-4o's score doubles",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-20",
+        "tags": ["swe-bench", "benchmarks", "coding-agents", "contamination", "evaluation"],
+        "sources": 10,
+        "words": 2189,
+        "reading_minutes": 10,
+        "dek": "SWE-bench grades a model by running a real repository's own tests in a sealed container, and OpenAI reports the same GPT-4o clearing that bar on 16% of the original 2,294 tasks but 33.2% of the 500 its annotators kept.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">Change which SWE-bench tasks are counted and GPT-4o's score doubles</h1>
+        <p class="nb-dekline">
+          SWE-bench grades a model by running a real repository's own tests in a
+          sealed container, and OpenAI reports the same GPT-4o clearing that bar
+          on 16% of the original 2,294 tasks but 33.2% of the 500 its annotators
+          kept.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-20</span>
+        </div>
+      </header>
+
+      <section class="rs-bookend" data-nb-section="why" id="why">
+        <p class="rs-bookend-name">Why this matters</p>
+        <div class="rs-bookend-rule"></div>
+        <p>
+          Every few weeks a lab announces that its coding agent resolves some
+          share of real software bugs, and the share is almost always a
+          SWE-bench score. The claim lands like a plain fact about a model, the
+          way "passes 90% of the driving test" sounds like a fact about a
+          driver. A SWE-bench score is built one bug at a time inside a container
+          that runs a real project's tests, and knowing how it is built is the
+          difference between reading it as a property of the model and reading
+          it as one measurement among several. By the end you will know the
+          three things a bare percentage hides: which set of tasks it was scored
+          on, what software wrapped around the model to produce it, and whether
+          the model had already seen the fix. You will also know why the same
+          GPT-4o can post 16% and 33.2% on what both announcements call
+          SWE-bench.
+        </p>
+        <div class="rs-bookend-band">
+          <span class="rs-bookend-label">Background</span>
+          <span class="rs-bookend-note">optional reading</span>
+        </div>
+        <dl class="rs-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/mmlu.html">The lab that ships an MMLU score rarely says how it was measured</a>
+            — the sibling case of a fixed test set, where contamination and
+            format do the same quiet work to a multiple-choice number.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/chatbot-arena-elo.html">Chatbot Arena's Elo is a preference vote that pays out for style</a>
+            — the other kind of instrument, a live human vote rather than an
+            executed test, for contrast with this one.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What the container actually checks</h2>
+        <p>
+          When a lab reports that its agent resolves some percentage of real
+          GitHub issues, the number is almost always a score on SWE-bench, an
+          evaluation built by Carlos Jimenez and colleagues at Princeton and the
+          University of Chicago and presented at ICLR 2024.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          SWE-bench is 2,294 problems drawn from real issues and the pull
+          requests that fixed them, across 12 widely used Python projects, among
+          them Django, scikit-learn, Flask, matplotlib, and
+          sympy.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Each problem, called a task instance, bundles three things that
+          already sit in a repository's history: the text of a bug report or
+          feature request, the change a human merged to resolve it, and the
+          project's own test suite.
+        </p>
+        <p>
+          The grade is a program that runs. To score one instance, a harness
+          checks out the repository at the commit just before the merged fix,
+          installs the project, and gives the model the issue text and the code
+          around it. The model returns a patch. The harness applies that patch,
+          then runs a named set of tests inside a sealed container and reads
+          what passes.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          One set, the FAIL_TO_PASS tests, comes with the human fix and fails on
+          the unpatched code; it must pass after the model's patch, confirming
+          the bug was addressed. A second set, the PASS_TO_PASS tests, passes
+          before and must still pass after, confirming the patch broke nothing
+          that already worked. The model resolves the
+          instance when every test in both sets passes.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The tests themselves are supplied by the harness, not the model; the
+          model only ever sees the issue and the code it can retrieve.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Hold onto that definition, because it is narrower than the word
+          suggests. To resolve an instance is to make a fixed list of tests go
+          green in a container, which is not the same as a maintainer reading
+          the patch and judging it the right change. Grading by execution is
+          what makes the number reproducible and hard to fudge, and it is also
+          why "resolved" certifies only that a particular set of tests passed,
+          not that the fix was the one the project wanted. The containerized
+          harness the maintainers ship lets anyone rerun the grade and get the
+          same answer.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          When the original paper ran in 2023 the strongest model resolved under
+          2% of the set.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The trouble is not the grade but what a lone percentage leaves out.
+        </p>
+      </section>
+
+      <section data-nb-section="which-set" id="which-set">
+        <h2>One name, four different sets of problems</h2>
+        <p>
+          The first thing the word SWE-bench hides is which SWE-bench. The name
+          now covers at least four sets of problems, and a percentage means
+          little until you know which one it names. They differ in size,
+          language, and how hard they are by
+          construction.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            The four sets that all travel under the name "SWE-bench," by their
+            public test splits. A number on one is not a number on another.
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Set</th>
+              <th>Test instances</th>
+              <th class="txt">What is in it</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Full</span></td>
+              <td>2,294</td>
+              <td class="txt">12 Python repositories, the original set<sup class="nb-cite"><a href="#s1">1</a></sup></td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Lite</span></td>
+              <td>300</td>
+              <td class="txt">a filtered, easier subset of the full set<sup class="nb-cite"><a href="#s3">3</a></sup></td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Verified</span></td>
+              <td>500</td>
+              <td class="txt">instances human-checked as fair and solvable<sup class="nb-cite"><a href="#s4">4</a></sup><sup class="nb-cite"><a href="#s5">5</a></sup></td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Multimodal</span></td>
+              <td>517</td>
+              <td class="txt">17 JavaScript libraries, each task carrying an image<sup class="nb-cite"><a href="#s6">6</a></sup></td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          These are not four difficulties of one exam. Multimodal is a different
+          language, JavaScript, and each of its tasks carries at least one image
+          in the problem or the tests, so it measures something the Python sets
+          never touch.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Lite was pared down to instances with short, single-file fixes, which
+          is why its own authors recommend it only when compute is tight, not as
+          the headline number.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Verified is where the trap is easiest to walk into: it looks like the
+          same benchmark reporting a higher score, and a launch slide will quote
+          it beside a full-set number as though the two were rungs on one ladder.
+        </p>
+      </section>
+
+      <section data-nb-section="why-verified" id="why-verified">
+        <h2>Why 500 of the tasks were thrown out</h2>
+        <p>
+          Verified exists because the original set graded some models unfairly
+          low. An OpenAI-led team, working with the SWE-bench authors, had 93
+          professional Python developers review 1,699 random instances, three
+          reviewers each.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          They found 38.3% of instances had underspecified problem statements
+          and 61.1% had tests that could reject a valid solution; in all, 68.3%
+          of the sampled instances were filtered out, leaving the 500 that make
+          up Verified.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          One kept example from the blog shows the failure concretely. In the
+          scikit-learn instance numbered 14520, a hidden test demands the
+          solution raise a specific deprecation warning with an exact wording
+          that was only settled in the pull request's discussion, text the model
+          never sees; OpenAI's own verdict is that it "would be nearly
+          impossible for an agent to solve this
+          sample."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The tests are the grade. When they check for a message the
+          issue never states, a correct fix still fails.
+        </p>
+        <p>
+          Remove those instances and the same model resolves more of what is
+          left. OpenAI reports that GPT-4o, on its best scaffold, reaches 33.2%
+          on SWE-bench Verified, "more than doubling its score of 16% on the
+          original SWE-bench."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Nothing about the model changed between those two numbers. The set of
+          tasks it was graded against did. The team argues, fairly, that the
+          rise is honest: scores go up within each difficulty band once
+          impossible instances are removed, so they took out the unsolvable, not
+          the hard.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The overall mix shifted easier too, and
+          both can be true at once. Either way, the lesson for quoting holds. A
+          16 and a 33.2 that describe one model are both
+          correct SWE-bench numbers, and setting them side by side as progress
+          is a mistake about which set each was measured on.
+        </p>
+      </section>
+
+      <section data-nb-section="before-the-cutoff" id="before-the-cutoff">
+        <h2>The tasks a model may have read before</h2>
+        <p>
+          Verified corrects a number that ran too low. Contamination pushes the
+          number the other way. Every instance is scraped from a public GitHub
+          repository, and most predate a model's training cutoff, so the fix and
+          its discussion may already sit in the data the model learned from.
+          OpenAI states the risk plainly: large models trained on
+          internet text "are likely to be contaminated on the
+          tasks."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          A resolved instance can therefore mean the tests passed on a fix the
+          model had seen, which is not the skill the score is taken to measure.
+        </p>
+        <p>
+          An independent study puts a size on the suspicion. Researchers at
+          Purdue and Microsoft, none of them authors of SWE-bench or scoring
+          their own agent on it, gave models only an issue's text, with no access
+          to the repository, and asked them to name the buggy file. The strongest
+          models identified the correct file up to 76% of the time on SWE-bench
+          Verified, but only up to 53% on comparable tasks from repositories not
+          in SWE-bench.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          A model that can point to the file to edit from the issue alone, having
+          never been shown the code, has most likely seen the fix before. The same
+          study also found far more verbatim overlap between model output and the
+          real patches on SWE-bench than on tasks elsewhere, and concluded that
+          its findings "raise concerns about the validity of existing
+          results."<sup class="nb-cite"><a href="#s7">7</a></sup>
+          This is a diagnostic, not a resolve rate, and it proves no single
+          headline score inflated. It does mean a number scored on tasks older
+          than the model carries a question a number on fresh tasks does not.
+        </p>
+      </section>
+
+      <section data-nb-section="the-harness" id="the-harness">
+        <h2>The software around the model, and the board that still sorts</h2>
+        <p>
+          A score can also be measured on a slice of the set and quoted as the
+          whole. When Cognition launched the Devin agent in March 2024 it
+          reported 13.86% on SWE-bench. That figure was 79 of 570 instances, a
+          randomly chosen quarter of the 2,294, set beside the paper's full-set
+          baseline of 4.80%.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Cognition disclosed the quarter in the technical report; the distortion
+          enters when "13.86% on SWE-bench" is repeated without it, against a
+          baseline measured on the full set.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          The agent wrapped around the model moves the number as much as the
+          model does. On SWE-bench Lite, one GPT-4 scored 2.7% with an early
+          retrieval-based scaffold and 28.3% with a stronger one called CodeR,
+          more than a tenfold spread with the weights
+          unchanged.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The original paper had shown a gentler form of the same effect: Claude
+          2 resolved 1.96% of the set when a keyword search chose its context and
+          4.80% when it was simply handed the files the human fix had
+          touched.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The official leaderboard controls for part of this by giving every
+          model the same system prompt, which, as Simon Willison notes, is fair
+          for comparison but means the quality of a lab's own harness and prompt
+          is not what the board measures.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <p>
+          None of this needs anyone to lie. Overclaiming, as Arvind Narayanan and
+          Sayash Kapoor argue, is the predictable response to what a leaderboard
+          rewards, and a bare accuracy figure quoted without the compute or the
+          scaffold behind it drops the column needed to price
+          it.<sup class="nb-cite"><a href="#s10">10</a></sup>
+          The instrument still sorts real systems when one party runs it in a
+          single piece. An official run in February 2026, not self-reported by
+          the labs, placed Claude 4.5 Opus at 76.8% on Verified, with Gemini 3
+          Flash and MiniMax M2.5 just behind at 75.8%, an order that matches how
+          engineers who use these agents would rank them.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+      </section>
+
+      <section class="rs-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="rs-bookend-name">The takeaway</p>
+        <div class="rs-bookend-rule"></div>
+        <p>
+          A SWE-bench score is a genuine measurement, and it answers a narrow
+          question: on this set of tasks, with this software feeding the model,
+          how often did a repository's own tests go from failing to passing.
+          Read that way, "65% on SWE-bench" is a question rather than an answer.
+          Sixty-five percent of which set: the 2,294 originals, the 500 that
+          annotators judged solvable, the 300 in Lite, the JavaScript of
+          Multimodal? Produced by which scaffold, when the same GPT-4 swung from
+          2.7% to 28.3% on that choice alone? And scored on tasks the model was
+          trained after, or on ones whose fixes it may already have read, the way
+          the strongest models can name the file to edit from an issue's text
+          alone far more often on tasks they have seen? The
+          GPT-4o that resolves 16% and 33.2% is one model both times; only the
+          set of tasks changed. Keep in view what "resolved" certifies, that a
+          fixed list of tests passed, and the percentage becomes what it is, a
+          checkable estimate of one thing, too often quoted as though it settled
+          another.
+        </p>
+        <div class="rs-bookend-band">
+          <span class="rs-bookend-label">Go deeper</span>
+          <span class="rs-bookend-note">optional reading</span>
+        </div>
+        <dl class="rs-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://simonwillison.net/2026/Feb/19/swe-bench/">Simon Willison, "SWE-bench February 2026 leaderboard update"</a>
+            — a plain reading of the current official standings and the harness
+            caveats behind them.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2506.12286">Liang, Garg and Zilouchian Moghaddam, "The SWE-Bench Illusion"</a>
+            — the contamination diagnostics in full, including the buggy-file
+            test on tasks the models never saw.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Sec. 4.1; Sec. A.4 (resolved definition, evaluation pipeline); Table 5"
+              href="https://arxiv.org/abs/2310.06770"
+              >Jimenez et al. · SWE-bench: Can Language Models Resolve Real-World GitHub Issues? (ICLR 2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="README: containerized Docker evaluation harness; variants"
+              href="https://github.com/princeton-nlp/SWE-bench"
+              >princeton-nlp · SWE-bench repository (README and evaluation harness)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="300 test instances; filtering criteria; recommendation to report Lite when compute is a concern"
+              href="https://www.swebench.com/lite.html"
+              >SWE-bench · Lite (official site)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Grading restatement; three problems; scikit-learn-14520; 38.3% / 61.1% / 68.3%; GPT-4o 16% vs 33.2%; GPT-4 Lite 2.7%–28.3%; contamination note"
+              href="https://openai.com/index/introducing-swe-bench-verified/"
+              >OpenAI · Introducing SWE-bench Verified (Aug 2024, updated Feb 2025)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Dataset card: subset of 500 human-validated samples; viewer shows 500 test rows"
+              href="https://huggingface.co/datasets/princeton-nlp/SWE-bench_Verified"
+              >princeton-nlp · SWE-bench_Verified dataset card (Hugging Face)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="517 test instances (617 total) across 17 JavaScript libraries; each task carries an image"
+              href="https://arxiv.org/abs/2410.03859"
+              >Yang et al. · SWE-bench Multimodal: Do AI Systems Generalize to Visual Software Domains? (2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Buggy-file identification up to 76% vs ≤53%; 35% vs 18% n-gram overlap; conclusion"
+              href="https://arxiv.org/abs/2506.12286"
+              >Liang, Garg & Zilouchian Moghaddam (Purdue, Microsoft) · The SWE-Bench Illusion: When State-of-the-Art LLMs Remember Instead of Reason (2025)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="79/570 = 13.86%; randomly chosen 25% (570 of 2,294); 4.80% baseline; 15 Mar 2024"
+              href="https://cognition.com/blog/swe-bench-technical-report"
+              >Cognition · Devin SWE-bench technical report (2024)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Feb 2026 official standings; same-system-prompt caveat; counts"
+              href="https://simonwillison.net/2026/Feb/19/swe-bench/"
+              >Simon Willison · SWE-bench February 2026 leaderboard update</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Accuracy-without-cost argument; overclaiming as leaderboard incentive"
+              href="https://www.normaltech.ai/p/ai-leaderboards-are-no-longer-useful"
+              >Kapoor, Stroebl & Narayanan · AI leaderboards are no longer useful. It's time to switch to Pareto curves. (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
