@@ -13,6 +13,11 @@ good or being understood, be understood.
 Every article is a lesson on the lesson template. The template's identity
 file carries the teaching rules. Follow them; do not restate them.
 
+The takeaway bookend is where a lesson lands its judgment. Do not close
+the body with a Verdict note, or any block that restates the finding.
+Some older articles still carry that block from the paper's earlier
+template. It is a leftover, not a model to copy.
+
 Algebra and probability need no introduction. Everything else about AI
 gets taught before it is used, in this lesson or an earlier one. Link the
 earlier lesson instead of re-teaching it: a plain link in prose at first
