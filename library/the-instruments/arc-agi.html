@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The same o3 scored 75.7% and 87.5% on ARC-AGI, and only the compute changed · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "arc-agi",
+        "template": "lesson",
+        "title": "The same o3 scored 75.7% and 87.5% on ARC-AGI, and only the compute changed",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-21",
+        "tags": ["arc-agi", "benchmarks", "test-time-compute", "o3", "evaluation"],
+        "sources": 9,
+        "words": 1774,
+        "reading_minutes": 9,
+        "dek": "On the same 100 held-out puzzles, the same o3 ran about $26 a task at one compute setting and about $4,560 at another — so what an ARC-AGI score means depends on the compute behind it and the eval set under it, and \"AGI has arrived\" was never what the number said.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">The same o3 scored 75.7% and 87.5% on ARC-AGI, and only the compute changed</h1>
+        <p class="nb-dekline">
+          On the same 100 held-out puzzles, the same o3 ran about $26 a task at
+          one compute setting and about $4,560 at another — so what an ARC-AGI
+          score means depends on the compute behind it and the eval set under it,
+          and "AGI has arrived" was never what the number said.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-21</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          For a week in December 2024 the sentence "AI has reached AGI" traveled
+          on a single benchmark number: o3 scored 87.5% on ARC-AGI. ARC-AGI is a
+          test of abstract reasoning on colored grids, run by the people who
+          designed it, and its scores now anchor a running argument about how
+          close frontier systems are to general intelligence. The number that
+          set off the headlines was real. It was also one of two numbers the same
+          model produced on the same tasks, separated only by how much compute
+          the run was allowed to spend. By the end you will be able to take any
+          "AI scored X% on ARC-AGI" claim and ask the two questions that decide
+          what it means: at what compute cost, and on which eval set.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/mmlu.html">The lab that ships an MMLU score rarely says how it was measured</a>:
+            why a bare benchmark percentage hides the procedure that made it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/swe-bench.html">Change which tasks are counted and a coding score moves</a>:
+            how the choice of eval subset alone reshapes a headline figure.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One model, one task set, two very different numbers</h2>
+        <p>
+          In December 2024, OpenAI's o3-preview scored 87.5% on ARC-AGI-1, and a
+          wave of coverage read it as the arrival of artificial general
+          intelligence. The same model, on the same 100 tasks, also scored
+          75.7%.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Nothing about the model or the puzzles changed between the two figures.
+          What changed was the test-time compute each run was allowed to spend,
+          meaning the amount of computation the model used while answering, set
+          here by how many separate candidate solutions it sampled per task
+          before settling on its final answers.
+        </p>
+        <p>
+          The 75.7% run sampled six candidate solutions per task, at about $26 a
+          task. The 87.5% run sampled 1,024 per task, at about $4,560 a task,
+          roughly 172 times the compute for the identical set of
+          grids.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The eval set was the same in both: the ARC-AGI-1 semi-private set of
+          100 held-out tasks.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A percent on this test is not yet a measurement until its compute cost
+          and its eval set are named beside it.
+        </p>
+      </section>
+
+      <section data-nb-section="what-the-test-is" id="what-the-test-is">
+        <h2>What ARC-AGI-1 actually asks</h2>
+        <p>
+          ARC-AGI-1 is a set of grid-reasoning puzzles. Each task shows a few
+          example pairs, usually about three, where an input grid of colored
+          cells is transformed into an output grid, and the solver has to infer
+          the rule and apply it to a new input.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The design intends that a system deduce the rule on the spot rather
+          than recognize it from training, so the tasks are novel and the rules
+          are not published.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The corpus is split four ways. There are
+          400 public training tasks to build against, 400 public evaluation tasks
+          to test a finished system, 100 semi-private tasks held back to test
+          closed models like o3, and 100 fully private tasks reserved for the
+          ARC Prize competition.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The semi-private and private sets are withheld so a model cannot have
+          trained on the answers. When you read an ARC-AGI score, which of these
+          four sets it was measured on is half of what the number means, because
+          a public-set figure and a held-out figure are answering different
+          questions about the same model.
+        </p>
+        <p>
+          Grading is mechanical and strict. The rule is pass@2: for each task the
+          system submits two candidate output grids, and if either one is an
+          exact match for the withheld answer the task counts as solved,
+          otherwise it scores zero.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Exact match means pixel-perfect. Every cell's color and position has to
+          be identical to the keyed solution; a single wrong cell fails the
+          task.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The final score is the fraction of tasks solved this way.
+        </p>
+      </section>
+
+      <section data-nb-section="the-compute-dial" id="the-compute-dial">
+        <h2>The dial that set the number</h2>
+        <p>
+          Because a task is solved
+          if either of two submitted grids is exact, a system can raise its score
+          by generating many candidate solutions, ranking them, and submitting
+          its best two. More samples means more chances to have produced the
+          right grid somewhere in the pile. Samples cost compute, and compute
+          costs money, so the score has a dial attached to it, and the dial is
+          spending.
+        </p>
+        <table class="nb-table">
+          <caption>
+            o3-preview on the ARC-AGI-1 semi-private eval set, 100 tasks,
+            December 2024: the same model and tasks at two compute
+            settings.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>RUN</th>
+              <th>SCORE</th>
+              <th>SAMPLES / TASK</th>
+              <th>COST / TASK</th>
+              <th>TOTAL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">low-compute</span></td>
+              <td>75.7%</td>
+              <td>6</td>
+              <td>$26</td>
+              <td>$2 680</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">high-compute</span></td>
+              <td>87.5%</td>
+              <td>1 024</td>
+              <td>$4 560</td>
+              <td>$456 000</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          One name for each run, kept for the rest of the lesson: the low-compute
+          run scored 75.7% at six samples a task, and the high-compute run scored
+          87.5% at 1,024 samples a task. ARC Prize's own report labels them the
+          other way around, calling the cheap run "high-efficiency" and the
+          costly run "low-efficiency," because efficiency there means score per
+          dollar.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Same two runs, opposite-sounding labels. This lesson names them by how
+          much they spend.
+        </p>
+        <p>
+          The spending decides which number is even eligible for the public
+          board. ARC Prize reports that the low-compute 75.7% "is within the
+          budget rules of ARC-AGI-Pub (costs &lt;$10k) and therefore qualifies as
+          1st place on the public leaderboard."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The high-compute 87.5% run is reported separately, on its own, and is
+          not the leaderboard entry.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The figure that qualified as a public record and the figure that ran
+          the headlines were not the same figure.
+        </p>
+      </section>
+
+      <section data-nb-section="the-test-and-the-thing" id="the-test-and-the-thing">
+        <h2>The test and the thing it is named after</h2>
+        <p>
+          The confusion in "o3 reached AGI" lives in a slide between two nouns.
+          ARC-AGI is the name of a test. AGI, artificial general intelligence, is
+          the ability people heard the test had certified. The person who built
+          both keeps them apart. François Chollet designed ARC in his 2019 paper
+          "On the Measure of Intelligence," and his argument there is that a
+          score is exactly the thing you should not read as the ability. Skill at
+          a task, he writes, "is heavily modulated by prior knowledge and
+          experience," so "unlimited priors or unlimited training data allow
+          experimenters to 'buy' arbitrary levels of skills for a system, in a
+          way that masks the system's own generalization
+          power."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The compute dial is a second way to buy the same skill. More samples
+          purchase a higher pass@2 score without changing what the model can do
+          on its own.
+        </p>
+        <p>
+          Chollet said as much about o3 directly, in the same post that reported
+          the 87.5%.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The benchmark's author on his own result</span>
+          <blockquote>
+            "Passing ARC-AGI does not equate to achieving AGI, and, as a matter
+            of fact, I don't think o3 is AGI yet. o3 still fails on some very easy
+            tasks, indicating fundamental differences with human
+            intelligence."<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">François Chollet, ARC Prize, December 2024</span>
+          </blockquote>
+        </div>
+        <p>
+          Independent readers landed in the same place, and on the same
+          mechanism. Rolf Pfister and Hansueli Jud argued in early 2025 that the
+          87.5% was reached "through the extensive use of computing power," by
+          massive trialling of predefined operations, which "cannot be a basis
+          for AGI."<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Melanie Mitchell, writing days after the announcement, priced the same
+          run from the outside: "several thousands of dollars per task, and over
+          $1M total for the whole evaluation," and asked whether o3 was solving
+          the tasks with the kind of abstraction the benchmark was built to
+          measure at all.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          A model passed some held-out grids at a chosen compute budget under a
+          pass@2 rule. That is what happened. General intelligence arriving is a
+          different claim, and it was not what the number showed.
+        </p>
+      </section>
+
+      <section data-nb-section="what-the-successor-did" id="what-the-successor-did">
+        <h2>What the next test did to the reading</h2>
+        <p>
+          If a high ARC-AGI-1 score had meant the test was solved, the systems
+          that do well on it would keep doing well on harder problems of the same
+          kind. In 2025
+          ARC Prize released ARC-AGI-2, which keeps the input-output grid format
+          and adds tasks meant to probe reasoning the first version no longer
+          separated.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The frontier collapsed. ARC Prize's own measurement of the released
+          o3 shows the drop cleanly.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Released o3 on the semi-private eval sets of both tests: the systems
+            that scored well on the first version score in the low single digits
+            on the second.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>MODEL</th>
+              <th>ARC-AGI-1</th>
+              <th>ARC-AGI-2</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">o3-low</span></td>
+              <td>41%</td>
+              <td>1.9%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">o3-medium</span></td>
+              <td>53%</td>
+              <td>2.9%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The pattern is general, not a quirk of one model. ARC Prize reports
+          that no leading model has surpassed a 5% success rate on ARC-AGI-2,
+          while comparable models score between 20% and 50% on
+          ARC-AGI-1.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          For contrast, every ARC-AGI-2 task was solved pass@2 by at least two
+          people during its human study, so the tasks are not beyond ordinary
+          reasoning.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          A test read as evidence that a general ability had arrived was replaced
+          by a successor of the same design, on which the same class of systems
+          scored near zero. The "solved" reading did not survive the next test.
+        </p>
+        <p>
+          One honest wrinkle points the same way. The o3 that shipped to the
+          public in April 2025 scored 53% on the ARC-AGI-1 semi-private set, far
+          below the December preview's 75.7% to 87.5%, because OpenAI says the
+          released model is a different, lower-compute
+          system.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The name "o3" stayed fixed while the compute budget dropped, and the
+          number dropped with it. That is the compute dial again, seen from the
+          product side.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A single "AI scored X% on ARC-AGI" number does not stand on its own.
+          Two questions finish it. At what compute cost, because the same o3 on
+          the same 100 tasks returned 75.7% for about $26 a task and 87.5% for
+          about $4,560 a task, and only the compute separated them. On which eval
+          set, because a public-set figure and a held-out semi-private figure are
+          not the same measurement, and the compute cap is what decides which
+          number even reaches the public board. The 87.5% was true. "AGI is here"
+          was a different claim, made by reading a bought score as an ability, and
+          the arrival of ARC-AGI-2 (where the same systems score near zero) showed
+          how far apart the two statements always were. So when the next
+          benchmark number crosses your feed, treat it as unfinished until you
+          can say what compute it cost and which eval set it ran on — the two
+          answers that separate a measurement from a headline.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1911.01547">François Chollet, "On the Measure of Intelligence"</a>:
+            the paper that defines what ARC measures and why buying skill is not the same as having it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arcprize.org/leaderboard">The ARC Prize leaderboard</a>:
+            current scores with cost per task shown beside every entry.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://aiguide.substack.com/p/did-openai-just-solve-abstract-reasoning">Melanie Mitchell, "Did OpenAI Just Solve Abstract Reasoning?"</a>:
+            an outside read of the o3 result on the day it landed.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Cost/compute table; leaderboard rule; Chollet quote"
+              href="https://arcprize.org/blog/oai-o3-pub-breakthrough"
+              >ARC Prize · OpenAI o3 Breakthrough High Score on ARC-AGI-Pub (Dec 2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Task format; four-way split (400/400/100/100)"
+              href="https://arcprize.org/arc-agi/1"
+              >ARC Prize · ARC-AGI-1 specification</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Pass@2 rule; exact pixel-match scoring"
+              href="https://arcprize.org/guide/1"
+              >ARC Prize · ARC-AGI-1 &amp; ARC-AGI-2 Guide (scoring)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract (buying skill; skill vs intelligence)"
+              href="https://arxiv.org/abs/1911.01547"
+              >François Chollet · On the Measure of Intelligence (2019)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2501.07458"
+              >Pfister &amp; Jud · OpenAI's o3 Is Not AGI (2025)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://aiguide.substack.com/p/did-openai-just-solve-abstract-reasoning"
+              >Melanie Mitchell · Did OpenAI Just Solve Abstract Reasoning? (Dec 2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="&lt;5% on ARC-AGI-2 vs 20-50% on ARC-AGI-1; design"
+              href="https://arxiv.org/abs/2505.11831"
+              >Chollet et al. · ARC-AGI-2: A New Challenge for Frontier AI Reasoning Systems (2025)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Released o3/o4-mini scores; preview-vs-release note"
+              href="https://arcprize.org/blog/analyzing-o3-with-arc-agi"
+              >ARC Prize · Analyzing o3 and o4-mini with ARC-AGI (Apr 2025)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="All tasks solved pass@2 by at least two humans"
+              href="https://arcprize.org/arc-agi/2"
+              >ARC Prize · ARC-AGI-2 specification</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
