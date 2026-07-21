@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Two answers to one prompt diverge at a single draw · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "sampling-temperature",
+        "template": "lesson",
+        "title": "Two answers to one prompt diverge at a single draw",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-21",
+        "tags": ["sampling", "temperature", "softmax", "decoding", "determinism"],
+        "sources": 8,
+        "words": 2180,
+        "reading_minutes": 10,
+        "dek": "The weights and the prompt fix a probability distribution over the next token, and a sampler's single draw from it is where two answers to one question come apart.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">Two answers to one prompt diverge at a single draw</h1>
+        <p class="nb-dekline">
+          The weights and the prompt fix a probability distribution over the
+          next token, and a sampler's single draw from it is where two
+          answers to one question come apart.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-21</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Everyone who uses AI has met the same small surprise: ask a chatbot
+          one question twice and the two answers differ. It is easy to read that
+          as the system having a mood. This lesson takes the behavior apart down
+          to the one step that produces it. By the end you will be able to say
+          where the randomness enters, what a temperature setting does when you
+          turn it, and why even a careful, temperature-zero request to a hosted
+          model still is not guaranteed to repeat. You will also catch the most
+          common wrong explanation the moment someone reaches for it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">An attention head is a weighted average that computes its own weights</a>:
+            where the softmax that turns scores into probabilities first shows
+            up in the stack.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/gradient-descent.html">One training step nudges every weight against its own gradient</a>:
+            how the weights that fix the distribution came to hold the values
+            they do.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The model produces scores, not words</h2>
+        <p>
+          Ask a model the same question two mornings running and the two
+          answers rarely match word for word. Nothing about the request
+          changed. The prompt is identical, the model on the server is
+          identical, and no setting changed between the tries. The usual
+          explanation is that the model thinks differently each time. It is a
+          reasonable guess, and it is wrong. The cause is mechanical. It sits at
+          one specific step.
+        </p>
+        <p>
+          Start with what the model actually produces. It does not produce
+          words. At each position it produces a vector of logits: one real
+          number for every token in its vocabulary, tens of thousands of them,
+          each a raw score for the claim that this token comes next. A larger
+          logit means the model favors that token more, and the scores are
+          unbounded.
+        </p>
+        <p>
+          A function called softmax turns that list of scores into a probability
+          distribution. It raises the constant <em>e</em> to the power of each
+          logit and divides by the total, so every entry lands between 0 and 1
+          and the whole set sums to 1. This is the same softmax that turns
+          <a href="../the-mechanics/attention.html">attention scores into weights</a>.
+          The output is a genuine probability for each token, given this model
+          and this prompt. Holtzman and colleagues write exactly this per-token distribution
+          over the vocabulary, and show that the quality of generated text can
+          change dramatically from the very same trained model depending only on
+          what is done with that distribution next.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-draw" id="the-draw">
+        <h2>The draw is where the answer moves</h2>
+        <p>
+          The distribution is fixed. Given the weights and the prompt, the
+          softmax over the vocabulary is a plain calculation with one result;
+          run it a thousand times and the probabilities are identical. So the
+          variation cannot live there. It lives in the next step, where a
+          sampler reads the distribution and picks one token to emit.
+        </p>
+        <p>
+          There are two ways to pick. The first is to take the token with the
+          highest probability, every time. This is greedy decoding, also called
+          argmax: greedy search selects the word with the highest probability as
+          its next word at each step.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Give it the same distribution and it returns the same token, always.
+        </p>
+        <p>
+          The second is to sample: to treat the probabilities as odds and let
+          chance choose, so a token the model rates at 20 percent is picked
+          roughly one time in five. Sampling means randomly picking the next
+          word according to its conditional probability
+          distribution.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Two runs of the same distribution now hand back two different tokens,
+          not because the odds changed but because a different roll came up.
+          That draw, at every position, is where two answers to one prompt come
+          apart.
+        </p>
+        <p>
+          Hold two things apart. One is the distribution: the probabilities themselves,
+          fixed by the weights and the prompt. The other is the draw: the single
+          token chance pulled out of that distribution this time. The weights
+          and the prompt settle the distribution. The sampler and its seed
+          settle the draw. A seed is the starting value for the pseudo-random
+          number generator the sampler uses, and fixing it makes the draw
+          repeatable. OpenAI documents this directly: pass the same seed across
+          requests and the outputs become mostly reproducible, because the same
+          seed reproduces the same draws.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          So the model does not think differently each time. It computes the
+          same distribution each time, and a sampler draws a different token from
+          it. The wrong explanation points at the distribution, which did not
+          move. The cause is the draw, which did.
+        </p>
+      </section>
+
+      <section data-nb-section="temperature" id="temperature">
+        <h2>Temperature reshapes the odds before the draw</h2>
+        <p>
+          If sampling is where variety enters, temperature is the dial that sets
+          how much. Temperature is a single number, written T, that rescales the
+          logits before the softmax sees them: every logit is divided by T
+          before softmax turns the list into probabilities. Hinton,
+          Vinyals, and Dean, who gave this scaled softmax its standard form,
+          state its effect in one line: a higher T produces a softer probability
+          distribution.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          At T equal to 1 the division changes nothing, and you get plain
+          softmax.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Watch it on three tokens. Call them A, B, and C, with illustrative
+          logits of 2.0, 1.0, and 0.0. At T equal to 1 the division by 1 leaves
+          the logits alone, and softmax raises <em>e</em> to each: <em>e</em> to
+          the 2.0 is about 7.39, <em>e</em> to the 1.0 is about 2.72, and
+          <em>e</em> to the 0.0 is 1.00. Those three sum to 11.11. Dividing each
+          by that total gives A, B, and C probabilities of 0.665, 0.245, and
+          0.090. Now set the temperature to 0.5. Dividing each logit by 0.5
+          doubles it, to 4.0, 2.0, and 0.0, so the exponentials spread further
+          apart: A climbs to 0.867 and C sinks to about 0.016. Set the
+          temperature to 2.0 instead, halving the logits to 1.0, 0.5, and 0.0,
+          and the probabilities even out: A eases to 0.506 while C rises to
+          about 0.186.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The same three logits (A = 2.0, B = 1.0, C = 0.0), an illustrative
+            example and not measured data, run through the temperature-scaled
+            softmax at four settings. Each row sums to 1.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Temperature</th>
+              <th>P(A)</th>
+              <th>P(B)</th>
+              <th>P(C)</th>
+              <th class="txt">Shape</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">T = 0.5</span></td>
+              <td>0.867</td><td>0.117</td><td>0.016</td>
+              <td class="txt">mass piles onto A</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">T = 1.0</span></td>
+              <td>0.665</td><td>0.245</td><td>0.090</td>
+              <td class="txt">plain softmax</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">T = 2.0</span></td>
+              <td>0.506</td><td>0.307</td><td>0.186</td>
+              <td class="txt">spread toward B and C</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">T &rarr; 0</span></td>
+              <td>1.000</td><td>0.000</td><td>0.000</td>
+              <td class="txt">always A, which is greedy</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The logits never changed. Only T moved, and token C went from a
+          roughly one-in-sixty long shot at T equal to 0.5 to a nearly
+          one-in-five real possibility at T equal to 2.0. Low temperature sharpens the
+          distribution toward its top token. High temperature flattens it toward
+          the field. Holtzman states the same: T below 1 skews the distribution
+          toward high-probability tokens and drains the
+          tail.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Push T all the way to zero and the softmax collapses onto its largest
+          logit, giving that token a probability of 1 and every other token 0.
+          That is why very low temperature behaves like greedy decoding: there
+          is nothing left for the sampler to vary.
+        </p>
+        <p>
+          Temperature is a knob on a real product, and its range is not
+          universal. Anthropic's API runs temperature from 0.0 to 1.0 with a
+          default of 1.0.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Other vendors expose a wider band that reaches above 1.0 for still
+          flatter distributions. The number that matters is not the ceiling but
+          the direction, which is the same everywhere: down sharpens, up
+          flattens.
+        </p>
+      </section>
+
+      <section data-nb-section="truncation" id="truncation">
+        <h2>Cutting the tail: top-k and top-p</h2>
+        <p>
+          Temperature reshapes the whole distribution but never zeroes any token
+          out. Even at a modest setting, the lowest-ranked token keeps a sliver
+          of probability, and the sampler will occasionally draw it. Two more
+          controls forbid that outright, by truncating the distribution before
+          the draw.
+        </p>
+        <p>
+          Top-k keeps only the k highest-probability tokens and discards the
+          rest, renormalizing what remains. Fan, Lewis, and Dauphin introduced
+          the move for story generation, sampling at each step from the k = 10
+          most likely candidates.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          With k set to 10, the eleventh-ranked token and everything below it
+          cannot be drawn at all, whatever the temperature.
+        </p>
+        <p>
+          Top-k has a blind spot: a fixed k ignores how peaked or flat the
+          distribution is. When the model is confident, ten candidates may reach
+          into noise; when it is unsure, ten may cut off good options. Top-p, or nucleus sampling, fixes this by cutting on
+          cumulative probability instead of a fixed count. Holtzman and
+          colleagues, who introduced it, keep the smallest set of tokens whose
+          probabilities add up to at least p, then sample from that
+          set.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          At p equal to 0.9 the model keeps just enough tokens to cover 90
+          percent of the mass, which is a handful when it is confident and many
+          when it is not. Anthropic exposes this as top_p, computing the
+          cumulative distribution in decreasing order and cutting it off at the
+          chosen probability.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          Temperature, top-k, and top-p are settled engineering: each is a
+          specific, well-defined operation on the distribution before the draw,
+          documented in the paper that introduced it and the API that ships it.
+        </p>
+      </section>
+
+      <section data-nb-section="zero-still-moves" id="zero-still-moves">
+        <h2>Why zero temperature still is not repeatable</h2>
+        <p>
+          One honest complication remains. Set temperature to zero, which should
+          make decoding greedy and therefore deterministic, and hosted models
+          still return different answers on different runs. Anthropic says so in
+          its own reference: even with temperature of 0.0, the results will not
+          be fully deterministic.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          OpenAI's seed feature carries the same caveat, that responses can
+          differ even when the seed and the system configuration match, due to
+          the inherent non-determinism of the
+          models.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The tempting explanation is that GPU floating-point arithmetic is
+          non-associative, so concurrent operations that finish in a different
+          order round to slightly different results. That is a real ingredient,
+          but a recent analysis from Thinking Machines argues it is not the
+          trigger, because a normal forward pass has essentially no race-prone
+          atomic additions to reorder.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Their account puts the cause one level up. The server batches requests
+          together, the batch size shifts with load from other users, and the
+          normalization and matrix-multiply kernels are not batch-invariant, so
+          a change in batch size changes the order the numbers are summed in and
+          therefore the exact result. The primary
+          reason nearly all LLM inference endpoints are nondeterministic, they
+          write, is that the load, and thus the batch size, nondeterministically
+          varies.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Make the kernels batch-invariant, they show, and the runs become
+          bit-identical.
+        </p>
+        <p>
+          This part is not settled the way softmax is. It is a strong, recent
+          account that others are still testing and adopting. Simon Willison,
+          walking through the same work, flags the batch-size finding as the
+          surprising claim and notes the effect is not tied to any one kind of
+          GPU.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The safe statement is narrow: at temperature zero the sampler stops
+          adding randomness, but the numbers feeding it are not guaranteed
+          identical from run to run on shared hardware, and why is still being
+          worked out.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A model does not choose words. It produces a probability distribution
+          over the next token, and a sampler draws one token from it. The
+          distribution is fixed by the weights and the prompt, so it is not
+          where two answers differ. The draw is. Temperature tilts that
+          distribution before the draw, sharper as it goes down and flatter as
+          it goes up, and top-k and top-p cut off the unlikely tail the draw
+          could otherwise reach. When someone says the model thinks differently
+          each time, the precise reply is that the distribution is identical run
+          to run, and only the draw from it changes. And at temperature zero,
+          shared hardware and shifting batch sizes can still move the numbers,
+          and exactly why is not fully closed.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1904.09751">Holtzman et al., The Curious Case of Neural Text Degeneration</a>:
+            the paper that introduced nucleus sampling and measured what
+            decoding choices do to text quality.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/">Thinking Machines, Defeating Nondeterminism in LLM Inference</a>:
+            the batch-invariance account of why temperature-zero runs still
+            differ, with a library that removes it.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://huggingface.co/blog/how-to-generate">von Platen, How to generate text</a>:
+            a hands-on walk through greedy, sampling, top-k, and top-p with
+            worked outputs.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; §3.1; §4"
+              href="https://arxiv.org/abs/1904.09751"
+              >Holtzman, Buys, Du, Forbes &amp; Choi · The Curious Case of Neural Text Degeneration (ICLR 2020)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Greedy Search; Sampling; Top-p"
+              href="https://huggingface.co/blog/how-to-generate"
+              >Patrick von Platen · How to generate text: decoding methods for language generation with Transformers (Hugging Face)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="seed; caveat on remaining non-determinism"
+              href="https://cookbook.openai.com/examples/reproducible_outputs_with_the_seed_parameter"
+              >OpenAI Cookbook · Reproducible outputs with the seed parameter (2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§2, Distillation"
+              href="https://arxiv.org/abs/1503.02531"
+              >Hinton, Vinyals &amp; Dean · Distilling the Knowledge in a Neural Network (2015)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="temperature; top_p"
+              href="https://docs.anthropic.com/en/api/messages"
+              >Anthropic · Messages API reference (temperature, top_p)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§5.4"
+              href="https://arxiv.org/abs/1805.04833"
+              >Fan, Lewis &amp; Dauphin · Hierarchical Neural Story Generation (ACL 2018)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="batch-invariance thesis"
+              href="https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/"
+              >Horace He (Thinking Machines Lab) · Defeating Nondeterminism in LLM Inference (2025)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="notes on batch size and GPUs"
+              href="https://simonwillison.net/2025/Sep/11/defeating-nondeterminism/"
+              >Simon Willison · Defeating Nondeterminism in LLM Inference (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
