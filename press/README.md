@@ -11,13 +11,12 @@ section, one article each per night, in this published order:
 3. The Instruments
 4. The Levers
 
-Every desk is open, and every article runs on the `framed` template: it
-opens with the paper's Prior Context card (why the subject matters, what
-it unlocks, and two prior readings from the library or outside it). The
-first phase's six series rest in the stacks; their archive remains
-published and is taught material the new desks link into.
+Every desk is open, and every article runs on the `lesson` template: it
+opens on Why this matters and closes on The takeaway, two bookends framing a
+taught body. The first phase's six series rest in the stacks. Their archive
+remains published and is taught material the new desks link into.
 
 Editorial logic lives in `editorial.md`, each desk's beat in its
-`prompt.md`, the frame's contract in `templates/framed/` and
-`furniture/catalog.md`, and mechanics such as cadence and source floors in
-each `series.yaml`.
+`prompt.md`, the lesson template's contract in the engine's
+`templates/lesson/`, and mechanics such as cadence and source floors in each
+`series.yaml`.

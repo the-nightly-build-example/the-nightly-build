@@ -7,9 +7,9 @@ and never pad or talk down.
 
 Every lesson has three parts in a fixed order: the Why this matters
 bookend, the body, and The takeaway bookend. The bookends are documented
-in `press/furniture/catalog.md`. Write the body first. Write both bookends
-after the body is done, so they describe the lesson that was actually
-written.
+in this template's `furniture.md`. Write the body first. Write both
+bookends after the body is done, so they describe the lesson that was
+actually written.
 
 Each lesson is one piece of a running course. The library holds everything
 already taught. A lesson may build on an earlier one by linking it in
