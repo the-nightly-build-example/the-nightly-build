@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Every context window has a second number, and it is smaller · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "context-window",
+        "template": "lesson",
+        "title": "Every context window has a second number, and it is smaller",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-22",
+        "tags": [],
+        "sources": 9,
+        "words": 1560,
+        "reading_minutes": 8,
+        "dek": "Labs advertise 128K, 1M, even 2M tokens as the length a model will accept. A separate test measures how much of it the model actually uses, and the answer routinely lands far below the number on the box.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">Every context window has a second number, and it is smaller</h1>
+        <p class="nb-dekline">
+          Labs advertise 128K, 1M, even 2M tokens as the length a model will
+          accept. A separate test measures how much of it the model actually
+          uses, and the answer routinely lands far below the number on the box.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-07-22</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every few months a lab announces a bigger context window: 128,000
+          tokens, then a million, then two million. The number is the headline
+          spec, the way megapixels once sold cameras. It decides whether you can
+          drop an entire codebase, a book, or a year of email into a single
+          prompt and ask about all of it at once.
+        </p>
+        <p>
+          This lesson is about what that number does and does not promise. By
+          the end you will be able to tell two things apart: how much text a
+          model will accept, and how much of it the model actually uses well. The
+          first is the number on the box. The second is smaller, it is measured
+          by its own tests, and knowing it is the difference between trusting a
+          long-context answer and checking it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/swe-bench.html">Change which SWE-bench tasks are counted and GPT-4o's score doubles</a>:
+            a sibling lesson on how a headline AI number can mean less than it says once you ask how it was measured.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://simonwillison.net/tags/long-context/">Simon Willison, long-context tag</a>:
+            an ongoing, hands-on log of what current models actually do when you feed them very long inputs.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The number on the box</h2>
+        <p>
+          When Google introduced Gemini 1.5, it reported that the model could
+          recall a planted fact with better than 99 percent accuracy across as
+          much as 10 million tokens of text, far past the 128,000 tokens of
+          GPT-4 Turbo or the 200,000 of Claude 3.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A token is the unit a model reads, roughly three-quarters of an English
+          word, so 10 million tokens is something like 7.5 million words, a small
+          library. This is the context window: the largest amount of text a model
+          will accept in one go. Labs now print it on the box the way a phone
+          prints its storage, and the numbers have climbed from a few thousand
+          tokens to one and two million in three years.
+        </p>
+        <p>
+          The window is a real limit and a real achievement. It is also two
+          different numbers wearing one label. The first is how much text the
+          model will take. The second is how much of that text it uses well. The
+          second number is measured by separate tests, and it is smaller.
+        </p>
+      </section>
+
+      <section data-nb-section="ceiling-source" id="ceiling-source">
+        <h2>How the ceiling gets set</h2>
+        <p>
+          The window is not a setting someone types in. It is fixed by two
+          things: how the model marks the position of each word, and how long
+          the texts were that it trained on.
+        </p>
+        <p>
+          Take position first. A model reads all of its input at once, so it
+          needs a way to know that the fifth word comes after the fourth. Most
+          current models use rotary position embedding, or RoPE, which marks a
+          token's position by rotating its representation by an angle that grows
+          with the position.<sup class="nb-cite"><a href="#s2">2</a></sup> Word
+          one gets a small rotation, word one thousand a much larger one, and the
+          math lets the model feel how far apart any two words sit.
+        </p>
+        <p>
+          Those rotations are only practiced up to the longest texts the model
+          trained on. Feed it a longer input and the angles run past anything it
+          saw during training, where its accuracy falls apart. So the advertised
+          window is, at bottom, the longest sequence the position scheme and the
+          training data were built to handle.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          It is a ceiling the lab sets, then reports.
+        </p>
+      </section>
+
+      <section data-nb-section="extend-ceiling" id="extend-ceiling">
+        <h2>Moving the ceiling after the fact</h2>
+        <p>
+          That ceiling can move. In 2023, researchers at Meta showed a method
+          called position interpolation: instead of letting positions run off
+          the end of the trained range, squeeze them back into it. A word at
+          position 8,000 is relabeled as position 500, inside the range the model
+          already knows.<sup class="nb-cite"><a href="#s3">3</a></sup> With this,
+          they stretched LLaMA's window from 2,048 tokens to 32,768, a sixteenfold
+          jump, using fewer than 1,000 steps of extra training.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          This changes how to read the number. A context window is not a fixed
+          property of a model that its makers discover. It is partly an
+          engineering choice: train a little more, rescale the positions, and
+          announce a larger number. The window is set and then extended, which is
+          why the same base model can ship with one length this month and a
+          bigger one the next.
+        </p>
+      </section>
+
+      <section data-nb-section="needle-test" id="needle-test">
+        <h2>The easy test everyone passes</h2>
+        <p>
+          So how does anyone check whether a model uses a two-million-token
+          window? The most common test is called needle in a haystack, built by Greg
+          Kamradt. Plant a single out-of-place sentence, the needle, somewhere
+          inside a long block of filler text, the haystack, then ask the model to
+          repeat it back.<sup class="nb-cite"><a href="#s4">4</a></sup> Slide the
+          needle through every depth and every length, and you get a grid of how
+          often the model finds it.
+        </p>
+        <p>
+          Models pass this test almost perfectly. Gemini 1.5's
+          better-than-99-percent recall across 10 million tokens is a
+          needle-in-a-haystack score.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          But finding one planted sentence is the easiest thing a long context
+          can ask for. The needle is written to stick out, and the model only has
+          to copy it, not use it. The team behind a harder benchmark, RULER, said
+          so plainly: the needle test measures
+          &ldquo;only a superficial form of long-context understanding.&rdquo;<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          Retrieving a fact is one narrow slice of what people do with a long
+          context. They also summarize across a whole document, answer questions
+          that need two passages combined, and follow instructions buried in the
+          middle. LongBench, a benchmark that scores exactly these jobs, spreads
+          across twenty-one datasets and six task types for that
+          reason.<sup class="nb-cite"><a href="#s6">6</a></sup> A single retrieval
+          number says little about any of them.
+        </p>
+      </section>
+
+      <section data-nb-section="effective-length" id="effective-length">
+        <h2>The number measured separately</h2>
+        <p>
+          So the field measures the second number directly. RULER runs 17 models
+          through 13 tasks at growing lengths and finds where each one stops
+          performing well. The result is stark: every model tested claims a
+          window of at least 32,000 tokens, but only half still perform
+          acceptably once the input actually reaches 32,000
+          tokens.<sup class="nb-cite"><a href="#s5">5</a></sup> That cutoff is
+          RULER's own bar rather than a hard wall, but the pattern holds across
+          the field: the length a model can use trails the length it will accept.
+        </p>
+        <p>
+          Where inside the window a fact sits matters too. In
+          &ldquo;Lost in the Middle,&rdquo; researchers moved the same needed
+          fact to different positions in a long input and watched accuracy trace
+          a U: highest when the fact sat at the very start or the very end,
+          lowest when it sat in the middle, even for models built for long
+          context.<sup class="nb-cite"><a href="#s7">7</a></sup> A summary that
+          quietly drops the middle of a document is not a worry someone invented.
+          It is the direct cost of this effect, paid by anyone who trusts the
+          summary without checking it.
+        </p>
+        <p>
+          Those studies used the models of 2023, and it is fair to ask whether
+          newer ones fixed the problem. They did not. In 2025, the research group
+          at Chroma ran 18 current models, among them GPT-4.1, Claude 4, and
+          Gemini 2.5, and found the same thing: &ldquo;their performance grows
+          increasingly unreliable as input length grows,&rdquo; even on simple
+          tasks.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          None of this makes the advertised number a lie. Gemini really does
+          retrieve a planted fact at 10 million tokens. The point is narrower and
+          more useful: a model that accepts a length is not promising to reason
+          across it, and the gap does not show up on the spec sheet. It is why
+          people who work with these models day to day treat a big context claim
+          as something to test rather than take on
+          faith.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A context window is a ceiling, not a guarantee. It tells you the
+          longest input the model will accept, a length its position scheme and
+          its training set. Labs can raise that ceiling with a little extra
+          training, so the number is partly an engineering choice they announce.
+        </p>
+        <p>
+          What the number cannot tell you is how well the model uses that space.
+          That is a separate measurement, and it comes back smaller: an effective
+          length below the advertised length, accuracy that sags in the middle of
+          a long input, reliability that fades as the input grows. A perfect
+          needle-in-a-haystack score means the model can find a planted sentence,
+          not that it can reason over everything around it. When a model says it
+          accepts a million tokens, treat that as the start of a question, not
+          the answer: how much of the million can it actually use, and who
+          measured?
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2404.06654">RULER: What's the Real Context Size of Your Long-Context Language Models?</a>:
+            the benchmark that measures effective length, with per-model results across many tasks and lengths.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2307.03172">Lost in the Middle: How Language Models Use Long Contexts</a>:
+            the original study of how position inside a long input changes what a model can find.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://www.trychroma.com/research/context-rot">Context Rot (Chroma, 2025)</a>:
+            18 current models tested for how reliability changes as input grows, with the raw curves.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract and long-context evaluation"
+              href="https://arxiv.org/abs/2403.05530"
+              >Gemini Team, Google · Gemini 1.5: Unlocking multimodal understanding across millions of tokens of context (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2104.09864"
+              >Su et al. · RoFormer: Enhanced Transformer with Rotary Position Embedding (2021)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="LLaMA 2,048 to 32,768 tokens; under 1,000 fine-tuning steps"
+              href="https://arxiv.org/abs/2306.15595"
+              >Chen et al. · Extending Context Window of Large Language Models via Positional Interpolation (2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/gkamradt/LLMTest_NeedleInAHaystack"
+              >Greg Kamradt · LLMTest_NeedleInAHaystack (GitHub repository)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; 17 models, 13 tasks"
+              href="https://arxiv.org/abs/2404.06654"
+              >Hsieh et al. · RULER: What's the Real Context Size of Your Long-Context Language Models? (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="21 datasets across 6 task categories"
+              href="https://arxiv.org/abs/2308.14508"
+              >Bai et al. · LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding (2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; multi-document QA and key-value retrieval"
+              href="https://arxiv.org/abs/2307.03172"
+              >Liu et al. · Lost in the Middle: How Language Models Use Long Contexts (2023)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="July 2025; 18 models evaluated"
+              href="https://www.trychroma.com/research/context-rot"
+              >Hong, Troynikov &amp; Huber, Chroma · Context Rot: How Increasing Input Tokens Impacts LLM Performance (2025)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://simonwillison.net/2024/Dec/31/llms-in-2024/"
+              >Simon Willison · Things we learned about LLMs in 2024 (2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
