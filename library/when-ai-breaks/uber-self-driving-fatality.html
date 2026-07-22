@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Uber's car detected Elaine Herzberg 5.6 seconds before it killed her · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "uber-self-driving-fatality",
+        "template": "lesson",
+        "title": "Uber's car detected Elaine Herzberg 5.6 seconds before it killed her",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-22",
+        "tags": ["autonomous-vehicles", "safety"],
+        "sources": 8,
+        "words": 2100,
+        "reading_minutes": 9,
+        "dek": "The software tracked her the whole way and never decided she was a person, and every automatic brake that could have stopped the car had been switched off.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">Uber's car detected Elaine Herzberg 5.6 seconds before it killed her</h1>
+        <p class="nb-dekline">
+          The software tracked her the whole way and never decided she was a
+          person, and every automatic brake that could have stopped the car had
+          been switched off.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-22</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          On the night of March 18, 2018, a car with nobody driving it killed a
+          woman in Tempe, Arizona. It was the first time an automated test
+          vehicle had killed a pedestrian, and the federal investigators who took
+          the case apart left one of the clearest public records we have of how a
+          self-driving system fails. The popular version is that the car did not
+          see her. The record says the opposite: it saw her for almost six
+          seconds and killed her anyway. By the end you will understand why that
+          is not a paradox, and why the way this car failed is sitting, unfixed,
+          in cars people buy today.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../when-ai-breaks/air-canada-chatbot.html">Air Canada's chatbot invented a refund policy</a>:
+            a software failure where fluent output was never checked against the
+            real rules, a cousin of the perception failure here.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.ntsb.gov/investigations/Pages/HWY18MH010.aspx">The NTSB's Uber investigation page</a>:
+            the full public docket, including the photographs, data, and factual
+            reports this lesson is built from.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The test car that drove into Elaine Herzberg</h2>
+        <p>
+          The vehicle was a 2017 Volvo XC90 that Uber's Advanced Technologies
+          Group had rebuilt into a robotaxi prototype. Uber ATG was the company's
+          self-driving division, racing rivals to build a car that could carry
+          passengers with no driver. Its test cars still carried a person in the
+          driver's seat, a safety operator whose only job was to watch the road
+          and grab the controls if the software erred.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          A little before ten at night, the car was driving itself north on Mill
+          Avenue at about 45 mph. Elaine Herzberg, 49, was walking a
+          bicycle across the road, away from any crosswalk. The car's sensors
+          picked her up 5.6 seconds before it reached her. It did not brake or
+          slow. The safety operator looked up about a second before impact,
+          turned the wheel two-hundredths of a second before it, and the car
+          struck Herzberg at 39 mph. She was killed.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The first federal report, out two months later, already flagged the two
+          facts that would define the case: the car's emergency braking was off
+          while the software drove, and the system was never built to warn the
+          operator of a crash.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Almost nothing about that came down to a single broken part.
+          Investigators found a row of safeguards, each removed or weakened on
+          its own reasonable-sounding grounds, until the only protection left was
+          a person who had stopped watching.
+        </p>
+      </section>
+
+      <section data-nb-section="perception" id="perception">
+        <h2>It could see her. It could not decide what she was.</h2>
+        <p>
+          A self-driving car builds a running picture of the world from its
+          sensors, and two steps in it matter here. <em>Classification</em> is
+          the software putting a label on a cluster of sensor returns: car,
+          bicycle, or pedestrian. <em>Tracking</em> is tying the thing it sees
+          now to the same thing it saw a moment ago, so it can measure where the
+          object is going and predict where it will be next. Prediction is what
+          lets the car tell whether a path is about to cross its own.
+        </p>
+        <p>
+          Uber's system detected Herzberg 5.6 seconds out and held a sensor lock
+          on her the whole way in. What it could not do was decide what she was.
+          It labeled her an unknown object, then a vehicle, then a bicycle, and
+          kept switching. Two design choices turned that indecision deadly. The
+          system had no category for a person crossing away from a crosswalk, so
+          it never classified her as a pedestrian. And when an object's label
+          changed, the software threw away its history and treated the new label
+          as a brand-new object with no past.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Every time the classification flipped, one account of the findings
+          noted, the car lost her earlier positions, so it could not work out she
+          was moving into its lane.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          A thing whose identity resets several times a second has no trajectory
+          the car can trust, so the prediction stayed broken for more than four
+          seconds while Herzberg walked toward the car. Only 1.2 seconds before
+          impact did the software place her in its own path and register an
+          imminent collision.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          By then the car was 80 feet away, and the time to stop had nearly run
+          out.
+        </p>
+        <table class="nb-table">
+          <caption>
+            What Uber's automated system did in the seconds it tracked Elaine Herzberg.<sup class="nb-cite"><a href="#s1" data-nb-locator="Executive Summary and §1.5" data-nb-url="https://www.ntsb.gov/investigations/accidentreports/reports/har1903.pdf">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Seconds to impact</th>
+              <th class="txt">What the system did</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>5.6</td>
+              <td class="txt">Detected an object ahead and began tracking it.</td>
+            </tr>
+            <tr>
+              <td>5.6 to 1.2</td>
+              <td class="txt">Relabeled it unknown, then vehicle, then bicycle, discarding its predicted path each time. Never classified it as a person.</td>
+            </tr>
+            <tr>
+              <td>1.2</td>
+              <td class="txt">Recognized an imminent collision, then suppressed its own braking for one second, with no alert to the operator.</td>
+            </tr>
+            <tr>
+              <td>0.2</td>
+              <td class="txt">Suppression ended. The operator was still not in control, and the system would not brake at full force just to soften the impact.</td>
+            </tr>
+            <tr>
+              <td>0.02</td>
+              <td class="txt">The operator, eyes just back on the road, began to steer.</td>
+            </tr>
+            <tr>
+              <td>0</td>
+              <td class="txt">The car struck Herzberg at 39 mph.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section data-nb-section="brakes" id="brakes">
+        <h2>The brakes that were switched off on purpose</h2>
+        <p>
+          At 1.2 seconds the software knew it was about to hit something. It
+          still did not brake.
+        </p>
+        <p>
+          The Volvo came from the factory with a system called City Safety, which
+          includes <em>automatic emergency braking</em>: sensors that watch for an
+          imminent forward collision and brake by themselves, without waiting for
+          the driver. This version could detect pedestrians, and had it been on it
+          very likely would have braked for Herzberg. But Uber turned the Volvo
+          system off whenever its own software drove, because two automated
+          systems fighting over the same brake pedal made the ride jerky.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Uber's own software had a braking function too, and Uber had leashed it
+          as well. Whenever it decided hard braking was needed, it waited a full
+          second first, a delay Uber called action suppression: a beat to confirm
+          the hazard was real rather than stab the brakes at every false alarm,
+          and to let the human take over. During that pause the car gave the
+          operator no warning at all, and Herzberg was struck inside it.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Worse, when a crash could no longer be avoided by gentle braking, the
+          system was set not to brake hard even to reduce the impact.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The factory brake that would have caught her was off.
+          The software's own brake was gagged for the second that mattered and
+          told no one. Each choice had a defensible reason. Together they stripped
+          the car of every automatic way to stop itself, leaving one safeguard:
+          the person in the seat.
+        </p>
+      </section>
+
+      <section data-nb-section="handoff" id="handoff">
+        <h2>A safety driver set up to fail</h2>
+        <p>
+          The safety operator that night was Rafaela Vasquez. Video from inside
+          the car showed she spent 34 percent of the moving trip looking down
+          toward her phone in the center console, where she had been streaming a
+          show, once for a continuous 26 and a half seconds. She
+          raised her eyes about a second before the crash, too late to do more
+          than begin turning the wheel.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          It is tempting to stop there, and the first police account did: a
+          distracted driver, an avoidable death. But the deeper finding is about
+          the job itself. Ask a person to watch a system that drives almost
+          perfectly for hours, then snap to attention in the rare second it
+          fails, and they will fail too. Psychologists call this automation
+          complacency: the better a machine performs, the less its human monitor
+          can stay alert, because there is nothing to do. A safety operator
+          watching a road the car handles flawlessly is not lazy so much as human
+          in a role built to defeat humans. Uber had done little to counter this
+          known effect, and had lately cut its cars from two operators to one.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The finding</span>
+          <blockquote>
+            The probable cause was "the failure of the vehicle operator to
+            monitor the driving environment... because she was visually
+            distracted throughout the trip by her personal cell phone."
+            Contributing to it were Uber ATG's "inadequate safety risk assessment
+            procedures," "ineffective oversight of vehicle operators," and "lack
+            of adequate mechanisms for addressing operators' automation
+            complacency, all a consequence of its inadequate safety culture,"
+            plus the pedestrian's impaired crossing and Arizona's weak oversight.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">NTSB, adopted report, November 2019</span>
+          </blockquote>
+        </div>
+        <p>
+          The report spreads the cause, and this is where accounts of the crash
+          diverge. One reading centers Vasquez: she was paid to watch and watched
+          a show instead. A second centers the machine: the car discarded its own
+          perception and both automatic brakes were disabled by Uber's choices. A
+          third centers the culture: a company with no standalone safety office
+          and no formal safety plan sent a single, under-supervised operator out
+          in a car built without a backstop. The strongest reading holds all
+          three, and one fact settles the weighting. An attentive operator
+          probably avoids the crash, but so does an enabled factory brake on its
+          own, with the same distracted driver. Each of two safeguards would likely
+          have avoided the crash or blunted it, and Uber had removed both. A
+          failure any single working layer would have caught is not a story about
+          one person's attention.
+        </p>
+        <p>
+          The aftermath tracked that split. Uber grounded its fleet within days
+          and settled with Herzberg's husband and daughter inside two weeks, on
+          undisclosed terms.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          A year later Arizona prosecutors found "no basis for criminal liability
+          for the Uber corporation."<sup class="nb-cite"><a href="#s5">5</a></sup>
+          In December 2020 Uber paid to hand its self-driving division to a
+          startup, Aurora, and left the business.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Vasquez alone was charged; in 2023 she pleaded guilty to endangerment
+          and got three years of probation.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The one human in the chain answered in court. The design choices that
+          removed her backup did not.
+        </p>
+      </section>
+
+      <section data-nb-section="today" id="today">
+        <h2>Driver-assist puts the same trap in ordinary cars</h2>
+        <p>
+          Uber's robotaxi was an experiment, and experiments end. The handoff
+          problem did not. It moved into the mainstream market under a friendlier
+          name: driver-assistance features like Tesla's Autopilot and Full
+          Self-Driving, and the lane-centering systems most carmakers now sell.
+          Engineers rank these as Level 2 automation: the car steers, brakes, and
+          holds its lane, but the human must watch every second and take over
+          instantly. That is the Tempe operator's job, handed to millions of
+          untrained owners on their commute.
+        </p>
+        <p>
+          The predictable thing happened. In December 2023 federal regulators
+          forced Tesla to recall about two million cars, nearly every one it had
+          sold in the United States with Autopilot, after finding the controls
+          that keep drivers engaged "may be insufficient to prevent driver
+          misuse." Drivers had crashed with Autopilot on, grown inattentive, even
+          when they met everything the car's monitoring asked.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          It is the Tempe finding almost word for word: a system good enough to
+          lull its human, who is the last defense against its rare mistakes.
+        </p>
+        <p>
+          The fix Tesla shipped was more chimes and warnings to nag the driver
+          back. That treats the symptom. The disease is the arrangement itself,
+          the same one that killed Elaine Herzberg: hand the driving to a machine
+          that almost never needs help, then stake a life on a person staying
+          alert for the rare second it does.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Elaine Herzberg did not die because a self-driving car failed to see
+          her. She died because it saw her for 5.6 seconds and every layer that
+          should have turned that warning into a stop had been removed. The
+          software could not hold a label on her long enough to predict her path.
+          The factory brake was switched off so two systems would not fight. The
+          car's own brake was gagged for a second and told no one. The only
+          safeguard left was a person in a job that reliably makes people stop
+          watching. Remember it as a chain, not a bug. When an automated system
+          "just fails," the useful question is not which part broke but which
+          safeguards were meant to catch the break, and who decided to remove
+          them. That question has no comfortable answer for the driver-assist
+          features on sale now, which run on the same bet Uber made and lost:
+          that a human will be watching at the one moment the machine needs them.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.ntsb.gov/investigations/accidentreports/reports/har1903.pdf">NTSB Highway Accident Report HAR-19/03</a>:
+            the full adopted report, readable and thorough, with the complete
+            timeline, findings, and recommendations.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://static.nhtsa.gov/odi/rcl/2023/RCLRPT-23V838-8276.PDF">NHTSA Recall 23V-838</a>:
+            the Tesla Autopilot recall report, for how the same driver-engagement
+            gap reads five years later in a mass-market car.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.ntsb.gov/investigations/accidentreports/reports/har1903.pdf"
+              >NTSB · Highway Accident Report HAR-19/03, Tempe, Arizona (2019)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://data.ntsb.gov/Docket/Document/docBLOB?ID=40477716&FileExtension=.PDF&FileName=Preliminary+Report-Master.PDF"
+              >NTSB · Preliminary Report HWY18MH010 (2018)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://spectrum.ieee.org/ntsb-investigation-into-deadly-uber-selfdriving-car-crash-reveals-lax-attitude-toward-safety"
+              >Mark Harris, IEEE Spectrum · NTSB Investigation Reveals Lax Attitude Toward Safety (2019)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.nbcnews.com/news/us-news/uber-reaches-settlement-family-woman-killed-self-driving-car-n861131"
+              >NBC News · Uber settles with family of woman killed by self-driving car (2018)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.npr.org/2019/03/06/700801945/uber-not-criminally-liable-in-death-of-woman-hit-by-self-driving-car-says-prosec"
+              >NPR · Arizona prosecutor says Uber not criminally liable (2019)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://investor.uber.com/news-events/news/press-release-details/2020/Aurora-is-acquiring-Ubers-self-driving-unit-Advanced-Technologies-Group-accelerating-development-of-the-Aurora-Driver/default.aspx"
+              >Uber · Aurora is acquiring Uber's Advanced Technologies Group (2020)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.npr.org/2023/07/28/1190866476/autonomous-uber-backup-driver-pleads-guilty-death"
+              >NPR/AP · Uber backup driver pleads guilty to endangerment (2023)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://static.nhtsa.gov/odi/rcl/2023/RCLRPT-23V838-8276.PDF"
+              >NHTSA · Part 573 Recall Report 23V-838, Tesla Autopilot (2023)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
