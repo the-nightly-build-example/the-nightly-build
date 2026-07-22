@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How a model learns from examples it was never trained on · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "in-context-learning",
+        "template": "lesson",
+        "title": "How a model learns from examples it was never trained on",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-22",
+        "tags": [],
+        "sources": 9,
+        "words": 1800,
+        "reading_minutes": 9,
+        "dek": "Show a model two or three input-to-output pairs and it continues the pattern with its weights frozen. A two-attention-head circuit that copies from earlier in the prompt is the part we can point to, and it is not the whole answer.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">How a model learns from examples it was never trained on</h1>
+        <p class="nb-dekline">
+          Show a model two or three input-to-output pairs and it continues the
+          pattern with its weights frozen. A two-attention-head circuit that
+          copies from earlier in the prompt is the part we can point to, and it
+          is not the whole answer.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-22</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every time you drop a few examples into a chatbot and it picks up your
+          format, you are using the single most practical trick these systems
+          have. It is how people get a model to extract fields, follow an odd
+          output shape, or mimic a labeling scheme without touching any settings.
+          The common explanation is four words long: it learns from examples. By
+          the end here you will be able to say what actually happens instead,
+          name the one circuit researchers can point to, and hear the exact place
+          where "it just learns from the examples" skips a step that nobody has
+          fully filled in.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">An attention head is a weighted average that computes its own weights</a>:
+            the operation this lesson's circuit is built out of. Read it first if
+            "attention" is a black box.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/gpt-3-few-shot.html">Few-shot GPT-3 beat fine-tuning on a handful of tasks and trailed it on most</a>:
+            the evidence that prompting with examples works at all, and where it
+            does not. This lesson is about the how. That one is about the whether.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The behavior, stated exactly</h2>
+        <p>
+          Put three lines in front of a model. The first reads
+          <code>Paris, France -&gt; France</code>. The second reads
+          <code>Tokyo, Japan -&gt; Japan</code>. The third reads
+          <code>Cairo, Egypt -&gt;</code> and stops, left for the model to
+          finish.
+        </p>
+        <p>
+          It writes <code>Egypt</code>. You never told it the rule. From two
+          finished pairs it worked out "return the part after the comma" and
+          applied it to the third. Swap in a rule it has no name for, say
+          "return the first three letters" or a made-up label on each line, and
+          it still continues the pattern after two or three examples. This is the
+          behavior to explain: a model reads a short list of input-to-output
+          pairs in its prompt and completes the pattern for a fresh input. The
+          field calls it in-context learning, learning from the examples sitting
+          in the context.<sup class="nb-cite"><a href="#s1">1</a></sup> The word
+          "learning" is doing a lot of work in that name.
+        </p>
+      </section>
+
+      <section data-nb-section="nothing-trained" id="nothing-trained">
+        <h2>Nothing was trained</h2>
+        <p>
+          When GPT-3 first showed this off, the paper was blunt about the
+          setup: the model is run "without any gradient updates or fine-tuning,"
+          with tasks "specified purely via text interaction."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Training is the process that sets a model's weights, the roughly 175
+          billion numbers inside GPT-3 that get nudged, one small step at a time,
+          to lower its error.<sup class="nb-cite"><a href="#s2">2</a></sup> When
+          you paste your examples in, none of that happens. Not one of those
+          numbers moves. The weights are frozen.
+        </p>
+        <p>
+          So whatever "learning" means here, it is not the usual meaning. It has
+          to happen inside a single forward pass: the one left-to-right sweep in
+          which the model reads the prompt and produces the next token, using
+          weights that are fixed before your prompt arrives and unchanged after
+          it leaves. The examples are input, not instruction. That narrows the
+          question to something answerable. What is the model doing, in that one
+          pass, with the example pairs already in front of it, that makes it
+          continue the pattern? The answer lives in how it reads across the
+          prompt, which is the job of attention (covered in its own
+          <a href="../the-mechanics/attention.html">lesson</a>): each position
+          can look back at earlier positions and pull in what they hold.
+        </p>
+      </section>
+
+      <section data-nb-section="the-copy" id="the-copy">
+        <h2>The circuit that copies from earlier in the prompt</h2>
+        <p>
+          The clearest thing anyone has found inside that forward pass is a small
+          circuit called an induction head. It was first isolated in stripped-down
+          two-layer models, where researchers could read the wiring end to end and
+          watch it drive the pattern-completion behavior.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          An induction head is built from two attention heads working in series,
+          and its job is described in one line: it finds an earlier spot where the
+          current token already appeared, and it copies whatever came next.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Walk it on a real string. Suppose the prompt contains, earlier on, the
+          text <code>The password is zephyr9</code>, and now the model has read
+          up to a second <code>The password is</code> and must predict what
+          follows. Two steps run:
+        </p>
+        <dl class="nb-bookend-reading">
+          <dt>1</dt>
+          <dd>
+            A head in the first layer is a "previous-token head." It walks along
+            and writes onto each token a note about the token just before it. So
+            the first <code>zephyr9</code> gets tagged with "the word in front of
+            me was <code>is</code>."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          </dd>
+          <dt>2</dt>
+          <dd>
+            A head in the second layer, the induction head proper, is now sitting
+            on the current <code>is</code>. It searches earlier positions for one
+            tagged "preceded by <code>is</code>," lands on that first
+            <code>zephyr9</code>, and pushes up the odds that the next token is
+            <code>zephyr9</code>.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          </dd>
+        </dl>
+        <p>
+          Researchers write the pattern as <code>[A][B] ... [A] -&gt; [B]</code>:
+          having seen A followed by B once, then meeting A again, predict B.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The same shape reaches the comma example.
+          "Return the field after the comma" is the same move:
+          the head learns from the first lines that the useful token sits in a
+          certain spot relative to a marker, then copies the token in that spot
+          for the new input. The examples are not teaching the model a rule in
+          the training sense. They are laying down earlier occurrences for a
+          copying circuit to find. Knocking out the induction heads themselves
+          removes the behavior, which is why researchers treat the heads as
+          causal.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="on-schedule" id="on-schedule">
+        <h2>The circuit shows up on a schedule</h2>
+        <p>
+          The strongest reason to take induction heads seriously is when they
+          appear. Train a model and watch its error fall, and there is a short
+          stretch early on where the loss dips in a small, visible bump. Right at
+          that bump, induction heads form, and the model's grip on in-context
+          examples jumps at the same moment.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The two events are locked together across every model size tested, as
+          long as the model has more than one layer, which fits the finding that
+          the copying circuit needs two attention layers to exist at all.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          To see the jump you need a number for "grip on in-context examples."
+          The measure used is deliberately crude: take the model's error on the
+          500th token of a passage and subtract its error on the 50th, so a model
+          that keeps getting better the more context it has read scores high.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The authors flag that the exact token positions are "somewhat
+          arbitrary," so read it as a thermometer, not a verdict.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The result has since been reproduced outside the group that found it: an
+          independent study of a small classification setup reports that
+          in-context learning there "is driven by the abrupt emergence of an
+          induction head," and ties the sharpness to the order in which the
+          circuit's parts get learned.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          A circuit that reliably arrives on cue, and that a second lab
+          reproduced, is a real object.
+        </p>
+      </section>
+
+      <section data-nb-section="the-edge" id="the-edge">
+        <h2>The honest edge of the explanation</h2>
+        <p>
+          The four-word version skips one step. Everything above is
+          solid for small models and for plain copying. Whether induction heads
+          account for the <em>majority</em> of in-context learning in a large
+          production model is not settled, and the people who found the circuit
+          are the ones saying so. They call their own case "circumstantial" and
+          "only the beginnings of evidence," and note the argument is stronger
+          for small models than for large ones.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          An outside researcher put the limit plainly: the work is "not
+          purporting to explain the entire mechanism," only that induction heads
+          "seem to be involved."<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          One finding shows why pure copying cannot be the whole account. If you
+          take a working set of examples and scramble the labels, pairing each
+          input with a wrong output, the model's accuracy barely drops. What the
+          examples supply, in large part, is the format, the range of possible
+          labels, and the kind of input to expect, not the exact input-to-label
+          rule.<sup class="nb-cite"><a href="#s7">7</a></sup> A circuit that
+          simply copied the demonstrated answers should collapse when the answers
+          are wrong. It does not. So induction heads explain how a model
+          continues a pattern it can find earlier in the text, which is real and
+          common, but they do not by themselves explain how it lands the right
+          answer on a task where the examples carry no answer to copy.
+        </p>
+        <p>
+          Two other accounts try to fill that space, at a higher level than
+          individual heads. One says the pretrained model treats the prompt as
+          evidence and infers a shared hidden topic across the examples, then
+          predicts as if drawing from it, a kind of built-in Bayesian
+          guess about which concept the examples came from.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Another shows that a simplified attention layer can be constructed to
+          carry out, inside the forward pass, a step of the same gradient descent
+          that training uses, as if the model fits a tiny model to your examples
+          on the spot, though this is shown for clean regression tasks rather
+          than full language models.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          These are not rivals to the induction-head result so much as
+          descriptions one level up: a circuit is what runs, Bayesian inference or
+          an implicit gradient step is a claim about what that running computes.
+          None of the three has closed the case, and a recent survey frames the
+          mechanism of in-context learning as an open problem the field is still
+          working on.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When a model picks up your format from a couple of examples, no
+          training happened: its weights sat frozen while a single forward pass
+          read the examples as input. The one part we can point to is the
+          induction head, a two-step circuit that finds where the current token
+          appeared earlier in the prompt and copies what followed, which is
+          exactly the copying that pattern completion needs and which shows up,
+          on schedule, at a bump early in training. That is the concrete answer
+          to why the model continues the pattern. It is also, by its own authors'
+          account, a partial one: it explains copying, not every case where a
+          model gets the right answer with nothing to copy, and the higher-level
+          stories about what the copying computes are still contested. So when
+          someone says a model "just learns from the examples," you can name the
+          circuit that does the visible work and point at the seam they walked
+          past.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html">In-context Learning and Induction Heads</a>:
+            the full six-argument case for the circuit, readable with its
+            interactive figures.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2202.12837">Rethinking the Role of Demonstrations</a>:
+            the experiment that scrambles the labels and shows what the examples
+            really provide.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Abstract; §1 definition"
+              href="https://arxiv.org/abs/2301.00234"
+              >Dong et al. · A Survey on In-context Learning (2022)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2005.14165"
+              >Brown et al. · Language Models are Few-Shot Learners (GPT-3, 2020)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§ Induction Heads (two-layer models)"
+              href="https://transformer-circuits.pub/2021/framework/index.html"
+              >Elhage et al. · A Mathematical Framework for Transformer Circuits (2021)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§ Induction Heads (prefix-matching, copying); Key Concepts (ICL score); Arguments Summary (phase change, ablation, small-vs-large)"
+              href="https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html"
+              >Olsson et al. · In-context Learning and Induction Heads (2022)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2312.03002"
+              >Reddy · The mechanistic basis of data dependence and abrupt learning in an in-context classification task (2023)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Jacob Hilton (OpenAI), quoted"
+              href="https://www.quantamagazine.org/researchers-glimpse-how-ai-gets-so-good-at-language-processing-20220414/"
+              >Quanta Magazine · Researchers Glimpse How AI Gets So Good at Language Processing (2022)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2202.12837"
+              >Min et al. · Rethinking the Role of Demonstrations (2022)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2111.02080"
+              >Xie et al. · An Explanation of In-context Learning as Implicit Bayesian Inference (2021)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; single linear self-attention layer = one GD step"
+              href="https://arxiv.org/abs/2212.07677"
+              >von Oswald et al. · Transformers Learn In-Context by Gradient Descent (2022)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
