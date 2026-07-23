@@ -122,3 +122,11 @@ def test_check_yml_routes_exact_syncs_to_the_protected_merge_job() -> None:
 
     assert "sync" in validate["outputs"]
     assert "needs.validate.outputs.sync == 'true'" in automerge["if"]
+
+
+def test_canonical_workflows_use_declared_engine_dependencies() -> None:
+    for name in ("check.yml", "publish.yml"):
+        workflow = (REPO / ".github" / "workflows" / name).read_text()
+        assert "uv run" in workflow
+        assert "pip install" not in workflow
+        assert "uv pip" not in workflow
