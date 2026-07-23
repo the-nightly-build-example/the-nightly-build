@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A model builds a fake citation the same way it builds a true one · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "hallucination",
+        "template": "lesson",
+        "title": "A model builds a fake citation the same way it builds a true one",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-23",
+        "tags": [],
+        "sources": 9,
+        "words": 1620,
+        "reading_minutes": 7,
+        "dek": "No part of a chatbot checks whether a reference is real, and the way models are graded rewards a confident invention over an admitted blank.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A model builds a fake citation the same way it builds a true one</h1>
+        <p class="nb-dekline">
+          No part of a chatbot checks whether a reference is real, and the way
+          models are graded rewards a confident invention over an admitted blank.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-07-23</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Ask a chatbot for research on almost any topic and it may hand back a
+          tidy list of references. Some of them can be inventions: a real-looking
+          author, a plausible journal, a well-formed identifier, for a paper that
+          was never written. This lesson explains why that happens and why it is
+          predictable rather than a random slip. By the end you can name the part
+          of the system that produces the fake reference, say why no step inside
+          catches it, and explain why the way models are graded makes the
+          confident guess the sensible output. You will also be able to hear when
+          someone's account of the problem skips the moment where truth was
+          supposed to enter.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/sampling-temperature.html">Two answers to one prompt diverge at a single draw</a>:
+            how the model turns scores into an actual next word.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/letter-counting.html">A model can recognize strawberry's letters and still miscount them</a>:
+            what the model receives instead of the raw text.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The model wrote the reference, it did not look it up</h2>
+        <p>
+          Ask a chatbot for the title of a specific researcher's doctoral thesis
+          and it may answer with a clean, confident, wrong title. Ask the same
+          system for that person's birthday, with a note to answer only if it
+          knows, and one model gave three different wrong dates on three
+          tries.<sup class="nb-cite"><a href="#s1" data-nb-locator="Table 1" data-nb-note="Three models asked for the dissertation title; none returned the correct title or year.">1</a></sup>
+          None of that is a search that went wrong. It is a
+          hallucination: output presented as fact that nothing in the world backs
+          up.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The instinct is to say the tool reached for a reference and grabbed the
+          wrong one. It did neither, because a plain chatbot has nowhere to reach.
+          When it answers, a trained network reads the words so far and produces
+          one next word, then the next, from patterns fixed in its weights while
+          it was trained.<sup class="nb-cite"><a href="#s3">3</a></sup> There is no
+          shelf of references inside it and no lookup against one. The lesson on
+          <a href="../the-mechanics/sampling-temperature.html">how a word gets chosen</a>
+          covers the draw itself, and the lesson on
+          <a href="../the-mechanics/letter-counting.html">what the model sees</a>
+          covers the units it works in. The citation was written, one word at a
+          time, the same way the rest of the answer was written. It was not
+          fetched.
+        </p>
+        <p>
+          So the useful question is not why a lookup failed. It is why a fake
+          reference is the thing the writing produces.
+        </p>
+      </section>
+
+      <section data-nb-section="citation-shape" id="citation-shape">
+        <h2>A citation is a shape, and shapes are easy to predict</h2>
+        <p>
+          The model writes by predicting a likely next word given the words so
+          far. A reference has a very regular shape: a surname, a year, a title
+          in title case, a journal name, a volume, a page range or an identifier.
+          The training text carries that shape a vast number of times. So once an
+          answer reaches the point where a citation belongs, the words that make
+          one are among the most probable continuations, whether or not a specific
+          true source sits behind this instance. The model learned the form of a
+          reference thoroughly. It did not, and could not, store which exact
+          references exist.
+        </p>
+        <p>
+          A benchmark called TruthfulQA measured a close relative of this. It
+          asked models questions where a common human answer is false, and found
+          that models reproduce those learned falsehoods: the best model was
+          truthful on 58 percent of the questions, against 94 percent for
+          people.<sup class="nb-cite"><a href="#s4">4</a></sup> Whatever pattern
+          the text taught is what comes back out, true or not. The survey that
+          fixed the vocabulary for this field calls the case at hand extrinsic:
+          output that cannot be verified from any source, neither supported nor
+          contradicted by one.<sup class="nb-cite"><a href="#s5">5</a></sup> A
+          fabricated citation is exactly that. Nothing grounds it, and nothing in
+          the question rules it out.
+        </p>
+      </section>
+
+      <section data-nb-section="no-truth-check" id="no-truth-check">
+        <h2>No part of the model stops to ask if it is true</h2>
+        <p>
+          Between the ranked possibilities for the next word and the word that
+          actually comes out, there is no separate step that asks whether the
+          model knows this. A plausible string and a true string are produced by
+          the same operation, and nothing in the system tells them apart. This is
+          the step most casual explanations skip.
+        </p>
+        <p>
+          It is worth being careful, because models are not simply blind to their
+          own uncertainty. A calibration study found that a large model, given the
+          right format, can report a fairly accurate probability that its own
+          answer is correct, and can partly predict whether it knows an answer at
+          all.<sup class="nb-cite"><a href="#s6">6</a></sup> Later work reads a
+          usable uncertainty signal directly from a model's internal
+          state.<sup class="nb-cite"><a href="#s7">7</a></sup> So the information
+          is present, in part. What a standard model lacks is a gate: a step that
+          consults that signal and holds back the answer when confidence is low.
+          The signal is real, it is imperfect, and later stages of training can
+          distort it. A model can half-register that it is unsure and still emit
+          the confident reference, because nothing wires the knowing to the
+          saying.
+        </p>
+      </section>
+
+      <section data-nb-section="grading-rewards-guessing" id="grading-rewards-guessing">
+        <h2>The grading rewards a guess over an "I don't know"</h2>
+        <p>
+          Why would the process leave that gap? Because the way models are built,
+          and above all graded, pays for guessing. One recent argument frames it
+          as a school exam: a student who is unsure still writes something down,
+          since a blank scores zero and a guess sometimes earns the mark. Most
+          benchmarks score a model the same way, on whether the answer is right,
+          with no credit for admitting ignorance and no extra penalty for a
+          confident mistake.<sup class="nb-cite"><a href="#s1" data-nb-locator="Abstract and §1">1</a></sup>
+          A model tuned against that scoring learns to always answer. The authors
+          argue the result is not a mysterious defect but the expected outcome of
+          the objective. Producing a correct answer is in general harder than
+          telling a correct answer from a wrong one, so some rate of confident
+          error is built in.
+        </p>
+        <p>
+          Size does not rescue this. TruthfulQA found the largest models the least
+          truthful of the group, because a bigger model imitates the training
+          text, and its falsehoods, more
+          fluently.<sup class="nb-cite"><a href="#s4">4</a></sup> The reason a fake
+          citation matters more than most inventions is that it carries no alarm.
+          A made-up function in code fails the moment the code runs, and the error
+          is instantly obvious;<sup class="nb-cite"><a href="#s8">8</a></sup> an
+          invented reference runs against nothing. It reads like a real one until
+          a person tries to open it.
+        </p>
+      </section>
+
+      <section data-nb-section="grounding" id="grounding">
+        <h2>Hand it the source, and the inventing mostly stops</h2>
+        <p>
+          The cleanest evidence that the cause is missing grounding, rather than a
+          broken model, is what happens when you supply the grounding. Put the
+          relevant document in front of the model at answer time and let it work
+          from that text, and the invention rate falls. That is what
+          retrieval augmentation does: it pairs the memory baked into the weights
+          with a live lookup into an outside store of text. The method's first
+          paper reported that such a model generates "more specific, diverse and
+          factual language than a state-of-the-art parametric-only"
+          model.<sup class="nb-cite"><a href="#s9">9</a></sup> The
+          "parametric-only" model there is the plain chatbot from the top of this
+          lesson: a store of patterns with no way to look anything up. Give it a
+          way, and the behavior changes. That is a controlled comparison, and it
+          points straight at the cause.
+        </p>
+        <p>
+          It also marks where the settled account ends. Two things stay open even
+          for the people who build these systems. The first is timing: a clean
+          mechanical account of when a model invents versus when it recalls
+          correctly does not yet exist. The uncertainty signal helps predict it
+          but does not fully explain
+          it.<sup class="nb-cite"><a href="#s6">6</a></sup> The second is whether
+          the behavior can be removed entirely. Grounding handles facts that live
+          in some document a system can fetch. For a fact that appears once or
+          never in any text, there is no pattern to learn and nothing to retrieve,
+          and the same argument that treats hallucination as expected holds that
+          some rate of invention is then
+          unavoidable.<sup class="nb-cite"><a href="#s1" data-nb-locator="§ on arbitrary facts">1</a></sup>
+          The chain down to here is settled engineering: next-word prediction, no
+          lookup, no truth gate, and grading that pays for a guess. The fine
+          timing of a fabrication, and its full removal, are not.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A chatbot does not keep references and look them up. It predicts likely
+          text, and a well-formed citation is likely text whether or not the paper
+          exists. Nothing between the prediction and the output checks whether the
+          reference is real, and the tests that shape the model reward a confident
+          answer over an admitted blank. So a fake citation that looks perfectly
+          real is not the system failing. It is the system doing the one thing it
+          does, with no part of it assigned to truth. When you read someone's
+          explanation of why models make things up, check that it names that
+          missing part. If it jumps from "it predicts text" to "it is sometimes
+          wrong" without saying where truth was supposed to enter and why nothing
+          puts it there, it skipped the step that matters.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2509.04664">Why Language Models Hallucinate</a>:
+            the full argument that grading rewards guessing, with the proofs.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://simonwillison.net/tags/hallucinations/">Simon Willison on hallucinations</a>:
+            a working developer's running notes on how the behavior shows up in practice.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2509.04664"
+              >Kalai, Nachum, Vempala &amp; Zhang · Why Language Models Hallucinate (2025)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.ibm.com/think/topics/ai-hallucinations"
+              >IBM · What Are AI Hallucinations? (2023, updated 2026)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.03762"
+              >Vaswani et al. · Attention Is All You Need (2017)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2109.07958"
+              >Lin, Hilton &amp; Evans · TruthfulQA: Measuring How Models Mimic Human Falsehoods (2021)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2202.03629"
+              >Ji et al. · Survey of Hallucination in Natural Language Generation (2022)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2207.05221"
+              >Kadavath et al. · Language Models (Mostly) Know What They Know (2022)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.15927"
+              >Kossen et al. · Semantic Entropy Probes: Robust and Cheap Hallucination Detection in LLMs (2024)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://simonwillison.net/2025/Mar/2/hallucinations-in-code/"
+              >Simon Willison · Hallucinations in code are the least dangerous form of LLM mistakes (2025)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2005.11401"
+              >Lewis et al. · Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks (2020)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
