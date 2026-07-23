@@ -2,13 +2,13 @@
 
 ![The Nightly Build](assets/the-nightly-build-banner.png)
 
-## Your own AI-researched morning paper, published while you sleep.
+## Your own AI-researched morning paper, published while you sleep
 
 The Nightly Build turns a GitHub repository into a personal newspaper. Describe
 what you want to read, connect an agent, and get original, cited articles on
 your own GitHub Pages site every morning.
 
-**No backend and no new accounts. It works with your existing AI subscriptions!**</u>
+**No backend and no new accounts. It works with your existing AI subscriptions!**
 
 Your paper and its archive live in your fork. You own it.
 
@@ -18,24 +18,56 @@ Your paper and its archive live in your fork. You own it.
 
 ## How it works
 
-```text
-main
-  your engine and paper configuration
-          ↓
-night shift
-  researches, writes, and opens a pull request
-          ↓
-library
-  validates and publishes the article
-          ↓
-GitHub Pages
-  rebuilds your paper, search, and feeds
+```mermaid
+flowchart TD
+    MAIN["main<br/>engine + press/"] --> ORCH["Orchestrator<br/>reads duty and commissions due sections"]
+    ORCH --> FAN["Fan out one isolated desk<br/>for each due article"]
+    FAN --> A["Section A"]
+    FAN --> B["Section B"]
+    FAN --> C["Section …"]
+
+    subgraph TREE["The same article tree runs in parallel for each desk"]
+        TASK["Commission<br/>task.md"] --> VOICE["Voice coach<br/>voice.md"]
+        VOICE --> RESEARCH["Researcher<br/>research.md"]
+        RESEARCH --> WRITE["Writer<br/>article HTML"]
+        WRITE --> EDIT["Fresh-eyes editor<br/>requested-changes.md"]
+        EDIT -->|research gap| RESEARCH
+        EDIT -->|rewrite| WRITE
+        EDIT --> BUNDLE["PR bundle<br/>article + assets + production record"]
+    end
+
+    A -.-> TASK
+    B -.-> TASK
+    C -.-> TASK
+    BUNDLE --> VALIDATE["Validation<br/>engine/check.py"]
+    VALIDATE -->|failure| FIX["Desk fixes the relevant role<br/>and reruns validation"]
+    FIX -.-> RESEARCH
+    FIX -.-> WRITE
+    VALIDATE -->|passes| PR["Pull request<br/>to library"]
+    PR --> CI["PR CI<br/>read-only checks"]
+    CI -->|failure| ROUTE["Orchestrator routes the failure<br/>back to the desk"]
+    ROUTE --> FIX
+    CI -->|passes| MERGE["Merge to library"]
+    MERGE --> PAGES["GitHub Pages<br/>paper, archive, search, feeds"]
 ```
 
-You configure the paper in `press/`. The scheduled agent reads that
-configuration, selects the sections due that night, and opens one pull request
-per section. The proof checks the article's structure, sources, and safety
-before a clean pull request is merged into `library`.
+You configure the paper in `press/`. The orchestrator reads that configuration,
+selects the sections due that night, and distributes one commission to an
+isolated desk for each article. Each desk runs the same chain: a coach sets the
+voice, a researcher builds the evidence, a writer drafts from it, and a fresh
+editor challenges the result.
+
+Every stage leaves a named artifact for the next one. The resulting PR carries
+the article, any earned assets, and the production record—`task.md`, `voice.md`,
+`research.md`, and `requested-changes.md`—so the work can be reviewed rather
+than treated as a mysterious final answer.
+
+Validation runs before the PR opens. A validation failure goes back to the
+desk and the relevant role. Once the PR is open, CI failures go back through the
+orchestrator to that desk for another pass. This separation of labor, evidence,
+fresh editing, and automated checks is how the system reduces AI-slop and
+hallucination risk without pretending that automation makes judgment
+unnecessary. See the [FAQ](#faq) for the security, source, and permission model.
 
 `main` holds the engine and your configuration. `library` holds published
 articles. Keeping those branches separate makes engine updates and paper
@@ -89,7 +121,6 @@ This is useful for getting a feel for your prompts as well as the HTML component
 that come with the repo and/or your own custom ones, which you can read about in
 [Customization](docs/customization.md).
 
-
 ### 4. Schedule the night shift
 
 Ask your agent to help you schedule the night shift. You'll need to make sure
@@ -120,25 +151,57 @@ See [Delivery](docs/delivery.md) for the URLs and feed formats.
 The [examples](examples/README.md) are a living reference. [Customization](docs/customization.md)
 covers the extension points without requiring engine changes.
 
-## Development
+For contributors and engine maintainers, start with [PROTOCOL.md](PROTOCOL.md) and
+[Updating the engine](docs/press.md#updating-the-engine).
 
-The engine targets Python 3.10+ and uses `uv`:
+## FAQ
 
-```sh
-uv sync --group figure-capture
-uv run pytest
-uv run engine/validate_config.py --repo .
-```
+### How does it avoid sounding like AI slop?
 
-Web and documentation checks use the tools in `package.json`:
+The paper-wide editorial brief, series prompt, and voice artifact give the
+writer a specific register to work toward. The writer does not invent the
+evidence, and a fresh editor reads the result as a skeptical reader, cutting
+generic prose and requesting new reporting or a redraft when needed.
 
-```sh
-npm install
-npm run lint
-```
+### How are hallucinations and citations handled?
 
-Read [PROTOCOL.md](PROTOCOL.md) for the complete article contract and
-[Updating the engine](docs/press.md#updating-the-engine) for the fork update
-flow.
+The researcher records claims and supporting sources in `research.md`, and the
+writer cites from that record. The editor reopens the evidence when a claim is
+important or doubtful. Validation checks the article's structure, citation
+shape, source policy, and safety; it cannot prove that every sentence is true,
+which is why doubt remains a reason to revise or remove a claim.
+
+### What permissions does the night shift need?
+
+It needs a checkout of `main` and `library`, web access for research, and
+permission to push a work branch and open a pull request to `library`. The
+trusted scheduled run holds the credentials; PR CI validates article changes
+read-only and without those secrets. See [Scheduling](docs/scheduling.md) for
+the security model and least-privilege setup.
+
+### Can it use private or authenticated sources?
+
+Only when the selected agent runtime can access them. Sources should remain
+auditable to the reader, and credentials should never be committed to the
+repository or placed in article content.
+
+### Why does every article use a pull request?
+
+The PR is both the publishing gate and the production record. It shows the
+article, its validation status, and the research and editorial artifacts that
+explain how the article was made. A clean PR can merge into `library`, where
+GitHub Pages publishes it.
+
+### What does it cost?
+
+The Nightly Build has no hosted backend fee. Usage depends on the agent you
+choose, its plan, the number of sections due, and how much research each series
+requests. See [Harnesses](docs/harnesses.md) for provider-specific billing and
+the available lower-cost scheduling options.
+
+### Can I keep my paper private?
+
+The repository can be private when your GitHub plan supports private Pages. A
+public repository is the simplest option for a free GitHub Pages setup.
 
 MIT licensed. The catalog and Atom feeds are the API.
