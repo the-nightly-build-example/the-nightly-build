@@ -24,7 +24,7 @@ press/
   series/_tags/      reusable prompt fragments shared across series
   themes/            custom design token files
   furniture/         shared furniture: catalog.md + styles.css (see customization.md)
-  templates/<id>/    your own template packages: manifest, skeleton, brief, furniture
+  templates/<id>/    your own packages: manifest, skeleton, identity, furniture
 ```
 
 ## The fork lifecycle

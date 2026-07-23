@@ -8,7 +8,7 @@ The Nightly Build turns a GitHub repository into a personal newspaper. Describe
 what you want to read, connect an agent, and get original, cited articles on
 your own GitHub Pages site every morning.
 
-**No backend and no new accounts. It works with your existing AI subscriptions!**
+**No backend and no new accounts. It can run on AI tools you already use.**
 
 Your paper and its archive live in your fork. You own it.
 
@@ -139,8 +139,9 @@ Claims without enough evidence should be cut.</p>
 <summary><strong>What can the night shift access?</strong></summary>
 
 <p>Only what you grant it. A normal run needs the web, both repository branches,
-and permission to open a PR against <code>library</code>. CI is read-only and
-does not receive the scheduler's secrets. See <a href="docs/scheduling.md">Scheduling</a>.</p>
+and permission to open a PR against <code>library</code>. Validation reads
+untrusted article code without the scheduler's secrets. See
+<a href="docs/scheduling.md">Scheduling</a> for the full trust boundary.</p>
 
 </details>
 

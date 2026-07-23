@@ -3,28 +3,26 @@
 Everything here happens inside `press/` (see [press.md](press.md)). Engine
 updates never touch it. Working examples live in `examples/`.
 
-Most papers only need three files: `site.yaml` for the title and appearance,
-`editorial.md` for the paper-wide voice, and each series' `prompt.md` for its
-beat. Use the rest of this page when you want to change the visual system or
-add reusable furniture and templates.
+Most papers need two paper-wide files, `site.yaml` and `editorial.md`, plus a
+`series.yaml` and `prompt.md` for each section. Use the rest of this page when
+you want to change the visual system or add reusable furniture and templates.
 
 ## Look: themes
 
 The entire visual system reads about two dozen CSS variables from one token
-file. The theme contract: define the color tokens in all four blocks (light,
-dark, and the two manual-override blocks); the font and radius tokens live in
-the base block and are inherited. The test suite enforces parity across the
-blocks.
+file. Define the color tokens in all four blocks: light, dark, and the two
+manual overrides. Font and radius tokens live in the base block and are
+inherited. The shipped theme has automated parity checks; custom themes do not.
 
 Beyond the page tokens, a theme carries two data-color groups. `--chart-1`
 through `--chart-6` are the categorical series colors for charts, in a
 fixed, colorblind-validated order: assign them in sequence, never
 re-sorted.
-`--ok`, `--warn`, and `--bad` are semantic status inks (grade verdicts,
-holds-up labels, score meters). The suite checks their contrast in every
-block: chart tokens hold at least 3:1 against `--bg` and `--panel`, status
-tokens at least 4.5:1, so a custom theme cannot ship unreadable legends or
-status text.
+`--ok`, `--warn`, and `--bad` are semantic status inks for verdicts, labels,
+and score meters. The shipped theme keeps chart tokens at least 3:1 against
+`--bg` and `--panel`, and status tokens at least 4.5:1. Check the same contrast
+when you make a custom theme; validation currently checks only that its file
+exists.
 
 The shipped theme pairs a pale day-sky paper with bronze accents in light
 mode and a deep navy night with amber in dark mode. Keep day accents deep
