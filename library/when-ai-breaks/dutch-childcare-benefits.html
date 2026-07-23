@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Dutch tax office turned a non-Dutch passport into a fraud score · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "dutch-childcare-benefits",
+        "template": "lesson",
+        "title": "The Dutch tax office turned a non-Dutch passport into a fraud score",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-23",
+        "tags": [],
+        "sources": 9,
+        "words": 1590,
+        "reading_minutes": 7,
+        "dek": "The higher score sent tens of thousands of parents into a fraud dragnet they could not see or appeal.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">
+          The Dutch tax office turned a non-Dutch passport into a fraud score
+        </h1>
+        <p class="nb-dekline">
+          The higher score sent tens of thousands of parents into a fraud
+          dragnet they could not see or appeal.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-07-23</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Governments increasingly decide whom to investigate with software that
+          scores people for risk. When the Netherlands did this to families
+          claiming childcare benefits, the result was one of the worst
+          administrative disasters in the country's postwar history: tens of
+          thousands of parents wrongly branded as fraudsters, and a cabinet
+          brought down. This lesson takes the system apart to show exactly how it
+          broke, so you can see the same break coming in the next fraud-scoring
+          system, wherever it runs. By the end you will know what a risk proxy
+          is, why an unexplained flag is dangerous, and why the rule wrapped
+          around an algorithm can matter more than the algorithm.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a
+              href="https://www.ohchr.org/en/press-releases/2020/02/landmark-ruling-dutch-court-stops-government-attempts-spy-poor-un-expert"
+              >Landmark ruling by Dutch court stops government attempts to spy on
+              the poor</a
+            >: a court strikes down a sister welfare-fraud scoring system a year
+            before this scandal broke.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a
+              href="https://www.autoriteitpersoonsgegevens.nl/en/current/tax-administration-fined-for-discriminatory-and-unlawful-data-processing"
+              >Tax Administration fined for discriminatory and unlawful data
+              processing</a
+            >: the Dutch regulator's own account of what the tax office did with
+            nationality.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The model that graded every claim</h2>
+        <p>
+          The Netherlands pays parents an allowance that covers most of the cost
+          of childcare. It is paid in advance on an estimate, then reconciled
+          against what the family actually earned and used. A low-income
+          household can have up to 96 percent of its childcare bill covered, so
+          the sums are large, and any gap between the advance and the final
+          entitlement has to be paid back.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          In 2013 the Tax Administration, which runs the scheme, added software
+          to police it: a risk classification model that scored every incoming
+          application for how likely it was to be wrong.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          The model was self-learning, meaning it was trained on past
+          applications marked correct or incorrect and adjusted its own weights
+          over time, so the more a new claim resembled an old one that had been
+          marked wrong, the higher its score.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          A claim it scored low was approved automatically. A claim it scored
+          high went to a civil servant, who could open an investigation and, if
+          the paperwork did not satisfy him, label the applicant a fraudster.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Almost everything that went wrong is
+          already visible in that arrangement.
+        </p>
+      </section>
+
+      <section data-nb-section="nationality-as-proxy" id="nationality-as-proxy">
+        <h2>How a passport became a risk factor</h2>
+        <p>
+          Among the model's several dozen inputs was one yes/no field: did the
+          applicant hold Dutch citizenship?<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Not being Dutch counted toward a higher score. This is what a proxy is,
+          a fact that is not the thing you care about but stands in for it. The
+          office was not measuring fraud. It was measuring resemblance to past
+          flagged cases, and it had decided that a non-Dutch nationality was one
+          of the resemblances worth points. A non-Dutch parent and a Dutch parent
+          who filed identical claims did not receive identical scores, and the
+          non-Dutch parent was likelier to be pulled out for investigation.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          The same reflex ran outside the model too. When officials suspected
+          fraud among a small group of people with Ghanaian nationality, between
+          120 and 150 of them, they queried the database and investigated all
+          6,047 applicants who held Ghanaian nationality.<sup class="nb-cite"
+            ><a
+              href="#s1"
+              data-nb-locator="Design of the system, p. 16"
+              >1</a
+            ></sup
+          >
+          The suspicion of a few became a search of everyone who shared their
+          passport. In July 2020 the Dutch Data Protection Authority established
+          that nationality had been a factor in the model, and in December 2021
+          it fined the Tax Administration 2.75 million euros. In the regulator's
+          own words, the office "used applicants' nationality (Dutch/not Dutch)
+          as an indicator in a system that automatically designated certain
+          applications as risky."<sup class="nb-cite"
+            ><a
+              href="#s2"
+              data-nb-locator="Unlawful processing, 7 December 2021"
+              >2</a
+            ></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="the-blank-flag" id="the-blank-flag">
+        <h2>A flag with no reason attached</h2>
+        <p>
+          The civil servant received a flag and little else. The model scored an
+          application high-risk but did not say why, and the people who built it
+          could not say either, because a self-learning model keeps no
+          plain-language reason for any single score.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The official had a flag, a family, a caseload, and an employer that
+          rewarded finding fraud. Mostly, the official trusted the flag.
+        </p>
+        <p>
+          That reflex has a name: automation bias, the tendency of the human who
+          is supposed to check a machine to defer to it instead, because
+          questioning a number no one can see is harder than acting on it. The
+          review that was meant to protect people became a stamp on a score no
+          one could inspect. The family was boxed in the same way. They were told
+          they were under investigation but not told what the software had
+          counted against them, so they could not argue with it.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The opacity was not a side effect. A score no one can see is a score
+          no one can contest, and a system no one can contest has thrown away the
+          safeguard that makes it survivable to be wrong.
+        </p>
+      </section>
+
+      <section data-nb-section="all-or-nothing" id="all-or-nothing">
+        <h2>Why a false alarm meant ruin</h2>
+        <p>
+          Two more facts turn a wrong flag into a catastrophe. The first is that
+          real benefit fraud is rare. Hunt a rare thing with a rough test, and
+          most of what the test catches is not the thing. Flag hard on weak
+          signals and the result is mostly false alarms.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The office had a reason to flag hard anyway: its fraud unit was expected
+          to claw back enough money to cover the cost of running itself, an
+          incentive to seize whether or not the accusation held.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <p>
+          The second is the rule waiting for a flagged family. It was all or
+          nothing. A missing signature on a childcare contract, or a personal
+          contribution paid a little late, was enough for the office to reclaim
+          every euro of benefit it had ever paid and cut off all future payments,
+          the whole sum due at once.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Because the benefit was largest for the poorest families, the poorest
+          families owed the most. Any parent recorded as owing more than 3,000
+          euros, or as having received more than 10,000 in a year, was
+          automatically marked as having committed deliberate fraud.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          No one checked the mark, and it stripped away the right to repay in
+          instalments.
+          A paperwork slip became a five-figure debt due tomorrow.
+        </p>
+        <p>
+          The wreckage is documented. Tens of thousands of families were driven
+          into debt, unemployment, eviction, and divorce, and the parliamentary
+          inquiry that examined it in 2020 called the injustice
+          "unprecedented."<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Statistics Netherlands later estimated that about 2,090 children of
+          affected families were placed in out-of-home care.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          A government commission tied that harm to the debt and stress the
+          scandal created rather than to any decision by the tax office itself,
+          a distinction the piece keeps: the placements were court-ordered on
+          child-safety grounds.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The scandal, public since 2018, brought down the government. The third
+          Rutte cabinet resigned on 15 January 2021.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="what-caused-it" id="what-caused-it">
+        <h2>The algorithm did not act alone</h2>
+        <p>
+          It is tempting to say an AI did this. That is the wrong lesson, and the
+          record does not support it. Take the strongest case for blaming the
+          model first: it used nationality as a proxy, so it steered non-Dutch
+          families into the investigation pipeline to begin with, and its opacity
+          kept them there.<sup class="nb-cite"><a href="#s1">1</a></sup> Against
+          that, the journalist Jesse Frederik, who reconstructed the affair,
+          argued there were tens of thousands of victims but no single culprit.
+          The ruin came from harsh law, a rule with no partial setting, and a
+          culture of distrust that had brushed off warnings for years. It would
+          have fallen on whoever was selected, by the model or by a manual
+          sweep.<sup class="nb-cite"><a href="#s7">7</a></sup> That culture was
+          not confined to one program: the same office kept a separate secret
+          blacklist of suspected fraudsters with no legal basis, which drew its
+          own record fine.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          The regulator's finding splits the difference. It established that
+          nationality was in the model and its use unlawful, but it did not
+          establish that officials cut off benefits because of nationality once a
+          case was open.<sup class="nb-cite"><a href="#s2">2</a></sup> So read the
+          failure as three switches rather than one. The nationality proxy chose
+          who entered the punitive process. The black-box opacity disabled the
+          human brake inside it. The all-or-nothing rule set how completely a
+          false alarm destroyed a family. Pull any one switch and the harm
+          shrinks. What would settle how much each mattered is per-family data
+          comparing flagged and unflagged families with the same errors. That
+          data is mostly missing, because the system was built in a way that
+          never produced it.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The three independent failures behind the scandal, and whether each
+            has been undone for its victims.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            ><sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Switch</th>
+              <th class="txt">What it did</th>
+              <th class="txt">Reset?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Proxy</span></td>
+              <td class="txt">
+                Non-Dutch applicants scored higher, so they were investigated
+                more often.
+              </td>
+              <td class="txt">Punished by the 2021 fine.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Opacity</span></td>
+              <td class="txt">
+                The official saw a flag but no reason, so the human check
+                collapsed.
+              </td>
+              <td class="txt">Not undone for the model's victims.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">All-or-nothing</span></td>
+              <td class="txt">
+                A single error triggered a total clawback, payable at once.
+              </td>
+              <td class="txt">Not undone for the model's victims.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Only the nationality proxy has actually been addressed. The fine
+          punished it. A Dutch court had already struck down a sibling system, SyRI, a
+          welfare-fraud scoring tool aimed at poor neighbourhoods, as an unlawful
+          intrusion in February 2020.<sup class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+          But the compensation scheme for the benefits victims excludes redress
+          for the model's discrimination, and nothing in the record undoes the
+          all-or-nothing logic for the people it caught.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The shape is portable. Any system that scores citizens for fraud on a
+          proxy, hides the reason, and hands the score to an official under
+          pressure inside a punitive rule will fail the same way, whatever it is
+          called.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The Dutch benefits scandal was not a story about a computer that got
+          too clever. It was a plain risk-scoring system doing three ordinary
+          things at once. It stood a passport in for a risk. It hid its reasons
+          from the human meant to check it. And it fed its verdict into a rule
+          that answered every error with total ruin. The discrimination decided
+          who was investigated. The rule decided how completely they were ruined.
+          Neither needed the other to be built badly, and fixing one leaves the
+          rest standing, which is why the fine and the apology have not closed the
+          wound. When you next meet a system that scores people for fraud, ask the
+          three questions this one failed. What is it really measuring? Can the
+          person told "no" find out why? And what happens to them if it is wrong?
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.amnesty.org/en/documents/eur35/4686/2021/en/"
+              >Xenophobic Machines (Amnesty International)</a
+            >: the fullest single account of how the model discriminated, with the
+            documents behind it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a
+              href="https://press.uchicago.edu/ucp/books/book/chicago/U/bo24663621.html"
+              >Weapons of Math Destruction, Cathy O'Neil</a
+            >: why opaque scoring systems harm at scale, the general case this
+            incident belongs to.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.amnesty.org/en/documents/eur35/4686/2021/en/"
+              >Amnesty International · Xenophobic Machines: Discrimination through
+              unregulated use of algorithms in the Dutch childcare benefits
+              scandal (EUR 35/4686/2021, October 2021)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.autoriteitpersoonsgegevens.nl/en/current/tax-administration-fined-for-discriminatory-and-unlawful-data-processing"
+              >Autoriteit Persoonsgegevens (Dutch Data Protection Authority) ·
+              Tax Administration fined for discriminatory and unlawful data
+              processing (7 December 2021)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.tweedekamer.nl/sites/default/files/atoms/files/20201217_eindverslag_parlementaire_ondervragingscommissie_kinderopvangtoeslag.pdf"
+              >Parlementaire ondervragingscommissie Kinderopvangtoeslag · Ongekend
+              Onrecht (Unprecedented Injustice), Netherlands House of
+              Representatives, 17 December 2020 (Dutch)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.cbs.nl/nl-nl/longread/aanvullende-statistische-diensten/2022/jeugdbescherming-en-de-toeslagenaffaire"
+              >Centraal Bureau voor de Statistiek (Statistics Netherlands) ·
+              Jeugdbescherming en de toeslagenaffaire (child protection and the
+              benefits affair), 2022 (Dutch)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://nos.nl/artikel/2561277-toeslagenaffaire-had-grote-rol-bij-uithuisplaatsingen-gevolgen-elke-dag-voelbaar"
+              >NOS · Toeslagenaffaire had grote rol bij uithuisplaatsingen (the
+              benefits affair played a major role in out-of-home placements)
+              (Dutch)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.rijksoverheid.nl/documenten/kamerstukken/2021/01/15/kamerbrief-met-reactie-kabinet-op-rapport-ongekend-onrecht"
+              >Prime Minister / Minister of General Affairs · Cabinet response to
+              Ongekend Onrecht and resignation of the Rutte III cabinet, 15
+              January 2021 (Dutch)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://decorrespondent.nl/10628/tienduizenden-gedupeerden-maar-geen-daders-zo-ontstond-de-tragedie-achter-de-toeslagenaffaire"
+              >Jesse Frederik · Tienduizenden gedupeerden, maar geen daders (Tens
+              of thousands of victims, but no perpetrators), De Correspondent, 13
+              November 2020 (Dutch)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.autoriteitpersoonsgegevens.nl/en/current/tax-administration-fined-for-fraud-blacklist"
+              >Autoriteit Persoonsgegevens · Tax Administration fined for fraud
+              blacklist (FSV), 12 April 2022</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://uitspraken.rechtspraak.nl/details?id=ECLI:NL:RBDHA:2020:865"
+              >District Court of The Hague · Judgment on SyRI (System Risk
+              Indication), ECLI:NL:RBDHA:2020:865, 5 February 2020 (Dutch)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
