@@ -24,16 +24,23 @@ def asset_stamp(repo, css_paths=()):
     """Return a short content hash of the shared assets for cache busting.
 
     Every generated page and article copy links assets with ?v=<stamp>,
-    so a returning reader can never pair cached old CSS with newer markup.
-    The stamp folds in nb.css, nb.js, and every CSS owner concatenated
-    into assets/theme.css (the configured theme plus all furniture, shared
-    and template-scoped). copy_assets rebuilds theme.css from those owners
-    every build, so editing any of them busts the reader's cache and the
-    new look actually reaches them.
+    so a returning reader can never pair cached old assets with newer markup.
+    The stamp folds in the site icons, nb.css, nb.js, and every CSS owner
+    concatenated into assets/theme.css (the configured theme plus all
+    furniture, shared and template-scoped). copy_assets rebuilds theme.css
+    from those owners every build, so editing any of them busts the reader's
+    cache and the new look actually reaches them.
     """
     h = hashlib.md5()
     base = os.path.join(repo, "engine", "assets")
-    paths = [os.path.join(base, "nb.css"), os.path.join(base, "nb.js"), *css_paths]
+    paths = [
+        os.path.join(base, "apple-touch-icon.png"),
+        os.path.join(base, "favicon-32.png"),
+        os.path.join(base, "favicon-64.png"),
+        os.path.join(base, "nb.css"),
+        os.path.join(base, "nb.js"),
+        *css_paths,
+    ]
     for path in paths:
         if os.path.isfile(path):
             with open(path, "rb") as fh:
@@ -115,6 +122,18 @@ def dress_article(raw, site):
     the next build. Idempotent, so an article that already carries a bar (an
     already-dressed copy handed back in) is left with exactly one.
     """
+    icons = "\n".join(
+        (
+            '<link rel="icon" type="image/png" sizes="32x32" '
+            f'href="../../assets/favicon-32.png?v={site["stamp"]}">',
+            '<link rel="icon" type="image/png" sizes="64x64" '
+            f'href="../../assets/favicon-64.png?v={site["stamp"]}">',
+            '<link rel="apple-touch-icon" sizes="180x180" '
+            f'href="../../assets/apple-touch-icon.png?v={site["stamp"]}">',
+        )
+    )
+    if "assets/favicon-32.png" not in raw:
+        raw = raw.replace("</head>", f"{icons}\n</head>", 1)
     if site["assets_html"]:
         raw = raw.replace("</head>", f"{site['assets_html']}\n</head>", 1)
     body_open = BODY_OPEN_RE.search(raw)
