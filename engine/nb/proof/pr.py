@@ -149,7 +149,7 @@ def section_text(body, name):
 def check_pr_body_record(pr_body_path, rep):
     """WARN when the PR body's production record is missing or hollow.
 
-    PROTOCOL step 8 makes the body the article's production record, and the
+    PROTOCOL step 9 makes the body the article's production record, and the
     artifacts are gitignored, so the body is the only place they survive.
     Presence is the quality bar, never the publishing bar, so a gap is a WARN.
 
@@ -170,7 +170,7 @@ def check_pr_body_record(pr_body_path, rep):
             "W-BODY-RECORD",
             f"PR body record missing section(s): {', '.join(missing)}",
             suggestion="the body is the article's production record; "
-            "PROTOCOL step 8 lists the sections",
+            "PROTOCOL step 9 lists the sections",
         )
     if "Voice brief" in missing:
         return

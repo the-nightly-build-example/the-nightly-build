@@ -48,24 +48,28 @@ press/
 ## Updating the engine
 
 ```sh
-git remote add upstream https://github.com/the-nightly-build/the-nightly-build.git   # once
-git fetch upstream
-git merge upstream/main
-./setup.sh    # re-syncs the trigger workflows onto library
+scripts/sync.sh --update-main-from-upstream
 ```
 
-This is an ordinary fork merge. It is clean by construction for anyone who
-only writes inside `press/`: your commits and upstream's commits touch
-disjoint paths, and upstream has no `press/` at all.
+This deliberate command merges upstream into your clean, current `main`,
+pushes it, and brings the protected `library` workflows forward through an
+exact, CI-gated PR. A merge conflict stops before `library` changes and names
+the paths to resolve.
+
+The nightly command is simply `scripts/sync.sh`. It follows your fork's
+`origin/main`; it never imports upstream changes. If you update `main` with
+GitHub's Sync fork button, run that default command afterward.
+
+Upstream merges are clean by construction for anyone who only writes inside
+`press/`: your commits and upstream's commits touch disjoint paths, and
+upstream has no `press/` at all.
 
 Editing the engine is allowed. It is your fork. If you patch engine files,
 future merges may conflict exactly where you deviated, and resolving them is
 yours, the same as any fork on GitHub.
 
-Three follow-ups after an engine update:
+Two follow-ups after an engine update:
 
-- `./setup.sh` re-syncs the two trigger workflows that the `library` branch
-  carries. They are the only engine-adjacent files outside `main`.
 - Check your schedule prompt against the canonical one in
   [scheduling.md](scheduling.md). The prompt lives outside the repo (a hosted
   routine, an Actions step), so a merge cannot update it, and a prompt that
@@ -73,6 +77,7 @@ Three follow-ups after an engine update:
   the canonical prompt, replace it.
 - Optionally dispatch the publish workflow (Actions, nightly-build-publish,
   Run workflow) to re-render your whole back catalog with the new engine
-  immediately instead of waiting for tonight's build. Nothing on `library`
-  ever merges with upstream. Forks copy `main` only, and your library is
-  yours alone.
+  immediately instead of waiting for tonight's build.
+
+`library` is downstream publication state. Never merge it into `main` or
+upstream. Forks copy `main` only; your library is yours alone.

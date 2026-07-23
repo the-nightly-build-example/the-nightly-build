@@ -28,7 +28,7 @@ MINIMAL_BODY = (
     "```\n"
 )
 
-# The canonical body carries the production record PROTOCOL step 8 defines: every
+# The canonical body carries the production record PROTOCOL step 9 defines: every
 # artifact the chain produced, including a voice brief that studied real writers.
 STUDIED_VOICE = (
     "## Voice brief\n"
@@ -172,7 +172,7 @@ def test_pr_body_the_diff_does_not_answer_to(
 
 
 def test_preflight_passes_from_the_library_checkout(pr_repo: PressRepo) -> None:
-    """PROTOCOL step 8 preflights from the library checkout, where the new
+    """PROTOCOL step 9 preflights from the library checkout, where the new
     bundle is not on disk yet. On the 2026-07-16 run two desks hit a false
     'file not found' block on valid PRs; the proof reads the bundle from the
     head ref, so which branch the checkout sits on cannot matter."""
