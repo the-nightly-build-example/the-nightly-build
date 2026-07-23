@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A big part of Apple's "reasoning collapse" was models hitting an output limit · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "illusion-of-thinking",
+        "template": "lesson",
+        "title": "A big part of Apple's \"reasoning collapse\" was models hitting an output limit",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-23",
+        "tags": ["reasoning", "evaluation"],
+        "sources": 6,
+        "words": 1780,
+        "reading_minutes": 9,
+        "dek": "The 2025 \"Illusion of Thinking\" study gets cited to prove reasoning models can't really reason, but its headline Tower of Hanoi failures were largely the models running out of room to print the answer.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">
+          A big part of Apple's "reasoning collapse" was models hitting an
+          output limit
+        </h1>
+        <p class="nb-dekline">
+          The 2025 "Illusion of Thinking" study gets cited to prove reasoning
+          models can't really reason, but its headline Tower of Hanoi failures
+          were largely the models running out of room to print the answer.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-23</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You keep meeting a single sentence used to end arguments about AI:
+          reasoning models do not really reason, and here is the Apple paper
+          that proves it. This lesson reads that paper, "The Illusion of
+          Thinking," alongside the rebuttal that followed it a week later. You
+          will see what the study actually tested: four puzzles turned up in
+          difficulty until the models failed. You will see why one of its two
+          headline results was partly an accident of how the answers were
+          graded, and which part of the finding survives that objection
+          untouched. By the end you can tell anyone who cites this paper which
+          piece of "reasoning is an illusion" the evidence carries, and which
+          piece it does not.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/emergent-abilities.html"
+              >The sudden jump in AI benchmarks was mostly in the scoring</a
+            >: the same series on how a scoring rule, not the model, can
+            manufacture a sudden "collapse" or jump.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/gpt-3-few-shot.html"
+              >Few-shot GPT-3 beat fine-tuning on a handful of tasks and trailed
+              it on most</a
+            >: how prompting a model at inference time works, the setup these
+            reasoning models grew out of.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What Apple put on the stand</h2>
+        <p>
+          A reasoning model is an ordinary language model trained to write out a
+          long private chain of steps before it commits to an answer. The team
+          behind DeepSeek-R1, one of the models on trial here, showed that this
+          behavior can be produced by reinforcement learning alone, "obviating
+          the need for human-labeled reasoning trajectories."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Abstract">1</a></sup
+          >
+          The same training draws out patterns like "self-reflection,
+          verification, and dynamic strategy adaptation."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Abstract">1</a></sup
+          >
+          OpenAI's o1 and o3, Claude with extended thinking, and DeepSeek-R1 are
+          the systems people mean by the term.
+        </p>
+        <p>
+          In June 2025 six Apple researchers put such models through a test
+          built to dodge the usual complaint that benchmark questions leak into
+          training data.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Abstract">2</a></sup
+          >
+          Instead of math problems, they used four puzzles, each with a knob for
+          difficulty. Tower of Hanoi moves a stack of disks one at a time.
+          Checker Jumping and River Crossing slide pieces and passengers past
+          each other. Blocks World restacks blocks into a target tower. Turning
+          the knob adds disks, checkers, people, or blocks. For every run they recorded two numbers: whether the final
+          answer was correct, and how long the model's chain of thinking
+          ran.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Abstract">2</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="the-collapse" id="the-collapse">
+        <h2>The two results everyone quotes</h2>
+        <p>
+          The finding that traveled is in the first line of the abstract: past a
+          certain difficulty, "LRMs face a complete accuracy collapse."<sup
+            class="nb-cite"
+            ><a href="#s2" data-nb-locator="Abstract">2</a></sup
+          >
+          Below the threshold the models are fine. Above it they score
+          essentially zero, and piling on more of the same puzzle does not bring
+          them back. Apple sorted the behavior into three regimes: on easy
+          puzzles a plain model with no thinking step does better; in the middle
+          the thinking earns its keep; and at the top "both models experience
+          complete collapse."<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Abstract">2</a></sup
+          >
+        </p>
+        <p>
+          The second result is stranger, and it did more of the rhetorical work.
+          As the puzzles got harder the models first spent more thinking tokens,
+          then past the threshold spent fewer, "despite having remaining token
+          budget."<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Abstract">2</a></sup
+          >
+          A model that meets a harder problem and thinks less looks like a mind
+          giving up, and that is the reading that spread. It is also the reading
+          that outruns the evidence, because "spent fewer tokens" and "gave up"
+          are different claims. An engineer who worked through the traces put the
+          limit of the finding plainly. All the data really shows is that the
+          models "don't want to" keep going.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          That tells us how the model behaved. It does not measure a ceiling on
+          what the model can do.
+        </p>
+      </section>
+
+      <section data-nb-section="the-token-wall" id="the-token-wall">
+        <h2>Tower of Hanoi runs longer than the model can write</h2>
+        <p>
+          Tower of Hanoi has an exact price. Moving a stack of N disks always
+          takes 2<sup>N</sup>&nbsp;&minus;&nbsp;1 moves, with no shortcut
+          available.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Ten disks is 1,023 moves; fifteen disks is 32,767; twenty disks is
+          over a million. A model solving the puzzle in the format Apple
+          required has to print every one of those moves in order. The rebuttal,
+          "The Illusion of the Illusion of Thinking," did the arithmetic the
+          automated grading skipped. At roughly ten tokens per move, a
+          fifteen-disk answer runs to about 327,670 tokens.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Abstract">4</a></sup
+          >
+          That is several times the output any model in the study could produce
+          in one go.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The move list for Tower of Hanoi doubles with every disk, while the
+            token budget stays fixed. Move counts are exact
+            (2<sup>N</sup>&nbsp;&minus;&nbsp;1); the token estimate uses the
+            rebuttal's ten-tokens-per-move figure against Apple's 64,000-token
+            cap.<sup class="nb-cite"
+              ><a href="#s4" data-nb-locator="Abstract">4</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Disks</th>
+              <th>Moves</th>
+              <th>Tokens to print (est.)</th>
+              <th class="txt">Fits a 64k budget?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>5</td>
+              <td>31</td>
+              <td>310</td>
+              <td class="txt">Yes</td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td>1 023</td>
+              <td>10 230</td>
+              <td class="txt">Yes</td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td>4 095</td>
+              <td>40 950</td>
+              <td class="txt">Yes</td>
+            </tr>
+            <tr>
+              <td>13</td>
+              <td>8 191</td>
+              <td>81 910</td>
+              <td class="txt">No</td>
+            </tr>
+            <tr>
+              <td>15</td>
+              <td>32 767</td>
+              <td>327 670</td>
+              <td class="txt">No</td>
+            </tr>
+            <tr>
+              <td>20</td>
+              <td>1 048 575</td>
+              <td>10 485 750</td>
+              <td class="txt">No</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The table marks where the wall falls. Apple capped thinking at 64,000
+          tokens, and a little past twelve disks the correct move list no longer
+          fits in that space, whatever the model knows.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Abstract">2</a></sup
+          >
+          The models were not silent about the squeeze. The rebuttal collected
+          traces where a model lays out the pattern and then stops on purpose,
+          saying so in as many words.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In the model's own words</span>
+          <blockquote>
+            The pattern continues, but to avoid making this too long, I'll stop
+            here.<sup class="nb-cite"><a href="#s4">4</a></sup>
+            <span class="nb-note-who">a model trace, quoted in the rebuttal</span>
+          </blockquote>
+        </div>
+        <p>
+          Apple's grader counted those cut-off runs the same as a wrong
+          answer.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Abstract">4</a></sup
+          >
+          The clearest sign that this is a mistake is what happened when the
+          rebuttal took the wall away. Asked to hand back a short program that
+          generates the moves rather than the moves themselves, the same models
+          solved Tower of Hanoi at fifteen disks "in under 5,000 tokens," a size
+          the original paper had logged as total failure.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The model knew the moves. It ran out of room to write them down.
+        </p>
+      </section>
+
+      <section data-nb-section="the-unsolvable-crossing" id="the-unsolvable-crossing">
+        <h2>Some of the graded puzzles had no answer</h2>
+        <p>
+          River Crossing exposed a sharper problem. The puzzle asks you to ferry
+          people across a river in a boat that holds only so many, never leaving
+          a forbidden group alone on either bank. For a boat that holds three,
+          the puzzle has no solution at all once you pass five pairs of people.
+          It is not merely hard, it is impossible, and provably so with pencil
+          and paper.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Abstract">4</a></sup
+          >
+          Apple's benchmark included those impossible instances and scored the
+          models as failing them.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Abstract">4</a></sup
+          >
+          A model that correctly saw there was no answer earned the same zero as
+          one that flailed. Part of the River Crossing "collapse" is the grader
+          marking models wrong for not doing the undoable.
+        </p>
+        <p>
+          This does not clear the models. Apple also reported that they often
+          failed after only a handful of moves on crossings that do have
+          answers, well short of any length limit,<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          and the contrast with their long Tower of Hanoi runs is real. The
+          unsolvable instances inflate the collapse. They do not invent it.
+        </p>
+      </section>
+
+      <section data-nb-section="what-survives" id="what-survives">
+        <h2>What the puzzles still show</h2>
+        <p>
+          Take out the token wall and the impossible puzzles and something the
+          internet's version of the paper skips over is still standing. The
+          effort-drop result does not depend on either flaw: the models spend
+          fewer thinking tokens on harder problems with thinking budget still to
+          spare, so a shortage of room cannot be the whole story.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Abstract">2</a></sup
+          >
+          Whatever that is, it is a real and odd property of how these models
+          decide when to stop working.
+        </p>
+        <p>
+          The paper's narrower claim also holds: the models "fail to use
+          explicit algorithms."<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Apple wrote the exact recipe for Tower of Hanoi into the prompt and
+          still watched accuracy fall apart at about the same point.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The token wall clouds even this test, since running the recipe still
+          means printing every move, but the result fits a pattern Apple's own
+          lab had found a year earlier. Their GSM-Symbolic study showed that
+          changing only the numbers in a grade-school math problem lowers
+          accuracy, and that adding one irrelevant sentence drops it by "up to
+          65%" across every leading model.<sup class="nb-cite"
+            ><a href="#s5" data-nb-locator="Abstract">5</a></sup
+          >
+          These systems run long procedures unreliably and lean on the shape of
+          problems they have seen. That was true before the puzzles and it is
+          true after.
+        </p>
+        <p>
+          What the puzzles do not carry is the sentence they get cited for.
+          "Reasoning models cannot reason" is a claim about capability; a model
+          that could name the millionth move but cannot type it has hit a limit
+          of format, not of thought. Even the rebuttal's author does not argue
+          that the models reason well, only that this experiment measured the
+          wrong thing. And the practical fact sits outside the whole quarrel:
+          the models that "collapse" on twenty-disk Hanoi are the ones people
+          use all day, "already useful today, whether or not they can reliably
+          solve the Tower of Hanoi or River Crossing puzzles."<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          "The Illusion of Thinking" ran real experiments and found two real
+          things: reasoning models score zero on puzzles past a complexity
+          threshold, and they spend less effort, not more, as the problems get
+          harder. What the study could not show is the claim it now gets cited
+          for. A large part of the Tower of Hanoi "collapse" was the model
+          running out of room to write a move list that climbs past a million
+          steps, and some of the River Crossing puzzles it graded had no
+          solution to find. What survives is smaller and worth keeping: these
+          models run long mechanical procedures unreliably, and they do not fall
+          back on an exact algorithm even when handed one. So when you next see
+          this paper cited to prove that AI cannot think, discount the claim to
+          its real size. The study found where one kind of model stops writing
+          the answer, which is not the same place as where it stops being able
+          to work one out.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://simonwillison.net/2025/Jun/15/viral-apple-reasoning-paper/"
+              >Simon Willison, "Seven replies to the viral Apple reasoning
+              paper"</a
+            >: a working practitioner weighs the popular readings of the study
+            against what it can support.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2506.09250"
+              >"The Illusion of the Illusion of Thinking" (arXiv 2506.09250)</a
+            >: the rebuttal in full, with the token-budget arithmetic and the
+            list of unsolvable instances.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2501.12948"
+              >arXiv · DeepSeek-AI, "DeepSeek-R1: Incentivizing Reasoning
+              Capability in LLMs via Reinforcement Learning" (2025)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2506.06941"
+              >arXiv · Shojaee, Mirzadeh et al. (Apple), "The Illusion of
+              Thinking" (2025)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.seangoedecke.com/illusion-of-thinking/"
+              >Sean Goedecke · "The illusion of 'The Illusion of Thinking'"
+              (2025)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2506.09250"
+              >arXiv · Lawsen, "The Illusion of the Illusion of Thinking"
+              (2025)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2410.05229"
+              >arXiv · Mirzadeh et al. (Apple), "GSM-Symbolic: Understanding the
+              Limitations of Mathematical Reasoning in Large Language Models"
+              (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://simonwillison.net/2025/Jun/15/viral-apple-reasoning-paper/"
+              >Simon Willison · "Seven replies to the viral Apple reasoning
+              paper" (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
