@@ -9,7 +9,7 @@ what you want to read, connect an agent, and get original, cited articles on
 your own GitHub Pages site every morning.
 
 No backend. No accounts. No analytics. Your paper and its archive live in your
-fork.
+fork. You own it.
 
 ## How it works
 
@@ -36,6 +36,10 @@ before a clean pull request is merged into `library`.
 articles. Keeping those branches separate makes engine updates and paper
 ownership straightforward.
 
+Since you own the code, you can even make personal changes to the engine.
+However, note that then it is on you to resolve conflicts or issues when
+you sync your fork.
+
 ## Get started
 
 ### 1. Fork and bootstrap
@@ -43,7 +47,7 @@ ownership straightforward.
 Fork this repository with **Copy the main branch only** enabled. Keep the fork
 public if you want to use GitHub Pages on the free plan.
 
-Clone the fork and run the setup script:
+Clone the fork and run the setup script (or ask your agent to do this in the next step):
 
 ```sh
 git clone https://github.com/<you>/<your-paper>.git
@@ -76,6 +80,10 @@ configuration model.
 
 Ask your agent for a **press check**. It runs the article workflow locally,
 builds a preview, and lets you tune your paper before anything is published.
+This is useful for getting a feel for your prompts as well as the HTML components
+that come with the repo and/or your own custom ones, which you can read about in
+[Customization](docs/customization.md).
+
 
 ### 4. Schedule the night shift
 
@@ -86,6 +94,11 @@ you add or pause a section.
 Choose a provider schedule or the universal GitHub Actions path in
 [Scheduling](docs/scheduling.md). [Harnesses](docs/harnesses.md) lists the
 supported agents and how their usage is billed.
+
+It is important that you do this mindfully. Different harnesses have different
+default permissions, and those can change over time. You need to make sure your
+automation has permission to read articles on the internet and raise PRs into
+your fork.
 
 ### 5. Read your paper
 
