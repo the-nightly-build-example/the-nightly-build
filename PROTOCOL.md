@@ -160,8 +160,7 @@ dependencies. Do not substitute `pip install` in a harness or schedule.
      under `.nb-work/<series>/<slug>/`, harness-agnostic and readable years
      later. In order:
      - a code fence tagged `nb-meta` (not `yaml`: the proof matches the tag)
-       holding YAML that mirrors the embedded metadata, a link to your run if
-       available, and the proof's final WARN summary:
+       holding YAML that mirrors the embedded metadata:
 
        ````text
        ```nb-meta
@@ -185,9 +184,10 @@ dependencies. Do not substitute `pip install` in a harness or schedule.
        or copy artifacts by hand. Each artifact is verbatim in a collapsed
        `<details>` block inside a four-backtick fence (its own code fences nest
        safely). The artifacts are gitignored, so the PR body is where they
-       survive. If the assembled body would exceed GitHub's body limit
-       (~60k characters), elide the research log's verbatim passages in place
-       with a note and post the full log as a comment after opening.
+       survive. If the record exceeds GitHub's body limit, the builder keeps the
+       full voice brief and every section heading, moves the largest remaining
+       artifacts to one digest-marked follow-up comment, and leaves references
+       in their place. Post that generated comment once after opening.
 
    - Preflight BEFORE opening the PR, with the same invocation the desk's CI
      will run. Commit the article bundle on the work branch, write the intended
