@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenAI funded FrontierMath and had the answers before o3 scored 25% on it · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "frontiermath",
+        "template": "lesson",
+        "title": "OpenAI funded FrontierMath and had the answers before o3 scored 25% on it",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-23",
+        "tags": [],
+        "sources": 8,
+        "words": 1650,
+        "reading_minutes": 8,
+        "dek": "Epoch AI built 350 unpublished problems that a script grades with no human in the loop, and the version of o3 that OpenAI shipped solved about 10% of them when Epoch ran the test itself.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">
+          OpenAI funded FrontierMath and had the answers before o3 scored 25% on
+          it
+        </h1>
+        <p class="nb-dekline">
+          Epoch AI built 350 unpublished problems that a script grades with no
+          human in the loop, and the version of o3 that OpenAI shipped solved
+          about 10% of them when Epoch ran the test itself.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-07-23</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          AI labs argue about progress with benchmark scores, and one of the
+          loudest recent numbers is o3 solving about a quarter of FrontierMath, a
+          test of research-level mathematics that had stumped every earlier
+          model. The score is real and the problems are hard. It is also the
+          number a lab reached for to say its model can do frontier math, and the
+          way that number was produced and announced is a clean example of how a
+          carefully built measurement can still mislead. By the end you will know
+          how FrontierMath turns research mathematics into a score a program can
+          grade, and why the headline 25% came from a compute setting rather than
+          the model anyone could run. You will also see why it matters that OpenAI
+          paid for the test and could read most of its answers before the number
+          went out.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/swe-bench.html"
+              >Change which SWE-bench tasks are counted and GPT-4o's score
+              doubles</a
+            >: a sibling case where how a benchmark is built quietly moves its
+            number, through the tasks counted rather than the funder.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/mmlu.html"
+              >The lab that ships an MMLU score rarely says how it was
+              measured</a
+            >: the other way a score loses its meaning, when the measurement
+            protocol is left off the label.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The number, and where it comes from</h2>
+        <p>
+          On December 20, 2024, during a livestream, OpenAI announced that its o3
+          model solved 25.2% of a math test called FrontierMath.<sup
+            class="nb-cite"
+            ><a
+              href="#s1"
+              data-nb-note="o3 preview FrontierMath result announced on the final day of OpenAI's '12 Days of OpenAI'"
+              >1</a
+            ></sup
+          >
+          The best any earlier model had managed was under 2%.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          On a test whose problems take professional mathematicians hours or
+          days, a jump from 2 to 25 reads as a plain fact about the model, the way
+          "scored 90 on the driving test" reads as a fact about the driver.
+        </p>
+        <p>
+          FrontierMath is built by Epoch AI, a research group that measures AI
+          progress.<sup class="nb-cite"><a href="#s2">2</a></sup> Every part of
+          the test is designed so the score means something. The problems are new
+          and unpublished, they are written by professional mathematicians, and
+          each one has a single answer a computer can check on its own.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The 25 comes out of that design. What the announcement left out is who
+          paid for the design and who could read the answers.
+        </p>
+      </section>
+
+      <section data-nb-section="auto-grading" id="auto-grading">
+        <h2>Why no person grades a FrontierMath answer</h2>
+        <p>
+          A test is only useful as a comparison if the same answer earns the same
+          score every time, whoever is checking. FrontierMath reaches that by
+          giving every problem one definite answer a program can verify. An
+          answer is "a large integer, a symbolic real, or a tuple of such objects
+          that can be checked computationally," and a verification script marks a
+          submission correct by matching it against the known solution.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          ><sup class="nb-cite"><a href="#s4">4</a></sup> No human reads the
+          model's working and decides whether it deserves credit. That removes the
+          grader's judgment, and with it the arguments about partial credit that
+          make many claims about what a model can do soft at the edges.
+        </p>
+        <p>
+          The problems are also built to be guessproof. Epoch requires that
+          "random attempts or trivial brute-force approaches have a negligible
+          chance of success," so answers are large or structured enough that a
+          lucky guess almost never lands.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Because the problems are new and never published, a model cannot have
+          seen them during training, which is the usual way a high score turns out
+          to be memory rather than reasoning.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The 350 problems are sorted into tiers, from ones resembling hard
+          olympiad and advanced-undergraduate exercises up to problems a PhD
+          student would recognize as early research, with a top tier meant to go
+          well beyond the rest.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">A working mathematician's read</span>
+          <blockquote>
+            These are extremely challenging. I think that in the near term
+            basically the only way to solve them, short of having a real domain
+            expert in the area, is by a combination of a semi-expert like a
+            graduate student in a related field, maybe paired with some
+            combination of a modern AI and lots of other algebra packages.<sup
+              class="nb-cite"
+              ><a href="#s4">4</a></sup
+            >
+            <span class="nb-note-who">Terence Tao, on FrontierMath</span>
+          </blockquote>
+        </div>
+        <p>
+          The difficulty is not a sales pitch. When Epoch ran six leading models
+          before o3, including GPT-4o, Claude 3.5 Sonnet, and Gemini 1.5 Pro, none
+          cleared 2%.<sup class="nb-cite"><a href="#s4">4</a></sup> So the test is
+          real, the grading is automatic and fair, and o3's number was a genuine
+          leap. The question is what kind of number it was.
+        </p>
+      </section>
+
+      <section data-nb-section="the-25" id="the-25">
+        <h2>The 25 was a setting, not the model you can run</h2>
+        <p>
+          Here the caveat rides with the number. The 25.2% came from an o3
+          configuration OpenAI ran at high test-time compute, the amount of
+          computation a model is allowed to spend thinking about each problem. It
+          was a preview, not the product. When Epoch later tested the o3 that
+          OpenAI actually released, it scored about 10% on FrontierMath, well under
+          half the headline.<sup class="nb-cite"><a href="#s5">5</a></sup> The ARC
+          Prize Foundation, which had tested the preview, said the released o3 "is
+          a different model tuned for chat/product use" and runs at smaller
+          compute settings.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          Neither number is fake. They measure different things. The 25.2% is what
+          a high-compute preview did on the test in December, and about 10% is what
+          the shipped model did when someone outside OpenAI ran it in April.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          The headline traveled far faster than the correction, and it traveled
+          without the one figure needed to size it: how much compute bought the
+          25.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="frontiermath/chart-1.png"
+            alt="Bar chart of three FrontierMath results reported for o3-class models: prior frontier models under 2 percent, OpenAI's December 2024 o3 preview claim of 25.2 percent, and the released o3 re-tested independently by Epoch at about 10 percent."
+          />
+          <figcaption>
+            Fig. 1 · Three FrontierMath results that circulated as "o3": prior
+            frontier models under 2%,<sup class="nb-cite"
+              ><a href="#s2">2</a></sup
+            >
+            OpenAI's December 2024 preview claim of 25.2%,<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+            and the released o3 re-tested by Epoch at about 10%.<sup
+              class="nb-cite"
+              ><a href="#s5">5</a></sup
+            >
+          </figcaption>
+        </figure>
+      </section>
+
+      <section data-nb-section="funder-access" id="funder-access">
+        <h2>The funder could see the problems</h2>
+        <p>
+          Epoch AI did not build FrontierMath on its own and then test OpenAI on
+          it. OpenAI commissioned it. In Epoch's own words, "OpenAI commissioned
+          Epoch AI to produce 300 advanced math problems for AI evaluation," and
+          "OpenAI retains ownership of these questions and has access to the
+          problems and solutions, with the exception of a holdout set."<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">350</span
+            ><span class="nb-stat-l">Problems in the test</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">300</span
+            ><span class="nb-stat-l">Commissioned by OpenAI</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">50</span
+            ><span class="nb-stat-l">Hold-out, solutions withheld</span>
+          </div>
+        </div>
+        <p>
+          Three facts set the independence problem. OpenAI paid for the test.
+          OpenAI could read most of its problems and their answers. And the
+          50-problem hold-out set that OpenAI could not fully see was still being
+          finalized when the 25 was announced.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          None of this was disclosed on December 20. The mathematicians who wrote
+          the problems were not told: reporting by TechCrunch found six major
+          contributors who said they were unaware OpenAI would have access, and
+          that most would not have taken part had they known.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Epoch's associate director later said the group "should have negotiated
+          harder for the ability to be transparent to the benchmark
+          contributors."<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          The disclosure came late and in pieces. Epoch added an acknowledgment of
+          OpenAI's support to its paper only after the paper's fifth revision, and
+          the contributors' non-disclosure agreements had covered the problems
+          themselves, not the funding relationship.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+      </section>
+
+      <section
+        data-nb-section="what-benchmarks-are-for"
+        id="what-benchmarks-are-for"
+      >
+        <h2>What an outside benchmark is for</h2>
+        <p>
+          A benchmark exists to be a check a lab cannot mark for itself. When a
+          company reports its own internal number, a reader has to trust the
+          company. An external benchmark replaces that trust with something
+          firmer: a test the company did not write, cannot see in advance, and
+          does not score. That independence is the reason an outside number is
+          worth more than a press release.
+        </p>
+        <p>
+          Funding and access do not prove that o3 cheated. Epoch says OpenAI
+          agreed not to train on the problems, and the hold-out set exists so
+          Epoch can check models against questions the lab never saw.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          There is no public evidence that o3 was trained on FrontierMath. Put at
+          its strongest, Epoch's position is that the problems are legitimate, the
+          grading is sound, and the funding does not by itself make the score
+          false. All of that can be true at once.
+        </p>
+        <p>
+          It still does not return what the undisclosed relationship took. Once the
+          funder could read most of the answers, an outsider can no longer tell,
+          from the number alone, how much of the 25 is fresh reasoning and how much
+          is contact with the test. The score stops being an independent check and
+          falls back to being OpenAI's report about a test OpenAI paid for, which
+          is the thing an outside benchmark was supposed to improve on. The
+          problems did not get weaker. The disclosure did.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          FrontierMath is a real achievement of test design: hundreds of fresh,
+          hard problems that a script can grade without trusting anyone's opinion.
+          That makes the 25.2% a real result about a real capability, at one
+          undisclosed compute setting, from a preview rather than the model you
+          can use. What the number cannot be is an independent check on OpenAI,
+          because OpenAI paid for the test and could read most of its problems and
+          answers, and none of that was stated when the 25 was announced. An
+          outside benchmark is worth more than a lab's own claim only for as long
+          as it stays outside. So when you next meet a headline benchmark score,
+          the useful question is not only how hard the test is, but who built it,
+          who paid for it, and who could see it before the number went out.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://epoch.ai/latest/openai-and-frontiermath"
+              >Epoch AI: Clarifying the creation and use of the FrontierMath
+              benchmark</a
+            >: Epoch's own account of the funding, the data access, and the
+            hold-out set.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a
+              href="https://techcrunch.com/2025/04/20/openais-o3-ai-model-scores-lower-on-a-benchmark-than-the-company-initially-implied/"
+              >TechCrunch: o3 scores lower than the company initially implied</a
+            >: the independent re-test that put the released model near 10%.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-note="OpenAI's own reporting of FrontierMath performance; the 25.2% o3 preview figure was announced in OpenAI's Dec 20, 2024 livestream. Page returns 403 to automated fetchers; public in a browser."
+              href="https://openai.com/index/openai-o3-mini/"
+              >OpenAI · o3-mini (OpenAI's reporting of FrontierMath results)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract: hundreds of original problems; branches from number theory to algebraic geometry; unpublished problems and automated verification; current models under 2%"
+              href="https://arxiv.org/abs/2411.04872"
+              >Epoch AI et al. · FrontierMath: A Benchmark for Evaluating Advanced
+              Mathematical Reasoning in AI (arXiv:2411.04872)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="About: 350 problems (300 core + 50 Tier 4); tiers 1-3 and Tier 4; definite computationally-checkable answer; 'guessproof'"
+              href="https://epoch.ai/frontiermath/tiers-1-4/about"
+              >Epoch AI · FrontierMath, about the benchmark (Tiers 1-4)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Verification script by exact match; six models under 2% (incl. Claude 3.5 Sonnet, o1-preview, GPT-4o, Gemini 1.5 Pro); Terence Tao quote"
+              href="https://epoch.ai/frontiermath/tiers-1-4/the-benchmark"
+              >Epoch AI · FrontierMath, the benchmark</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Epoch independent eval of released o3 ~10% vs OpenAI's Dec claim over 25%; ARC Prize: 'a different model tuned for chat/product use'; smaller compute tiers"
+              href="https://techcrunch.com/2025/04/20/openais-o3-ai-model-scores-lower-on-a-benchmark-than-the-company-initially-implied/"
+              >TechCrunch · OpenAI's o3 scores lower on a benchmark than the
+              company initially implied (Kyle Wiggers, Apr 20, 2025)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="'OpenAI commissioned Epoch AI to produce 300 advanced math problems'; 'access to the problems and solutions, with the exception of a holdout set'; 50-problem hold-out"
+              href="https://epoch.ai/latest/openai-and-frontiermath"
+              >Epoch AI · Clarifying the creation and use of the FrontierMath
+              benchmark (Jan 23, 2025)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Six contributors unaware OpenAI would have access; most would not have participated; Besiroglu: 'should have negotiated harder ... to be transparent to the benchmark contributors'"
+              href="https://techcrunch.com/2025/01/19/ai-benchmarking-organization-criticized-for-waiting-to-disclose-funding-from-openai/"
+              >TechCrunch · AI benchmarking organization criticized for waiting to
+              disclose funding from OpenAI (Kyle Wiggers, Jan 19, 2025)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Funding acknowledged only after the paper's fifth revision; contributor NDAs covered the problems, not the funding relationship"
+              href="https://the-decoder.com/openai-quietly-funded-independent-math-benchmark-before-setting-record-with-o3/"
+              >The Decoder · OpenAI quietly funded independent math benchmark
+              before setting record with o3 (Matthias Bastian, Jan 19, 2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
