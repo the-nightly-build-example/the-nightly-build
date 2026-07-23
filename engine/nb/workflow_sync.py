@@ -1,8 +1,8 @@
 """Recognize the one non-article change allowed to reach ``library``.
 
 A workflow sync is a content-addressed exception, not a title, label, or PR
-author. It is valid only when the PR changes both publishing workflows, changes
-nothing else, and copies their exact blobs from the fork's ``main`` branch.
+author. It is valid only when the PR changes one or both publishing workflows,
+changes nothing else, and copies their exact blobs from the fork's ``main``.
 """
 
 import subprocess
@@ -38,11 +38,11 @@ def classify_workflow_sync(
     if not attempted:
         return WorkflowSync(attempted=False, valid=False)
 
-    if changed_paths != SYNC_PATHS or len(changes) != len(SYNC_PATHS):
+    if not changed_paths <= SYNC_PATHS or len(changes) != len(changed_paths):
         return WorkflowSync(
             attempted=True,
             valid=False,
-            reason="a workflow sync must change both publishing workflows and nothing else",
+            reason="a workflow sync may change only the publishing workflows",
         )
 
     invalid_statuses = [status for status, _path in changes if status not in {"A", "M"}]
@@ -53,7 +53,7 @@ def classify_workflow_sync(
             reason="a workflow sync may only add or update the publishing workflows",
         )
 
-    for path in sorted(SYNC_PATHS):
+    for path in sorted(changed_paths):
         canonical_path = Path(main, path)
         try:
             canonical = canonical_path.read_bytes()

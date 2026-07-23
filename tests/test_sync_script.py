@@ -12,6 +12,7 @@ import pathlib
 import shutil
 import subprocess
 from dataclasses import dataclass
+from typing import Literal
 
 from press import REPO
 
@@ -115,7 +116,9 @@ esac
     script.chmod(0o755)
 
 
-def make_sync_repo(tmp_path: pathlib.Path, *, drift: bool) -> SyncRepo:
+def make_sync_repo(
+    tmp_path: pathlib.Path, *, drift: Literal["none", "both", "check"]
+) -> SyncRepo:
     source = tmp_path / "source"
     origin = tmp_path / "origin.git"
     upstream = tmp_path / "upstream.git"
@@ -169,7 +172,10 @@ def make_sync_repo(tmp_path: pathlib.Path, *, drift: bool) -> SyncRepo:
     (maintainer / "library").mkdir()
     (maintainer / "library" / ".gitkeep").write_text("")
     for path in WORKFLOWS:
-        content = "name: stale\n" if drift else (REPO / path).read_text()
+        stale = drift == "both" or (
+            drift == "check" and path == ".github/workflows/check.yml"
+        )
+        content = "name: stale\n" if stale else (REPO / path).read_text()
         (maintainer / path).write_text(content)
     git(maintainer, "add", "-A")
     git(maintainer, "commit", "-qm", "library")
@@ -188,7 +194,7 @@ def make_sync_repo(tmp_path: pathlib.Path, *, drift: bool) -> SyncRepo:
 def test_default_sync_is_idempotent_and_never_fetches_upstream(
     tmp_path: pathlib.Path,
 ) -> None:
-    repo = make_sync_repo(tmp_path, drift=False)
+    repo = make_sync_repo(tmp_path, drift="none")
 
     first = repo.run()
     second = repo.run()
@@ -201,7 +207,7 @@ def test_default_sync_is_idempotent_and_never_fetches_upstream(
 def test_drift_opens_a_protected_pr_and_verifies_library(
     tmp_path: pathlib.Path,
 ) -> None:
-    repo = make_sync_repo(tmp_path, drift=True)
+    repo = make_sync_repo(tmp_path, drift="both")
 
     result = repo.run()
 
@@ -214,10 +220,20 @@ def test_drift_opens_a_protected_pr_and_verifies_library(
     assert "--auto --squash" in calls
 
 
+def test_one_stale_workflow_self_heals(tmp_path: pathlib.Path) -> None:
+    repo = make_sync_repo(tmp_path, drift="check")
+
+    result = repo.run()
+
+    assert result.returncode == 0, result.stderr
+    for path in WORKFLOWS:
+        assert repo.remote_blob("main", path) == repo.remote_blob("library", path)
+
+
 def test_sync_refuses_to_overwrite_an_unrecognized_remote_branch(
     tmp_path: pathlib.Path,
 ) -> None:
-    repo = make_sync_repo(tmp_path, drift=True)
+    repo = make_sync_repo(tmp_path, drift="both")
     git(repo.checkout, "fetch", "-q", "origin", "library")
     git(repo.checkout, "checkout", "-qb", SYNC_BRANCH, "origin/library")
     for path in WORKFLOWS:
@@ -240,7 +256,7 @@ def test_sync_refuses_to_overwrite_an_unrecognized_remote_branch(
 
 
 def test_upstream_conflict_stops_before_library_sync(tmp_path: pathlib.Path) -> None:
-    repo = make_sync_repo(tmp_path, drift=True)
+    repo = make_sync_repo(tmp_path, drift="both")
     library_before = repo.remote_ref("refs/heads/library")
 
     result = repo.run("--update-main-from-upstream")
@@ -252,7 +268,7 @@ def test_upstream_conflict_stops_before_library_sync(tmp_path: pathlib.Path) -> 
 
 
 def test_failed_sync_reports_the_check_and_repair_path(tmp_path: pathlib.Path) -> None:
-    repo = make_sync_repo(tmp_path, drift=True)
+    repo = make_sync_repo(tmp_path, drift="both")
 
     result = repo.run(check_failure=True)
 

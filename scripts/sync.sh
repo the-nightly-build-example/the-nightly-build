@@ -92,8 +92,6 @@ generated_branch_is_safe() {
 	[ -n "$recorded_main" ] || return 1
 	[ "$recorded_library" = "$base" ] || return 1
 
-	seen_check=false
-	seen_publish=false
 	count=0
 	while IFS="$(printf '\t')" read -r status path; do
 		[ -n "$path" ] || continue
@@ -102,16 +100,14 @@ generated_branch_is_safe() {
 		*) return 1 ;;
 		esac
 		case "$path" in
-		.github/workflows/check.yml) seen_check=true ;;
-		.github/workflows/publish.yml) seen_publish=true ;;
+		.github/workflows/check.yml | .github/workflows/publish.yml) ;;
 		*) return 1 ;;
 		esac
 		count=$((count + 1))
 	done <<EOF
 $(git -C "$ROOT" diff --name-status --no-renames "$base" "$remote_sha")
 EOF
-	[ "$count" = 2 ] && [ "$seen_check" = true ] && [ "$seen_publish" = true ] ||
-		return 1
+	[ "$count" -ge 1 ] && [ "$count" -le 2 ] || return 1
 
 	for path in "$CHECK_WORKFLOW" "$PUBLISH_WORKFLOW"; do
 		branch_blob=$(git -C "$ROOT" rev-parse "$remote_sha:$path" 2>/dev/null) || return 1

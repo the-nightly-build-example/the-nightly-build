@@ -41,7 +41,12 @@ def test_article_path_prints_the_prs_one_added_article(
     assert ci_helper("article-path", "autopublish: true\n") == "library/foo/story.html"
 
 
-def run_sync_helper(tmp_path: pathlib.Path, *, extra_file: bool = False) -> str:
+def run_sync_helper(
+    tmp_path: pathlib.Path,
+    *,
+    extra_file: bool = False,
+    only_check: bool = False,
+) -> str:
     canonical = tmp_path / "canonical"
     checkout = tmp_path / "checkout"
     canonical.mkdir()
@@ -62,7 +67,10 @@ def run_sync_helper(tmp_path: pathlib.Path, *, extra_file: bool = False) -> str:
     subprocess.run(["git", "add", "-A"], cwd=checkout, check=True)
     subprocess.run(["git", "commit", "-qm", "library"], cwd=checkout, check=True)
     subprocess.run(["git", "checkout", "-qb", "sync"], cwd=checkout, check=True)
-    for path, content in workflows.items():
+    proposed = {".github/workflows/check.yml": workflows[".github/workflows/check.yml"]}
+    if not only_check:
+        proposed = workflows
+    for path, content in proposed.items():
         target = checkout / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(content)
@@ -94,6 +102,10 @@ def test_sync_requires_both_exact_workflow_blobs(tmp_path: pathlib.Path) -> None
 
 def test_sync_rejects_other_files(tmp_path: pathlib.Path) -> None:
     assert run_sync_helper(tmp_path, extra_file=True) == "false"
+
+
+def test_sync_accepts_one_stale_canonical_workflow(tmp_path: pathlib.Path) -> None:
+    assert run_sync_helper(tmp_path, only_check=True) == "true"
 
 
 def check_yml_triggers() -> set[str]:

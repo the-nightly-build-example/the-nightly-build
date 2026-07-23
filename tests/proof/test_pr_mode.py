@@ -228,14 +228,21 @@ def test_pr_modifying_engine_code(pr_repo: PressRepo) -> None:
     assert "B-DIFF-SHAPE" in result.blocks
 
 
-def prepare_workflow_sync(pr_repo: PressRepo) -> str:
+def prepare_workflow_sync(
+    pr_repo: PressRepo,
+    paths: tuple[str, ...] = (
+        ".github/workflows/check.yml",
+        ".github/workflows/publish.yml",
+    ),
+) -> str:
     workflows = {
         ".github/workflows/check.yml": "name: canonical check\n",
         ".github/workflows/publish.yml": "name: canonical publish\n",
     }
     pr_repo.checkout("library")
     pr_repo.checkout("nb/sync-library-workflows", new=True)
-    for path, content in workflows.items():
+    for path in paths:
+        content = workflows[path]
         pr_repo.write(path, content)
     pr_repo.commit("chore: sync library workflows from main abc123")
     return "nb/sync-library-workflows"
@@ -243,6 +250,15 @@ def prepare_workflow_sync(pr_repo: PressRepo) -> str:
 
 def test_pr_accepts_an_exact_workflow_sync(pr_repo: PressRepo) -> None:
     head = prepare_workflow_sync(pr_repo)
+
+    result = pr_repo.run_pr(head=head)
+
+    assert not result.blocks
+    assert result.report.outcome == "SYNC"
+
+
+def test_pr_accepts_one_stale_canonical_workflow(pr_repo: PressRepo) -> None:
+    head = prepare_workflow_sync(pr_repo, (".github/workflows/check.yml",))
 
     result = pr_repo.run_pr(head=head)
 
