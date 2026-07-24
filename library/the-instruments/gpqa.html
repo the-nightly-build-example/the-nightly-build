@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>o1 beat GPQA's recruited PhDs, not its own expert ceiling · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "gpqa",
+        "template": "lesson",
+        "title": "o1 beat GPQA's recruited PhDs, not its own expert ceiling",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-24",
+        "tags": [],
+        "sources": 12,
+        "words": 2187,
+        "reading_minutes": 10,
+        "dek": "When OpenAI's o1 scored 78 percent on GPQA-Diamond's 198 questions in September 2024 and passed a 69.7 percent human baseline, the launch was read as a machine reaching PhD level, though the validators who define that set score closer to 81.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">o1 beat GPQA's recruited PhDs, not its own expert ceiling</h1>
+        <p class="nb-dekline">
+          When OpenAI's o1 scored 78 percent on GPQA-Diamond's 198 questions in
+          September 2024 and passed a 69.7 percent human baseline, the launch was
+          read as a machine reaching PhD level, though the validators who define
+          that set score closer to 81.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-24</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          GPQA is the benchmark labs point to when they say a model reasons at
+          graduate level. The name packs two promises: the questions are
+          graduate-level, and they are Google-proof. In September 2024 a model
+          cleared a human baseline that ships with one of GPQA's subsets, and the
+          result traveled as proof that AI had reached the level of a working
+          scientist. You will learn who wrote GPQA's questions and who could not
+          answer them, what its three subsets are and which one the headline
+          scores live on, and why passing one human number on that subset is a
+          small claim. By the end you will read a GPQA score for what it
+          certifies.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/mmlu.html">MMLU: the lab that ships a
+            score rarely says how it was measured</a>: how a scraped benchmark
+            saturates, and why a bare percentage hides its own method.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2311.12022">Rein et al., "GPQA: A
+            Graduate-Level Google-Proof Q&amp;A Benchmark"</a>: the construction,
+            the human baselines, and the subset definitions in full.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The day a model outscored the recruited PhDs</h2>
+        <p>
+          On 12 September 2024, OpenAI released o1 and reported that it answered
+          78.0 percent of the questions on GPQA-Diamond correctly using a
+          consensus of samples, and 77.3 percent on a single pass. In the same
+          post OpenAI described recruiting people with PhDs, giving them the same
+          198 questions, and recording their score: 69.7 percent. o1 was, by
+          OpenAI's account, the first released model to sit above that human
+          number on this test.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The reading came fast. Nature's news desk told readers that o1 had
+          "become the first large language model to beat PhD-level scholars" on
+          the Diamond set,<sup class="nb-cite"><a href="#s2">2</a></sup> and the
+          launch-day trade press had already stamped the same phrase, with
+          VentureBeat announcing a model "claiming PhD-level performance."<sup
+            class="nb-cite"><a href="#s3">3</a></sup
+          >
+          A model had passed PhDs on graduate-level science questions, and the
+          result traveled as a machine that could out-reason working
+          scientists. Two words in the benchmark's own title, "graduate-level"
+          and "Google-proof," did much of the compressing. They sound like a
+          guarantee that a high score reflects the kind of thinking a scientist
+          does.
+        </p>
+        <p>
+          They are not that. They are claims about how GPQA's questions were
+          written and checked. Reading the o1 result correctly means knowing what
+          those two words were built to mean, which subset the 78 percent lives
+          on, and what the 69.7 percent baseline was. Each of those is checkable,
+          and together they narrow "a machine passed the PhDs" into something
+          accurate.
+        </p>
+      </section>
+
+      <section data-nb-section="how-the-questions-were-built" id="how-the-questions-were-built">
+        <h2>What the two adjectives were built to mean</h2>
+        <p>
+          GPQA is a set of 448 multiple-choice science questions, each with four
+          options, written by people holding or pursuing PhDs in biology,
+          physics, and chemistry.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          That authorship is the whole of the "graduate-level" claim. It says
+          domain experts working at the frontier of their subjects composed the
+          questions, not that they were scraped from textbooks or exams. It does
+          not, by itself, say what solving them requires.
+        </p>
+        <p>
+          The paper measures how hard the questions are for people. Experts in
+          the matching field scored 65 percent, rising to 74 percent once you
+          discount questions where the expert later agreed they had made a clear
+          mistake.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          "Google-proof" is the second measurement. The authors recruited skilled
+          non-experts, people with technical training but not in the question's
+          field, and let them answer with unrestricted access to the web. They
+          averaged more than thirty minutes per question and still scored 34
+          percent.<sup class="nb-cite"><a href="#s4">4</a></sup> A question you
+          cannot look up in half an hour is Google-proof in the paper's sense.
+          Chance on four options is 25 percent, so the non-experts landed barely
+          above guessing with the whole internet open.
+        </p>
+        <p>
+          A score counts correct answers. It does not record how they were
+          reached. The 34 percent tells you the non-experts mostly failed to find
+          the answer online. It does not tell you the experts' 65 percent came
+          from reasoning rather than recall, and it cannot tell you how a model
+          reached whatever it reached. Melanie Mitchell, who studies how machines
+          are evaluated, states the general version plainly: AI systems have
+          repeatedly been found to exploit unintended associations in a benchmark
+          to give "the right answer for the wrong reason."<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          A correct answer and a creditable process are two separate findings.
+          Nothing about a percentage keeps them together.
+        </p>
+      </section>
+
+      <section data-nb-section="the-two-human-numbers" id="the-two-human-numbers">
+        <h2>The two human numbers Diamond ships with</h2>
+        <p>
+          GPQA is not one test. The authors ship three nested sets: an Extended
+          set of 546 questions, a Main set of 448, and a high-confidence core of
+          198 called GPQA-Diamond.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Almost every headline model score, o1's included, is reported on
+          Diamond, so it is the one worth understanding.
+        </p>
+        <p>
+          Diamond is the hardest, most-discriminating slice. A question enters it
+          only when both experts who validated it answered correctly and most
+          non-experts got it wrong.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          That construction sets a trap for anyone who reads an expert number off
+          this subset. The paper reports 81.3 percent expert accuracy on Diamond
+          in its Table 2 and marks the figure with an asterisk: it is "skewed by
+          selection effects."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Because Diamond keeps only questions the validating experts already
+          answered correctly, measuring their accuracy on that filtered set
+          inflates it by construction. The 81.3 percent is the highest human
+          figure GPQA records here, but it measures the selection rule as much as
+          the experts.
+        </p>
+        <p>
+          The 69.7 percent human baseline OpenAI reported was not those
+          validators. It was a fresh crew of recruited PhDs who answered the
+          questions without having built them.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          So the launch measured the model against the weaker of two human
+          numbers the benchmark carries: a recruited baseline near 70 percent,
+          not the 81.3 percent the paper records for the validating experts on the
+          same set. "Above the human line" was true. It was true of the lower
+          human line.
+        </p>
+      </section>
+
+      <section data-nb-section="why-the-reading-overreached" id="why-the-reading-overreached">
+        <h2>Three steps between the score and "beats PhDs"</h2>
+        <p>
+          Three specific moves separate o1's 78 percent from the claim that a
+          machine out-reasons scientists. Each one is checkable.
+        </p>
+        <p>
+          The first is the baseline, already named. The human number o1 passed was
+          a recruited group, not the experts whose agreement defines Diamond.<sup
+            class="nb-cite"><a href="#s6">6</a></sup
+          >
+          Clearing the 69.7 percent recruited baseline is not clearing the 81.3
+          percent the validating experts reach on the same questions.
+        </p>
+        <p>
+          The second is leakage. GPQA is public and downloadable, which means its
+          questions can end up in the text a model is trained on. The authors saw
+          this coming. The dataset ships with a canary string and an explicit
+          request not to reproduce the questions in plain text online, "to reduce
+          the risk of leakage into foundation model training corpora."<sup
+            class="nb-cite"><a href="#s7">7</a></sup
+          >
+          A model that has seen a question during training can return the answer
+          from memory, which looks identical to solving it on a score sheet.
+          Arvind Narayanan and Sayash Kapoor showed how concrete this gets: GPT-4
+          could regularly solve coding problems published before its training
+          cutoff and almost none published after, a dated pattern that points to
+          memorization rather than skill.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          A score cannot tell recall and reasoning apart.
+        </p>
+        <p>
+          The third is the format. Diamond is four-option multiple choice. Picking
+          the right option from four is a task large language models are unusually
+          good at: it rewards retrieving and ranking known facts, not producing a
+          derivation someone could check. A high multiple-choice score is strong
+          evidence of knowledge and weak evidence about process.
+        </p>
+        <p>
+          None of this means OpenAI overclaimed. Its launch post carried a
+          careful caveat.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">OpenAI's own caveat</span>
+          <blockquote>
+            "These results do not imply that o1 is more capable than a PhD in all
+            respects &mdash; only that the model is more proficient in solving
+            some problems that a PhD would be expected to solve."<sup
+              class="nb-cite"><a href="#s1">1</a></sup
+            >
+            <span class="nb-note-who">OpenAI, "Learning to reason with LLMs," 12
+            September 2024</span>
+          </blockquote>
+        </div>
+        <p>
+          The lab hedged. The coverage did not. "More proficient on some problems
+          a PhD would be expected to solve" became "PhD-level" in Nature's news
+          desk and in the launch-day trade press,<sup class="nb-cite"
+            ><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s3">3</a></sup>
+          and the three steps above dropped out.
+        </p>
+      </section>
+
+      <section data-nb-section="a-diamond-score-without-the-diploma" id="a-diamond-score-without-the-diploma">
+        <h2>A Diamond score without the diploma</h2>
+        <table class="nb-table">
+          <caption>
+            GPQA-Diamond, the 198-question core: model scores against the two
+            human numbers the benchmark contains. Every value is on the Diamond
+            subset only.<sup class="nb-cite"><a href="#s4">4</a></sup><sup
+              class="nb-cite"><a href="#s6">6</a></sup><sup class="nb-cite"
+              ><a href="#s9">9</a></sup><sup class="nb-cite"
+              ><a href="#s10">10</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Point on Diamond</th>
+              <th>Accuracy</th>
+              <th class="txt">What it is</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Chance</span></td>
+              <td>25%</td>
+              <td class="txt">One option in four.</td>
+            </tr>
+            <tr>
+              <td class="txt">Claude 3 Opus, Mar 2024</td>
+              <td>50.4%</td>
+              <td class="txt">Model, zero-shot with chain-of-thought prompting.</td>
+            </tr>
+            <tr>
+              <td class="txt">Recruited PhDs, Sep 2024</td>
+              <td>69.7%</td>
+              <td class="txt">OpenAI's fresh recruited-PhD baseline.</td>
+            </tr>
+            <tr>
+              <td class="txt">o1, Sep 2024</td>
+              <td>78.0%</td>
+              <td class="txt">Model, consensus of samples.</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Ceiling</span></td>
+              <td>81.3%</td>
+              <td class="txt">Validating experts on the same questions, a figure the paper flags as selection-inflated.</td>
+            </tr>
+            <tr>
+              <td class="txt">Frontier models, 2026</td>
+              <td>~94%</td>
+              <td class="txt">Best public systems, on Epoch's standardized re-runs.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The honest ledger has two sides. First, what a high GPQA-Diamond score
+          cannot tell you. It cannot tell you a model reasoned rather than
+          recalled, because the format and the leakage risk both leave that
+          question open. It cannot tell you a model matches a working scientist,
+          because it is 198 multiple-choice items in three fields, not the
+          open-ended work of research. And it cannot certify "graduate-level"
+          thinking, a phrase that described who wrote the questions, not how a
+          machine would answer them.
+        </p>
+        <p>
+          Second, what it still can tell you. The numbers themselves are
+          trustworthy. Epoch AI, an independent evaluation group, re-ran the top
+          models' Diamond scores and found the labs' self-reported figures line up
+          with independent measurement, with no sign of systematic inflation. The
+          largest gap among leading models was statistically
+          insignificant.<sup class="nb-cite"><a href="#s11">11</a></sup> The
+          benchmark is not spent either. Reviewing Diamond's hardest questions by
+          hand, Epoch estimated at least 90 percent of them are still valid,
+          well-formed problems.<sup class="nb-cite"><a href="#s12">12</a></sup> A
+          high Diamond score is real evidence that a model holds and can deploy a
+          large store of specialized science knowledge. That is worth measuring.
+          It is simply not a diploma.
+        </p>
+        <p>
+          What it cost to blur the two is visible in the climb. Claude 3 Opus
+          scored 50.4 percent on Diamond in March 2024; o1 reached 78 percent that
+          September; by 2026 frontier models sit around 94
+          percent.<sup class="nb-cite"><a href="#s9">9</a></sup><sup
+            class="nb-cite"><a href="#s10">10</a></sup> A benchmark that domain
+          experts and paid validators built, designed so thirty minutes of
+          web search would not crack a single question, went from roughly half to
+          near its ceiling in about two years. Read as a measure of knowledge
+          under a hard answer key, that curve is impressive and largely honest.
+          Read as a scoreboard of machines overtaking scientists, it sold a story
+          the number was never built to support, and the people who bought it now
+          have to unlearn it.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          GPQA's two adjectives describe how it was built, not what a score
+          promises. Graduate-level means domain PhDs wrote the questions.
+          Google-proof means trained non-experts with the web open still scored 34
+          percent. Neither guarantees that a high result comes from reasoning
+          rather than recall, and the four-option format plus a public, leakable
+          question set leave that gap wide open. When o1 passed a 69.7 percent
+          human baseline on the 198-question Diamond set, it cleared the lower of
+          the two human numbers the benchmark holds. The validating experts who
+          define that set post 81.3 percent on it, a figure the paper itself flags
+          as inflated by the selection that builds the set. Both human numbers are
+          constructed artifacts, not ground truth. The scores were reported
+          honestly, and the benchmark measures something real: a large store
+          of specialized knowledge, retrieved under a clean answer key. What it
+          never measured was a scientist. Keep the correct answer and the
+          creditable process as two separate questions, and a GPQA number tells
+          you exactly as much as it earned, and no more.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://epoch.ai/gradient-updates/gpqa-diamond-whats-left">Epoch
+            AI, "GPQA Diamond: What's Left?"</a>: a hand audit of how many Diamond
+            questions still hold up as the scores approach the ceiling.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.normaltech.ai/p/gpt-4-and-professional-benchmarks">Narayanan
+            and Kapoor, "GPT-4 and professional benchmarks"</a>: why tests built
+            for people can lose their meaning when applied to models.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://epoch.ai/benchmarks/gpqa-diamond">Epoch AI's
+            GPQA-Diamond tracker</a>: the standardized saturation curve, with
+            confidence intervals from repeated runs.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://openai.com/index/learning-to-reason-with-llms/"
+              >OpenAI · Learning to reason with LLMs (o1 announcement), 12 Sep 2024</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.nature.com/articles/d41586-024-03169-9"
+              >Nature (news) · "In awe": scientists impressed by latest ChatGPT model o1, 7 Oct 2024</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://venturebeat.com/ai/forget-gpt-5-openai-launches-new-ai-model-family-o1-claiming-phd-level-performance"
+              >VentureBeat · Forget GPT-5! OpenAI launches new AI model family o1 claiming PhD-level performance, 12 Sep 2024</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2311.12022"
+              >Rein et al. · GPQA: A Graduate-Level Google-Proof Q&amp;A Benchmark, arXiv:2311.12022 (2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://aiguide.substack.com/p/on-evaluating-cognitive-capabilities"
+              >Melanie Mitchell · On Evaluating Cognitive Capabilities in Machines</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://openai.com/index/openai-o1-system-card/"
+              >OpenAI · o1 System Card, Sep 2024</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/idavidrein/gpqa"
+              >Rein et al. · GPQA dataset repository (canary string and leakage warning)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.normaltech.ai/p/gpt-4-and-professional-benchmarks"
+              >Narayanan &amp; Kapoor · GPT-4 and professional benchmarks: the wrong answer to the wrong question</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf"
+              >Anthropic · The Claude 3 Model Family model card, Mar 2024</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://epoch.ai/benchmarks/gpqa-diamond"
+              >Epoch AI · GPQA-Diamond benchmark tracker</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://epoch.ai/data-insights/self-reported-gpqa"
+              >Epoch AI · AI developers accurately report GPQA Diamond scores for recent models</a
+            >
+          </li>
+          <li id="s12">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://epoch.ai/gradient-updates/gpqa-diamond-whats-left"
+              >Epoch AI · GPQA Diamond: What's Left? (Greg Burnham, 30 May 2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
