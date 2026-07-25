@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenAI's 2020 scaling paper got the curve right and the budget wrong · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "scaling-laws-kaplan",
+        "template": "lesson",
+        "title": "OpenAI's 2020 scaling paper got the curve right and the budget wrong",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-25",
+        "tags": ["scaling-laws", "compute", "training"],
+        "sources": 6,
+        "words": 2069,
+        "reading_minutes": 10,
+        "dek": "DeepMind's 2022 Chinchilla paper retrained the same comparison and found the right split was close to even, not Kaplan's five-to-two tilt toward model size.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">
+          OpenAI's 2020 scaling paper got the curve right and the budget wrong
+        </h1>
+        <p class="nb-dekline">
+          DeepMind's 2022 Chinchilla paper retrained the same comparison and
+          found the right split was close to even, not Kaplan's five-to-two
+          tilt toward model size.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-25</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every large language model built since 2020 exists because of one
+          idea. A model's loss, how wrong its next-word guesses are, gets
+          better in a predictable way as you make it bigger, feed it more
+          text, and spend more compute training it. That idea has a source, a
+          single OpenAI paper that fit the curve and then told engineers
+          exactly how to spend a compute budget to ride it. The curve held.
+          The spending advice didn't, and a different lab caught the error two
+          years later by finding the specific flaw in how the first paper
+          measured its own models. This lesson walks through what the paper
+          actually measured, what it told engineers to do with that
+          measurement, and exactly which part of that advice broke and why.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/chinchilla.html"
+              >Chinchilla beat a model four times its size on the same
+              compute</a
+            >: the full derivation of the ~20-tokens-per-parameter rule this
+            lesson's correction leads to, not repeated here.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/gpt-3-few-shot.html"
+              >Few-shot GPT-3 beat fine-tuning on a handful of tasks and
+              trailed it on most</a
+            >: the model this paper's advice was used to build, months after
+            it was published.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The three curves that never bent</h2>
+        <p>
+          In January 2020, four months before GPT-3 existed, ten
+          researchers at OpenAI led by Jared Kaplan and Sam McCandlish
+          published "Scaling Laws for Neural Language Models."<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          They trained several hundred Transformer language models, sized
+          from 768 up to 1.5 billion parameters. For each run they recorded
+          one number: loss, how far off the model's predicted next word was
+          from the actual one, averaged over held-out text it never trained
+          on.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 2">1</a></sup
+          >
+          Then they plotted that loss against three quantities: how big the
+          model was (N, its parameter count), how much text it trained on (D,
+          in tokens), and how much computation the training run took (C).
+        </p>
+        <p>
+          All three plots came out as power laws: on a log-log chart, each one
+          is a straight line, meaning loss falls by a fixed fraction every
+          time the quantity on the x-axis multiplies by a fixed factor,
+          however far you zoom out. Kaplan's team fit those lines across a
+          genuinely wide range and reported, in their own words, "no signs of
+          deviation from these trends on the upper end."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 1.1">1</a></sup
+          >
+          The relationships held "across eight orders of magnitude in
+          C<sub>min</sub>, six orders of magnitude in N, and over two orders
+          of magnitude in D."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 1.2">1</a></sup
+          >
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="scaling-laws-kaplan/asset-1.png"
+            alt="Three log-log plots from Kaplan et al. 2020, each showing test loss falling in a straight line against compute, dataset size, and parameter count respectively, spanning several orders of magnitude on each axis."
+          />
+          <figcaption>
+            Fig. 1 · The paper's own headline result: loss against compute,
+            dataset size, and parameters, each a straight line on a log-log
+            scale.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Figure 1"
+                data-nb-note="the three power-law fits the paper's allocation advice was later built on"
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Nothing in the record checked for this lesson disputes that finding.
+          It is why the field kept buying scale after 2020: if loss keeps
+          falling in a straight line as you spend more, the rational move is
+          to keep spending. But a straight line only tells you that bigger is
+          better. It does not tell you how to split a fixed budget between a
+          bigger model and more training data, and Kaplan's paper did not stop
+          at the curve. It answered that question too, and the answer is where
+          the trouble starts.
+        </p>
+      </section>
+
+      <section data-nb-section="grow-the-model" id="grow-the-model">
+        <h2>Grow the model five times faster than the data</h2>
+        <p>
+          Kaplan's team fit a second pair of power laws for the optimal split
+          of a fixed compute budget C. The question was how large the model N
+          should be, and how much data D it should see, to reach the lowest
+          loss for that budget. They found N growing almost in step with C,
+          and D growing far slower: N ∝ C<sup>0.73</sup>, D ∝ C<sup
+            >0.27</sup
+          >.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 6.1, Eq. 6.1; Section 1.1">1</a></sup
+          >
+          Run the arithmetic on those two exponents and a tenfold increase in
+          compute should go mostly into the model.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">×5.4</span
+            ><span class="nb-stat-l">MODEL SIZE, PER 10x COMPUTE</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">×1.9</span
+            ><span class="nb-stat-l">TRAINING DATA, PER 10x COMPUTE</span>
+          </div>
+        </div>
+        <p>
+          The paper's own words for what that implies are direct: "optimally
+          compute-efficient training involves training very large models on a
+          relatively modest amount of data and stopping significantly before
+          convergence."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Abstract">1</a></sup
+          >
+          Convergence is the point where more training on the same data stops
+          helping. Kaplan's advice was to never get there: build the model
+          big, feed it comparatively little, and quit early. The paper's
+          discussion section states the conclusion as plainly as a scaling
+          paper gets: "Big models may be more important than big data."<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 8">1</a></sup
+          >
+        </p>
+        <p>
+          The advice did not sit in a journal. Kaplan is a co-author of
+          "Language Models are Few-Shot Learners," the paper that introduced
+          GPT-3 four months later. Its acknowledgments credit Kaplan and
+          McCandlish with having "initially predicted that a giant language
+          model should show continued gains" and with applying "scaling laws
+          to help predict and guide model and data scaling decisions for the
+          research."<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Acknowledgments">2</a></sup
+          >
+          GPT-3 shipped at 175 billion parameters trained on 300 billion
+          tokens, about 1.7 tokens for every parameter, a training run built
+          the way the scaling-laws paper said to build one.<sup
+            class="nb-cite"
+            ><a href="#s2" data-nb-locator="Section 2">2</a></sup
+          >
+        </p>
+        <p>
+          Kaplan's own team flagged the limits of the fit this advice rested
+          on. An appendix titled "Caveats" says the group "did not thoroughly
+          investigate the small data regime," that their fits "were poor for
+          the smallest values of D," and that "at present we do not have a
+          solid theoretical understanding for any of our proposed scaling
+          laws."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Appendix C">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="the-reversal" id="the-reversal">
+        <h2>Two years later, the split flipped to even</h2>
+        <p>
+          In March 2022 a DeepMind team led by Jordan Hoffmann, with no author
+          in common with Kaplan's paper, reran the same question:
+          for a fixed compute budget C, how should the optimal model size N
+          and token count D scale?<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Abstract">3</a></sup
+          >
+          They trained more than 400 models, from 70 million to over 16
+          billion parameters. They fit the split three separate ways: reading
+          the minimum off each training curve, holding compute fixed and
+          varying model size, and fitting one parametric surface to every
+          run.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Sections 3.1-3.3">3</a></sup
+          >
+          All three methods landed close to N ∝ C<sup>0.50</sup>, D ∝ C<sup
+            >0.50</sup
+          >: an even split, not Kaplan's lopsided one.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="scaling-laws-kaplan/chart-1.png"
+            alt="Grouped bar chart comparing the fitted exponents for how model size and training data should scale with compute. Kaplan 2020 shows 0.73 for model size against 0.27 for data. Chinchilla's three methods each land close to 0.50 and 0.50."
+          />
+          <figcaption>
+            Fig. 2 · The exponents from both papers: N<sub>opt</sub> ∝ C<sup
+              >a</sup
+            >
+            for model size, D<sub>opt</sub> ∝ C<sup>b</sup> for training data.
+            Kaplan's single fit against Chinchilla's three independent
+            ones.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Eq. 6.1; Section 1.1">1</a></sup
+            ><sup class="nb-cite"
+              ><a href="#s3" data-nb-locator="Table 2">3</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Hoffmann's team named the reason for the gap. Kaplan's runs shared
+          one learning-rate schedule, the rule that shrinks each training
+          step's size over the course of a run, typically decaying toward
+          zero near the end, sized for a long run regardless of how long any
+          given model actually trained. As Hoffmann's paper puts it: "the
+          authors use a fixed number of training tokens and learning rate
+          schedule for all models; this prevents them from modelling the
+          impact of these hyperparameters on the loss... the intermediate loss
+          estimates... are therefore overestimates of the loss of a model
+          trained with a schedule length matching" its actual data budget.<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="Section 2">3</a></sup
+          >
+          A model stopped early was measured mid-decay, against a schedule
+          tuned for a run it never finished, so its recorded loss looked worse
+          than a model properly trained for that shorter length would have
+          scored. Put plainly: Kaplan's team read each shorter run's loss off
+          a point partway down a longer run's schedule, rather than training a
+          separate run that actually finished on that shorter budget. At the
+          point being measured, "the learning rate schedule has not fully
+          decayed."<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Read across many model sizes, that overstatement tilted the fitted
+          optimum toward bigger models and less data, in the same direction
+          Kaplan's paper found. Chinchilla's models also sat at a different
+          scale: the majority of Kaplan's runs were under 100 million
+          parameters, against over 500 million for most of Chinchilla's.<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="Section 2">3</a></sup
+          >
+        </p>
+        <p>
+          This does not contradict what Kaplan's own paper says about
+          learning rates. Section 2.2 reports that the team "experimented with
+          a variety of learning rates and schedules" and "found that results
+          at convergence were largely independent of learning rate
+          schedule."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 2.2">1</a></sup
+          >
+          That is a claim about models trained to convergence under different
+          schedules. Chinchilla's critique is about a different practice: reading
+          intermediate, pre-convergence loss off one shared schedule to
+          compare across model sizes. Kaplan checked for the failure they
+          tested for and did not find it. They did not test for the one that
+          was actually there.
+        </p>
+        <p>
+          The reversal is checkable directly, not just through refitted
+          exponents. At a fixed budget of 10<sup>21</sup> FLOPs, Kaplan's
+          formula recommends a 4.68-billion-parameter model; Chinchilla's
+          recommends 2.86 billion. Hoffmann's team trained both, at 4.74
+          billion and 2.80 billion parameters, and the smaller one won.<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="Appendix D.4">3</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="more-pieces" id="more-pieces">
+        <h2>Two more pieces of evidence</h2>
+        <p>
+          A 2024 paper by Tim Pearce and Jinyeop Song, with no author or
+          institutional tie to either OpenAI or DeepMind, found a second,
+          independent contributor to Kaplan's skew. Kaplan counted only
+          non-embedding parameters, the weights inside a model's transformer
+          layers, leaving out the ones in its word-lookup table. Chinchilla
+          counted every parameter the model had.<sup
+            class="nb-cite"
+            ><a href="#s5" data-nb-locator="Abstract">5</a></sup
+          >
+          Pearce and Song simulated Chinchilla's own method under Kaplan's
+          original conditions, small scale and non-embedding counts, and it
+          reproduced Kaplan-like biased coefficients on its own, on top of the
+          learning-rate effect. Even a reader who accepts Chinchilla's
+          explanation in full is missing part of the story: the counting
+          convention was never named as a factor in Chinchilla's own paper.
+        </p>
+        <p>
+          The disagreement over which way to tilt, model or data, also
+          predates Chinchilla by five years. Baidu researchers led by Joel
+          Hestness, unconnected to either later team, published a 2017 study
+          of power-law scaling across translation, vision, speech, and
+          language tasks. They found the opposite lean from Kaplan's: model
+          size scaling sub-linearly with data size, meaning data outpacing the
+          model rather than the reverse.<sup class="nb-cite"
+            ><a href="#s6" data-nb-locator="Abstract">6</a></sup
+          >
+          Kaplan's own paper names the disagreement in its related-work
+          section without resolving it: "[Hestness et al.] found super-linear
+          scaling of dataset size with model size, whereas we find a
+          sub-linear scaling."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 7">1</a></sup
+          >
+          The grow-the-model conclusion was contested territory before Kaplan
+          ever published it, not a settled consensus that only Chinchilla
+          later broke.
+        </p>
+        <p>
+          No arXiv errata, published
+          rebuttal, or blog post from Kaplan, McCandlish, or any other
+          2020-paper author addressing Chinchilla's critique turns up in the
+          public record. That silence is not evidence the authors agree; it
+          only means the correction stands unanswered by them as far as this
+          search reached.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Kaplan's paper made two claims, and they aged differently. The
+          first, that loss falls as a straight line on a log-log chart as you
+          add model size, data, or compute, still describes every large model
+          tested against it since. Nothing in this lesson's sources challenges
+          it, and it is the reason scale became the field's default bet. The
+          second claim, that a compute budget should go roughly five times
+          faster into model size than into data, was specific to how Kaplan's
+          team measured their own models. One learning-rate schedule, sized
+          for long runs, was applied to runs of every length, and model size
+          was counted one particular way. Fix those two choices, and the same
+          kind of budget splits close to even, a reversal
+          Hoffmann's team checked directly by training the two rival model
+          sizes at the same budget and watching the smaller one win. Kaplan's
+          curve is the reason a lab keeps buying scale at all. Kaplan's own
+          arithmetic for spending it, checked against a model actually built
+          and run, was not the reason to spend it that way.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2001.08361"
+              >Kaplan et al., "Scaling Laws for Neural Language Models"
+              (full text)</a
+            >: the paper itself, including the appendices on caveats and the
+            compute-efficient frontier this lesson only summarizes.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2203.15556"
+              >Hoffmann et al., "Training Compute-Optimal Large Language
+              Models" (full text)</a
+            >: Chinchilla's own paper, with the full derivation of all three
+            fitting approaches.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2001.08361"
+              >arXiv · Kaplan, McCandlish, et al., "Scaling Laws for Neural
+              Language Models" (2020)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2005.14165"
+              >arXiv · Brown, Mann, et al., "Language Models are Few-Shot
+              Learners" (2020)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.15556"
+              >arXiv · Hoffmann, Borgeaud, et al., "Training Compute-Optimal
+              Large Language Models" (2022)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://irhum.github.io/blog/chinchilla/"
+              >Irhum Shafkat · "Chinchilla" (2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2406.12907"
+              >arXiv · Pearce &amp; Song, "Reconciling Kaplan and Chinchilla
+              Scaling Laws" (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1712.00409"
+              >arXiv · Hestness, Narang, et al., "Deep Learning Scaling is
+              Predictable, Empirically" (2017)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
