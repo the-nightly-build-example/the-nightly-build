@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hand-writing HumanEval's 164 problems solved contamination in 2021 and caused it by 2024 · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "humaneval-pass-at-k",
+        "template": "lesson",
+        "title": "Hand-writing HumanEval's 164 problems solved contamination in 2021 and caused it by 2024",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-25",
+        "tags": ["humaneval", "pass-at-k", "benchmarks", "contamination", "code-generation"],
+        "sources": 9,
+        "words": 2200,
+        "reading_minutes": 10,
+        "dek": "Pass@k is computed from many sampled tries per problem, the same arithmetic behind every reported HumanEval score, from Codex's 28.8% in 2021 to 2024's scores above 90%.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">
+          Hand-writing HumanEval's 164 problems solved contamination in 2021
+          and caused it by 2024
+        </h1>
+        <p class="nb-dekline">
+          Pass@k is computed from many sampled tries per problem, the same
+          arithmetic behind every reported HumanEval score, from Codex's
+          28.8% in 2021 to 2024's scores above 90%.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-25</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A HumanEval score is one of the first numbers a lab reaches for to
+          say a model can write code, and it appears in nearly every model
+          release. It reads like a plain fact about the model, the way
+          passing 92% of a driving test reads as a fact about the driver. It
+          is built instead from a procedure: sample the model many times on
+          164 fixed problems, count how many tries pass a small set of
+          hidden checks, and estimate how often at least one try would
+          succeed. By the end you can work that estimate by hand, see why a
+          score at one try and at a hundred tries differ, and see why the
+          design that made this test trustworthy in 2021 is why a
+          90-something percent score today says less than it implies.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/swe-bench.html"
+              >Change which SWE-bench tasks are counted and GPT-4o's score
+              doubles</a
+            >: the sibling instrument, which grades a patch against a whole
+            repository's own tests in a container instead of one function
+            against a handful of hidden checks.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/mmlu.html"
+              >The lab that ships an MMLU score rarely says how it was
+              measured</a
+            >: the same problem, a headline number hiding its measurement
+            conditions, by a different mechanism.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>164 problems a model was not supposed to have already seen</h2>
+        <p>
+          When a lab says its model "solves 90% of HumanEval," the claim
+          traces to one paper: Mark Chen and colleagues at OpenAI, in
+          "Evaluating Large Language Models Trained on Code," published in
+          July 2021.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§2.2, Abstract">1</a></sup
+          >
+          They built a benchmark called HumanEval: 164 Python problems, each
+          with a function signature, a docstring, and a hidden set of unit
+          tests, an average of 7.7 tests per problem.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          A model writes the function body, and the hidden tests decide
+          whether it passed.
+        </p>
+        <p>
+          The 164 problems were written by hand, and the paper says why. Its
+          models were trained on "a large fraction of GitHub, which already
+          contains solutions to problems from a variety of sources," so a
+          benchmark built from scraped problems risked testing memory
+          instead of ability.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Hand-writing problems no 2021 model could have trained on was how
+          Chen and colleagues kept the test honest.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">164</span
+            ><span class="nb-stat-l">Hand-written problems</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">7.7</span
+            ><span class="nb-stat-l">Average hidden tests per problem</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">200</span
+            ><span class="nb-stat-l">Completions sampled per problem</span>
+          </div>
+        </div>
+        <p>
+          HumanEval grades one function against the tests it ships with. A
+          related instrument grades a whole repository instead, running a
+          project's own test suite in a sealed container, a measurement this
+          course covers on its own terms. The grading code is public too:
+          OpenAI's <code>openai/human-eval</code> repository ships the 164
+          problems and the sandboxed code that checks a solution against the
+          hidden tests.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="README, Usage">2</a></sup
+          >
+          It is the actual code, so the metric taught here is the metric
+          anyone can run.
+        </p>
+      </section>
+
+      <section data-nb-section="the-shortcut" id="the-shortcut">
+        <h2>The guess that undercounts</h2>
+        <p>
+          To score one problem, Chen and colleagues sampled many completions,
+          not one: for each of the 164 problems they generated
+          <code>n</code> completions and counted <code>c</code> that passed
+          the hidden tests, using n=200 in the paper's own runs.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§2.1, §3.2">1</a></sup
+          >
+          Read that a model "solves 28.8% of HumanEval" and the natural
+          guess is c/n: 28.8% of 200 samples got the answer right. That
+          guess is correct only because the number in question is pass@1,
+          where c/n and the true estimator are the same formula.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          The trouble starts once the question is about more than one try.
+          Say a model writes 10 solutions and 2 pass: n=10, c=2. Ask how
+          often it would solve the problem given 5 of those tries at once,
+          needing only one to work. A tempting shortcut treats the
+          single-sample rate p̂=c/n=0.20 as fixed and computes 1−(1−p̂)⁵, as
+          if 5 draws were 5 independent coin flips at that rate: 1−0.8⁵, or
+          67.2%.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          It is wrong. Chen and colleagues prove in an appendix that this
+          shortcut is a consistent underestimate.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Appendix A">1</a></sup
+          >
+        </p>
+        <p>
+          The real answer, worked from the same n=10, c=2: choosing 5 of the
+          10 samples without replacement, the chance none is a passing one
+          is C(8,5)/C(10,5), or 56/252. Subtract that from 1 and pass@5 is
+          77.8%, over 10 points above the shortcut.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The gap is not rounding error. The shortcut assumes 5 draws with
+          replacement, like flipping one weighted coin 5 times. Pass@k is 5
+          draws without replacement from a fixed pool of 10 completions the
+          model already produced: different processes, different expected
+          values.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \text{pass@}k := 1 - \dfrac{\dbinom{\htmlClass{nb-mc1}{n}-\htmlClass{nb-mc2}{c}}{\htmlClass{nb-mc3}{k}}}{\dbinom{\htmlClass{nb-mc1}{n}}{\htmlClass{nb-mc3}{k}}}
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">n</span
+              ><span>samples drawn for one problem.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">c</span
+              ><span
+                >of those n, the number that pass the hidden tests
+                (n−c fail).</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">k</span
+              ><span
+                >the number of tries the model is credited with.</span
+              >
+            </li>
+          </ul>
+          <figcaption>
+            The unbiased estimator, exactly as the official
+            <code>openai/human-eval</code> harness computes it, the same
+            formula in the paper's numerically stable implementation and the
+            repository's own evaluation code.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Fig. 3">1</a></sup
+            ><sup class="nb-cite"
+              ><a
+                href="#s2"
+                data-nb-locator="human_eval/evaluation.py, estimator()"
+                >2</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+      </section>
+
+      <section data-nb-section="one-or-a-hundred" id="one-or-a-hundred">
+        <h2>What pass@1 and pass@100 actually ask</h2>
+        <p>
+          Pass@1 and pass@100 answer different questions: does the first
+          attempt work, or does one of a hundred. Take a model with a modest
+          10% chance of solving a problem on any single try, c=20 of the
+          paper's own n=200 budget. It solves on the first attempt 10% of
+          the time. Give it 10 tries and the odds one lands rise to 66%.
+          Give it 100 and the estimator is effectively certain, near
+          100%.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Only the number of tries changed.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Codex, by size, at k=1, 10, and 100 on the same 164 problems.
+            Pass@1 and pass@100 diverge further as the model gets
+            better.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Table 1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th>pass@1</th>
+              <th>pass@10</th>
+              <th>pass@100</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Codex-300M</span></td>
+              <td>13.2%</td>
+              <td>20.4%</td>
+              <td>36.3%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Codex-2.5B</span></td>
+              <td>21.4%</td>
+              <td>35.4%</td>
+              <td>59.5%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Codex-12B</span></td>
+              <td>28.8%</td>
+              <td>46.8%</td>
+              <td>72.3%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GPT-J-6B</span></td>
+              <td>11.6%</td>
+              <td>15.7%</td>
+              <td>27.7%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          One dial controls how spread out those samples are: temperature,
+          a setting that governs how much randomness enters each next word
+          picked. At low temperature the model leans on its single most
+          likely continuation, so samples look alike; at high temperature it
+          draws more from less-likely continuations, so samples diverge.
+          Chen and colleagues tuned temperature per metric: 0.2, close to
+          deterministic, for pass@1; 0.8, far more random, for
+          pass@100.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.3">1</a></sup
+          >
+          With one try, the safest bet is the model's best guess. With a
+          hundred tries, only one has to land, so spreading the guesses out
+          pays.
+        </p>
+      </section>
+
+      <section data-nb-section="fixed-set" id="fixed-set">
+        <h2>The problems stayed fixed while the scores kept climbing</h2>
+        <p>
+          The 164 problems Chen and colleagues wrote in 2021 have not
+          changed since. They sit unmodified in the public
+          <code>openai/human-eval</code> repository, hidden tests
+          included,<sup class="nb-cite"><a href="#s2">2</a></sup> and anyone
+          can read every solution posted to them since: on GitHub, in blog
+          posts, in papers that quote them as examples.
+        </p>
+        <p>
+          Reported pass@1 on that same fixed set climbed steadily. Codex-12B
+          solved 28.8% in 2021.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          GPT-4 solved 67.0% in 2023, more than double.<sup class="nb-cite"
+            ><a
+              href="#s3"
+              data-nb-locator="Table 2 / Table 11"
+              >3</a
+            ></sup
+          >
+          Claude 3 Opus solved 84.9% in 2024.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Table 1">4</a></sup
+          >
+          By late 2024, Meta's reported figures had GPT-4o at 90.2% and
+          Claude 3.5 Sonnet at 92.0%.<sup class="nb-cite"
+            ><a href="#s5" data-nb-locator="Table 18">5</a></sup
+          >
+          Three years, five models, the same 164 problems, and the reported
+          number more than tripled.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="humaneval-pass-at-k/chart-1.png"
+            alt="Bar chart of reported HumanEval pass@1 scores climbing from Codex-12B at 28.8 percent in 2021 to GPT-4 at 67.0 percent in 2023, Claude 3 Opus at 84.9 percent in 2024, and GPT-4o and Claude 3.5 Sonnet near 90 to 92 percent in 2024."
+          />
+          <figcaption>
+            Fig. 1 · Reported pass@1 on the same 164 problems, five models,
+            three years.<sup class="nb-cite"><a href="#s1">1</a></sup
+            ><sup class="nb-cite"><a href="#s3">3</a></sup
+            ><sup class="nb-cite"><a href="#s4">4</a></sup
+            ><sup class="nb-cite"><a href="#s5">5</a></sup> The GPT-4o and
+            Claude 3.5 Sonnet figures come from the Llama 3 paper, which
+            reports the best of what was publicly available or reproduced by
+            Meta itself.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Some of that climb is real progress; newer models write better
+          code. But the design that made HumanEval trustworthy in 2021 also
+          undercuts it later. Hand-writing the 164 problems kept them out of
+          a 2021 model's training data. Publishing them, so anyone could
+          verify a score, put them inside most models' training data within
+          a few years. One year's fix became a later year's leak.
+        </p>
+      </section>
+
+      <section data-nb-section="two-failures" id="two-failures">
+        <h2>Weak tests and memorized answers are not the same failure</h2>
+        <p>
+          A rising HumanEval score can be inflated two ways, often run
+          together in coverage of the benchmark: the hidden tests are too
+          weak to catch a wrong answer, or the model has already seen the
+          answer. The fix for one does nothing for the other.
+        </p>
+        <p>
+          The first problem is the tests. HumanEval ships an average of 7.7
+          hidden tests per problem, too few to catch every subtly wrong
+          function. A team at the University of Illinois Urbana-Champaign,
+          independent of OpenAI, built EvalPlus: they expanded each
+          problem's suite roughly eightyfold, to 764.1 tests on average, and
+          re-graded the same models against HumanEval+.<sup class="nb-cite"
+            ><a href="#s6" data-nb-locator="Abstract; §4">6</a></sup
+          >
+          Scores fell across the board: GPT-4 dropped 13.1 points, ChatGPT
+          12.6, pass@1 by as much as 19.3%, pass@100 by as much as
+          28.9%.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          None of that is about training data; a model that had never seen
+          HumanEval could still pass with subtly wrong code, because the
+          tests never asked the right question.
+        </p>
+        <p>
+          The second problem is separate: whether the training data already
+          contained the problems or their solutions. Researchers at Yale,
+          also independent of OpenAI, searched two large training corpora
+          and found 12.2% of HumanEval's solutions nearly verbatim in the
+          Pile and 18.9% in the Stack.<sup class="nb-cite"
+            ><a href="#s7" data-nb-locator="§3">7</a></sup
+          >
+          Removing those problems changed which model looked strongest: the
+          accuracy gap between StarCoderBase-15.5B and Pythia-12B shrank
+          from 23.8 points to 13.9.<sup class="nb-cite"
+            ><a href="#s7" data-nb-locator="§4.1">7</a></sup
+          >
+          That is contamination doing its work: the model had already read
+          the answer.
+        </p>
+        <p>
+          How much contamination moves a score depends on who measures it.
+          OpenAI's own check on GPT-4 found about 25% of HumanEval
+          overlapping its training data, yet GPT-4 scored 65.58% on the
+          clean remainder, a degradation of just 2.12 points by OpenAI's own
+          count.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Table 11">3</a></sup
+          >
+          A controlled experiment tells a starker story: researchers
+          deliberately leaked a growing share of HumanEval into three small
+          models' fine-tuning data and re-tested them. Llama-3.2-1B's
+          HumanEval accuracy rose from 19% with no leaked data to 82% with
+          all of it leaked.<sup class="nb-cite"
+            ><a href="#s8" data-nb-locator="Appendix A, Table 3">8</a></sup
+          >
+          The same models, tested on DyCodeEval, regenerated fresh each run,
+          showed no such rise: Llama-3.2-1B's score moved from 14% down to
+          11% over the same range.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          Meta, testing its own Llama 3 models, found HumanEval so
+          pervasively overlapped with common training data that its usual
+          contamination measure produced no usable estimate at all, and
+          dropped the benchmark from that part of its report.<sup
+            class="nb-cite"
+            ><a href="#s5" data-nb-locator="§5.1.4">5</a></sup
+          >
+          A small effect, a large one, and a broken measure are three
+          outcomes from three methods. The honest reading is that
+          contamination's size depends on the model, the training data, and
+          how "contaminated" gets defined.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="humaneval-pass-at-k/chart-2.png"
+            alt="Line chart of Llama-3.2-1B accuracy as injected training-data leakage rises from 0 to 100 percent: HumanEval accuracy climbs from 19 to 82 percent, while accuracy on DyCodeEval, a benchmark generated fresh each run, stays flat between 7 and 14 percent."
+          />
+          <figcaption>
+            Fig. 2 · The same model, the same injected leakage, two
+            benchmarks. HumanEval's fixed, memorizable problems reward the
+            leaked data; DyCodeEval, regenerated each run, does not.<sup
+              class="nb-cite"
+              ><a href="#s8" data-nb-locator="Appendix A, Table 3">8</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Even without contamination, "GPT-4's HumanEval score" is not one
+          figure. The 67.0% is from the original GPT-4 Technical Report; a
+          later point release, GPT-4T, scored higher, per Anthropic's model
+          card.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Table 1, footnote 6">4</a></sup
+          >
+          Meta's reported figures a year later put a GPT-4 variant at 86.6%,
+          almost 20 points above.<sup class="nb-cite"
+            ><a href="#s5" data-nb-locator="Table 18">5</a></sup
+          >
+          Epoch AI, independent of every lab named here, makes the general
+          point: self-reported numbers disagree mostly because "evaluators
+          often do not report what prompt and temperature they
+          used."<sup class="nb-cite"><a href="#s9">9</a></sup> A HumanEval
+          score is only comparable to another when both name the model
+          version, the sampling settings, and the date.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Pass@k is a statistical estimate, computed from many sampled
+          tries against 164 hand-written problems, of how likely at least
+          one of k tries would succeed, using the formula here. Pass@1 and
+          pass@100 are different questions on
+          purpose, which is why Codex-12B could truthfully report both 28.8%
+          and 72.3% on the same test. None of that is broken. What breaks
+          is the second half of the story. OpenAI hand-wrote those 164
+          problems in 2021 so no model had already seen them, and keeping
+          the set small, fixed, and public all but guaranteed that within a
+          few years most models had. Add a second failure, hidden tests too
+          sparse to catch subtly wrong code, and a HumanEval score above
+          90% today says as much about training data and grading as about
+          how well a model writes code. The next time a HumanEval number
+          appears, ask not just how high it is but which model version,
+          sampled how many times, at what temperature, and how much
+          training data had already seen the answer.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://github.com/openai/human-eval"
+              >openai/human-eval on GitHub</a
+            >: the runnable harness and the 164 problems themselves, for
+            anyone who wants to compute pass@k by hand.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://github.com/evalplus/evalplus"
+              >evalplus/evalplus on GitHub</a
+            >: the HumanEval+ project, with the expanded test suites and
+            current model scores.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§2.1-2.2 (construction, equation 1); §3.2-3.3 (sampling, temperature); Fig. 3; Table 1; Appendix A"
+              href="https://arxiv.org/abs/2107.03374"
+              >Chen et al. · Evaluating Large Language Models Trained on Code
+              (arXiv:2107.03374, 2021)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="README; human_eval/evaluation.py; human_eval/execution.py"
+              href="https://github.com/openai/human-eval"
+              >openai/human-eval GitHub repository (dataset and evaluation
+              harness)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Table 2 (67.0% 0-shot); Table 11 (contamination ~25%, 65.58% vs 67.0%); §3.2"
+              href="https://arxiv.org/abs/2303.08774"
+              >OpenAI · GPT-4 Technical Report (arXiv:2303.08774, 2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Table 1 (Opus 84.9%, Sonnet 73.0%, Haiku 75.9%); footnote 6 (GPT-4T scored higher)"
+              href="https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf"
+              >Anthropic · The Claude 3 Model Family: Opus, Sonnet, Haiku
+              (model card, 2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Table 18 (pass@1 by model, incl. GPT-4o 90.2%, Claude 3.5 Sonnet 92.0%, GPT-4 86.6%); §5.1.4 (8-gram overlap breaks HumanEval contamination estimate); §5.2.3"
+              href="https://arxiv.org/abs/2407.21783"
+              >Meta AI · The Llama 3 Herd of Models (arXiv:2407.21783,
+              2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract (80x test expansion); §4 (score drops by model)"
+              href="https://arxiv.org/abs/2305.01210"
+              >Liu, Xia, Wang & Zhang · Is Your Code Generated by ChatGPT
+              Really Correct? Rigorous Evaluation of Large Language Models
+              for Code Generation (arXiv:2305.01210, 2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3 (12.2% Pile, 18.9% Stack overlap); §4.1 (23.8 to 13.9 point gap after decontamination)"
+              href="https://arxiv.org/abs/2403.04811"
+              >Riddell, Ni & Cohan · Quantifying Contamination in Evaluating
+              Code Generation Capabilities of Language Models
+              (arXiv:2403.04811, 2024)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Appendix A, Table 3 (injected leakage 0-100% vs HumanEval and DyCodeEval accuracy)"
+              href="https://arxiv.org/abs/2502.17521"
+              >Chen et al. · Benchmarking Large Language Models Under Data
+              Contamination: A Survey from Static to Dynamic Evaluation
+              (arXiv:2502.17521, 2025)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Benchmarking-methodology section, on undisclosed prompt/temperature settings"
+              href="https://epoch.ai/benchmarks/about"
+              >Epoch AI · About: Benchmarking</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
