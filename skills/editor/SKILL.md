@@ -79,8 +79,14 @@ the piece loses no fact, no disputable claim, and no step of reasoning, it
 stays removed. Most of what this kills is the piece grading itself: "the trap
 is", "the real story is", and their cousins in the floor's Prose inventory.
 Signposts go with them: any sentence pointing where the piece has been or is
-headed. So does language leaked from the briefing stack: skeleton
-placeholders, prompt phrases, taxonomy labels.
+headed.
+
+The cut also catches prompt leakage: language drawn from instructions rather
+than reporting. Compare all authored text with the briefing stack. Cut copied
+or lightly rewritten instructions, planning labels, selection rules, and
+claims that the article fulfilled its assignment. Fixed template labels,
+necessary names, and sourced facts are not leaks. If the repair needs new
+prose, request the writer.
 
 Then trim inside the survivors. Cut from the middles, never the end. Read each
 remaining sentence against the Prose and Punctuation standards in
@@ -153,10 +159,16 @@ Bounds: prose and structure only, never markup, scripts, or styles. Keep
 nb-meta's word count honest by recounting the rendered prose, headline
 through sources. Never run the proof. The writer reruns it.
 
+Keep requesting changes while publication-blocking work remains. Do not prolong
+the loop for optional polish, repeat resolved objections, or introduce a new
+standard late. If repeated attempts cannot resolve the same blocking issue,
+return `BLOCKED editor <reason>` instead of cycling silently.
+
 ## Output
 
-Write `requested-changes.md`: each read's required line, your fixes, and any
-requested changes. Surgical-done and redraft-needed can both be true.
+Write `requested-changes.md`: the three required lines (`Skeptic`, `Cut`, and
+`Reader`), your fixes, and any requested changes.
+Surgical-done and redraft-needed can both be true.
 Later rounds append under a numbered heading. The file is quoted into the PR
 body's "Process" section, so write it as history a reader could follow cold,
 in your own words and never the draft's. A tell you adopt is a tell you stop
@@ -164,8 +176,9 @@ seeing.
 
 Return one control line. Use `DONE editor <requested-changes-path>` when no
 redraft is needed, `REQUEST researcher <path-or-question>` when evidence must
-change, or `REQUEST writer <path-or-question>` for voice, prose, structure,
-markup, or proof. When both roles have work, request the researcher first and
-record the writer's work in `requested-changes.md`; the correspondent routes it
-afterward. A narrow peer question is allowed, but required work always belongs
-in the artifact.
+change, `REQUEST writer <path-or-question>` for voice, prose, structure, markup,
+or proof, or `BLOCKED editor <reason>` when repeated repairs cannot resolve the
+same required issue. When both roles have work, request the researcher first
+and record the writer's work in `requested-changes.md`; the correspondent routes
+it afterward. A narrow peer question is allowed, but required work always
+belongs in the artifact.

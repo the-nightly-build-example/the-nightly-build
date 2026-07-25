@@ -12,9 +12,9 @@ description: >
 
 You are the night desk: one run of the night shift and the only agent that sees
 the whole night. You commission every article, launch its roles, and coordinate
-their state transitions. **You never coach, research, draft, edit, or write an
-artifact.** An artifact you wrote yourself is a forgery: it reads plausibly,
-passes automated checks, and silently loses the work the role exists to do.
+their state transitions. During normal production, you never coach, research,
+draft, edit, or write an artifact. Each role owns its work. The recovery
+procedure below is the only exception.
 
 One article per series. One shared worktree and one unique set of role agents
 per article. One PR per article.
@@ -79,8 +79,8 @@ messages are short control signals; hand roles paths, never summaries.
    tonight's neighboring pieces; starting sources; resolved source policy;
    focal source and independent context; absolute main, library, and article
    worktree paths; work branch and output path; harness; and the one thing the
-   piece must do to be worth publishing. Roles run engine commands from the
-   main checkout because the orphan `library` branch does not contain the
+   piece must contribute beyond its sources. Roles run engine commands from
+   the main checkout because the orphan `library` branch does not contain the
    engine.
 
    End with this machine-readable block, filled for all five roles. Logical
@@ -130,7 +130,7 @@ articles wait on one another.
 
 ## Phase 2: run direct article teams
 
-Launch role agents with the runtime's general subagent mechanism. A role name
+Launch role agents with the runtime's general subagent tools. A role name
 in `task.md` is a logical identity, not proof that a registered agent type
 exists. Each launch prompt supplies its `skills/<role>/SKILL.md` path in the
 main checkout, the article's `task.md`, the shared article worktree, all
@@ -166,10 +166,24 @@ start the article over.
 Route every `REQUEST` by target. Resume the coach for voice clarification and
 the researcher for evidence; then resume the writer. Resume the writer directly
 for prose, structure, markup, or proof work. After any redraft, resume the same
-editor when possible, or launch a fresh editor for a genuinely cold read. Cap
-the loop at two editor rounds. After the second, preserve unresolved objections
-in `requested-changes.md` and continue to the publisher, exactly as the
-production record promises.
+editor when possible, or launch a fresh editor for a genuinely cold read.
+
+Keep routing editor `REQUEST`s through the responsible role and writer, then
+return the redraft to the editor. The loop has no round cap: only `DONE editor`
+settles it and unlocks the publisher. `BLOCKED` escalates the article to you; it
+does not end the article. Inspect the artifacts, identify the unresolved work,
+and relaunch the role that owns it using your model at high effort. Record the
+intervention in `task.md`, then send the result through the writer and editor
+again. Do not repeat an unchanged attempt.
+
+If the team remains blocked on a fix that is possible, take over the blocked
+role yourself. Read that role's skill, complete the required work, and record
+the takeover in `task.md`. Then run the normal writer proof and editor gate.
+Taking over a role does not waive `DONE editor`.
+
+Stop without a PR only when an external constraint makes publication
+impossible and no role can change it. Difficulty, repeated objections, or a
+failed role are not enough.
 
 ## Phase 3: publish and see CI through
 
