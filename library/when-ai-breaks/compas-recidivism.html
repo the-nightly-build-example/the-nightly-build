@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ProPublica and Northpointe read the same recidivism scores and both were right · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "compas-recidivism",
+        "template": "lesson",
+        "title": "ProPublica and Northpointe read the same recidivism scores and both were right",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-25",
+        "tags": [],
+        "sources": 10,
+        "words": 2197,
+        "reading_minutes": 9,
+        "dek": "The two sides in the COMPAS bias fight were measuring real numbers off the same 7,214 defendants, just not the same question.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">
+          ProPublica and Northpointe read the same recidivism scores and both
+          were right
+        </h1>
+        <p class="nb-dekline">
+          The two sides in the COMPAS bias fight were measuring real numbers
+          off the same 7,214 defendants, just not the same question.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-25</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Courts across the United States hand judges a number before
+          deciding bail, sentence length, and parole: an algorithm's
+          estimate of how likely a defendant is to be arrested again.
+          COMPAS, sold by a company called Northpointe, is one of the most
+          widely used of these scores. In 2016 ProPublica found it was
+          wrong in a specific, racially lopsided way. Northpointe answered
+          with its own analysis of the same data and found no bias at all.
+          Both were reading real numbers correctly. This lesson explains
+          why: not a dispute about arithmetic, but a mathematical fact
+          about what happens when two groups are arrested again at
+          different rates. By the end you will name the two fairness
+          definitions each side used, work the arithmetic that pulls them
+          apart, and know which question to ask the next time a score is
+          called unbiased by one report and biased by another.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../when-ai-breaks/dutch-childcare-benefits.html"
+              >The Dutch tax office turned a non-Dutch passport into a fraud
+              score</a
+            >: a different automated government score that harmed people
+            through a proxy, nationality. COMPAS's problem instead is a
+            genuine trade-off between two honest ways to measure fairness.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a
+              href="https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing"
+              >Machine Bias</a
+            >: ProPublica's original 2016 investigation, read in full, with
+            the individual defendants' stories this lesson only outlines.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What COMPAS told the judge about Eric Loomis</h2>
+        <p>
+          Northpointe sells software called COMPAS to American courts, and
+          judges, parole boards, and pretrial officers use its score to
+          help decide bail, sentence length, and parole.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Eric Loomis met that score at his sentencing. He pleaded guilty to
+          two lesser charges: attempting to flee a traffic officer, and
+          operating a vehicle without the owner's consent. Three more
+          serious counts were dismissed but "read in," so the court could
+          still weigh them. The
+          plea deal left his sentence to the court's discretion, with up to
+          17.5 years possible on the two counts alone.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          His presentence report carried a COMPAS score, and the judge told
+          him directly: "You're identified, through the COMPAS assessment,
+          as an individual who is at high risk to the community."<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          Loomis appealed. Northpointe treats the formula behind COMPAS as a
+          trade secret, so he argued that being sentenced partly on a number
+          he could not inspect violated his right to due process. The
+          Wisconsin Supreme Court disagreed. A COMPAS score at sentencing,
+          it ruled, "does not violate a defendant's right to due process,"
+          so long as the court warns itself, in writing, of its limits.
+          Those limits include that COMPAS's workings are hidden from the
+          court and the defendant alike, that some studies suggest it
+          treats minority defendants differently, and that Northpointe
+          never validated it on Wisconsin's population.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          A score, the court added, "may not be used as the determinative
+          factor."<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          The ruling upheld Loomis's sentence, though its text never states
+          how many years the court imposed. That figure is commonly put
+          elsewhere at six years of confinement plus five years of extended
+          supervision. At a later hearing, the same judge said the
+          sentence would have been the same without ever mentioning the
+          score.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The Wisconsin court never engaged the fight over whether COMPAS
+          was actually biased, and the timing explains why. It heard
+          arguments on April 5, 2016 and ruled on July 13, seven weeks after
+          "Machine Bias" published on May 23 and five days after
+          Northpointe's rebuttal began circulating. The opinion gestures at
+          "a recent analysis of COMPAS's recidivism scores based upon data
+          from 10,000 criminal defendants in Broward County, Florida"
+          without naming ProPublica, treating the disparate-impact concern
+          as one risk factor among four.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          ProPublica analyzed COMPAS scores given to 7,214 people arrested
+          in Broward County, Florida. It illustrated the pattern with two defendants
+          scored the same year. Brisha Borden, who is Black, was rated
+          high risk. Vernon Prater, who is white, was rated low risk. Two
+          years later, Borden had not been charged with any new crime;
+          Prater was serving an eight-year sentence for breaking into a
+          warehouse and stealing electronics.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The same pattern held across the full sample. Among defendants
+          who were not arrested again within two years, 44.85 percent of
+          Black defendants had been rated high risk, versus 23.45 percent
+          of white defendants. Among defendants who were arrested again,
+          47.72 percent of white defendants had been rated low risk, versus
+          27.99 percent of Black defendants.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Overall, the score was not especially accurate either way: 61
+          percent of people flagged likely to commit any future crime were
+          arrested again, and only 20 percent of those flagged likely to
+          commit a violent crime were.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="counted-the-other-way" id="counted-the-other-way">
+        <h2>The same defendants, counted the other way</h2>
+        <p>
+          Northpointe's response arrived seven weeks later: a technical
+          report titled "COMPAS Risk Scales: Demonstrating Accuracy Equity
+          and Predictive Parity." It did not dispute ProPublica's data or
+          its arithmetic. Working from ProPublica's own released dataset,<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          it stated its conclusion just as flatly: "We strongly reject the
+          conclusion that the COMPAS risk scales are racially biased
+          against blacks."<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          ProPublica had asked: of people who did not reoffend, what
+          share had been rated high risk? That is a false positive rate,
+          and it was badly unequal by race. Northpointe asked a different
+          question: of people COMPAS rated high risk, what share actually
+          reoffended? That is predictive value, and by ProPublica's own
+          published count it came out nearly equal: 63 percent of Black
+          defendants rated likely to reoffend went on to do so, versus 59
+          percent of white defendants.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          ><sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          The tool's overall ranking power came out equal too, measured by
+          area under the curve, where 1.0 is perfect and 0.5 is a coin
+          flip. COMPAS scored 0.69 for both Black and white defendants.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          Both descriptions are true of the same defendants. As the
+          statistician Andrew Gelman put it, a tool can be "equally accurate
+          between racial groups" and still be "unfair to different
+          groups."<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Accuracy and fairness are not the same test, and COMPAS was
+          passing one while failing the other. Northpointe framed the same
+          finding this way: "This pattern does not show evidence of bias,
+          but rather is a natural consequence of using unbiased scoring
+          rules for groups that happen to have different distributions of
+          scores."<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="the-math" id="the-math">
+        <h2>The math that makes both sides right</h2>
+        <p>
+          Northpointe's phrase, "groups that happen to have different
+          distributions of scores," names the real cause. Black defendants
+          in the Broward sample were rearrested within two years at 51
+          percent; white defendants, at 39 percent.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          That is the base rate: the share of a group that actually
+          reoffends, measured after the fact. A statistician named
+          Alexandra Chouldechova
+          proved, in a 2017 paper, that when two groups have different base
+          rates, a score cannot equalize both error rates and predictive
+          value at once.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          Her proof turns on one equation relating four quantities: a
+          group's false positive rate (FPR), false negative rate (FNR),
+          predictive value (PPV), and base rate (p).
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \htmlClass{nb-mc1}{\text{FPR}} = \frac{\htmlClass{nb-mc2}{p}}{1 -
+            \htmlClass{nb-mc2}{p}} \cdot \frac{1 -
+            \htmlClass{nb-mc3}{\text{PPV}}}{\htmlClass{nb-mc3}{\text{PPV}}}
+            \cdot (1 - \htmlClass{nb-mc4}{\text{FNR}})
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">FPR</span
+              ><span
+                >False positive rate: the share of non-reoffenders a
+                group's score wrongly rated high risk. ProPublica's
+                criterion.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">p</span
+              ><span
+                >Base rate: the group's true share of reoffenders, measured
+                after the fact.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">PPV</span
+              ><span
+                >Predictive value: the share of people the group's score
+                rated high risk who actually reoffended. Northpointe's
+                criterion.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc4">FNR</span
+              ><span
+                >False negative rate: the share of reoffenders a group's
+                score wrongly rated low risk.</span
+              >
+            </li>
+          </ul>
+          <figcaption>
+            Fig. 1 · Fix a group's predictive value and false negative rate,
+            and its false positive rate is locked to its base rate, p.
+            Raise p and FPR has to rise with it.<sup class="nb-cite"
+              ><a href="#s7">7</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Read the equation for what it says. Fix two groups to the same
+          predictive value and the same false negative rate. A group's
+          false positive rate then rises and falls only with its base rate.
+          Black defendants entered the Broward data with a higher base rate
+          than white defendants, and Northpointe's own numbers show COMPAS
+          came close to equal predictive value for both groups. A score
+          built that way was required to produce a higher false positive
+          rate for Black defendants than white, the same direction
+          ProPublica measured.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="compas-recidivism/chart-1.png"
+            alt="Grouped bar chart comparing Black and white defendants in Broward County on three measures: reoffended within two years (51 percent versus 39 percent), wrongly rated high risk (44.85 percent versus 23.45 percent), and wrongly rated low risk (27.99 percent versus 47.72 percent)."
+          />
+          <figcaption>
+            Fig. 2 · Two-year recidivism, and how often COMPAS got it wrong,
+            by race, Broward County, 2013-2014. The higher base rate for
+            Black defendants and the higher false-positive rate move
+            together, as the equation above predicts.<sup class="nb-cite"
+              ><a href="#s3">3</a></sup
+            ><sup class="nb-cite"><a href="#s7">7</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          A second, independent proof reaches the same wall from a
+          different direction. Jon Kleinberg, Sendhil Mullainathan, and
+          Manish Raghavan defined three conditions a fair score would meet,
+          in a paper published the same year. Calibration: the score means
+          the same thing for both groups. Balance for the negative and
+          positive classes: people who will not reoffend, and people who
+          will, each get the same average score regardless of group.
+          Satisfying all three at once, they showed, is possible only if
+          the score predicts perfectly or the two groups already share a
+          base rate.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          COMPAS does neither. Calibration is what Northpointe's
+          predictive-parity argument amounts to. The other two conditions
+          together are what ProPublica's error-rate argument amounts to.
+          Outside those two narrow cases, the theorem says a score cannot
+          have both.
+        </p>
+      </section>
+
+      <section data-nb-section="what-remains" id="what-remains">
+        <h2>What the equation doesn't decide</h2>
+        <p>
+          Two smaller fights sit inside the bigger one. Northpointe argued that ProPublica's cut point and regression
+          model inflated the disparity; ProPublica's technical response
+          showed the gap survived under Northpointe's preferred cut point
+          and model, a Cox survival model.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          ><sup class="nb-cite"><a href="#s9">9</a></sup>
+          Neither exchange touches Chouldechova's equation, which holds for
+          any cut point or model: it is a fact about false positive rates,
+          predictive values, and base rates, not about how any one is
+          calculated.
+        </p>
+        <p>
+          What the equation cannot settle is a different, older question:
+          why the base rates differ at all. Both proofs take the
+          51-versus-39 gap as a fact about the data; neither says where it
+          comes from. Four independent statisticians, examining the same
+          public data, made the same point in plain language. Once the two
+          groups' reoffense rates differ, they wrote, "it's actually
+          impossible for a risk score to satisfy both fairness criteria at
+          the same time." "The imbalance ProPublica highlighted," they
+          added, "will always occur."<sup class="nb-cite"
+            ><a href="#s10">10</a></sup
+          >
+          Whether that gap reflects biased policing upstream of the
+          algorithm, rather than a true behavioral difference, is a
+          separate question none of these sources resolve.
+        </p>
+        <p>
+          Kleinberg, Mullainathan, and Raghavan's theorem was never really
+          about COMPAS. It applies to any score sorting people into groups
+          without a shared base rate, deciding bail, a credit line, or a
+          résumé.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The choice facing that score's designer, equalize the errors or
+          equalize the predictive value, cannot be dodged by better data or
+          a cleverer model. It must be made on purpose.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          ProPublica was right that COMPAS flagged Black defendants who
+          never reoffended as high risk far more often than white
+          defendants who never reoffended. Northpointe was right that,
+          among people COMPAS scored as likely to reoffend, Black and white
+          defendants reoffended at almost the same rate. Both claims are
+          true at once, because Black and white defendants in the Broward
+          data did not reoffend at the same overall rate. A score cannot
+          equalize error rates and predictive value across two groups
+          unless their base rates already match or the score predicts
+          perfectly. Neither condition held for COMPAS. The next time a
+          risk score is called unbiased by one report and biased by
+          another, ask two questions. What is the gap in base rates
+          between the groups it scores? Which property, equal errors or
+          equal predictive value, does this decision need? A score can
+          usually give you one but not both, and choosing which one is a
+          policy decision no formula can make for you.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1703.00056"
+              >Chouldechova, "Fair Prediction with Disparate Impact"</a
+            >: the full proof behind the equation this lesson quotes.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1609.05807"
+              >Kleinberg, Mullainathan, and Raghavan, "Inherent Trade-Offs in
+              the Fair Determination of Risk Scores"</a
+            >: the general theorem, not specific to COMPAS, that this
+            lesson's proof is one case of.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing"
+              >Angwin, Larson, Mattu, Kirchner · "Machine Bias," ProPublica
+              (May 23, 2016)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://caselaw.findlaw.com/court/wi-supreme-court/1742124.html"
+              data-nb-locator="paragraphs 8, 12, 19, 22, 63, 94, 100, 106"
+              >State v. Loomis, 881 N.W.2d 749, 2016 WI 68 (Wis. 2016)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.propublica.org/article/how-we-analyzed-the-compas-recidivism-algorithm"
+              data-nb-locator="Risk of Recidivism results table"
+              >Larson, Mattu, Kirchner, Angwin · "How We Analyzed the COMPAS
+              Recidivism Algorithm," ProPublica (May 23, 2016)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/propublica/compas-analysis"
+              >ProPublica · <code>compas-analysis</code> data release and
+              analysis notebook, GitHub</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.documentcloud.org/documents/2998391-ProPublica-Commentary-Final-070616.html"
+              data-nb-locator="Executive Summary pp. 1-3; §3.2-3.3 pp. 6-13; Ch. 4 pp. 20-22"
+              >Dieterich, Mendoza, Brennan · "COMPAS Risk Scales:
+              Demonstrating Accuracy Equity and Predictive Parity,"
+              Northpointe Inc. Research Department (July 8, 2016)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.propublica.org/article/propublica-responds-to-companys-critique-of-machine-bias-story"
+              >Larson and Angwin · "ProPublica Responds to Company's
+              Critique of Machine Bias Story," ProPublica (July 29, 2016)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1703.00056"
+              data-nb-locator="§2.3, eq. 2.6; §1 introduction"
+              >Chouldechova · "Fair Prediction with Disparate Impact: A
+              Study of Bias in Recidivism Prediction Instruments," Big
+              Data, vol. 5 (2017)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1609.05807"
+              data-nb-locator="§1.1 definitions; §1.2 Theorem 1.1"
+              >Kleinberg, Mullainathan, and Raghavan · "Inherent
+              Trade-Offs in the Fair Determination of Risk Scores," ITCS
+              2017</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.propublica.org/article/technical-response-to-northpointe"
+              >Larson and Angwin · "A Technical Response to Northpointe,"
+              ProPublica (July 29, 2016)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.washingtonpost.com/news/monkey-cage/wp/2016/10/17/can-an-algorithm-be-racist-our-analysis-is-more-cautious-than-propublicas/"
+              >Feller, Pierson, Corbett-Davies, and Goel · "A Computer
+              Program Used for Bail and Sentencing Decisions Was Labeled
+              Biased Against Blacks. It's Actually Not That Clear,"
+              Washington Post (October 17, 2016)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
