@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A transformer redraws a word's vector for every sentence it appears in · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "word-embeddings",
+        "template": "lesson",
+        "title": "A transformer redraws a word's vector for every sentence it appears in",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-26",
+        "tags": ["embeddings", "word2vec", "glove", "contextual-representations", "transformers"],
+        "sources": 8,
+        "words": 2154,
+        "reading_minutes": 9,
+        "dek": "Word2vec's famous king-minus-man-plus-woman trick ran on a vector frozen once at training time, and most explanations of how today's language models represent a word still describe that same frozen kind.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A transformer redraws a word's vector for every sentence it appears in</h1>
+        <p class="nb-dekline">
+          Word2vec's famous king-minus-man-plus-woman trick ran on a vector
+          frozen once at training time, and most explanations of how today's
+          language models represent a word still describe that same frozen
+          kind.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-26</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every model you have typed a prompt into runs this step before it
+          does anything else: your text gets cut into pieces, and each piece
+          is swapped for a row in a table the model learned during training.
+          That row, not the letters you typed, is what the rest of the model
+          works with. This lesson follows that swap down to the exact lookup. It
+          also settles a specific confusion. The
+          king-minus-man-plus-woman trick people quote as proof a model
+          "understands" analogies is real, from a real, inspectable table.
+          But it describes a kind of vector a modern model uses for exactly
+          one step before moving on. By the end, you will know what a word
+          turns into before a model works with it, and where the tidy
+          vector-arithmetic story stops describing what a model like this
+          one actually does.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/letter-counting.html">A model can recognize strawberry's letters and still miscount them</a>:
+            the token → integer id step, one lookup before this lesson
+            begins.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../transformers-first-principles/embeddings.html">A token id is an address into a table the model learned</a>:
+            a deeper look at the same lookup, including tied input and
+            output tables and rows training barely touches.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A word enters as a number before it means anything</h2>
+        <p>
+          Ask almost any chatbot for words like <em>dog</em> and it offers
+          <em>puppy</em> before it offers <em>cat</em>. Feed the right tool
+          the arithmetic "king minus man plus woman" and it hands back
+          <em>queen</em>. Both are the same trick. Somewhere inside the
+          model, <em>dog</em> and <em>puppy</em> sit close together. And
+          <em>king</em>, <em>man</em>, <em>woman</em>, and <em>queen</em> sit
+          at points that can be added and subtracted like ordinary numbers. A
+          word, though, is just a string of letters. Getting from letters to
+          something a model can do arithmetic on takes a specific, traceable
+          series of steps.
+        </p>
+        <p>
+          <a href="../the-mechanics/letter-counting.html">The first step</a>
+          turns text into a short sequence of integers, one per token, by
+          matching each piece against a fixed vocabulary list. That integer
+          is where this lesson picks up. On its own, an integer carries no
+          meaning: it is a position in a list, nothing else. The step that
+          gives it one is a second lookup, into a much larger table. Vaswani
+          and colleagues describe the transformer architecture almost every
+          current large model is built on. They state the mechanism in one
+          line: the model uses learned embeddings to convert each input token
+          into a vector of a fixed width.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Token id 40, whatever token that happens to be, means row 40 of
+          that table. Nothing is computed. The row is read.
+        </p>
+        <p>
+          That is as far down as this explanation goes. Every step before
+          this one had a further mechanism underneath it, worth asking about.
+          This one doesn't. The row is not standing in for some deeper
+          process. Reading it out of the table is the entire operation. The
+          vector it returns, a few hundred to a few thousand numbers, is
+          what the rest of the model works with from here on.
+        </p>
+      </section>
+
+      <section data-nb-section="the-table-nobody-wrote" id="the-table-nobody-wrote">
+        <h2>The table nobody wrote</h2>
+        <p>
+          Picture the table itself: one row per token the model knows, one
+          column per number in the vector, usually called the model's
+          width. In the base transformer Vaswani's paper describes, the
+          width is 512 numbers; in the larger version, 1024.
+          The vocabulary runs to roughly 32,000 to 37,000 tokens, depending
+          on the language pair.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          None of those numbers describes anything a person decided in
+          advance. Before 2013, the field's standard practice was to keep
+          word vectors deliberately small. Mikolov and colleagues introduced
+          word2vec, which popularized much larger ones. They describe the
+          prior norm as a "modest dimensionality of the word vectors between
+          50-100."<sup class="nb-cite"><a href="#s2">2</a></sup> A vector
+          that size starts as random numbers. Training nudges it, one
+          example at a time, by the same process that adjusts every other
+          weight in the network. Nobody writes a row down. Training arrives
+          at it.
+        </p>
+        <p>
+          What training arrives at is at least partly checkable. A real
+          50-number word vector, the kind word2vec's contemporaries were
+          producing, begins <code>0.50451, 0.68607, -0.59517</code> and runs
+          for 47 more entries. Jay Alammar, showing that vector for the word
+          <em>king</em>, says plainly: "It's a list of numbers. We can't
+          tell much by looking at the
+          values."<sup class="nb-cite"><a href="#s3">3</a></sup> Printing
+          every number in a row is one thing; explaining what any single one
+          means is another. None of the papers behind this lesson claim the
+          second, only where a row sits relative to the others.
+        </p>
+      </section>
+
+      <section data-nb-section="the-arithmetic-word2vec-actually-showed" id="the-arithmetic-word2vec-actually-showed">
+        <h2>The arithmetic word2vec actually showed</h2>
+        <p>
+          Once every word is a row, "arithmetic on words" is literal: take
+          one row, subtract another, add a third, and search the table for
+          the nearest row to what is left. Mikolov and
+          colleagues built exactly that search. Their own worked table shows
+          the offset from <em>Paris</em> to <em>France</em>, added to
+          <em>Italy</em>, landing nearest <em>Rome</em>, and added to
+          <em>Japan</em>, nearest <em>Tokyo</em>. The same offset run on
+          professions turns <em>Einstein</em> minus <em>scientist</em> plus
+          <em>Messi</em> into <em>midfielder</em>, and plus <em>Picasso</em>
+          into <em>painter</em>.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Across a test set of 19,544 such questions, their best model,
+          trained on six billion words with 1,000-number rows, solved 65.6
+          percent overall. That included 66.1 percent of the semantic
+          questions and 65.1 percent of the syntactic
+          ones.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The sentence most people actually quote, king minus man plus woman
+          equals queen, is not in that table, or anywhere else in this
+          paper. It appears once, in a single sentence, credited to a
+          separate paper by overlapping
+          authors.<sup class="nb-cite"><a href="#s2">2</a></sup> The
+          companion paper published the same year, introducing the training
+          tricks behind the numbers above, never uses the words king or
+          queen. Its own headline example is that the vector
+          for <em>Madrid</em>, minus <em>Spain</em>, plus <em>France</em>,
+          lands closer to <em>Paris</em> than to any other word vector in the
+          collection.<sup class="nb-cite"><a href="#s4">4</a></sup> The paper
+          that actually puts the literal king-queen sentence into print is a
+          competing method: Pennington, Socher, and Manning's GloVe,
+          published the following year. It uses the sentence to motivate its
+          own evaluation scheme, while crediting the same third, uninspected
+          paper for the underlying idea.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The example everyone reaches for to explain this trick is real; it
+          just doesn't come from where the story says it does.
+        </p>
+        <p>
+          GloVe's method is built independently, from a global count of
+          which words appear near which others rather than word2vec's local
+          prediction. It reports a stronger result on the same kind of test:
+          75 percent overall, its best run using 300-number rows trained on
+          42 billion words. That is three questions in
+          four.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="how-much-of-that-is-really-arithmetic" id="how-much-of-that-is-really-arithmetic">
+        <h2>How much of that is really arithmetic</h2>
+        <p>
+          A 75 percent score sounds like the vector space is doing real
+          geometric reasoning. Two independent researchers checked how much
+          of that number came from arithmetic, and how much came from a
+          rule built into the test. Tal Linzen audited the
+          method from outside it. A literal, unassisted version, one that
+          simply reports whichever word sits nearest the computed point,
+          mostly hands back one of the three words already in the question.
+          Subtract man from king, add woman, and the nearest row to that
+          point is often king or woman itself, not
+          queen.<sup class="nb-cite"><a href="#s6">6</a></sup> Every reported
+          accuracy figure above comes from a version of the test that
+          forbids the search from answering with a word already in the
+          question. Reversing the
+          direction of a question changes the score, even though the
+          underlying arithmetic does not. Linzen found the same offset,
+          asked backward, dropped a US-cities category's accuracy from 69
+          percent to 17 percent.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          Nissim, van Noord, and van der Goot measured exactly how much the
+          forbidding rule was carrying. On the standard test
+          set, the same constrained search behind every accuracy number
+          above scores 0.74 by one measure and 0.71 by a stricter one.
+          Strip the rule out, let the search answer with an input word if
+          that is genuinely nearest, and the identical formula collapses to
+          0.21 by both measures.<sup class="nb-cite"><a href="#s7">7</a></sup> Three
+          answers in four become roughly one in five. None of this means the
+          vectors carry no structure. Something in that space does put
+          queen nearer than most words to that point, or the constrained
+          search could not find it at all. It means a meaningful share of
+          the trick's fame belongs to the test's rulebook, not to the
+          geometry alone.
+        </p>
+      </section>
+
+      <section data-nb-section="a-vector-that-moves-with-the-sentence" id="a-vector-that-moves-with-the-sentence">
+        <h2>A vector that moves with the sentence</h2>
+        <p>
+          Word2vec and GloVe share one more property, easy to miss because
+          the demo depends on it. Each word gets exactly one row, decided
+          once during training, and reused every time the word appears
+          again. The row for <em>play</em> is the same row
+          whether the sentence is about baseball or Broadway.
+        </p>
+        <p>
+          A transformer's embedding table starts the same way, a static row
+          per token, read the same way Vaswani's paper describes.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          But that row is not the end of its story. The model immediately
+          hands it to <a href="../the-mechanics/attention.html">attention</a>,
+          layer after layer. Each layer recombines a token's row with the
+          rows around it in that particular sentence, a step this lesson
+          names but leaves for its own lesson to explain. Peters and
+          colleagues, building a language model, showed exactly what that
+          recombination buys. Where word2vec-style
+          approaches "only allow a single context-independent representation
+          for each word," their model assigns each token a vector that is a
+          function of the entire sentence around it.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Put a fixed vector for <em>play</em> next to its nearest neighbors
+          and the senses blur together: <em>playing</em>, <em>game</em>,
+          <em>games</em>, <em>played</em>, <em>football</em>,
+          <em>multiplayer</em>, among others.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Ask the sentence-sensitive version the same question with two
+          different sentences: "Chico Ruiz made a spectacular play on
+          Alusik's grounder" and "Olivia De Havilland signed to do a Broadway
+          play for Garson." It answers with two different vectors, each
+          correctly matched to sentences about the same sense of the
+          word.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          The real difference between the 2013 story and a modern model is
+          not the arithmetic. It is what happens to the row immediately
+          afterward. Word2vec's vectors stop at the table: reading the row
+          is the last step as well as the first, so a demo built from
+          those rows tests the whole representation a word will ever get.
+          A transformer's row is only the first step. Pull it
+          up for <em>play</em> in isolation, before attention has touched
+          it, and it tells you as little as Alammar's fifty numbers did.
+          Which sense is meant depends on the sentence, and the sentence has
+          not been consulted yet.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A word turns into a vector in exactly one way: its token id points
+          at a row in a table the model learned, and that row is read, not
+          computed. Word2vec and GloVe stop there. The arithmetic that made
+          them famous, king minus man plus woman landing near queen, is a
+          real result, though the exact sentence traces to a different paper
+          than the one usually credited. A meaningful share of the trick's
+          reported accuracy also depends on a rule that forbids the search
+          from answering with a word already in the question. None of that
+          makes the underlying table meaningless: distances and directions
+          inside it do line up with real relationships in the founding
+          papers' own numbers. A modern model reads the same kind of
+          row. Then it spends every layer above that row reshaping it,
+          using the sentence around it, so the vector for <em>play</em>
+          only settles once the model knows which play is meant. The lookup
+          is where a word becomes a number. The sentence is where that
+          number becomes the right one.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://simonwillison.net/2023/Oct/23/embeddings/">Simon Willison, Embeddings: What they are and why they matter</a>:
+            what the same nearest-neighbor trick does for documents, images,
+            and search once the vectors are not just for single words.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://colah.github.io/posts/2014-07-NLP-RNNs-Representations/">Christopher Olah, Deep Learning, NLP, and Representations</a>:
+            goes further into why the offset trick works at all, and marks
+            the exact point where the explanation runs out.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.4 Embeddings and Softmax; Table 3"
+              href="https://arxiv.org/abs/1706.03762"
+              >Vaswani et al. · Attention Is All You Need (NeurIPS 2017)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§1.1; §4.1 Table 1; Table 6; Table 8"
+              href="https://arxiv.org/abs/1301.3781"
+              >Mikolov, Chen, Corrado &amp; Dean · Efficient Estimation of Word Representations in Vector Space (2013)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://jalammar.github.io/illustrated-word2vec/"
+              >Jay Alammar · The Illustrated Word2vec</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§1; Table 1"
+              href="https://arxiv.org/abs/1310.4546"
+              >Mikolov, Sutskever, Chen, Corrado &amp; Dean · Distributed Representations of Words and Phrases and their Compositionality (NeurIPS 2013)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§1; Table 2"
+              href="https://nlp.stanford.edu/pubs/glove.pdf"
+              >Pennington, Socher &amp; Manning · GloVe: Global Vectors for Word Representation (EMNLP 2014)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="§4-5"
+              href="https://aclanthology.org/W16-2503/"
+              >Tal Linzen · Issues in Evaluating Semantic Spaces Using Word Analogies (ACL Workshop, 2016)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="§4.1 Table 1"
+              href="https://arxiv.org/abs/1905.09866"
+              >Nissim, van Noord &amp; van der Goot · Fair Is Better Than Sensational: Man Is to Doctor as Woman Is to Doctor (2020)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§2; §5.3 Table 4; Table 1"
+              href="https://arxiv.org/abs/1802.05365"
+              >Peters et al. · Deep Contextualized Word Representations (ELMo, NAACL 2018)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
