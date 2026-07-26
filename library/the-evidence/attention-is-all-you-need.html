@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The paper credited with starting the LLM era never trained a language model · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "attention-is-all-you-need",
+        "template": "lesson",
+        "title": "The paper credited with starting the LLM era never trained a language model",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-26",
+        "tags": [],
+        "sources": 7,
+        "words": 1766,
+        "reading_minutes": 9,
+        "dek": "Vaswani et al.'s 2017 paper reported BLEU translation scores on two language pairs and never once trained the kind of model it is now credited with inventing.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">The paper credited with starting the LLM era never trained a language model</h1>
+        <p class="nb-dekline">
+          Vaswani et al.'s 2017 paper reported BLEU translation scores on two
+          language pairs and never once trained the kind of model it is now
+          credited with inventing.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-26</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          "Attention Is All You Need" is probably the most cited document in
+          AI right now, invoked constantly as the paper that produced ChatGPT
+          and everything since. Most of the people invoking it have not
+          opened it. Its own tables reported a translation score on two 2017
+          language pairs, not a next-word-prediction test of the kind every
+          large language model trains on now. Its own text still
+          disagrees with itself on the one number most people quote. Strip
+          away the reputation and a narrower, stranger document remains: a
+          specific benchmark, a specific training bill, and a specific gap
+          between what the paper built and what it is credited with
+          building.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">An attention head is a weighted average that computes its own weights</a>:
+            how one attention head turns comparisons between words into the
+            weights this paper's two stacks are built from.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Eight authors, two language pairs, one new architecture</h2>
+        <p>
+          "Attention Is All You Need" is a 2017 paper by eight researchers
+          then at Google Brain, Google Research, and the University of
+          Toronto.<sup class="nb-cite"><a href="#s1">1</a></sup> Its eight
+          authors are Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob
+          Uszkoreit, Llion Jones, Aidan Gomez, Łukasz Kaiser, and Illia
+          Polosukhin. Its own
+          author footnote calls the listing order random and every
+          contribution equal. It then names who proposed what: Uszkoreit
+          replacing the model's recurrent layers with self-attention,
+          Shazeer designing the scaled dot-product and multi-head attention
+          that made the replacement work.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="author footnote, p. 1">1</a></sup
+          >
+        </p>
+        <p>
+          The paper reported one kind of experimental result: machine
+          translation. Its new architecture, the Transformer, was trained
+          and scored on two language pairs from WMT 2014, a shared
+          translation task organized by an independent group of academic
+          linguists, not by Google or Toronto.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The English-to-German pair drew about 4.5 million training
+          sentence pairs; the English-to-French pair drew 36 million.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§5.1, p. 7">1</a></sup
+          >
+          A third, smaller test applied the same architecture to English
+          constituency parsing, the task of diagramming a sentence's
+          grammatical structure, trained on the Wall Street Journal portion
+          of the Penn Treebank.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The Transformer's central move was to drop the recurrent and
+          convolutional layers translation models had used for years and let
+          attention alone connect every word in a sentence to every other
+          word in a single step. How one attention head turns that
+          connection into a number is its own subject, already taught in
+          <a href="../the-mechanics/attention.html">the mechanics of an attention head</a>.
+          What matters here is the shape the paper built: two attention-based
+          stacks, an encoder that reads the source sentence and a decoder
+          that writes the translation, joined together. That two-stack shape
+          returns later, when a decoder working alone becomes the entire
+          model.
+        </p>
+        <p>
+          None of that is how the paper gets discussed today. A 2023 profile
+          from Vaswani's alma mater quotes him saying "there is going to be a
+          time before Chat-GPT and a time after Chat-GPT," and quotes a USC
+          researcher calling the architecture's staying power a sign it
+          "tapped into something fundamental."<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="the-scoreboard" id="the-scoreboard">
+        <h2>The 41.8 score the paper's own text calls 41.0</h2>
+        <p>
+          Table 2 is the paper's scoreboard, measured in BLEU, a 0-to-100
+          score for how closely a machine's translation matches a human
+          reference. On WMT 2014 English-to-German, the Transformer scored
+          27.3 BLEU in its smaller "base" configuration and 28.4 in its
+          larger "big" one. The paper's abstract calls that an improvement
+          "over the existing best results, including ensembles, by over 2
+          BLEU."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="abstract, p. 1">1</a></sup
+          >
+          The prior best, an ensemble of the GNMT and ConvS2S architectures,
+          scored 26.30 and 26.36.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 2, p. 8">1</a></sup
+          >
+          On WMT 2014 English-to-French, the base model scored 38.1.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="attention-is-all-you-need/asset-1.png"
+            alt="Table 2 from the paper, comparing BLEU scores and training-cost FLOPs for ByteNet, Deep-Att, GNMT, ConvS2S, and MoE against the Transformer base and big models on WMT 2014 English-German and English-French translation."
+          />
+          <figcaption>
+            Table 2, as printed in the paper's current arXiv version: the
+            Transformer's two rows sitting inside the same comparison as the
+            five prior architectures.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Table 2, p. 8"
+                data-nb-url="https://arxiv.org/pdf/1706.03762"
+                data-nb-note="The EN-FR column reads 41.8 here; the paper's own Section 6.1 prose, and the NeurIPS-published version throughout, reads 41.0 for the same result."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          The big model's French score is where the paper disagrees with
+          itself. Its abstract and Table 2 both report 41.8 BLEU.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Section 6.1, one page later, describes the identical result as "a
+          BLEU score of 41.0."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§6.1, p. 8">1</a></sup
+          >
+          The peer-reviewed version of the paper, published in the NeurIPS
+          2017 proceedings, is consistent throughout: 41.0 in its abstract,
+          its table, and its prose.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The likeliest explanation is that the authors raised their own
+          headline number sometime after the NeurIPS camera-ready text was
+          locked, updated the arXiv abstract and table, and never returned to
+          fix the sentence in Section 6.1. That sentence still reads 41.0 in
+          the version posted today, six years later, and no public
+          correction accounts for the gap.
+        </p>
+        <p>
+          The paper's other well-known line is about cost, not accuracy, and
+          it names two different training runs. The big model, the one that
+          scored 28.4 and 41.x, took 3.5 days to train on eight Nvidia P100
+          GPUs.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§5.2, p. 7">1</a></sup
+          >
+          A separate line in the introduction claims the architecture "can
+          reach a new state of the art in translation quality after being
+          trained for as little as twelve hours on eight P100 GPUs."<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Introduction, p. 2">1</a></sup
+          >
+          That sentence describes the smaller base model, whose French score
+          is 38.1, not 41.x. The two claims measure two different models.
+          A retelling that keeps the twelve hours and attaches the bigger
+          model's score to it is combining numbers the paper itself never
+          combined. By the paper's own accounting, the big model's training
+          run used about 2.3×10¹⁹ floating-point operations, roughly a
+          fifth of the 1.2×10²⁰ the strongest prior single model needed.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 2 note, p. 8">1</a></sup
+          >
+        </p>
+        <p>
+          The paper's one other experiment, the parsing side-test on the
+          Wall Street Journal, is easy to miss. Trained on roughly 40,000
+          sentences, the Transformer reached an F1 score of 91.3, short of
+          the 91.7 the best specialized parser of the time reached on the
+          same data.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 4, p. 9">1</a></sup
+          >
+          Trained instead on a larger, 17-million-sentence corpus built for
+          the purpose, it reached 92.7, ahead of the 92.1 prior best.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Translation and parsing: that is the complete list of tasks this
+          paper's results sections cover.
+        </p>
+      </section>
+
+      <section data-nb-section="no-language-model" id="no-language-model">
+        <h2>Five mentions of "language model," zero about this one</h2>
+        <p>
+          The phrase "language model" appears five times in the paper.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Every one of them describes something else: earlier work that
+          combined attention with a recurrent network, cited in the
+          introduction or the background section, or a paper listed in the
+          bibliography. None describes an experiment the Transformer itself
+          ran. The paper never trained on a next-word prediction task, never
+          reported a perplexity score, and never claimed to generate
+          open-ended text.
+        </p>
+        <p>
+          This is not only casual imprecision by people who never opened the
+          paper. Careful outside reporting has repeated a softer version of
+          the same error. A 2022 Quanta Magazine retrospective on the
+          architecture's spread describes it as "originally designed to
+          handle language" in a general sense.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          The paper does not support that framing on its own terms. What it
+          was designed and shown to do was translate between two specific
+          language pairs and, in one side test, parse sentence structure.
+          Language in general was never the task; translation and parsing
+          were the tasks, and they are not the same claim.
+        </p>
+        <p>
+          The kind of model most people mean when they credit this paper with
+          starting the current era, one trained to predict the next word
+          across open-ended text, is a different, later invention. It keeps
+          only half of the architecture this paper described.
+        </p>
+      </section>
+
+      <section data-nb-section="the-decoder-only-split" id="the-decoder-only-split">
+        <h2>GPT kept the decoder. It dropped the other half.</h2>
+        <p>
+          The encoder-decoder shape from the first section is where the
+          actual language-model lineage splits off, and it splits in two
+          steps, not one. OpenAI's 2018 paper introducing GPT-1 states
+          plainly: "we use a multi-layer Transformer decoder for the
+          language model, which is a variant of the transformer."<sup
+            class="nb-cite"
+            ><a href="#s6" data-nb-locator="§3.1, p. 3">6</a></sup
+          >
+          Its citation for "the transformer" is Vaswani et al., the 2017
+          paper.<sup class="nb-cite"><a href="#s6">6</a></sup> Its citation
+          for the specific decoder-only design, the version with no encoder
+          half at all, is a different paper: Liu et al.'s 2018 "Generating
+          Wikipedia by Summarizing Long Sequences."<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          Liu et al. was published months before GPT-1 and shares two
+          authors with the original Transformer paper, Łukasz Kaiser and
+          Noam Shazeer.<sup class="nb-cite"><a href="#s7">7</a></sup> So the
+          decoder-only design GPT's whole lineage runs on was not GPT-1's own
+          invention. GPT-1 adopted it from a paper written earlier the same
+          year, by two researchers who had also helped write the paper it is
+          now credited with superseding. GPT-1 named one more departure of
+          its own: it replaced the original's fixed, sinusoidal position
+          signal with one the model learns during training.<sup
+            class="nb-cite"
+            ><a href="#s6" data-nb-locator="&quot;Model specifications,&quot; p. 5">6</a></sup
+          >
+          And its training objective is the one the 2017 paper never ran:
+          next-word prediction. GPT-1 pretrained on more than 7,000
+          unpublished books, reaching a perplexity score of 18.4 on that text
+          before any translation-style task entered the picture.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The paper measured translation: 28.4 BLEU on English-to-German,
+          and on English-to-French either 41.8 or 41.0 depending which line
+          of its own text you read. Both scores were measured against WMT
+          2014's independently curated test sets, and one side-test covered
+          parsing sentence structure. It cost 3.5 days on eight P100 GPUs for the model that
+          scored those numbers, not the twelve hours often quoted alongside
+          them, which belongs to a smaller model with a materially lower
+          score. The invention people mean when they credit this paper with
+          starting the current era, a model trained to predict the next word
+          across open-ended text, is not something this paper built. That
+          invention runs on half its architecture, the decoder alone. GPT-1
+          built it, training that decoder on next-word prediction, the
+          objective this paper never ran. The decoder design itself came
+          from a different paper, written months earlier by two of this
+          paper's own authors, built for summarizing Wikipedia articles.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf">Improving Language Understanding by Generative Pre-Training</a>:
+            OpenAI's 2018 paper, the one that actually built a decoder-only
+            language model on top of this architecture.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.quantamagazine.org/will-transformers-take-over-artificial-intelligence-20220310/">Will Transformers Take Over Artificial Intelligence?</a>:
+            an independent look, five years on, at how far the architecture
+            spread beyond translation.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.03762"
+              >arXiv · Vaswani et al., "Attention Is All You Need" (v7, 2017–2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/W14-3302.pdf"
+              >ACL Anthology · "Findings of the 2014 Workshop on Statistical Machine Translation"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.isi.edu/news/54564/attention-is-all-you-need-usc-alumni-paved-path-for-chatgpt/"
+              >USC Viterbi / ISI · Caitlin Dawson, "'Attention Is All You Need': USC Alumni Paved Path for ChatGPT"</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf"
+              >NeurIPS 2017 Proceedings · Vaswani et al., "Attention is All you Need"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.quantamagazine.org/will-transformers-take-over-artificial-intelligence-20220310/"
+              >Quanta Magazine · Stephen Ornes, "Will Transformers Take Over Artificial Intelligence?"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf"
+              >OpenAI · Radford et al., "Improving Language Understanding by Generative Pre-Training"</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1801.10198"
+              >arXiv · Liu et al., "Generating Wikipedia by Summarizing Long Sequences"</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
