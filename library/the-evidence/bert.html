@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BERT's near-human score on a reasoning test collapsed once the shortcut was closed · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "bert",
+        "template": "lesson",
+        "title": "BERT's near-human score on a reasoning test collapsed once the shortcut was closed",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-27",
+        "tags": [],
+        "sources": 10,
+        "words": 2175,
+        "reading_minutes": 10,
+        "dek": "Devlin, Chang, Lee and Toutanova's 2018 model set new marks on eleven language tasks by training on masked words instead of the next one. One of its most human-looking scores, though, traced to a handful of words a benchmark let it exploit, not the argument the task was built to test.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">
+          BERT's near-human score on a reasoning test collapsed once the
+          shortcut was closed
+        </h1>
+        <p class="nb-dekline">
+          Devlin, Chang, Lee and Toutanova's 2018 model set new marks on
+          eleven language tasks by training on masked words instead of the
+          next one. One of its most human-looking scores, though, traced to
+          a handful of words a benchmark let it exploit, not the argument the
+          task was built to test.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-27</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          BERT is a 2018 Google model that reads a sentence in both
+          directions at once instead of left to right, and it made
+          "pre-train once, fine-tune per task" the default way to build a
+          language system. Search engines, recommendation systems, and the
+          retrieval step behind many chatbots still lean on models built the
+          way BERT was, even as public conversation moved to models that
+          write rather than classify.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/attention-is-all-you-need.html"
+              >The paper credited with starting the LLM era never trained a
+              language model</a
+            >: the encoder-decoder architecture BERT keeps half of.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A blanked-out word, a guessed sentence order, eleven firsts</h2>
+        <p>
+          BERT, short for Bidirectional Encoder Representations from
+          Transformers, is a language model Jacob Devlin, Ming-Wei Chang,
+          Kenton Lee, and Kristina Toutanova published at Google in October
+          2018.<sup class="nb-cite"><a href="#s1">1</a></sup> Their paper
+          reports new state-of-the-art results on eleven language tasks,
+          including a benchmark score of 80.5 percent, up 7.7 points, and a
+          question-answering score of 93.2, up 1.5 points.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Abstract">1</a></sup
+          >
+          It came in two sizes: BERT_BASE, 12 layers and 110 million
+          parameters, and BERT_LARGE, 24 layers and 340 million.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3">1</a></sup
+          >
+          BASE matched, layer for layer, a rival OpenAI had published earlier
+          the same year: GPT-1, a 12-layer, 768-dimension decoder trained to
+          predict the next word instead of reading a whole sentence at
+          once.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="§4.1">2</a></sup
+          >
+          Same size, same year, opposite reading direction.
+        </p>
+        <p>
+          Both sizes trained on the same 3.3 billion words: the
+          800-million-word BooksCorpus, the same collection of 7,000-plus
+          novels GPT-1 had used, plus 2.5 billion words of English
+          Wikipedia.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.1">1</a></sup
+          >
+          Reading that much text eight hours a day at 250 words a minute
+          would take about 75 years, longer than most human lives. The model
+          went through it in four days, on a bank of specialized chips.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.2 / Appendix A.2">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="what-bidirectional-buys" id="what-bidirectional-buys">
+        <h2>Reading both directions cost the model its easiest training signal</h2>
+        <p>
+          A standard language model predicts the next word from the words
+          before it: given "the cat sat on the," guess "mat." That signal is
+          easy to build, since every sentence in a corpus generates one
+          automatically, but it only looks one direction: showing the model
+          the real next word while it trains would let it cheat. BERT's
+          authors wanted a model that weighs a word against everything around
+          it, left and right at once, the way a person rereads a finished
+          sentence. So they trained on a different task: blank out 15
+          percent of a sentence's words and have the model guess each one
+          back from both sides.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.1, Task #1">1</a></sup
+          >
+          In "The [MASK] sat on the mat, purring," the blank could be "cat"
+          or "kitten," and only the words after it narrow that down. Devlin
+          and his co-authors called this the masked language model
+          objective.
+        </p>
+        <p>
+          They paired it with a smaller second task: next sentence
+          prediction. Given two sentences, A and B, the model guesses whether
+          B genuinely follows A in the source text or was swapped in at
+          random, a coin flip it sees half the time each way.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.1, Task #2">1</a></sup
+          >
+          The stated reason is that jobs like question answering need a model
+          that has practiced judging how two sentences relate, not only how
+          words inside one sentence relate.
+        </p>
+        <p>
+          BERT's own tables show what each half of that training actually
+          bought: the paper reports the same model with pieces removed.
+          Removing next-sentence prediction alone barely moves SQuAD's
+          score.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 5, §5.1">1</a></sup
+          >
+          Removing the bidirectional reading itself, forcing the model back
+          to left-to-right only, drops the same score by nearly eleven
+          points.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 5, §5.1">1</a></sup
+          >
+          Bidirectional reading, not the sentence-order guess, is where most
+          of BERT's advantage lived.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="bert/chart-1.png"
+            alt="Bar chart comparing BERT-base scores on MNLI, QNLI, MRPC, SST-2, and SQuAD F1 across three configurations: the full model, the full model with next-sentence prediction removed, and a version with next-sentence prediction removed and reading restricted to left-to-right only. The left-to-right configuration scores markedly lower on MRPC and SQuAD than the other two."
+          />
+          <figcaption>
+            Removing next-sentence prediction alone moves four of the five
+            scores by a point or less; QNLI drops 3.5 points. Restricting the
+            model to left-to-right reading, on top of that, costs nine points
+            of MRPC accuracy and about ten points of SQuAD F1.<sup
+              class="nb-cite"
+              ><a href="#s1" data-nb-locator="Table 5, §5.1">1</a></sup
+            >
+          </figcaption>
+        </figure>
+      </section>
+
+      <section data-nb-section="the-uneven-average" id="the-uneven-average">
+        <h2>The averaged score hides a 600-fold gap in the data behind it</h2>
+        <p>
+          The 80.5 in BERT's abstract is a GLUE score. GLUE, the General
+          Language Understanding Evaluation benchmark, is a nine-task suite
+          built by Alex Wang and five co-authors, independent of BERT's
+          authors.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The nine tasks do not rest on comparable amounts of evidence. MNLI,
+          a test of whether one sentence logically follows from another, has
+          393,000 training examples. WNLI, a pronoun-resolution task, has
+          634.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Table 1">3</a></sup
+          >
+          That is more than a 600-fold gap underneath a single reported
+          average.
+        </p>
+        <p>
+          GLUE's own authors do not trust WNLI. Every model they tested
+          failed to beat "most-frequent-class guessing" on it, so its
+          maintainers substitute the majority-class answer for every
+          submission.<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="§6">3</a></sup
+          >
+          BERT's own Table 1 excludes WNLI from its reported average for that
+          reason, in a footnote most readers skip: "we exclude the
+          problematic WNLI set."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 1, footnote">1</a></sup
+          >
+          Excluding it, BERT_LARGE's average across the other eight tasks is
+          82.1.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 1">1</a></sup
+          >
+          That is not the 80.5 the abstract leads with. The 80.5 is a
+          different number, the official GLUE leaderboard's own score, which
+          folds WNLI back in through that same majority-class substitution.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§4.1">1</a></sup
+          >
+          Two real numbers, two different accountings, one model, and the
+          paper never flags that its abstract and its own table measure
+          different things.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The training data behind five of GLUE's nine tasks, and what each
+            one actually measures.<sup class="nb-cite"
+              ><a href="#s3" data-nb-locator="Table 1">3</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Training examples</th>
+              <th class="txt">Metric</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">MNLI</span></td>
+              <td>393 000</td>
+              <td class="txt">accuracy, sentence-pair logic</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">QNLI</span></td>
+              <td>105 000</td>
+              <td class="txt">accuracy, question-answer fit</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">CoLA</span></td>
+              <td>8 500</td>
+              <td class="txt">correlation, grammatical judgment</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">MRPC</span></td>
+              <td>3 700</td>
+              <td class="txt">accuracy/F1, paraphrase match</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">WNLI</span></td>
+              <td>634</td>
+              <td class="txt">accuracy; predictions overridden</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          CoLA is scored by a correlation coefficient, not a percentage.
+          Averaging it against QNLI's plain accuracy already mixes two kinds
+          of number before WNLI enters the picture.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Table 1">3</a></sup
+          >
+        </p>
+        <p>
+          The question-answering numbers rest on a fixed human baseline.
+          SQuAD, built at Stanford independent of BERT's authors,
+          asks a model to find the exact span of text in a Wikipedia passage
+          that answers a question.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Abstract">4</a></sup
+          >
+          Human performance was 86.8 F1; BERT's ensemble scored 93.2, six and
+          a half points above the people who wrote the questions.<sup
+            class="nb-cite"
+            ><a href="#s4" data-nb-locator="Abstract">4</a></sup
+          ><sup class="nb-cite"><a href="#s1" data-nb-locator="Table 2">1</a></sup>
+          A later, harder version added unanswerable questions and raised the
+          human baseline to 89.5; there, BERT_LARGE scored 83.1, six and a
+          half points behind.<sup class="nb-cite"
+            ><a href="#s5" data-nb-locator="Table 3">5</a></sup
+          >
+          Beating people on one version of a task and trailing them on a
+          harder version is a specific, bounded result, well short of the
+          general claim it came to support.
+        </p>
+      </section>
+
+      <section data-nb-section="the-word-that-gave-it-away" id="the-word-that-gave-it-away">
+        <h2>The word that gave it away</h2>
+        <p>
+          The paper's own language invites the general claim. Explaining why
+          it added next-sentence prediction, Devlin and his co-authors write
+          that they wanted "to train a model that understands sentence
+          relationships."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.1, Task #2">1</a></sup
+          >
+          That is the authors' own word, not the press's. It is also the
+          word two independent linguists, Emily Bender and Alexander Koller,
+          later flagged as exactly the kind of imprecise language that let a
+          public "understanding" claim grow out of a narrower one about
+          scores.<sup
+            class="nb-cite"
+            ><a href="#s6" data-nb-locator="§1">6</a></sup
+          >
+          Put the claim at its strongest: an 80-plus GLUE score, a
+          Wikipedia-question test beaten outright, a model reading both
+          directions at once. On the numbers alone, "understands" does not
+          sound like a stretch.
+        </p>
+        <p>
+          Two independent research groups tested that claim, on two different
+          tasks, and both broke it the same way. Timothy Niven and Hung-Yu
+          Kao ran BERT on the Argument Reasoning Comprehension Task: given an
+          argument and two candidate warrants, the model picks the one that
+          makes it valid. BERT scored 77 percent, three points below the
+          untrained human average.<sup
+            class="nb-cite"
+            ><a href="#s7" data-nb-locator="Abstract">7</a></sup
+          >
+          Niven and Kao found which words predicted the correct warrant
+          regardless of the argument's content, then rewrote the dataset to
+          cancel that pattern. On the rewritten version, BERT's score fell to
+          chance.<sup
+            class="nb-cite"
+            ><a href="#s7" data-nb-locator="Abstract">7</a></sup
+          >
+          The 77 percent had measured a correlation in the dataset's wording,
+          not the reasoning the task was designed to test.
+        </p>
+        <p>
+          Tom McCoy, Ellie Pavlick, and Tal Linzen found the same pattern on
+          BERT's largest GLUE task, MNLI, the 393,000-example sentence-logic
+          test. They built a second test set, HANS, to separate real
+          entailment reasoning from shortcuts like assuming two sentences
+          sharing most of their words must agree. Models fine-tuned on MNLI,
+          BERT included, scored far
+          worse than chance on the examples built to punish those shortcuts,
+          evidence the authors read as reliance on shortcuts, not
+          entailment.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          A model can pass a real benchmark and fail a version of the same
+          task built only to remove the pattern it was actually using.
+        </p>
+        <p>
+          Bender and Koller's explanation does not call BERT unimpressive. It
+          asks what a system trained only on word sequences could learn even
+          in principle: their example is a hyper-intelligent octopus that
+          learns to hold up a fluent
+          conversation purely from the statistical shape of undersea-cable
+          traffic, without ever seeing what the words refer to.<sup
+            class="nb-cite"
+            ><a href="#s6" data-nb-locator="§4">6</a></sup
+          >
+          BERT's masked-word objective puts it in exactly that position.
+        </p>
+      </section>
+
+      <section data-nb-section="what-came-after" id="what-came-after">
+        <h2>The recipe had more room in it than anyone tested</h2>
+        <p>
+          BERT's eleven firsts held for less than a year. In 2019, a team led
+          by Yinhan Liu at Facebook AI ran BERT's exact architecture again,
+          changing only the training: ten times the text (160 gigabytes, not
+          16), longer runs, bigger batches, and no next-sentence
+          prediction.<sup class="nb-cite"
+            ><a href="#s9" data-nb-locator="§2.5, §3.2">9</a></sup
+          >
+          They called the result RoBERTa and stated their finding plainly:
+          "BERT was significantly undertrained."<sup class="nb-cite"
+            ><a href="#s9" data-nb-locator="Abstract">9</a></sup
+          >
+          On RACE, BERT_LARGE had scored 72.0, ahead of everything published
+          before it. The same architecture, with more training data, reached
+          83.2 under RoBERTa: eleven points higher, on a test BERT itself had
+          just set the standard for.<sup
+            class="nb-cite"
+            ><a href="#s9" data-nb-locator="Table 7">9</a></sup
+          >
+          None of BERT's architecture changed; the scores people had treated
+          as a ceiling were a floor the field mistook for an answer.
+        </p>
+        <p>
+          The split that mattered afterward ran between the two halves of the
+          2017 Transformer architecture. BERT is an encoder, reading a full
+          sequence at once and returning a representation suited to
+          comparing, ranking, and classifying text. GPT kept the decoder
+          half, built to write one word at a time, and that lineage became
+          what the public meant by "AI" in the years after. Google confirmed
+          one concrete use: in October 2019 it announced BERT-based ranking
+          would affect one in ten English search queries, reported
+          independently at the time.<sup
+            class="nb-cite"
+            ><a href="#s10">10</a></sup
+          >
+          That is a dated fact about one company's search engine in 2019, not
+          a count of today's software; no public count exists. What holds is
+          the shape of the job: ranking documents against a query, or turning
+          a sentence into a fixed vector to search, is a comparison problem,
+          and comparison is what an encoder is built for.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          BERT's tables are real. A model trained to fill in blanked-out
+          words, reading both directions at once, beat every prior system on
+          nine language tasks and outright beat the people who wrote SQuAD's
+          questions. Removing that bidirectional reading alone cost it nearly
+          eleven points on the same test. That result survives every
+          complication: a GLUE average spanning two orders of
+          magnitude in evidence, one of nine tasks not working as a
+          benchmark, a recipe with eleven more points left once someone ran
+          it longer. Understanding sentence relationships is a
+          different claim, one the paper's own words half-invited. Niven and
+          Kao closed one dataset's shortcut and watched a near-human score
+          fall to a coin flip; McCoy, Pavlick, and Linzen found the same
+          collapse inside BERT's biggest, most-cited task. That score was
+          never evidence for the claim it got used to support. Transfer
+          learning through bidirectional pre-training beat task-specific
+          architecture by a real, now-repeated margin, and it needed no help
+          from the other word to be worth the eleven benchmarks it won.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1907.11692"
+              >RoBERTa: A Robustly Optimized BERT Pretraining Approach</a
+            >: the full replication study, every hyperparameter and score it
+            changed.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://aclanthology.org/2020.acl-main.463.pdf"
+              >Climbing towards NLU: On Meaning, Form, and Understanding in
+              the Age of Data</a
+            >: the fuller argument for why a high score and understanding
+            are different claims.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1810.04805"
+              >arXiv · Devlin, Chang, Lee &amp; Toutanova, "BERT: Pre-training
+              of Deep Bidirectional Transformers for Language Understanding"</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf"
+              >OpenAI · Radford, Narasimhan, Salimans &amp; Sutskever,
+              "Improving Language Understanding by Generative Pre-Training"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1804.07461"
+              >arXiv · Wang, Singh, Michael, Hill, Levy &amp; Bowman, "GLUE: A
+              Multi-Task Benchmark and Analysis Platform for Natural Language
+              Understanding"</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1606.05250"
+              >arXiv · Rajpurkar, Zhang, Lopyrev &amp; Liang, "SQuAD:
+              100,000+ Questions for Machine Comprehension of Text"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1806.03822"
+              >arXiv · Rajpurkar, Jia &amp; Liang, "Know What You Don't Know:
+              Unanswerable Questions for SQuAD"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://aclanthology.org/2020.acl-main.463.pdf"
+              >ACL Anthology · Bender &amp; Koller, "Climbing towards NLU: On
+              Meaning, Form, and Understanding in the Age of Data"</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/1907.07355"
+              >arXiv · Niven &amp; Kao, "Probing Neural Network Comprehension
+              of Natural Language Arguments"</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/1902.01007"
+              >arXiv · McCoy, Pavlick &amp; Linzen, "Right for the Wrong
+              Reasons: Diagnosing Syntactic Heuristics in Natural Language
+              Inference"</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1907.11692"
+              >arXiv · Liu, Ott, Goyal, Du, Joshi, Chen, Levy, Lewis,
+              Zettlemoyer &amp; Stoyanov, "RoBERTa: A Robustly Optimized BERT
+              Pretraining Approach"</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://searchengineland.com/welcome-bert-google-artificial-intelligence-for-understanding-search-queries-323976"
+              >Search Engine Land · Barry Schwartz, "Welcome BERT: Google's
+              latest search algorithm to better understand natural
+              language"</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
