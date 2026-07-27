@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A model's weights freeze the moment its training run ends · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "knowledge-cutoff",
+        "template": "lesson",
+        "title": "A model's weights freeze the moment its training run ends",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-27",
+        "tags": [],
+        "sources": 9,
+        "words": 2110,
+        "reading_minutes": 9,
+        "dek": "Everything a chatbot seems to learn afterward, from a correction to a live search result, arrives through the prompt: its weights were never touched again once training ended.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A model's weights freeze the moment its training run ends</h1>
+        <p class="nb-dekline">
+          Everything a chatbot seems to learn afterward, from a correction to a
+          live search result, arrives through the prompt: its weights were
+          never touched again once training ended.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-27</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Whatever a chatbot just told you about something that happened this
+          month came from one of two very different places. Only one of them
+          means the model learned anything: a search result stitched into
+          the prompt, or a weight that was set months ago and never touched
+          since. Vendors change products constantly: a new default model, a
+          search feature switched on, a wrong date corrected in one
+          conversation, none of which requires retraining anything. A page
+          announcing a chatbot is "more current now" can describe either
+          move, and they are not the same move. By the end here you can tell
+          them apart: what a model learned, sitting inside numbers set once,
+          against what it can only access, arriving fresh in a prompt and
+          gone the moment the exchange ends.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/gradient-descent.html">One gradient step drops the loss from 7.0 to 0.225</a>:
+            how the numbers this lesson calls "weights" get set in the first
+            place, and what stops changing them once training is done.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/in-context-learning.html">How a model learns from examples it was never trained on</a>:
+            the other half of this lesson's split, what a prompt alone can
+            supply without touching a single weight.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/hallucination.html">A model builds a fake citation the same way it builds a true one</a>:
+            what happens when a frozen model has no real answer and produces
+            a fluent one anyway.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A December 2022 fact, asked of a model finished reading in 2021</h2>
+        <p>
+          Ask GPT-4 who won the 2022 World Cup and it has no way to get the
+          answer right, not because Argentina's win over France is obscure,
+          but because of when the model stopped reading. OpenAI's own account
+          of the model states the boundary directly: "GPT-4 generally lacks
+          knowledge of events that occurred after the vast majority of its
+          pre-training data cuts off in September 2021, and does not learn
+          from its experience."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 5, Limitations">1</a></sup
+          >
+          The World Cup final was played fifteen months after that cutoff.
+          Every sentence GPT-4 can produce about it was assembled from
+          whatever came before September 2021, and nothing about it came from
+          anywhere else.
+        </p>
+        <p>
+          The whole exchange, prompt in, answer out, is produced by one thing:
+          a fixed set of numbers called weights, set once during
+          <a href="../the-mechanics/gradient-descent.html">training</a> and
+          arranged into a network that reads your words and produces the
+          next ones. Nothing else is in the box: no live connection to the
+          internet, no memory of yesterday's conversation, no clock. Ask the
+          same question twice, a year apart, and the model runs the
+          identical fixed function on your words both times.
+        </p>
+        <p>
+          The natural guess is that a system used by hundreds of millions of
+          people every day keeps learning as it goes, the way a person does.
+          It doesn't.
+        </p>
+      </section>
+
+      <section data-nb-section="the-weights-stop-changing" id="the-weights-stop-changing">
+        <h2>Why the weights don't just keep updating</h2>
+        <p>
+          Training is a distinct phase that ends. After it ends, the weights
+          are constants a program reads, not a process still running. GPT-4's
+          own report says the model "does not learn from its experience" for
+          exactly this reason: once pretraining is over, no further gradient
+          step touches those numbers. Meta describes the same shape of limit
+          for a different model family. Llama 3 was pretrained on "a variety
+          of data sources containing knowledge until the end of 2023,"<sup
+            class="nb-cite"
+            ><a
+              href="#s2"
+              data-nb-locator="Section 3.1, Pre-Training Data"
+              >2</a
+            ></sup
+          >
+          a single closed window. Two labs, two model
+          families, the same shape of claim: a training run collects data up
+          to some point, stops, and the weights that come out of it are what
+          the deployed model has, permanently.
+        </p>
+        <p>
+          Why not just keep training as new data arrives? Because a network
+          that keeps learning overwrites what it already learned. DeepMind's
+          work on catastrophic forgetting describes exactly this failure.
+          Train the same network further on a new task, and "knowledge of
+          previously learnt task(s)... [is] abruptly lost as information
+          relevant to the current task... is incorporated."<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="Introduction">3</a></sup
+          >
+          The reason is mechanical: "weights in the network that are
+          important for task A are changed to meet the objectives of task
+          B." A system that has to answer the same question the same way
+          next year cannot afford to keep quietly rewriting the numbers that
+          produced this year's correct answer. Freezing the weights once
+          training stops is the design that makes a deployed model a fixed
+          function at all.
+        </p>
+        <p>
+          Because of that stop point, no gradient step ever touched a match
+          played fifteen months after data collection stopped. The words
+          "Argentina" and "World Cup" may well sit together in GPT-4's
+          weights, from years of football writing before 2021, but nothing
+          ties either word to the score of a match played after the cutoff.
+          Asked directly, the model can do one of two things. It can say
+          plainly that it doesn't know, or it can produce a fluent, wrong
+          answer built from whatever pattern in its weights looks closest,
+          the construction this desk's earlier lesson on
+          <a href="../the-mechanics/hallucination.html">hallucination</a>
+          already describes. A frozen model with no real record of an event
+          is exactly the setup that produces a confident, invented one.
+        </p>
+      </section>
+
+      <section data-nb-section="a-tool-is-not-training" id="a-tool-is-not-training">
+        <h2>What a search tool adds, and what it doesn't</h2>
+        <p>
+          The 2020 paper that introduced retrieval-augmented generation gave
+          this split its working vocabulary. A language model's weights hold
+          "parametric" knowledge, learned once during training. A separate
+          system can supply "non-parametric" knowledge instead, drawn from
+          "a dense vector index... accessed with a... neural retriever,"
+          fetched fresh at the moment of the question.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Abstract">4</a></sup
+          >
+          The distinction matters because from the outside, the two look
+          identical: the same fluent answer, in the same chat window. What
+          differs is where the fact came from. Parametric knowledge was
+          baked in during training. Retrieved knowledge arrived seconds ago,
+          in the prompt, the same channel this desk's lesson on
+          <a href="../the-mechanics/in-context-learning.html"
+            >in-context learning</a
+          >
+          already showed can carry a pattern the model was never trained on.
+        </p>
+        <p>
+          Give a search tool to a model asked about the World Cup, and it can
+          now answer correctly, fetching a page that names Argentina's win
+          and reading it back. Google says exactly this about its current
+          model: "Gemini 3 models have a knowledge cutoff of January 2025. For
+          more recent information, use the Search Grounding tool."<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          It does not say the tool
+          moves the cutoff forward, or teaches the model the new fact. It
+          hands the model a page to read, once, for this one exchange. Close
+          the chat, and the weights are exactly what they were before the
+          World Cup came up: a fixed set of numbers, untouched.
+        </p>
+        <p>
+          This is the gap between a product getting better and a model
+          learning something. When a chatbot starts answering questions about
+          last week's news, what typically changed is the product wrapped
+          around the model, a search tool bolted on, not the weights
+          underneath. Gary Marcus, writing about a chatbot caught denying an
+          already-reported story, calls exactly this kind of fix a
+          "band-aid".<sup class="nb-cite"><a href="#s6">6</a></sup>
+          It patches the one conversation in front of you. The next model a
+          lab releases still needs its own training run and its own new set
+          of frozen numbers to know anything by default.
+        </p>
+      </section>
+
+      <section data-nb-section="not-one-clean-date" id="not-one-clean-date">
+        <h2>Even the labs don't write down one clean date</h2>
+        <p>
+          The frozen-weights part of this story is settled: every lab that
+          publishes a model card says some version of it. What is genuinely
+          unsettled is whether "the cutoff" names one clean date at all.
+          Anthropic's own documentation lists two different cutoff dates for
+          the same model, not one, in tables headed "reliable knowledge
+          cutoff" and "training data cutoff":<sup class="nb-cite"
+            ><a
+              href="#s7"
+              data-nb-locator="Latest models comparison table"
+              >7</a
+            ></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            Anthropic's own comparison splits one number into two for every
+            model it ships; the gap between them ranges from none to six
+            months.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Reliable knowledge cutoff</th>
+              <th>Training data cutoff</th>
+              <th class="txt">Gap</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Sonnet 5</span></td>
+              <td>Jan 2026</td>
+              <td>Jan 2026</td>
+              <td class="txt">none</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Opus 5</span></td>
+              <td>May 2026</td>
+              <td>May 2026</td>
+              <td class="txt">none</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Haiku 4.5</span></td>
+              <td>Feb 2025</td>
+              <td>Jul 2025</td>
+              <td class="txt">5 months</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Sonnet 4.5</span></td>
+              <td>Jan 2025</td>
+              <td>Jul 2025</td>
+              <td class="txt">6 months</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Anthropic explains the split plainly: "Reliable knowledge cutoff
+          indicates the date through which a model's knowledge is most
+          extensive and reliable. Training data cutoff is the broader date
+          range of training data used."<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The company that trained the model is telling its own customers
+          that data collected right up to the training cutoff is present in
+          the weights but thin, patchy enough that the label warns against
+          leaning on it. If the company that owns the weights won't stand
+          behind their own tail end, the cutoff was never one instant. It is
+          a range with a soft edge.
+        </p>
+        <p>
+          The soft edge gets worse once anyone measures it instead of reading
+          the vendor's label. A 2024 study set out to test whether a training
+          corpus's claimed cutoff matches what a model trained on it can
+          actually demonstrate, and named the measured version the "effective
+          cutoff," distinct from "the LLM designer reported cutoff."<sup
+            class="nb-cite"
+            ><a href="#s8" data-nb-locator="Abstract">8</a></sup
+          >
+          The gap it found in one widely used open corpus, RedPajama, was not
+          months. The corpus's own file listing cites a 2023 Wikipedia dump.
+          But the study traced over 80% of the Wikipedia text actually
+          included back to older snapshots crawled years earlier.<sup
+            class="nb-cite"
+            ><a href="#s8" data-nb-locator="Section 5.2, Figure 7">8</a></sup
+          >
+          Its effective, demonstrable cutoff landed around 2019, four years
+          before the date printed on its label. A reported cutoff describes
+          what a data-collection script was told to fetch. An effective
+          cutoff describes what the resulting weights actually carry.
+          Nothing guarantees the two match.
+        </p>
+        <p>
+          A cutoff can drift the other way too: forward, after the fact,
+          without the model ever learning anything at inference. A 2026 study
+          trained models on a pretraining set that included contaminated
+          information, then continued training them on clean data until the
+          contamination's measurable effect nearly vanished. The information
+          was not erased. Running the same models through a later training
+          stage, supervised fine-tuning or reinforcement learning, brought it
+          back: "the leaked information is merely submerged not erased and is
+          readily rediscovered during post-training."<sup class="nb-cite"
+            ><a href="#s9" data-nb-locator="Key findings">9</a></sup
+          >
+          That resurfacing still happens through training. No live
+          conversation pulled the fact back in; a later training stage did,
+          one that ran after the pretraining cutoff most people mean when
+          they cite "the cutoff" at all. The frozen-function fact from
+          earlier in this lesson still holds at every instant. It is only
+          that training turns out to be more than one stage, and a date
+          attached to the first of them does not describe the last.
+        </p>
+        <p>
+          Anthropic and Google publish their
+          models' cutoffs as facts about the model, stated by the company.
+          Neither claims the model reliably reports its own cutoff, and the
+          entire premise of measuring an "effective cutoff" is that asking
+          directly does not settle the question.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          Ask GPT-4 both what its own cutoff is and who won the 2022 World
+          Cup, and both answers come from the identical process: whatever
+          the weights happen to encode, delivered with the same confidence
+          either way.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          What a model knows lives entirely in the weights its training run
+          left behind, and that run has an end. A search tool, a live
+          snippet, a corrected date pasted into the prompt: none of it
+          touches those weights. It only gives them something to read once,
+          for one exchange. Even the number stamped on a model card as "the
+          cutoff" is really a soft edge, not a line. The tail of a training
+          run is present but thin enough that Anthropic and Google both hedge
+          it, an independent measurement can find a corpus's real cutoff
+          sitting years off its printed label, and a fact submerged during
+          pretraining can resurface later through a further round of
+          training, never through a conversation.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a
+              href="https://simonwillison.net/2023/Mar/22/dont-trust-ai-to-talk-about-itself/"
+              >Don't trust AI to talk accurately about itself</a
+            >, Simon Willison: why a model's own account of what it knows, or
+            when it was trained, is not a reliable source on either question.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a
+              href="https://writings.stephenwolfram.com/2023/02/what-is-chatgpt-doing-and-why-does-it-work/"
+              >What Is ChatGPT Doing … and Why Does It Work?</a
+            >, Stephen Wolfram: a from-scratch account of how the weights this
+            lesson treats as fixed produce an answer at all.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2303.08774"
+              >OpenAI · GPT-4 Technical Report</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2407.21783"
+              >Meta AI (Grattafiori et al.) · The Llama 3 Herd of Models</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1612.00796"
+              >Kirkpatrick et al. (DeepMind), PNAS · Overcoming Catastrophic
+              Forgetting in Neural Networks</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2005.11401"
+              >Lewis et al. (FAIR/UCL) · Retrieval-Augmented Generation for
+              Knowledge-Intensive NLP Tasks</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://ai.google.dev/gemini-api/docs/gemini-3"
+              >Google · Gemini 3 Developer Guide</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://garymarcus.substack.com/p/why-chatgpt-cant-be-trusted-with"
+              >Gary Marcus · Why ChatGPT Can't Be Trusted With Breaking
+              News</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://platform.claude.com/docs/en/about-claude/models/overview"
+              >Anthropic · Claude Models Overview</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2403.12958"
+              >Cheng, Marone, Weller, Lawrie, Khashabi, Van Durme (Johns
+              Hopkins), COLM 2024 · Dated Data: Tracing Knowledge Cutoffs in
+              Large Language Models</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/html/2601.06103"
+              >The Impact of Post-training on Data Contamination</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
