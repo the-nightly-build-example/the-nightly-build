@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IBM trained Watson for Oncology on hypothetical patients, then sold it worldwide · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "ibm-watson-oncology",
+        "template": "lesson",
+        "title": "IBM trained Watson for Oncology on hypothetical patients, then sold it worldwide",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-27",
+        "tags": ["clinical-ai", "distribution-shift", "training-data", "ibm-watson"],
+        "sources": 16,
+        "words": 2131,
+        "reading_minutes": 9,
+        "dek": "Its own internal reviewers called the results unsafe and incorrect, and the same slide decks weighed the business risk of finally testing them.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">IBM trained Watson for Oncology on hypothetical patients, then sold it worldwide</h1>
+        <p class="nb-dekline">
+          Its own internal reviewers called the results unsafe and incorrect,
+          and the same slide decks weighed the business risk of finally
+          testing them.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-27</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          In 2012, IBM promised hospitals a machine that could weigh a
+          cancer patient's chart the way its best oncologists would, trained
+          on evidence rather than any one doctor's habits. Five years later,
+          IBM's own reviewers were calling its recommendations unsafe and
+          incorrect, after the system had already been sold to hospitals
+          across several countries. It was a quiet substitution, real
+          evidence for a handful of experts' best guesses, that took years to
+          surface.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../when-ai-breaks/uk-a-level-algorithm.html">Ofqual built a model that graded schools, then handed the grades to students</a>:
+            another model that let one dataset stand in for individual
+            judgment, unchecked.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>IBM built Watson for Oncology to be Memorial Sloan Kettering in a box</h2>
+        <p>
+          In 2012, IBM and Memorial Sloan Kettering Cancer Center announced
+          Watson for Oncology: software that would weigh a cancer patient's
+          chart against the medical literature and rank treatments for the
+          doctor. Dr. Mark Kris, chosen to lead its training, called the plan
+          "this comprehensive, evidence-based approach."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A pilot on lung, breast, and prostate cancer was set for later that
+          year, with a wider release due in 2013.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          By 2017, hospitals in Thailand, Mongolia, China, South Korea,
+          Taiwan, and India had all licensed Watson for Oncology, and Jupiter
+          Medical Center in Florida built television ads around it.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          None of that had waited for outside proof: at the time, there was
+          "no published research supporting its impact on patient care."<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The expansion had outrun the foundation under it. Internal IBM
+          presentations from the summer of 2017 said Watson's medical
+          judgment rested on hypothetical cases invented by a couple dozen
+          doctors at one hospital, not on how real patients elsewhere had
+          fared.<sup class="nb-cite"><a href="#s3" data-nb-note="internal IBM Watson Health presentations, quoted verbatim in STAT's 2018 investigation">3</a></sup>
+          Company specialists and paying customers had already found
+          "multiple examples of unsafe and incorrect treatment
+          recommendations," STAT News reported a year later, after reviewing
+          slide decks IBM's own deputy chief health officer had shown to the
+          division's management.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="training-data" id="training-data">
+        <h2>Watson learned cancer care from two dozen doctors' hypothetical patients</h2>
+        <p>
+          A system like Watson for Oncology learns from cases, each paired
+          with the treatment a human expert chose. What it learns is only as
+          good as how well those cases represent the patients it will later
+          meet. Memorial Sloan Kettering and IBM started, in 2014, by
+          training the system on real patient records.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          They soon switched to hypothetical patients, cases the doctors
+          invented themselves rather than pulled from real charts, because
+          standards of care were changing faster than historical records
+          could keep up with.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          Dr. Andrew Seidman, the Memorial Sloan Kettering oncologist who
+          trained the system, did not treat this as a flaw to hide: "We are
+          not at all hesitant about inserting our bias... it's a very
+          unapologetic bias."<sup class="nb-cite"><a href="#s6">6</a></sup>
+          IBM's own account did not always agree. Deborah DiSanzo, then
+          general manager of IBM Watson Health, told the same reporters that
+          "the bias is taken out by the sheer amount of data we have," a
+          claim IBM later said meant Watson generally, not Oncology
+          specifically.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          One defended the bias as intentional. The other denied it was
+          there.
+        </p>
+        <p>
+          By July 2017, an internal presentation put a number on how thin the
+          foundation was. Across eight cancer types, the training set ranged
+          from 635 hypothetical cases for lung cancer down to 106 for ovarian
+          cancer.<sup class="nb-cite"><a href="#s3" data-nb-locator="internal presentation, July 27, 2017">3</a></sup>
+          Memorial Sloan Kettering doctors and IBM engineers compiled the
+          cases with no statistical check on whether the mix represented how
+          cancer actually presents.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          A couple dozen specialists at one hospital cannot describe how
+          cancer is treated everywhere, and the gap shows in how often
+          outside oncologists agreed with Watson's advice. Four measurements
+          below, none directly comparable since they cover different cancers
+          and panels, still slide the same direction: down, the farther a
+          study sits from Memorial Sloan Kettering's own patients and
+          specialists.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Only the Copenhagen account and the pooled meta-analysis below
+            are independent of IBM or Memorial Sloan Kettering.
+          </caption>
+          <thead>
+            <tr>
+              <th>Study or site</th>
+              <th>Cancer type(s)</th>
+              <th class="txt">Agreement with Watson</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Copenhagen</span></td>
+              <td>Multiple, unpublished</td>
+              <td class="txt">About 33 percent; the hospital dropped the project.<sup class="nb-cite"><a href="#s6">6</a></sup></td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">South Korea</span></td>
+              <td>Colon cancer</td>
+              <td class="txt">49 percent, published study.<sup class="nb-cite"><a href="#s8">8</a></sup></td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Manipal, India</span></td>
+              <td>Breast cancer, n=638</td>
+              <td class="txt">73 percent raw; 93 percent after a second, blinded review of the disagreements. IBM/MSK co-authored.<sup class="nb-cite"><a href="#s9">9</a></sup></td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Pooled meta-analysis</span></td>
+              <td>7 cancer types, ~1,800 cases</td>
+              <td class="txt">81.5 percent overall: 88.99 percent for breast cancer, the best result, against 57.94 percent for gastric cancer, the worst.<sup class="nb-cite"><a href="#s7">7</a></sup></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section data-nb-section="deployment" id="deployment">
+        <h2>Watson was sold to hospitals years before anyone tested whether it worked</h2>
+        <p>
+          STAT found hospitals trading on Watson's name recognition
+          regardless of clinical value: Manipal Hospital in Bangalore, India,
+          charged patients about $150 for a "Watson opinion" consult.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Pilar Ossorio, a bioethicist at the University of Wisconsin, called
+          the sequence backwards: "you should have to prove that there's
+          safety and efficacy before you can just go do this."<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          Internal presentations show IBM's own deputy chief health officer,
+          Dr. Andrew Norden, weighing that risk after the product had already
+          been sold. One slide said running "a rigorous
+          study now is a very high-risk endeavor that could be embarrassing
+          at best and have serious adverse business consequences at
+          worst."<sup class="nb-cite"><a href="#s3" data-nb-locator="internal presentation, June 26, 2017">3</a></sup>
+          Another noted the concordance studies IBM had published so far were
+          "designed in a way that makes negative findings unlikely."<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The Manipal study shows why: its 73-to-93-percent jump came only
+          after the tumor board reviewed the disagreements a second time.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          Almost every published concordance study was funded by a paying
+          customer, co-authored by an IBM employee, or both.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          The clearest documented case: Watson recommended a chemotherapy
+          combination including bevacizumab for a hypothetical 65-year-old
+          man with severe bleeding, a drug carrying a black-box warning
+          against use in bleeding patients.<sup class="nb-cite"><a href="#s3" data-nb-locator="internal presentation, quoted in STAT, 2018">3</a></sup>
+          Dr. Eric Topol of the Scripps Translational Science Institute
+          called it worrying: "Any time you have an algorithm that makes a
+          recommendation that's dangerous, that's extremely worrisome."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Memorial Sloan Kettering said the case never reached a patient. It
+          was "part of IBM's system testing," the hospital told STAT, and "no
+          technology can replace a doctor."<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          MD Anderson Cancer Center in Texas spent roughly $62 million on its
+          Watson project, the Oncology Expert Advisor. A University of Texas
+          System audit found the spending had skirted procurement rules:
+          almost $40 million went to IBM and over $21 million to the
+          consultancy PwC, largely without board approval.<sup class="nb-cite"><a href="#s10">10</a></sup>
+          The system was never piloted outside MD Anderson; IBM ended its
+          support in September 2016, and MD Anderson's president resigned
+          soon after.<sup class="nb-cite"><a href="#s10">10</a></sup><sup class="nb-cite"><a href="#s11">11</a></sup>
+        </p>
+        <p>
+          In January 2022, IBM sold the Watson Health data-and-analytics
+          business that Watson for Oncology had been part of to the
+          investment firm Francisco Partners.<sup class="nb-cite"><a href="#s12">12</a></sup>
+          IBM did not disclose a price; reporting at the time put it near $1
+          billion, a fraction of the more than $3.6 billion IBM had spent
+          building the business.<sup class="nb-cite"><a href="#s13">13</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-dispute" id="the-dispute">
+        <h2>IBM says it was testing. The record says it was already for sale.</h2>
+        <p>
+          IBM and its critics do not disagree about what happened. They
+          disagree about what a company owes a hospital before selling it a
+          medical opinion.
+        </p>
+        <div class="nb-position">
+          <div class="nb-position-top">
+            <span class="nb-position-who">IBM Watson Health</span>
+            <span class="nb-position-pill">Position</span>
+          </div>
+          <p class="nb-position-statement">
+            Our own quality process caught the flagged recommendations
+            before any reached a patient, and synthetic cases were a
+            deliberate choice to avoid any single population's bias.
+          </p>
+          <p class="nb-position-summary">
+            Dr. Nathan Levitan, IBM Watson Health's chief medical officer,
+            called the errors "isolated" among "tens of thousands of correct
+            recommendations," caught by IBM's own quality process before any
+            reached a patient.<sup class="nb-cite"><a href="#s14">14</a></sup>
+            IBM told STAT the product had shipped 11 software releases in the
+            past year and was "trained to help treat 13 cancers" at 230
+            hospitals worldwide.<sup class="nb-cite"><a href="#s15">15</a></sup>
+          </p>
+        </div>
+        <div class="nb-position">
+          <div class="nb-position-top">
+            <span class="nb-position-who">STAT News and independent reviewers</span>
+            <span class="nb-position-pill">Position</span>
+          </div>
+          <p class="nb-position-statement">
+            By the time IBM weighed whether a rigorous study was too risky,
+            hospitals worldwide had already been marketing the product for
+            years.
+          </p>
+          <p class="nb-position-summary">
+            IBM's own product literature that year said Watson "analyzes
+            patient data against thousands of historical cases," the
+            opposite of the synthetic-case methodology the internal
+            presentations describe.<sup class="nb-cite"><a href="#s16" data-nb-note="IBM public marketing statements, 2017, quoted in STAT's 2018 investigation">16</a></sup>
+            The one meta-analysis with no IBM or MSK co-authorship still
+            found concordance falling the farther a study sat from Memorial
+            Sloan Kettering's own patients.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          </p>
+        </div>
+        <p>
+          Both can be true at once: a bad recommendation may never have
+          reached a patient, and the system may still have been marketed as
+          more validated than the record shows. What would
+          resolve the dispute is not another concordance study: those measure
+          only whether Watson agrees with a human panel, not whether its
+          advice helped a patient live longer or better. It would take an
+          independent, prospective trial: Watson-guided care against standard
+          care at multiple hospitals outside Memorial Sloan Kettering,
+          tracking survival and cost rather than agreement. No such trial was
+          ever run.<sup class="nb-cite"><a href="#s6">6</a></sup><sup class="nb-cite"><a href="#s7">7</a></sup><sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="today" id="today">
+        <h2>The same gap is open in the next clinical AI pilot</h2>
+        <p>
+          Nothing about this failure required Watson to be especially bad
+          software. Any system trained on one hospital's patterns and judged
+          against that hospital's own panel will look strong at home and
+          weaker elsewhere. The independent meta-analysis found
+          exactly that pattern beyond IBM's own case: concordance was
+          consistently lower for advanced, metastatic disease than for
+          earlier stages.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The authors traced part of the international spread to population
+          differences in drug tolerance that Memorial Sloan Kettering's
+          training cases never captured.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          IBM's own portfolio shows the alternative. Watson for Genomics
+          matched a tumor's genetic profile against curated literature rather
+          than issuing a treatment ranking, and it is the one Watson Health
+          product reporters have since called a success.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The fix was narrowing what the system decided, and proving that
+          narrower claim before selling it.
+        </p>
+        <p>
+          Clinical decision-support and diagnostic models are still built
+          the way Watson for Oncology was: trained on one institution's
+          patients, checked against that institution's own panel. Many still
+          reach patients before an independent trial shows whether the
+          advice helps anyone. A system built this narrowly cannot announce
+          its own limits, so the hospital buying it must ask what the seller
+          did not answer first: proven where, on whom, and against what.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Watson for Oncology did not fail because IBM's engineers built bad
+          software. It failed because the company let a couple dozen
+          doctors' hypothetical patients stand in for years of real-world
+          evidence. It sold the system to hospitals worldwide on that basis, and only
+          weighed the risk of testing it after the selling was well
+          underway. Whether IBM was still testing or already shipping is not
+          answerable by the concordance studies either side points to; those
+          measure agreement with a panel of doctors, not whether a patient
+          did better. The trial that would have answered it, Watson-guided
+          care against ordinary care, was the one thing nobody ran. That is
+          the question worth asking about any clinical AI system before it
+          reaches a patient: proven on whom, checked by whom, and against
+          what.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.statnews.com/2018/07/25/ibm-watson-recommended-unsafe-incorrect-treatments/">STAT News' full investigation, "IBM's Watson supercomputer recommended 'unsafe and incorrect' cancer treatments"</a>:
+            the reporting this lesson draws on.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.mskcc.org/news-releases/mskcc-ibm-collaborate-applying-watson-technology-help-oncologists"
+              >Memorial Sloan Kettering Cancer Center · Memorial Sloan Kettering Cancer Center, IBM to Collaborate in Applying Watson Technology to Help Oncologists (2012)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.statnews.com/2017/09/06/watson-ibm-marketing/"
+              >Ike Swetlitz &amp; Casey Ross, STAT News · A new advertising tack for hospitals: IBM's Watson supercomputer is in the house (2017)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.statnews.com/2018/07/25/ibm-watson-recommended-unsafe-incorrect-treatments/"
+              >IBM Watson Health · Internal presentations by Dr. Andrew Norden, deputy chief health officer (June–July 2017), as quoted in STAT News (2018)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.statnews.com/2018/07/25/ibm-watson-recommended-unsafe-incorrect-treatments/"
+              >Casey Ross &amp; Ike Swetlitz, STAT News · IBM's Watson supercomputer recommended "unsafe and incorrect" cancer treatments, internal documents show (2018)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.statnews.com/2018/07/25/ibm-watson-recommended-unsafe-incorrect-treatments/"
+              >Memorial Sloan Kettering Cancer Center · Official statement to STAT News (2018)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.statnews.com/2017/09/05/watson-ibm-cancer/"
+              >Casey Ross &amp; Ike Swetlitz, STAT News · AI vs. cancer: Paging Dr. Watson (2017)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nature.com/articles/s41598-021-84973-5"
+              >Zhou J, Zeng Z, Li L, Scientific Reports · A meta-analysis of Watson for Oncology in clinical application (2021)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://spectrum.ieee.org/how-ibm-watson-overpromised-and-underdelivered-on-ai-health-care"
+              >Eliza Strickland, IEEE Spectrum · How IBM Watson Overpromised and Underdelivered on AI Health Care (2019)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://pubmed.ncbi.nlm.nih.gov/29324970/"
+              >Somashekhar SP, Sepúlveda M-J, Puglielli S, et al., Annals of Oncology · Watson for Oncology and breast cancer treatment recommendations: agreement with an expert multidisciplinary tumor board (2018)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.pcworld.com/article/3179090/artificial-intelligence/texas-hospital-struggles-to-make-ibms-watson-cure-cancer.html"
+              >PCWorld / IDG News Service · Texas hospital struggles to make IBM's Watson cure cancer (2017)</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.theregister.com/2017/02/20/watson_cancerbusting_trial_on_hold_after_damning_audit_report/"
+              >The Register · Watson can't cure cancer... or all the stuff that breaks IT projects (2017)</a
+            >
+          </li>
+          <li id="s12">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://newsroom.ibm.com/2022-01-21-Francisco-Partners-to-Acquire-IBMs-Healthcare-Data-and-Analytics-Assets"
+              >IBM Newsroom · Francisco Partners to Acquire IBM's Healthcare Data and Analytics Assets (2022)</a
+            >
+          </li>
+          <li id="s13">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://techcrunch.com/2022/01/21/francisco-partners-scoops-up-remains-of-ibms-watson-health-unit"
+              >TechCrunch · Francisco Partners scoops up remains of IBM's Watson Health unit (2022)</a
+            >
+          </li>
+          <li id="s14">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://ascopost.com/issues/september-10-2019/confronting-the-criticisms-facing-watson-for-oncology/"
+              >Jo Cavallo, The ASCO Post · Confronting the Criticisms Facing Watson for Oncology (2019)</a
+            >
+          </li>
+          <li id="s15">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.statnews.com/2018/07/25/ibm-watson-recommended-unsafe-incorrect-treatments/"
+              >IBM · Official statement to STAT News (2018)</a
+            >
+          </li>
+          <li id="s16">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.statnews.com/2018/07/25/ibm-watson-recommended-unsafe-incorrect-treatments/"
+              >IBM · February 2017 product literature, as quoted in STAT News (2018)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
