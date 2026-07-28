@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tokenize the same sentence by letters instead of words, and its perplexity falls 66 percent · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "perplexity",
+        "template": "lesson",
+        "title": "Tokenize the same sentence by letters instead of words, and its perplexity falls 66 percent",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-28",
+        "tags": [],
+        "sources": 11,
+        "words": 2182,
+        "reading_minutes": 11,
+        "dek": "Perplexity scores a model's surprise at real text, but the same sentence scores differently depending only on the tokenizer, the blind spot that let a 2025 study catch Llama 3 favoring ungrammatical Japanese over grammatical Japanese.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">Tokenize the same sentence by letters instead of words, and its perplexity falls 66 percent</h1>
+        <p class="nb-dekline">
+          Perplexity scores a model's surprise at real text, but the same
+          sentence scores differently depending only on the tokenizer, the
+          blind spot that let a 2025 study catch Llama 3 favoring
+          ungrammatical Japanese over grammatical Japanese.
+        </p>
+        <div class="nb-byline">
+          <span>11 min read</span><span>2026-07-28</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Open the technical report behind almost any new base language
+          model and one number shows up before any benchmark score does:
+          perplexity. Labs have reported it since long before MMLU or GSM8K
+          existed, because computing it needs no multiple-choice test, only
+          ordinary text the model has not seen. It is the closest thing
+          language modeling has to a universal self-portrait.
+        </p>
+        <p>
+          Every other lesson in this course has scored a model against a
+          task someone designed: a grade-school problem, a bar exam
+          question, a coding assignment. Perplexity scores something
+          narrower and older: how well the model's own probabilities line
+          up with what actually comes next in real writing. It is a
+          property of the model itself, independent of any assigned task.
+        </p>
+        <p>
+          By the end of this lesson, you will compute a perplexity by hand,
+          on a sentence small enough to check on paper. You will also see
+          the trap that catches almost every casual "our perplexity is
+          lower" claim. The same sentence, run through the same kind of
+          model, can report two different perplexities. The reason has
+          nothing to do with which one predicts better.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/context-window.html">Every context window has a second number, and it is smaller</a>:
+            a sibling lesson on another spec-sheet number whose fine print carries the real claim.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../transformers-first-principles/tokenization.html">A transformer never reads the letters in strawberry</a>:
+            how a tokenizer cuts text into the pieces perplexity turns out to be measured over.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A score with no task attached</h2>
+        <p>
+          A language model's whole job, at each point in a piece of text, is
+          to output a probability for every token that could come next.
+          Perplexity is the name Jelinek, Mercer, Bahl and Baker gave that
+          quantity in 1977: how many equally likely choices a model faced at
+          each step.<sup class="nb-cite"><a href="#s1">1</a></sup> It is the
+          exponential of the average of a model's negative log-probabilities,
+          written PPL(X) = exp{-1/t &sum; log p&theta;(x&#8320; |
+          x&lt;&#8320;)}, the same average negative-log-probability-per-symbol
+          Shannon had already derived for entropy three decades
+          earlier.<sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s3">3</a></sup>
+          It is also equal to two raised to the model's cross-entropy on the
+          text, the same entropy Shannon defined as H =
+          -&sum;p log p.<sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s4">4</a></sup>
+          A perplexity of 20 behaves like a model choosing uniformly among 20
+          options at every position.
+        </p>
+        <p>
+          That is a different kind of number from every other measurement
+          this desk has covered. A benchmark like MMLU or GSM8K hands a
+          model an invented problem and grades whether the answer is right.
+          Perplexity asks nothing and grades nothing. It runs a model over a
+          held-out test corpus, text nobody trained it on, and records the
+          probability it assigned to what actually happened
+          next.<sup class="nb-cite"><a href="#s5">5</a></sup> WikiText-103,
+          one of the standard corpora built for this job, is 103 million
+          tokens of Wikipedia-quality prose kept fixed as a common
+          benchmark.<sup class="nb-cite"><a href="#s5">5</a></sup> GPT-2's
+          paper, for instance, cites its scores on WikiText-103 and the Penn
+          Treebank.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="computing-perplexity" id="computing-perplexity">
+        <h2>The arithmetic, one sentence at a time</h2>
+        <p>
+          Take a toy model, tested on the four-word sentence "the cat sat
+          down." At each word the model does not check whether it is right.
+          It puts out a probability for every word it knows, and the test
+          reads off whatever probability it assigned to the word that
+          actually came next.
+        </p>
+        <table class="nb-table">
+          <caption>
+            What a toy model assigned to each word of "the cat sat down," and
+            the base-2 logarithm of that assignment.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th class="txt">Context</th>
+              <th>Probability assigned</th>
+              <th>log&#8322; of that probability</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">the</span></td>
+              <td class="txt">sentence start</td>
+              <td>0.20</td>
+              <td>&minus;2.32</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">cat</span></td>
+              <td class="txt">the</td>
+              <td>0.15</td>
+              <td>&minus;2.74</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">sat</span></td>
+              <td class="txt">the cat</td>
+              <td>0.40</td>
+              <td>&minus;1.32</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">down</span></td>
+              <td class="txt">the cat sat</td>
+              <td>0.25</td>
+              <td>&minus;2.00</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Five steps turn those four numbers into one perplexity, run
+          strictly in order. First, read off the probability the model
+          assigned to what actually happened at each position: 0.20, 0.15,
+          0.40, 0.25. Second, take the base-2 logarithm of each one:
+          &minus;2.32, &minus;2.74, &minus;1.32, &minus;2.00. Third, negate
+          each logarithm, so a confident guess produces a small number and a
+          surprised one produces a large number: 2.32, 2.74, 1.32, 2.00.
+          Fourth, average those four negated logarithms: (2.32 + 2.74 + 1.32
+          + 2.00) &divide; 4 = 2.095 bits per word. Fifth, raise 2 to that
+          average: 2<sup>2.095</sup> &asymp; 4.27. That is the sentence's
+          perplexity: on this sentence, the model behaved as if it were
+          choosing among about 4.27 equally likely words at every step.
+        </p>
+      </section>
+
+      <section data-nb-section="what-the-test-set-decides" id="what-the-test-set-decides">
+        <h2>The test set decides what gets averaged</h2>
+        <p>
+          The four probabilities above came from running the model over a
+          specific text and recording what it thought would happen next at
+          every position. Whoever reports a perplexity picks that text and
+          publishes it alongside the number. GPT-2's paper names
+          WikiText-103 and the Penn Treebank as the two benchmarks its
+          scores refer to.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          Watch the number move when the test set does. Extend the sentence
+          to "the cat sat down slowly," and suppose the model assigns
+          "slowly" a probability of only 0.05, a fifth negated logarithm of
+          4.32 bits. Average five negated logarithms instead of four: (2.32
+          + 2.74 + 1.32 + 2.00 + 4.32) &divide; 5 = 2.54 bits per word, and
+          2<sup>2.54</sup> &asymp; 5.82. The perplexity rose from 4.27 to
+          5.82, and the model got no worse at anything. The test set now
+          includes a word the model finds harder to predict, and perplexity
+          averages over whatever the test set contains.
+        </p>
+        <p>
+          The same logic makes perplexity dataset-dependent in a way a task
+          score usually is not. A corpus of routine news writing produces a
+          lower perplexity, on the identical model, than one full of rare
+          words and unusual syntax, because rare words are harder to
+          predict.<sup class="nb-cite"><a href="#s7">7</a></sup> Two labs
+          both reporting "a perplexity of 15" have made the same claim only
+          if they measured it on the same corpus.
+        </p>
+        <p>
+          Even holding the model, the tokenizer, and the test set fixed, the
+          scoring procedure still moves the number. One walkthrough scores
+          GPT-2 at a perplexity of 19.44 on WikiText-2 in 1,024-token
+          strides, and at 16.44 in strides of 512
+          instead.<sup class="nb-cite"><a href="#s3">3</a></sup> The
+          shorter stride gives the model more context, more often. All of
+          this is fair, as long as the test set and procedure stay the
+          same. The condition almost nobody checks is the third: whether
+          both scores came from the same tokenizer.
+        </p>
+      </section>
+
+      <section data-nb-section="the-tokenizer-problem" id="the-tokenizer-problem">
+        <h2>The same sentence, cut two ways</h2>
+        <p>
+          Perplexity's formula divides total surprise by however many steps
+          the test was scored over. A "step" is whatever the tokenizer
+          decided a token is. Two tokenizers can cut the identical sentence
+          into a different number of tokens. Because the formula divides by
+          that count, changing the count changes the reported perplexity,
+          even when the model's grip on the sentence has not moved at all.
+        </p>
+        <p>
+          Take "the cat sat down" under its four-word tokenization: 8.38
+          bits of surprise total, the sum of the four negated logarithms
+          above, divided across 4 tokens, for a perplexity of 4.27. Now
+          score the identical sentence character by character. "The cat sat
+          down" is 16 characters, including spaces. Give the character-level
+          model exactly as much information as the word-level model had: the
+          same 8.38 bits of total surprise, spread across 16 steps instead
+          of 4. The average falls to 0.524 bits per step, and
+          2<sup>0.524</sup> &asymp; 1.44.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The same sentence, the same total probability assigned to it,
+            two different perplexities.
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Tokenization</th>
+              <th>Tokens scored</th>
+              <th>Total bits of surprise</th>
+              <th>Bits per token</th>
+              <th>Perplexity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Word-level</span></td>
+              <td>4</td>
+              <td>8.38</td>
+              <td>2.095</td>
+              <td>4.27</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Character-level</span></td>
+              <td>16</td>
+              <td>8.38</td>
+              <td>0.524</td>
+              <td>1.44</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Both rows agree, exactly, on how likely "the cat sat down" was:
+          8.38 bits, however it gets divided up. Slicing the sentence into
+          sixteen characters spreads that unchanged total across four times
+          as many steps, so each step looks less surprising and the
+          average comes out lower. A perplexity of 1.44 and a perplexity of
+          4.27 here describe identical knowledge. Ranking one model above
+          another on raw perplexity, without checking the tokenizer, can be
+          exactly this comparison wearing a scoreboard.
+        </p>
+        <p>
+          The same effect shows up in production models. An independent
+          benchmark ran nineteen of them through the same test text,
+          correcting each one for its own token
+          count.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Correcting for token count moves reported perplexity by a
+            different amount for every tokenizer.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model family</th>
+              <th class="txt">Change once corrected for token count</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Mixtral 8x7B</span></td>
+              <td class="txt">4.104 &rarr; 4.989, a 21.6% rise</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Gemma models</span></td>
+              <td class="txt">a 3.4% to 5.2% rise</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Llama models</span></td>
+              <td class="txt">about 0%, the benchmark's own reference tokenizer</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          None of those shifts said anything about which model predicts text
+          better, only how many pieces its tokenizer cut the same text into.
+        </p>
+        <p>
+          The fix is to stop dividing by tokens: score bits per byte, the
+          same total surprise divided by the text's raw byte count, a
+          number every tokenizer agrees on. The Pile, an 800-gigabyte
+          training benchmark, reports bits-per-byte for exactly this
+          reason.<sup class="nb-cite"><a href="#s9">9</a></sup> The idea
+          predates any system that needs it: a word-trigram model tested on
+          5.96 million characters of the Brown Corpus in 1992 put written
+          English's entropy at 1.75 bits per
+          character.<sup class="nb-cite"><a href="#s10">10</a></sup> That
+          figure holds regardless of tokenizer, because it counts
+          characters, not tokens.
+        </p>
+      </section>
+
+      <section data-nb-section="when-it-misled" id="when-it-misled">
+        <h2>When it actually misled someone</h2>
+        <p>
+          The clearest real case of this trap is not a thought experiment.
+          In 2025, researchers testing Llama 3 on Japanese ran it against
+          psychological predicates, words like "kanashii" (sad) that
+          Japanese grammar requires to carry an evidential marker when used
+          about someone else's feelings. On certain character combinations
+          in these sentences, Llama 3's tokenizer fell back to raw UTF-8
+          bytes instead of its normal subword pieces. That fallback split
+          those exact spots into far more tokens than the same words
+          received elsewhere in the sentence.<sup class="nb-cite"><a href="#s11">11</a></sup>
+        </p>
+        <p>
+          That inconsistency did not land evenly. Fixing the tokenization
+          dropped the reported perplexity of the grammatical sentences by a
+          factor of roughly 28. The ungrammatical sentences, which triggered
+          the byte fallback less often, dropped by only about 1.8 times
+          under the identical fix.<sup class="nb-cite"><a href="#s11">11</a></sup>
+          That gap was large enough to flip which sentence type scored
+          better. On the raw, inconsistent numbers, Llama 3's perplexity
+          favored the ungrammatical sentence. Once tokenization was made
+          consistent, the model's actual preference for the grammatical
+          sentence came through.<sup class="nb-cite"><a href="#s11">11</a></sup>
+        </p>
+        <p>
+          Llama 3 had learned this piece of Japanese grammar. Its raw
+          perplexity score said the opposite, and the error traced to an
+          uneven tokenizer, not to the model's own knowledge. A team judging
+          the model's Japanese grammar from the raw number would have
+          reached the wrong conclusion with full confidence, because
+          nothing about a perplexity score flags a broken tokenization.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Perplexity is the exponential of the average surprise a model
+          feels across text it never trained on. Assign a probability to
+          what actually happens next, take its logarithm, negate it,
+          average those negated logarithms across the test set, and raise 2
+          to the result. A perplexity of 20 means the model behaved, on
+          average, as if choosing among about 20 equally likely options at
+          every step, nowhere near the tens of thousands a coin flip across
+          its full vocabulary would allow. Strong models stay in the tens
+          precisely because their guesses are not coin flips.
+        </p>
+        <p>
+          The arithmetic is the easy part, and now you can do it on paper.
+          Perplexity divides an unchanged total surprise by however many
+          pieces the tokenizer cut the text into. The same sentence and the
+          same model can report 4.27 or 1.44 depending only on the
+          tokenizer.
+        </p>
+        <p>
+          Two models cannot be ranked on raw perplexity unless they share a
+          tokenizer and a test set. When a tokenizer splits inconsistently
+          within one sentence, as Llama 3's did on Japanese grammar, the raw
+          number can favor the wrong answer outright. Bits-per-byte exists
+          because bytes do not care which tokenizer counted them.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/pdf/2505.19599">Gambardella et al., "Inconsistent Tokenizations Cause Language Models to be Perplexed by Japanese Grammar" (2025)</a>:
+            the full study behind the Llama 3 case above, with the exact predicates and byte-fallback patterns.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://huggingface.co/docs/transformers/en/perplexity">Hugging Face, "Perplexity of fixed-length models"</a>:
+            a working code walkthrough for computing perplexity on a real model, including the stride effect described above.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract, JASA 62(S1), S63: coins perplexity as the entropy-based measure of equivalent choice"
+              href="https://doi.org/10.1121/1.2016299"
+              >Jelinek, Mercer, Bahl &amp; Baker &middot; Perplexity&mdash;a measure of the difficulty of speech recognition tasks (1977)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="p. 11, entropy H = -K&sum;p log p; p. 13, entropy as average negative log-probability per symbol"
+              href="https://people.math.harvard.edu/~ctm/home/text/others/shannon/entropy/entropy.pdf"
+              >Shannon &middot; A Mathematical Theory of Communication (1948)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Formula PPL(X) = exp{-1/t &sum; log p&theta;}; stride 1024 vs 512 example (19.44 vs 16.44 on WikiText-2)"
+              href="https://huggingface.co/docs/transformers/en/perplexity"
+              >Hugging Face Transformers Documentation &middot; Perplexity of fixed-length models</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="PPL(P, Q) = 2^H(P, Q) equivalence"
+              href="https://thegradient.pub/understanding-evaluation-metrics-for-language-models/"
+              >The Gradient &middot; Evaluation Metrics for Language Modeling</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="103 million training tokens, 267k-word vocabulary"
+              href="https://state.smerity.com/smerity/state/01HRTB51QZMG59MDAX2ME1TCHR"
+              >Merity, Keskar &amp; Socher &middot; Scalable Language Modeling: WikiText-103 (2016)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Perplexity reported on WikiText-103 and Penn Treebank; 50,257-token byte-level BPE vocabulary"
+              href="https://github.com/openai/gpt-2"
+              >Radford, Wu, Child, Luan, Amodei &amp; Sutskever &middot; Language Models are Unsupervised Multitask Learners (GPT-2, 2019)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Perplexity reported across C4, LAMBADA, and WikiText test sets"
+              href="https://arxiv.org/abs/2112.11446"
+              >Rae et al. &middot; Scaling Language Models: Methods, Analysis &amp; Insights from Training Gopher (2021)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="19 models; Mixtral 8x7B 4.104 to 4.989 (+21.6%); Gemma +3.4-5.2%; Llama reference ~0%"
+              href="https://www.alignmentforum.org/posts/csNk8ECk9SiKHkw35/the-weighted-perplexity-benchmark-tokenizer-normalized"
+              >Alignment Forum &middot; The Weighted Perplexity Benchmark: Tokenizer-Normalized Perplexity</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Adopts bits-per-byte in place of perplexity"
+              href="https://pile.eleuther.ai/paper.pdf"
+              >Gao, Biderman, Black et al. &middot; The Pile: An 800GB Dataset of Diverse Text for Language Modeling (2020)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="1.75 bits per character; word-trigram model on 5.96M-character Brown Corpus test set"
+              href="https://aclanthology.org/J92-1002/"
+              >Brown, Della Pietra, Della Pietra, Lai &amp; Mercer &middot; An Estimate of an Upper Bound for the Entropy of English (1992)</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Llama 3 byte-fallback on Japanese psych predicates; 28x and 1.8x perplexity shifts; preference reversal"
+              href="https://arxiv.org/pdf/2505.19599"
+              >Gambardella, Kojima, Iwasawa &amp; Matsuo &middot; Inconsistent Tokenizations Cause Language Models to be Perplexed by Japanese Grammar (ACL 2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
