@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A model given the right document can still score worse than one given none at all · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "losing-the-thread",
+        "template": "lesson",
+        "title": "A model given the right document can still score worse than one given none at all",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-28",
+        "tags": [],
+        "sources": 10,
+        "words": 2195,
+        "reading_minutes": 9,
+        "dek": "In a 2023 study, GPT-3.5-Turbo answered correctly 53.8% of the time when the right document sat in the middle of 20 documents, worse than the 56.1% it scored with no documents at all.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A model given the right document can still score worse than one given none at all</h1>
+        <p class="nb-dekline">
+          In a 2023 study, GPT-3.5-Turbo answered correctly 53.8% of the time
+          when the right document sat in the middle of 20 documents, worse
+          than the 56.1% it scored with no documents at all.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-28</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You mention something early on, a name, a constraint, a fact
+          buried in a pasted document. Thirty messages later the model
+          answers as if you never said it. The standard explanation is that
+          the conversation ran long and the old messages fell off the end.
+          That is sometimes correct, and it has an easy fix: a bigger
+          context window, or a shorter conversation. It is also, on its own,
+          incomplete. A model can lose a fact sitting in the exact middle of
+          a prompt that still fits, with room to spare, and that failure
+          does not shrink just because the window gets bigger. This lesson
+          traces both failures to how a chat model reads what you send it,
+          and shows the numbers proving the second is not a milder version
+          of the first.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/context-window.html">Every context window has a second number, and it is smaller</a>:
+            how the length a model will accept differs from the length it
+            actually uses well.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">An attention head is a weighted average that computes its own weights</a>:
+            the softmax weighting this lesson's mechanism section builds on.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The transcript is the only memory a chat model has</h2>
+        <p>
+          Every reply a chat model produces starts from nothing. No state
+          survives inside the model from one API call to the next, no
+          running notes, no memory of the last message. Anthropic says this
+          plainly about its own system: the Messages API &ldquo;is
+          stateless,&rdquo; so a client must resend the entire conversation
+          every time it wants a reply that accounts for what came
+          before.<sup class="nb-cite"><a href="#s1">1</a></sup> OpenAI
+          describes the same arrangement for its own models: the API holds no
+          memory of past requests, and the calling application must resend
+          the conversation's full history with each new call to keep the
+          exchange coherent.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Turn one of a conversation sends the model a short request: a
+          system prompt and a first message. By turn thirty, the request
+          looks nothing like thirty messages arriving one at a time. It is
+          one long document, the system prompt plus every earlier turn
+          pasted in ahead of the newest line, submitted whole as though for
+          the first time. Nothing about the model aged between those two
+          calls. Whatever it appears to know about the conversation is only
+          what was typed, again, into that one document. A fact from turn
+          three reaches turn thirty only if the words describing it are
+          still sitting somewhere inside the text sent at turn thirty.
+        </p>
+        <p>
+          That already narrows what &ldquo;the model forgot&rdquo; can mean.
+          It cannot mean a memory faded somewhere between calls, because
+          there was no such memory to fade. It can only mean that the
+          document sent this time failed to contain the fact, or contained
+          it in a form the model failed to use. That differs from a fact
+          postdating its training data, a limit that
+          <a href="../the-mechanics/knowledge-cutoff.html">a model's weights freeze the moment its training run ends</a>
+          covers. The easy assumption is that the conversation simply grew
+          too long, so something had to be cut. That assumption is half
+          right.
+        </p>
+      </section>
+
+      <section data-nb-section="running-out-of-room" id="running-out-of-room">
+        <h2>Running out of room is one real failure</h2>
+        <p>
+          The document assembled at turn thirty has to fit inside the
+          model's context window, the largest stretch of text it accepts,
+          already covered in
+          <a href="../the-instruments/context-window.html">Every context window has a second number, and it is smaller</a>.
+          That number is finite, and a long enough conversation eventually
+          exceeds it. When it does, the
+          application sending the request has to do something: drop the
+          oldest turns, compress them into a shorter summary, or refuse the
+          request outright. Whichever it picks, the same rule from before
+          still holds. The model only ever sees the document it was actually
+          handed.<sup class="nb-cite"><a href="#s1">1</a></sup> If a dietary
+          preference from turn three got cut to make room, it is not
+          misremembered. It is simply not there.
+        </p>
+        <p>
+          This failure has a real fix. Ask for a larger context window, or
+          have the application summarize more aggressively before it trims,
+          and this specific problem gets smaller. Independent write-ups on
+          this exact behavior draw the same line. A transcript that no
+          longer fits is a different problem from a transcript that fits but
+          is not read evenly. The two get confused constantly, because both
+          present the same way to the person typing.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The failure that follows is not a bigger version of running out of
+          room. It is a different failure, with a different fix, and it
+          shows up even when nothing was ever cut.
+        </p>
+      </section>
+
+      <section data-nb-section="the-middle-goes-quiet" id="the-middle-goes-quiet">
+        <h2>The middle goes quiet even when everything still fits</h2>
+        <p>
+          In 2023, a team led by Nelson Liu built a direct test of that
+          second failure. They gave GPT-3.5-Turbo a set of documents, one of
+          which held the answer to a question. They moved that one relevant
+          document to a different position in the stack on each run:
+          sometimes first, sometimes last, sometimes buried in between.
+          Every version of the test used the same number of documents and
+          the same total length, comfortably inside the model's 16,000-token
+          window, so nothing was ever cut and no summary was ever built. The
+          only thing that changed was where the answer sat.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          The accuracy traces a clean U. With 20 documents, the model
+          answered correctly 75.8% of the time when the relevant one came
+          first, 63.2% of the time when it came last, and only 53.8% of the
+          time when it sat in the middle. Stretch the same test to 30
+          documents and the shape holds: 73.4% at the start, 63.7% at the
+          end, 50.5% in the middle.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="losing-the-thread/chart-1.png"
+            alt="Grouped bar chart of GPT-3.5-Turbo's accuracy answering a question by the position of the document holding the answer, for 20-document and 30-document prompts. Both settings score highest at the start (75.8% and 73.4%), drop sharply in the middle (53.8% and 50.5%), and partly recover at the end (63.2% and 63.7%). A dashed line marks 56.1% accuracy with no documents supplied at all, above both middle-position bars."
+          />
+          <figcaption>
+            Fig. 1 &middot; Accuracy answering a question whose supporting
+            document sits at the start, middle, or end of the prompt,
+            GPT-3.5-Turbo, 20- and 30-document settings, both well inside the
+            model's context window.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          The sharper comparison is not between positions. It is between
+          having the document at all and not having it. Give the same model
+          no documents, just the bare question, and it answers correctly
+          56.1% of the time from what it already knew.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          That is higher than 53.8% and higher than 50.5%, the model's own
+          scores when the correct document was sitting right there in the
+          prompt, just in the middle. Handing the model the answer, badly
+          placed, scored worse than handing it nothing.
+        </p>
+        <p>
+          The pattern is not an artifact of one task. Liu's team ran a
+          second test, key-value retrieval, looking up one value among as
+          many as 140 planted pairs. The worst-case accuracy for a pair
+          buried in the middle fell to 45.6%, again comfortably inside
+          the window.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          One fix helped: repeating the question both before and after the
+          documents recovered most of the loss, reaching perfect accuracy at
+          300 pairs.<sup class="nb-cite"><a href="#s4">4</a></sup> That is a
+          change to how the prompt is built, and it depends on someone doing
+          it on purpose. The broader problem doesn't fade as windows grow.
+          RULER, testing seventeen models to 128,000 tokens, finds only
+          about half still acceptable past roughly 32,000.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          It reports one score per length, not by position, so it can't
+          confirm the U-shape at scale; only Liu's paper
+          does.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="where-the-u-shape-comes-from" id="where-the-u-shape-comes-from">
+        <h2>Where the U-shape actually comes from</h2>
+        <p>
+          An <a href="../the-mechanics/attention.html">attention head</a>
+          answers each token's question by scoring it against every other
+          token, turning those scores into a set of weights that sum to one,
+          then blending accordingly. That budget of one is the first piece
+          of the mechanism: a fixed total handed out across however many keys
+          are competing for it, exactly as Vaswani and his co-authors defined
+          the operation.<sup class="nb-cite"><a href="#s6">6</a></sup> Feed
+          the head 20 documents' worth of tokens instead of a handful, and
+          that same total of one has to stretch across thousands of
+          competitors. Most individual tokens' share of it, on average, gets
+          thinner. That alone predicts a longer prompt should be a harder
+          prompt. It does not, by itself, predict that the middle of that
+          prompt should fare worse than its own edges.
+        </p>
+        <p>
+          Two more pieces close the gap. The first is causal masking. A
+          decoder-only model restricts every token to scoring only the
+          tokens before it, never the ones after. So the last tokens in a
+          prompt are the only ones with a full view back across everything
+          else, while the first token anchors every later score no matter
+          what it contains.<sup class="nb-cite"><a href="#s7">7</a></sup> The
+          second is position itself. A model marks how far apart two tokens
+          sit with a scheme, most commonly rotary position embedding, or
+          RoPE, which rotates each token's representation by an angle set by
+          its position. A query's felt similarity to a key decays as the
+          distance between them grows, a property built directly into the
+          rotation rather than added on afterward.<sup class="nb-cite"><a href="#s8">8</a></sup><sup class="nb-cite"><a href="#s9">9</a></sup>
+          Ofir Press and his co-authors built an alternative, ALiBi, that
+          instead subtracts a penalty from the raw attention score in direct
+          proportion to that same distance, a blunter bias toward whatever
+          sits close to the token doing the asking.<sup class="nb-cite"><a href="#s10">10</a></sup>
+          Either way, the two edges of a prompt get a head start that tokens
+          buried in the middle do not.
+        </p>
+        <p>
+          Both newer schemes were also built to fix a related problem: a
+          model trained on sequences up to some length behaves
+          unpredictably past it, since it never practiced scoring across a
+          longer distance during training. Press's team showed ALiBi lets a
+          model trained on short sequences generalize cleanly to much longer
+          ones at test time, evidence that at least part of how position is
+          handled is a trained habit, not a fixed law of the architecture.<sup class="nb-cite"><a href="#s10">10</a></sup>
+          That is where the settled part of the account stops. It is settled
+          that softmax attention divides a fixed budget across every
+          competing token, and that position schemes make the two edges of a
+          prompt structural favorites for that budget. It is not settled why
+          the resulting dip is as sharp and as consistent as Liu's numbers
+          show, or how much of it a better positional scheme actually
+          removes. Liu's team tested models built specifically for long
+          context, not merely stretched after the fact, and the U held
+          anyway.<sup class="nb-cite"><a href="#s4">4</a></sup> A scheme that
+          widens how far a model can generalize has, so far, done that more
+          reliably than it has quieted what happens to the middle of a
+          prompt already well inside the model's reach.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Two different things happen when a chat model forgets, and they
+          call for two different fixes. The first is running out of room.
+          The conversation's full history no longer fits the context window,
+          so whatever is serving it drops or compresses the oldest turns,
+          and the fact you need is simply absent from the document the
+          model is shown. A bigger window, or better summarization before
+          the trim, fixes this one. The second happens with room to spare:
+          the model is handed the fact, unmodified, sitting in the middle of
+          a prompt well inside its limit, and still fails to use it. Liu and
+          her co-authors measured this directly. Accuracy on the same 20
+          documents fell from 75.8% at the start to 53.8% in the middle,
+          worse than the 56.1% the model scored with no documents at all.
+          Softmax attention spreads a fixed budget across every competing
+          token, and the schemes that mark position give the two edges of a
+          prompt a head start the middle does not get. That much is
+          settled; how much of the gap a better positional scheme can close
+          is not. So the next time a bigger context window is offered as
+          the whole fix for a chatbot that forgot, a step is being skipped.
+          A bigger window helps a transcript that no longer fits. It does
+          nothing for the fact that was there all along, sitting quietly in
+          the middle.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2307.03172">Lost in the Middle: How Language Models Use Long Contexts</a>:
+            the full paper, with the multi-document QA and key-value
+            retrieval results in detail.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2404.06654">RULER: What's the Real Context Size of Your Long-Context Language Models?</a>:
+            a newer benchmark measuring how far long-context performance
+            degrades as inputs grow past 32,000 tokens.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://platform.claude.com/docs/en/build-with-claude/working-with-messages"
+              >Anthropic &middot; Using the Messages API</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://developers.openai.com/api/docs/guides/conversation-state"
+              >OpenAI &middot; Conversation State</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://dev.to/thousand_miles_ai/the-lost-in-the-middle-problem-why-llms-ignore-the-middle-of-your-context-window-3al2"
+              >Thousand Miles AI &middot; The &ldquo;Lost in the Middle&rdquo; Problem: Why LLMs Ignore the Middle of Your Context Window</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.03172"
+              >Liu, Lin, Hewitt, Paranjape, Bevilacqua, Petroni, and Liang &middot; Lost in the Middle: How Language Models Use Long Contexts</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.06654"
+              >Hsieh, Sun, Kriman, Acharya, Rekesh, Jia, Zhang, and Ginsburg &middot; RULER: What's the Real Context Size of Your Long-Context Language Models?</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf"
+              >Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, and Polosukhin &middot; Attention Is All You Need</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://medium.com/@sanjjam/beginners-guide-to-causal-attention-b2e3fa9bc762"
+              >Singh Alang &middot; Beginners' Guide to Causal Attention</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2104.09864"
+              >Su, Lu, Pan, Wen, and Liu &middot; RoFormer: Enhanced Transformer with Rotary Position Embedding</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://blog.eleuther.ai/rotary-embeddings/"
+              >EleutherAI &middot; Rotary Embeddings: A Relative Revolution</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/ofirpress/attention_with_linear_biases"
+              >Press, Smith, and Lewis &middot; Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
