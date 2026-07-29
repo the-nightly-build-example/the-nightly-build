@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Answer order alone swung a language model's verdict by 80 points · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "llm-as-a-judge",
+        "template": "lesson",
+        "title": "Answer order alone swung a language model's verdict by 80 points",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-29",
+        "tags": [],
+        "sources": 8,
+        "words": 2150,
+        "reading_minutes": 10,
+        "dek": "Judged by ChatGPT, the same two chatbot answers swung from a 2.5% win rate to an 82.5% win rate depending only on which one appeared first.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">Answer order alone swung a language model's verdict by 80 points</h1>
+        <p class="nb-dekline">
+          Judged by ChatGPT, the same two chatbot answers swung from a 2.5%
+          win rate to an 82.5% win rate depending only on which one appeared
+          first.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-29</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A claim shows up on almost every model launch now: graded by
+          GPT-4, our model wins. That grade comes from LLM-as-a-judge, one
+          language model scoring another model's answers instead of a
+          person doing it, and the method now sits behind MT-Bench,
+          AlpacaEval, Arena-Hard, and most of the win-rate numbers a lab
+          puts on a slide. It has real backing: on the benchmark that
+          introduced it, a language-model judge matched human raters about
+          as often as two human raters matched each other. It also has
+          three measured failure modes, and a fourth problem: whether a
+          single verdict even repeats. This lesson walks through each one
+          with the size the researchers who found it actually measured. A
+          verdict moves for an answer arriving first instead of second, for
+          running longer instead of shorter, and for coming from the same
+          family as the judge itself. Finish this and a claim like "model X
+          beat model Y, judged by GPT-4" stops being a headline number and
+          becomes something you can check.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/chatbot-arena-elo.html"
+              >Chatbot Arena's Elo is a preference vote that pays out for
+              style</a
+            >: the human-vote instrument that produces a rank without a
+            language model anywhere in the loop.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2403.04132"
+              >Chiang et al., "Chatbot Arena: An Open Platform for
+              Evaluating LLMs by Human Preference"</a
+            >: the estimator behind the human-vote board this lesson checks
+            a model judge against.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One model grades another model's homework</h2>
+        <p>
+          "Judged by GPT-4" means a language model read the same answers a
+          person would have and returned a score or a pick, instead of a
+          person doing it. That method, LLM-as-a-judge, comes from a 2023
+          paper by Lianmin Zheng and coauthors, who built a 160-question
+          test called MT-Bench and set a judge model loose on it three
+          ways.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Single-answer grading hands the judge one response and a rubric,
+          and it scores that response alone, the way a single grader scores
+          an essay. Pairwise comparison hands it two responses and asks
+          which is better, or whether they tie. Reference-guided grading
+          adds the correct answer to check against, which helps on
+          questions that have one, math foremost, and removes one thing the
+          other two modes leave the judge to guess at.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Zheng and coauthors checked whether any of this was trustworthy
+          by comparing the judge's calls to a panel of human raters scoring
+          the same questions. The judge, GPT-4, agreed with the humans more
+          than 80 percent of the time, about the rate at which the humans
+          agreed with each other.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The paper's other reference point is Chatbot Arena, the
+          crowd-sourced site where real people cast the same kind of vote
+          instead of a model.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          <a href="../the-instruments/chatbot-arena-elo.html"
+            >This desk has already measured that platform on its own
+            terms</a
+          >: the same task, judged by a different kind of reader.
+        </p>
+        <p>
+          An 80 percent match with humans is real, and it is also the best
+          case: the same paper that reports it is the one that found where
+          the number breaks.
+        </p>
+      </section>
+
+      <section data-nb-section="position-bias" id="position-bias">
+        <h2>The answer that wins by going first, or second</h2>
+        <p>
+          Feed a judge the same two answers twice, swap only which one
+          comes first, and watch the verdict change without a word of the
+          answers changing. Wang and coauthors ran exactly that test using
+          ChatGPT as the judge, comparing an answer from Vicuna-13B against
+          an answer from ChatGPT's own family. Vicuna's win rate was 2.5
+          percent when ChatGPT saw its answer first, and 82.5 percent when
+          it saw the identical answer second.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          That is position bias: the verdict depends on where in the
+          prompt an answer sits, not only on what it says. Across a larger
+          set of comparisons, the same paper measured how often a verdict
+          flipped when the order flipped, a "conflict rate": GPT-4 flipped
+          46.3 percent of the time, ChatGPT flipped 82.5 percent of the
+          time.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Zheng and coauthors ran a milder version of the same check and
+          reported it as a consistency rate rather than a flip rate: GPT-4
+          kept the same call in 65 percent of reordered pairs, Claude-v1 in
+          just 23.8 percent.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Different test, same shape: whichever judge is doing the scoring,
+          part of its verdict is coming from where an answer happened to
+          land.
+        </p>
+        <p>
+          Because the flaw is a positional artifact of the prompt, the fix
+          lives in the prompt: run every comparison in both orders, and
+          count a win only if it survives the swap. Wang and coauthors
+          built exactly that check into a calibration procedure, pairing
+          it with a rule that asks the judge for its reasoning before its
+          score, and recovered 9.8 points of accuracy for GPT-4 and 14.3
+          points for ChatGPT.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          A verdict that has not been run both ways has not paid that cost,
+          and the gap it reports could still be sitting inside an 80-point
+          swing.
+        </p>
+      </section>
+
+      <section data-nb-section="verbosity-bias" id="verbosity-bias">
+        <h2>The answer that wins by saying more</h2>
+        <p>
+          Zheng and coauthors also tried feeding the judge padding: an
+          answer built from repetitive, list-heavy filler with nothing new
+          in it, to see whether length alone would carry it. GPT-4 fell for
+          it only 8.7 percent of the time. Claude-v1 and GPT-3.5 fell for
+          it 91.3 percent of the time, essentially every time the trick was
+          tried.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          That is verbosity bias: treating length as a stand-in for
+          quality. It shows up even without an adversarial trick.
+          AlpacaEval's own team measured its default evaluator and found it
+          picked the longer of two answers about 68 percent of the time,
+          regardless of which one was actually better.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          A judge that is not being tricked at all can still be rewarding
+          bulk by default.
+        </p>
+        <p>
+          The win probability is itself a function of length, not only of
+          quality. Dubois and coauthors built length directly into the
+          scoring: a regression estimates what the preference would have
+          been if both answers were the same length, and reports that
+          adjusted figure as length-controlled AlpacaEval.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Running it moved the metric's correlation with Chatbot Arena's
+          human votes from 0.94 to 0.98, and cut how far a provider could
+          move its own win rate just by writing longer, from a 25-point
+          swing down to 10.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          A win rate that has not been length-controlled is carrying an
+          unknown share of its gap in extra words, and AlpacaEval's own
+          baseline says that share can run as high as 18 points above a
+          coin flip.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="self-preference-bias" id="self-preference-bias">
+        <h2>A model favors what it recognizes as its own</h2>
+        <p>
+          Zheng and coauthors also checked whether a judge favors its own
+          family's answers over a rival's on otherwise similar questions.
+          GPT-4 rated its own answers the winner about 10 percentage points
+          more often than an outside judge would; Claude-v1 favored its own
+          family's answers by about 25 points. But GPT-3.5 showed no such
+          preference at all. The authors call their own numbers unsettled:
+          "due to limited data and small differences, our study cannot
+          determine whether the models exhibit a self-enhancement
+          bias."<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Panickssery, Bowman, and Feng put a firmer basis under the same
+          idea by tracing the mechanism directly. GPT-4, shown a set of
+          answers that included its own, could pick out its own writing
+          with no special training 73.5 percent of the time. When the
+          researchers fine-tuned GPT-3.5 and Llama 2 on just 500 examples
+          until each could recognize its own output more than 90 percent of
+          the time, each model's preference for its own answers grew right
+          along with its recognition accuracy.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          The better a model gets at telling its own writing apart from
+          everyone else's, the more it prefers it.
+        </p>
+        <p>
+          The same pattern shows up outside chat answers. Liu and
+          coauthors' G-Eval, a GPT-4-based judge built for grading text
+          summaries, consistently rated machine-written summaries above
+          human-written ones, even on pairs where separate human raters
+          preferred the human version.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Overall, G-Eval's scores tracked human judgment reasonably well
+          on summarization, a Spearman correlation of 0.514, well above
+          older metrics like ROUGE, and that aggregate number is exactly
+          what hides the specific pairs where its verdict and the human's
+          verdict diverged.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          Self-preference is not caused by anything in the prompt, so it
+          cannot be fixed by reordering answers or trimming words. What the
+          recognition mechanism suggests instead: a judge from a different
+          lab than either system it is scoring has nothing of its own to
+          recognize and prefer, so it is not exposed to the same
+          shortcut.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="reading-a-verdict" id="reading-a-verdict">
+        <h2>How much a verdict is worth before you trust it</h2>
+        <p>
+          None of these three biases is a rare failure mode, and a verdict
+          from a single run carries a fourth problem on top of them: it may
+          not even repeat itself. Yagubyan ran the identical pairwise
+          comparison twice across 29 tasks and found the verdict flipped
+          13.6 percent of the time on average, with more than a quarter of
+          the tasks flipping over 20 percent of the time. Two judges from
+          the same company, OpenAI's GPT-4o-mini and GPT-4.1-mini, scoring
+          the same pairs agreed only 76 percent of the time.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          That 76 percent is not the same kind of measurement as Zheng and
+          coauthors' finding that GPT-4 agreed with human raters more than
+          80 percent of the time.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Yagubyan tested two judges from one company against each other,
+          on a different set of tasks; Zheng and coauthors tested one judge
+          against people, on MT-Bench and Chatbot Arena.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Different pair, different tasks, different year: not a clean
+          before-and-after. What the two figures still show side by side is
+          a direction, agreement running weaker judge-to-judge than
+          judge-to-human even before any comparison crosses providers. A
+          survey of the field's
+          own literature reaches a similar verdict from outside any single
+          lab, concluding that keeping these judges reliable "remains a
+          significant challenge that requires careful design and
+          standardization."<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          Put the three biases and the instability together and a usable
+          check falls out. Before trusting a claim that model X beat model
+          Y, judged by some model Z, ask three questions the report usually
+          does not answer. Was the comparison run in both answer orders,
+          with a win counted only if it held both times? If not, the gap
+          could be sitting inside a swing as large as the 80 points
+          position bias has been measured to move a verdict.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Was the win rate computed with length controlled? If not, as much
+          as 18 points of it could be nothing but extra words.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Is the judge from the same lab as either model? The size of that
+          risk is less settled than the other two. The one paper that put a
+          number on it measured a 10-to-25-point spread, then called its
+          own measurement inconclusive. The underlying mechanism, a judge
+          preferring writing it recognizes as its own, is not in
+          doubt.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A reported gap that survives all three checks, or one large
+          enough to swallow whichever of them was skipped, is telling you
+          something about the models. One that does not is telling you
+          about the judge.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Research teams have now put a number on the three ways a "judged
+          by GPT-4" score gets made, and on how well a single run of it
+          holds up. Position bias has swung a verdict by as much as 80
+          points on two identical answers, just by changing which one came
+          first. Verbosity bias has been worth close to 20 points of win
+          rate for writing longer with nothing new to say. Self-preference
+          is real in mechanism, a judge favoring writing it recognizes as
+          its own, even where the one attempt to size it landed in a range
+          its own authors would not stand behind. A verdict checked in both
+          orders, with length controlled, from a judge outside either
+          model's family, is measuring close to what the headline claims.
+          Skip those checks and the reported gap could be sitting inside
+          effects this large, rather than any real difference between the
+          models. Read the win rate first, then read for which of the
+          checks the report bothered to run.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2306.05685"
+              >Zheng et al., "Judging LLM-as-a-Judge with MT-Bench and
+              Chatbot Arena"</a
+            >: the full paper behind these bias measurements, including
+            mitigations beyond position swap.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2404.04475"
+              >Dubois et al., length-controlled AlpacaEval</a
+            >: the regression that turns a length-inflated win rate into
+            one that controls for it.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2306.05685"
+              >Zheng et al. · Judging LLM-as-a-Judge with MT-Bench and
+              Chatbot Arena (2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.17926"
+              >Wang et al. · Large Language Models are not Fair Evaluators
+              (2023)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/tatsu-lab/alpaca_eval"
+              >Tatsu Lab · AlpacaEval project repository, "Evaluators" and
+              "Limitations" (github.com/tatsu-lab/alpaca_eval)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.04475"
+              >Dubois et al. · Length-Controlled AlpacaEval (2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.13076"
+              >Panickssery, Bowman, and Feng · LLM Evaluators Recognize and
+              Favor Their Own Generations (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2303.16634"
+              >Liu et al. · G-Eval (2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2606.13685"
+              >Yagubyan · The Coin Flip Judge? Reliability and Bias in
+              LLM-as-a-Judge Evaluation (2026)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2411.15594"
+              >Gu et al. · A Survey on LLM-as-a-Judge (2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
