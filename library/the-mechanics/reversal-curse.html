@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPT-4 names Tom Cruise's mother but not Mary Lee Pfeiffer's son · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "reversal-curse",
+        "template": "lesson",
+        "title": "GPT-4 names Tom Cruise's mother but not Mary Lee Pfeiffer's son",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-29",
+        "tags": ["reversal-curse", "generalization", "training-objective", "factorization", "knowledge-storage"],
+        "sources": 10,
+        "words": 2157,
+        "reading_minutes": 10,
+        "dek": "Berglund et al. tested about 1,500 real parent-child pairs and found forward accuracy at 79% and reverse accuracy at 33% — a training update that only ever runs in one direction, not a fact the model forgot.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">GPT-4 names Tom Cruise's mother but not Mary Lee Pfeiffer's son</h1>
+        <p class="nb-dekline">
+          Berglund et al. tested about 1,500 real parent-child pairs and found
+          forward accuracy at 79% and reverse accuracy at 33% &mdash;
+          a training update that only ever runs in one direction, not a fact
+          the model forgot.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-29</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every large chatbot you have used learned to talk by reading
+          enormous amounts of text and training, one step at a time, to
+          predict the next word. That method is directional by construction,
+          and it leaves a specific, checkable hole: a fact stated one way
+          during training does not automatically come back when the question
+          is asked the other way. Anyone who has pushed on a model's stated
+          facts has probably found this hole already, without a name for it.
+          It shows up anywhere a system reasons about a relationship from
+          whichever end a user asks: a support bot handed "refund policy X
+          applies to product Y" can fail the very next question, "which
+          policy covers product Y."
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html"
+              >The instant a model writes a token, it becomes fact</a
+            >: what next-token training actually computes, the mechanism this
+            lesson takes apart step by step.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/word-embeddings.html"
+              >A transformer redraws a word's vector for every sentence it
+              appears in</a
+            >: the representations this lesson calls directions in
+            weight-space.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Mostly right forward, mostly wrong in reverse</h2>
+        <p>
+          Ask GPT-4 who Tom Cruise's mother is and it answers Mary Lee
+          Pfeiffer, correctly, most of the time. Ask the same model who Mary
+          Lee Pfeiffer's son is, the identical fact from the other end, and it
+          fails more often than not.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          This is not a one-off. Berglund and colleagues ran the same test,
+          both directions, on roughly 1,500 real parent-child pairs pulled
+          from public records.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">79%</span
+            ><span class="nb-stat-l">forward accuracy</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">33%</span
+            ><span class="nb-stat-l">reverse accuracy, same pairs</span>
+          </div>
+        </div>
+        <p>
+          The celebrity test leaves an opening: maybe GPT-4 simply knows
+          famous parents better than famous children, for reasons unrelated
+          to training. Berglund's team closed that opening with a synthetic
+          version: invented people, sentences of the exact form "[Made-up
+          name] is [description]," and a model finetuned on those sentences
+          alone. Asked forward, it answered correctly. Asked the same fact
+          backward, "who fits [description]?", it scored no better than a
+          random guess.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Fame and ambiguity are not doing the work here. A fact trained in
+          one direction is not available from the other. Researchers call
+          this the reversal curse.
+        </p>
+        <p>
+          Both experiments run on the same underlying mechanism: next-token
+          prediction, the training method the earlier lesson on
+          <a href="../the-mechanics/autoregressive-generation.html"
+            >autoregressive generation</a
+          >
+          explains. What follows works out exactly what one step of that
+          training does to a sentence like "Tom Cruise's mother is Mary Lee
+          Pfeiffer" that leaves the forward direction intact and never
+          touches the reverse.
+        </p>
+      </section>
+
+      <section data-nb-section="training-update" id="training-update">
+        <h2>What one training update on "A is B" changes</h2>
+        <p>
+          Training that sentence into a model does not file it anywhere a
+          lookup could pull from either end. It runs through ordinary
+          next-token training: the model reads the tokens of "Tom Cruise's
+          mother is" in order, and at the position right after "is," it
+          produces a probability over every possible next token. The actual
+          next token, "Mary," gets compared against that guess, and
+          <a href="../the-mechanics/gradient-descent.html">one gradient
+            step</a
+          >
+          shifts every weight a small amount toward the guess that turns out
+          right. The same happens for "Lee," then for "Pfeiffer." This is
+          ordinary, measured engineering: what a training step does to every
+          sentence in a training set.
+        </p>
+        <p>
+          The literal claim, stated plainly and settled: the loss for this
+          sentence is computed in one direction only. Nothing in this
+          training step asks the model to predict "Tom Cruise" from "Mary Lee
+          Pfeiffer's son is," because that string of tokens was never in
+          front of it. Unless the training data separately contains a
+          sentence written in that order, no gradient nudges the network
+          toward answering it. That is the mechanical fact the reversal curse
+          rests on. A weight update that makes the tokens of A predict the
+          tokens of B does not, by that same update, make the tokens of B
+          predict the tokens of A. A second, separate update would be
+          needed, computed on a sentence written the other way, and ordinary
+          training text mostly supplies no such sentence.
+        </p>
+        <p>
+          Zhu and colleagues confirmed this directly inside a trained
+          network. Analyzing models after autoregressive training on
+          directional text, they found the attention weight matrices
+          connecting a description to a name come out asymmetric, structured
+          to compute the forward direction and not its mirror.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          That asymmetry is the measured shape training leaves behind,
+          inspected in real networks rather than inferred from behavior
+          alone.
+        </p>
+      </section>
+
+      <section data-nb-section="direction-not-address" id="direction-not-address">
+        <h2>A fact is a direction, not an address</h2>
+        <p>
+          Training builds a set of directions in a high-dimensional space,
+          the representations the earlier lesson on
+          <a href="../the-mechanics/word-embeddings.html">word embeddings</a>
+          describes. A transformer's layers push those directions around so
+          that, in the context "Tom Cruise's mother is," the arrangement
+          makes "Mary Lee Pfeiffer" the likely next token. No second
+          operation runs for free that arranges things so "Tom Cruise"
+          follows "Mary Lee Pfeiffer's son is." That would take the same kind
+          of gradient the first arrangement took, computed on the reverse
+          direction, and the training data supplied none.
+        </p>
+        <p>
+          A database offers the wrong comparison here. It stores "mother:
+          Mary Lee Pfeiffer" under a key, and a second index lets you query
+          it by the value too, so either direction is a lookup. Nothing in a
+          next-token predictor works this way.
+        </p>
+        <p>
+          Grosse and colleagues measured this asymmetry directly in a real
+          trained model, using influence functions, a technique for tracing
+          which training examples pushed a given output which way. They found
+          that when the order of two key phrases in a training example is
+          flipped, the measured influence of that example on related outputs
+          drops to near zero.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The information behind "who is Tom Cruise's mother" and the
+          information behind "who is Mary Lee Pfeiffer's son" behave, in
+          their data, like two separate facts. They are not two phrasings of
+          one.
+        </p>
+        <p>
+          Allen-Zhu and Li put a number on how little room there is to store
+          a fact at all: on the order of two bits of factual knowledge per
+          parameter.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Their separate analysis of extraction finds the same
+          direction-dependence. What a model can pull back out of its
+          weights depends on the specific shape of question it was trained
+          to answer, not on whether the fact merely sits somewhere inside,
+          waiting for any query that names it.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="factorization-curse" id="factorization-curse">
+        <h2>Whichever order you predict is the only order you learn</h2>
+        <p>
+          Push one level deeper: why can't a single training step teach both
+          directions at once? The constraint is in what an autoregressive
+          model is allowed to see while training. At the token position for
+          "Mary," the model attends only to the tokens before it: "Tom
+          Cruise's mother is." The token "Tom" never sits in a position where
+          it predicts anything about a sentence that starts with "Mary." The
+          two directions are not two readings of one computation. They are
+          two different computations, and training only ran one of them.
+        </p>
+        <p>
+          Kitouni and colleagues name this the factorization curse: an
+          autoregressive model commits, at training time, to one order for
+          predicting the tokens of a fact, and that order is the only one it
+          learns to compute.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Training on "Tom Cruise's mother is Mary Lee Pfeiffer" teaches one
+          conditional: the mother's name, given the son's. It teaches nothing
+          about the reverse conditional, because computing that would mean
+          predicting different tokens from a different starting point, a
+          computation the training sentence never asked for.
+        </p>
+        <p>
+          This is not a property of one architecture family alone. Wu, Yang,
+          and Wang tested BERT, a model trained to fill in a blank using
+          tokens on both sides rather than only the tokens before it. They
+          found it does not carry the reversal curse the way autoregressive
+          models do.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          That is independent confirmation, from a team with no stake in
+          Berglund's paper: change what a model is trained to predict from,
+          and the direction-dependence goes with it.
+        </p>
+      </section>
+
+      <section data-nb-section="mitigation-and-open" id="mitigation-and-open">
+        <h2>What closes the gap, and what does not</h2>
+        <p>
+          If the cause is which direction training predicts in, the fix
+          should be training in both directions at once. Golovneva and
+          colleagues tested exactly that: pretraining on a sentence together
+          with a copy that has the token order reversed, so the model gets a
+          gradient update in both directions for the same fact. They report
+          the method can "mitigate the reversal curse, and even completely
+          eliminate it in certain cases."<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          Kitouni and colleagues tested that same reversed-token mechanism on
+          their own tasks and report the opposite: reversing tokens "does not
+          improve backward retrieval," and reversing named entities
+          specifically "leads to undesirable behaviour."<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Neither paper cites the other. This is not one team's result
+          sitting inside the other's broader scope. Two primary sources
+          tested the same fix and got opposite answers, and that
+          disagreement stands unresolved.
+        </p>
+        <p>
+          A different line of work changes the training objective itself
+          rather than patching the data. Masked diffusion models do not
+          commit to a left-to-right order at all. During training, random
+          tokens are hidden and predicted from whatever tokens remain, in no
+          fixed order, so both directions of a fact get a gradient at some
+          point. Nie and colleagues found the advantage holds at scale: a
+          masked diffusion model with 1.1 billion parameters kept a
+          meaningfully higher reverse accuracy than autoregressive models
+          many times its size, including a 175-billion-parameter GPT-3.<sup
+            class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+          This is exactly what the training-dynamics account above predicts:
+          a method that refuses one predicting order produces less of the
+          asymmetry. No production chat model in wide use trains this way, so
+          the asymmetry in this lesson still applies to the model most
+          readers use.
+        </p>
+        <p>
+          One question this literature can now answer with real
+          measurements: whether making an autoregressive model bigger fixes
+          this by itself. Lin and colleagues tested the reversal gap on
+          open models ranging from 7 billion to 70 billion parameters,
+          across the Llama, Vicuna, and Mistral families, and found it
+          holding regardless of size or model family.<sup class="nb-cite"
+            ><a href="#s10">10</a></sup
+          >
+          That is a measured result, not a guess: scale alone has not closed
+          the gap in anything tested so far. What is still open sits one
+          layer beneath it. Exactly which computation, in which layer,
+          distinguishes a model trained one way from one trained the other is
+          not fully mapped for any production model. Zhu's asymmetric
+          attention matrices are evidence toward an account, not the account
+          itself. Whether some future training recipe could close the gap
+          without paying the cost of full masked-diffusion training is
+          untested. And whether a person who learns "Tom Cruise's mother is
+          Mary Lee Pfeiffer" and effortlessly answers "who is her son" runs a
+          computation categorically different from a weight update is a
+          question this literature does not touch. That comparison stays
+          open.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The reversal curse is the direct, measured consequence of one
+          training step. Gradient descent adjusts weights
+          to predict the tokens actually in front of it, in the order they
+          actually appear, and nothing about that step reaches backward to
+          adjust anything else. Training on "Tom Cruise's mother is Mary Lee
+          Pfeiffer" builds one computation, not two, and the model does not
+          get the second one for free. That much is settled, checked against
+          real runs and confirmed in an architecture that does not share the
+          constraint. What is not settled: which
+          exact computation inside a production-size model carries this
+          asymmetry, whether some cheaper fix closes it without retraining
+          everything, and whether a person making the same inference
+          effortlessly differs from this in kind. The next time a model
+          answers one direction of a fact and stumbles on the other, that is
+          the training step working exactly as built.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://distill.pub/2020/circuits/zoom-in/"
+              >Zoom In: An Introduction to Circuits</a
+            >, Chris Olah et al.: the interpretability program trying to find
+            the circuit inside a trained network that a claim like this one
+            still cannot point to.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://jalammar.github.io/illustrated-transformer/"
+              >The Illustrated Transformer</a
+            >, Jay Alammar: a walkthrough of the attention computation this
+            lesson treats as a black box.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2309.12288"
+              >Berglund et al. &middot; The Reversal Curse: LLMs Trained on
+              "A is B" Fail to Learn "B is A"</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2405.04669"
+              >Zhu et al. &middot; Towards a Theoretical Understanding of the
+              "Reversal Curse" via Training Dynamics</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2308.03296"
+              >Grosse et al. &middot; Studying Large Language Model
+              Generalization with Influence Functions</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.05405"
+              >Allen-Zhu &amp; Li &middot; Physics of Language Models Part
+              3.3: Knowledge Capacity Scaling Laws</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2309.14316"
+              >Allen-Zhu &amp; Li &middot; Physics of Language Models Part
+              3.1: Knowledge Storage and Extraction</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.05183"
+              >Kitouni et al. &middot; The Factorization Curse: Which Tokens
+              You Predict Underlie the Reversal Curse and More</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2312.03633"
+              >Wu, Yang &amp; Wang, Patterns &middot; Exploring the Reversal
+              Curse and Other Deductive Logical Reasoning in BERT and
+              GPT-Based Large Language Models</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2403.13799"
+              >Golovneva et al. &middot; Reverse Training to Nurse the
+              Reversal Curse</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2410.18514"
+              >Nie et al. &middot; Scaling up Masked Diffusion Models on
+              Text</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2410.18808"
+              >Lin et al. &middot; Delving into the Reversal Curse: How Far
+              Can Large Language Models Generalize?</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
