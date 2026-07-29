@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Every scalable-oversight test on record keeps an answer key in the loop · What Could Go Wrong</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "what-could-go-wrong",
+        "slug": "scalable-oversight",
+        "template": "lesson",
+        "title": "Every scalable-oversight test on record keeps an answer key in the loop",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-29",
+        "tags": ["scalable-oversight", "debate", "iterated-amplification", "weak-to-strong-generalization", "ai-safety"],
+        "sources": 10,
+        "words": 2199,
+        "reading_minutes": 11,
+        "dek": "Weak supervision recovers at most 80 percent of the performance gap to a stronger model, and both it and debate have only been measured on tasks a human could already grade alone.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">What Could Go Wrong</div>
+        <h1 class="nb-title">Every scalable-oversight test on record keeps an answer key in the loop</h1>
+        <p class="nb-dekline">
+          Weak supervision recovers at most 80 percent of the performance gap
+          to a stronger model, and both it and debate have only been measured
+          on tasks a human could already grade alone.
+        </p>
+        <div class="nb-byline">
+          <span>11 min read</span><span>2026-07-29</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every large language model in use today was trained in part by a
+          human rating its answers, and that rating only works if the human
+          can tell a good answer from one that merely sounds good. As
+          models improve at law, medicine, and code, the people training
+          them cannot always check the answers they grade, and the signal
+          that keeps a system honest can go bad exactly where it gets most
+          capable. This is the scalable-oversight problem, named by
+          AI-safety researchers in 2016 and now the subject of a decade of
+          proposed fixes and the experiments testing them. This lesson
+          reads those experiments against the argument, and shows where
+          the tests stop.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../what-could-go-wrong/reward-hacking.html">The record on reward hacking runs out before the catastrophe</a>: the sibling failure, where the training signal itself is wrong rather than uncheckable.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../what-could-go-wrong/deceptive-alignment.html">Models fake alignment when handed a goal, not yet on their own</a>: the sibling worry that a model, not the evaluator, is the one hiding the truth.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A judge who cannot solve the problem must still grade the answer</h2>
+        <p>
+          Imagine a contest judge who sets a geometry problem too hard for
+          her to solve under the clock, then grades two contestants'
+          proofs. She can check that each line follows from the last, but
+          she cannot derive the answer herself and compare. If one
+          contestant writes eleven confident, fluent paragraphs and the
+          other writes four correct ones, she may not tell which is right.
+        </p>
+        <p>
+          Training an advanced AI system puts a human in that seat.
+          Reinforcement learning from human feedback works by rating an
+          AI's answers, then training the system to produce more of
+          whatever earns a high rating, which assumes the rater can tell a
+          good answer from a bad one. In 2016, researchers named the
+          moment that assumption fails: an objective becomes hard to
+          supervise once it is "an objective function that is too
+          expensive to evaluate frequently," whether the expense is money,
+          time, or expertise the evaluator
+          lacks.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The worry is not that a system will misbehave once caught. It is
+          that the training signal degrades exactly where the system gets
+          most capable. Trained to earn approval, it learns to produce
+          whatever the evaluator approves, and once the evaluator cannot
+          tell a right answer from a merely persuasive one, the two become
+          the same target. That differs from an optimizer gaming a reward
+          it was given, or a model that acts differently once unwatched.
+          Here what gives out is the evaluator's own ability to tell the
+          two apart.
+        </p>
+      </section>
+
+      <section data-nb-section="the-two-fixes" id="the-two-fixes">
+        <h2>Debate and amplification promise a check that outgrows the judge</h2>
+        <p>
+          Two proposals let the judge grade correctly without becoming a
+          geometer.
+        </p>
+        <p>
+          The first is debate: put the two contestants in a room and let
+          them question each other's proofs before she rules. Two agents
+          "take turns making short statements up to a limit, then a human
+          judges which of the agents gave the most true, useful
+          information."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The judge cannot verify a claim by rederiving the geometry. But
+          if a proof is correct, the rival should struggle to find a
+          flaw under questioning, and if it is fluent but empty, questioning
+          should surface the step that fails.
+        </p>
+        <p>
+          The second is amplification: break the hard proof into pieces
+          small enough to grade easily, then combine the verdicts. The
+          result, Iterated Amplification, "progressively builds up a
+          training signal for difficult problems by combining solutions to
+          easier subproblems."<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The judge never grades the whole proof at once; a team of
+          assistants grades smaller claims each genuinely can check, and
+          the judgment is assembled from those.
+        </p>
+        <p>
+          Both papers tested their mechanism, keeping an answer key in the
+          loop. Irving, Christiano, and Amodei ran debate
+          on MNIST digits with most pixels hidden from the judge. At six
+          revealed pixels, debate turned a 59.4 percent accurate judge into
+          an 88.9 percent accurate one. At four, a 48.2 percent judge
+          became 85.2 percent accurate.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The judge, though, was a trained image classifier, not a person:
+          the paper calls it "an initial version of this experiment on
+          MNIST, using ML agents and an ML judge."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The result shows debate can sharpen a judge, just not yet a human
+          one. Christiano, Shlegeris, and Amodei tested amplification on
+          five algorithmic tasks, reaching near-full-supervision
+          performance on tens of thousands of labeled examples instead of
+          the tens of millions full supervision needed.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          There too, the "expert" was a synthetic oracle with a known
+          answer, not a person facing an unanswerable question.
+        </p>
+      </section>
+
+      <section data-nb-section="what-the-tests-measure" id="what-the-tests-measure">
+        <h2>The tests measure judges who could still grade the answer themselves</h2>
+        <p>
+          The first real test came from Bowman and colleagues in 2022, in a
+          design called sandwiching: put a human between the system and
+          the ground truth, using an "unreliable large-language-model
+          dialog assistant." On MMLU, unassisted humans scored 57.2
+          percent and the model alone scored 57.2 percent; paired, the team
+          reached 75.4 percent. On QuALITY, humans alone scored 48.6
+          percent, the model alone 59.2 percent, and the team 76.8
+          percent.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The authors call this "an encouraging sign that scalable
+          oversight will be tractable to study with present
+          models."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          But on both benchmarks, a competent adult already has, or can
+          look up, the right answer. The assistant made checking faster;
+          it never asked anyone to certify an answer with no way to
+          confirm it.
+        </p>
+        <p>
+          Two later papers pointed debate itself at real judges. Arnesen,
+          Rein, and Michael trained models through self-play to win
+          debates, then measured judge accuracy. Debate training produced
+          "stronger and more informative arguments," and judges improved;
+          training a model only to persuade, with no opponent, did
+          not.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The task was reading comprehension: the answer sat in a passage
+          the judge could reread.
+        </p>
+        <p>
+          Rahman and colleagues tested debate on a harder case in 2025:
+          claims about covid-19 and climate change, where an evaluator's
+          own prior belief gets in the way. Debate lifted accuracy over a
+          single, unopposed advisor by 4 to 10 percentage points on
+          average. Judges who already held the mainstream, correct belief
+          gained 15.2 points; judges who started out wrong gained only
+          4.7.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Debate helped least where help was most needed, as expected if
+          the judge's own prior is doing a share of the deciding. And
+          epidemiologists and climate scientists could check these claims:
+          the evaluators lacked expertise, not the field.
+        </p>
+        <p>
+          Sandwiching, debate self-play, and debate on contested claims
+          share one feature: an answer key, a rereadable passage, or a
+          consensus already existed in the loop. None asked whether a
+          human paired with debate could reach the truth without it. That
+          is the harder test the 2016 argument is actually about, and the
+          hardest to design, since it needs a question nobody in the loop
+          can answer.
+        </p>
+      </section>
+
+      <section data-nb-section="weak-to-strong" id="weak-to-strong">
+        <h2>The nearest thing to a real test still keeps the answer key nearby</h2>
+        <p>
+          Burns and colleagues came closest to removing that resource, in a
+          design meant to simulate the future case directly. Take a weak
+          model standing in for today's evaluator, and a much stronger
+          pretrained model standing in for a future AI, then finetune the
+          strong model only on labels the weak model produces. "When we
+          naively finetune strong pretrained models on labels generated by
+          a weak model, they consistently perform better than their weak
+          supervisors," the authors
+          report.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          They tested this across 22 NLP classification tasks, chess, and
+          reward modeling, on models spanning seven orders of magnitude in
+          compute.
+        </p>
+        <p>
+          The recovery is real but partial, and the paper reports it as two
+          separate comparisons that should not be merged into one. Across
+          the NLP tasks, naive finetuning alone often lifts the largest
+          strong students to a "PGR... above 50%," a statement about
+          student size that does not say how weak the supervisor
+          was.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          In one specific pairing, the smallest weak supervisor teaching
+          the largest strong student, an auxiliary technique that rewards
+          the strong model for confidence even when it disagrees with its
+          teacher "increases median PGR from about 25% to nearly
+          80%."<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The authors say plainly what even that best case leaves open:
+          "naive RLHF will likely scale poorly to superhuman models without
+          additional work."<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Recovering most of a gap, in the single most favorable pairing,
+          shows some of a weak evaluator's blind spots can be trained
+          around. It does not show all of them can.
+        </p>
+        <p>
+          What makes the experiment possible: researchers hid part of a
+          known answer from the weak supervisor, rather than finding a
+          truly unanswerable question. Weak-to-strong generalization comes
+          closest to testing the argument scalable oversight was written
+          about, and even it needed an answer key on the researchers'
+          side. Every method in this record shows a limited evaluator,
+          paired with a technique or a stronger partner, doing better than
+          alone. None show what happens once nobody already knows the
+          answer.
+        </p>
+      </section>
+
+      <section data-nb-section="the-present" id="the-present">
+        <h2>Today's fixes swap one oversight problem for another</h2>
+        <p>
+          The gap has not stopped anyone from shipping. One widely used
+          response, from Bai and coauthors in 2022, lets an AI grade
+          another AI's answers. A model trained "to evaluate which of two
+          samples is better" then stands in for the reward signal,
+          replacing human judgment with AI-generated
+          preferences.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          It solves the practical need for a rating on every example, but
+          not scalable oversight: it never shows the AI grader judges
+          correctly beyond what a human could check. It substitutes one
+          oversight problem, a person checking a smarter system, for a
+          structurally identical one, an AI checking a system as capable.
+        </p>
+        <p>
+          Independent surveys, from researchers with no stake in any one
+          method's success, describe the problem in terms close to 2016.
+          One frames the task as supervision once "direct human
+          supervision becomes insufficient" and treats the case as
+          unsolved.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          Another lists "reward misspecification, distributional
+          robustness, and scalable oversight" among the limitations of
+          current evaluation frameworks, and closes by naming "open
+          problems in oversight, value pluralism, robustness, and
+          continuous alignment."<sup class="nb-cite"><a href="#s10">10</a></sup>
+        </p>
+        <p>
+          Both doom and dismissal read too much into that record. Treating
+          the 2016 argument as settled, on the strength of a weak model
+          recovering most of a gap it was built to measure, mistakes an
+          analogy for a test of the real case. Treating a few points of
+          debate accuracy on covid-19 claims as proof enough makes the
+          opposite mistake: every evaluator there still had a scientific
+          consensus to check against. What would count as evidence either
+          way is specific enough to name. Oversight scales the day a human,
+          working with debate, amplification, or a weak-to-strong scheme,
+          lands reliably on an answer no person and no external check could
+          confirm. It fails to scale if today's gains disappear once the
+          check is gone. Nobody has run that test, in either direction.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every experiment run so far, sandwiching, debate, weak-to-strong
+          generalization, amplification, showed the same thing: paired
+          with the right technique, a limited evaluator does better than
+          alone. None showed the harder thing the 2016 argument is
+          actually about, an evaluator correctly judging a question nobody
+          in the loop could check independently. Weak-to-strong
+          generalization got closest, and its own authors called naive
+          versions of it likely to scale poorly, even in the one
+          experiment where researchers still held the ground truth. That
+          gap is not a reason to dismiss the argument: the mechanism that
+          could make oversight fail is real and named, and evaluators do
+          lose ground as capability grows. It is not proof the argument is
+          right, either: every fix has been tested only where an answer
+          key or a consensus sat somewhere in the loop. The test that
+          would settle it, judged by a human working with one of these
+          schemes on a question nobody in the loop can check, has not been
+          run. Take the mechanism seriously, and do not mistake a
+          demonstration of the fix for a demonstration that oversight
+          scales.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2211.03540">Measuring Progress on Scalable Oversight for Large Language Models</a>: the full sandwiching design and results across MMLU and QuALITY.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2312.09390">Weak-to-Strong Generalization</a>: the paper in full, with results on chess and reward modeling not covered here.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Sec. on scalable supervision"
+              href="https://arxiv.org/abs/1606.06565"
+              >arXiv · Amodei, Olah, Steinhardt, Christiano, Schulman, Mané, "Concrete Problems in AI Safety" (2016)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/1805.00899"
+              >arXiv · Irving, Christiano, Amodei, "AI Safety via Debate" (2018)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/1810.08575"
+              >arXiv · Christiano, Shlegeris, Amodei, "Supervising Strong Learners by Amplifying Weak Experts" (2018)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; findings section"
+              href="https://arxiv.org/abs/2211.03540"
+              >arXiv · Bowman et al., "Measuring Progress on Scalable Oversight for Large Language Models" (2022)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2409.16636"
+              >arXiv · Arnesen, Rein, Michael, "Training Language Models to Win Debates with Self-Play Improves Judge Accuracy" (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Findings section"
+              href="https://arxiv.org/abs/2506.02175"
+              >arXiv · Rahman et al., "AI Debate Aids Assessment of Controversial Claims" (2025)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; key insight section"
+              href="https://arxiv.org/abs/2312.09390"
+              >arXiv · Burns et al., "Weak-to-Strong Generalization: Eliciting Strong Capabilities With Weak Supervision" (2023)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2212.08073"
+              >arXiv · Bai et al., "Constitutional AI: Harmlessness from AI Feedback" (2022)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Problem statement"
+              href="https://arxiv.org/abs/2412.16468"
+              >arXiv · "The Road to Artificial SuperIntelligence: A Comprehensive Survey" (2026)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2507.19672"
+              >arXiv · "Alignment and Safety in Large Language Models: Safety Mechanisms, Training Paradigms, and Emerging Challenges" (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
