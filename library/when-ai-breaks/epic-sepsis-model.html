@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Epic's sepsis alarm missed two-thirds of the patients it was built to catch · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "epic-sepsis-model",
+        "template": "lesson",
+        "title": "Epic's sepsis alarm missed two-thirds of the patients it was built to catch",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-29",
+        "tags": [],
+        "sources": 9,
+        "words": 2193,
+        "reading_minutes": 10,
+        "dek": "An outside test of 38,455 hospital stays found the widely used score performed far below Epic's own numbers, and traced the gap to how the model defined sepsis in the first place.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">
+          Epic's sepsis alarm missed two-thirds of the patients it was built
+          to catch
+        </h1>
+        <p class="nb-dekline">
+          An outside test of 38,455 hospital stays found the widely used
+          score performed far below Epic's own numbers, and traced the gap
+          to how the model defined sepsis in the first place.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-29</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          American hospitals run predictive scores quietly in the background
+          of a patient's chart. Sepsis alerts are among the most widely
+          used, and one is a case study in how a tool can look excellent on
+          paper and fail at the bedside. Epic Systems built the Epic Sepsis
+          Model into the record software it sells hospitals nationwide, as
+          a shortcut for catching a condition that punishes delay. This
+          lesson follows the model from the high marks Epic gave it, through
+          the outside test that cut its accuracy roughly in half, to the
+          reason a tool can pass its own exam and fail everyone else's. By
+          the end you will know how to read that gap in any vendor's
+          number.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../when-ai-breaks/ibm-watson-oncology.html"
+              >IBM trained Watson for Oncology on hypothetical patients, then
+              sold it worldwide</a
+            >: a different way clinical AI overpromised, bad advice from
+            thin training data, not a live tool that failed an outside test.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../when-ai-breaks/compas-recidivism.html"
+              >ProPublica and Northpointe read the same recidivism scores and
+              both were right</a
+            >: the same question, who validated a score and on whose
+            population, playing out in criminal justice instead of
+            medicine.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A score wired into the record itself</h2>
+        <p>
+          Sepsis is organ damage caused by the body's own response to an
+          infection spiraling out of control. The international consensus
+          definition, known as Sepsis-3 and agreed by a task force led by
+          Mervyn Singer in 2016, states it plainly: "life-threatening organ
+          dysfunction caused by a dysregulated host response to
+          infection."<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Hospitals need to catch it within hours, before organs start
+          failing. Epic Systems, the country's largest health-record
+          vendor, built the Epic Sepsis Model, or ESM, for that window. It
+          is embedded directly in the record, scoring every hospitalized
+          patient automatically instead of waiting for a doctor to order a
+          test.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          It recalculates a score from a patient's vital signs and labs as
+          they update, and once the score crosses a set threshold, the
+          record posts an alert telling the clinical team to consider
+          sepsis.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Epic marketed it on its own testing: an area under the receiver
+          operating characteristic curve, a number from 0.5 (a coin flip) to
+          1.0 (perfect), of 0.76 to 0.83.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          That is respectable by the standards of hospital prediction
+          tools, and it was generated entirely inside Epic, on Epic's own
+          view of Epic's own customers, before Epic sold the tool
+          nationwide with no published external test.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="the-test-epic-never-ran" id="the-test-epic-never-ran">
+        <h2>The test Epic never ran on someone else's patients</h2>
+        <p>
+          In 2021, a team led by Andrew Wong at the University of Michigan
+          finally ran that test, on hospital data Epic had no hand in
+          choosing. They pulled 38,455 hospitalizations, 27,697 patients,
+          treated at Michigan Medicine between December 2018 and October
+          2019. Of those, 2,552, or 6.6 percent, involved a patient who
+          developed sepsis.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Scored against what actually happened to those patients, the
+          model's area under the curve came out at 0.63, with 95 percent
+          confidence between 0.62 and 0.64. Not 0.76 to 0.83.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          At the model's alert threshold, its sensitivity, the share of
+          true cases it flagged, was 33 percent. It missed 67 percent of
+          the patients who developed sepsis, roughly two out of every
+          three.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Its positive predictive value, the share of its alerts that were
+          correct, was 12 percent. For every eight alerts a clinician chased
+          down, on average one pointed to real sepsis and seven did not.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          An editorial in the same issue of JAMA Internal Medicine, by Anand
+          Habib, Anthony Lin, and Richard Grant, put the toll bluntly. A model
+          whose sensitivity and specificity add to less than 1.5, as ESM's
+          33 and 83 percent do, "must be incorporated into care with
+          caution, particularly when a validation study is not published,
+          as Epic failed to do."<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            The score, measured by three different tests on three different
+            patient populations.<sup class="nb-cite"><a href="#s2">2</a></sup
+            ><sup class="nb-cite"><a href="#s4">4</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Epic's claim</th>
+              <th>Wong et al., Michigan Medicine, 2021</th>
+              <th>Independent ED validation, 2024</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">AUC</span></td>
+              <td>0.76–0.83</td>
+              <td>0.63</td>
+              <td class="txt">not reported</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Sensitivity</span></td>
+              <td class="txt">not published</td>
+              <td>33%</td>
+              <td>14.7%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">PPV</span></td>
+              <td class="txt">not published</td>
+              <td>12%</td>
+              <td>7.6%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The gap was not a one-hospital fluke. A 2024 validation at two
+          county emergency departments, a different hospital system and a
+          different set of patients, found the same weakness. Within a
+          six-hour window, sensitivity fell to 14.7 percent and positive
+          predictive value fell to 7.6 percent.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Median lead time was zero minutes: the alert arrived as often
+          after the clinical team had already recognized sepsis as before.
+          Three years after Wong's finding, at a different institution, the
+          model that had scored 0.76 to 0.83 inside Epic was still failing
+          the same way outside it.
+        </p>
+      </section>
+
+      <section
+        data-nb-section="the-alarm-clinicians-tuned-out"
+        id="the-alarm-clinicians-tuned-out"
+      >
+        <h2>The alarm clinicians learned to tune out</h2>
+        <p>
+          At Michigan Medicine, 18 percent of all hospitalizations, 6,971 of
+          38,455, triggered an alert.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          With a positive predictive value of 12 percent, most of those
+          alerts were noise: a clinician who investigated eight of them
+          found, on average, one genuine case of sepsis. That is what alert
+          fatigue looks like from inside a shift. A warning wrong seven
+          times out of eight teaches clinicians to tune it out, so it is not
+          there for the eighth alert, the one that mattered.
+        </p>
+        <p>
+          The volume made it worse. A separate study across 24 hospitals
+          running the model, led by Andrew Wong, measured alert traffic when
+          COVID-19 arrived. The hospitals' overall patient census fell 35
+          percent. Sepsis alerts per day rose 43 percent anyway, from 953 to
+          1,363, and the share of patients triggering an alert on a given
+          day roughly doubled, from 9 percent to 21 percent.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          One hospital in the study, the University of Michigan, shut its
+          sepsis alert off within a month of its first COVID-19 admission
+          rather than keep chasing a tool producing more noise as the real
+          workload eased.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          The other side of that same 12 percent is the 2,552 people in
+          Wong's cohort who did develop sepsis, two out of three of whom got
+          no warning at all. The alarm flooding clinicians with false
+          positives was, at the same time, silent for most of the true
+          cases.
+        </p>
+      </section>
+
+      <section data-nb-section="what-epic-changed" id="what-epic-changed">
+        <h2>Epic retrained the model without proving it elsewhere</h2>
+        <p>
+          Reporting by STAT News in 2022 found that Epic had revised the
+          model. Hospitals should now retrain it on their own data before
+          clinical use, rather than run the nationally trained version. The
+          revision also tracks the Sepsis-3 criteria more closely and leans
+          less on treatment orders as an input.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          What Epic did not do was rebut the mechanism researchers had
+          identified. Instead, its director of nursing, Emily Barey,
+          pointed to a different, favorable study, one finding faster
+          antibiotic administration and better outcomes "without an
+          increase in harmful clinical interventions."<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          That answers a different question than Wong asked: whether the
+          alert correctly identifies who has sepsis.
+        </p>
+        <p>
+          The clearest independent look at version 2 comes from a
+          multicenter validation across four health systems. Its area under
+          the curve ranged from 0.82 to 0.92, well above version 1's
+          0.63.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          Performance varied by hospital, and low positive predictive value
+          with high alert volume persisted at some sites. Retraining locally
+          made the tool a better bet in some hospitals. It did not resolve
+          the deeper problem: a hospital cannot know how the tool will
+          perform on its patients until it tests the tool on its patients.
+        </p>
+      </section>
+
+      <section
+        data-nb-section="the-clock-the-model-was-reading"
+        id="the-clock-the-model-was-reading"
+      >
+        <h2>The clock the model was actually reading</h2>
+        <p>
+          Part of the reason ESM scored so well inside Epic sat inside its
+          own inputs. STAT News reported in 2021 that the model used,
+          among its predictors, whether and when a clinician had already
+          ordered antibiotics or a blood culture, a detail Epic had not
+          disclosed.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          An antibiotic order is not a symptom of sepsis. It is a record of
+          a decision a doctor already made, after already suspecting sepsis
+          enough to treat it.
+        </p>
+        <p>
+          Every prediction model is trained by checking its guesses against
+          a labeled outcome: for ESM, did this patient have sepsis, at a
+          given point in time. The label is only as good as how it draws
+          that line. If part of it depended on treatment a doctor had
+          already ordered, the model could get credit for "predicting"
+          sepsis in cases where the doctor's own order had already given
+          away the answer. Counting the three hours after the clinical team
+          had already
+          recognized sepsis as a hit, the area under the curve rose to 0.80,
+          close to Epic's claimed range.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Score it on the harder question, whether it flagged sepsis before
+          the team recognized and treated it, and the number fell back to
+          0.63.
+        </p>
+        <p>
+          That gap sits at the center of a real dispute. The researchers'
+          account: the leakage explains most of the difference between
+          Epic's number and Wong's. Strip out credit for a decision the
+          model didn't make, and performance collapses toward what
+          independent testing found.<sup class="nb-cite"><a href="#s2">2</a></sup
+          ><sup class="nb-cite"><a href="#s9">9</a></sup>
+          Epic has not published a technical rebuttal of that analysis. Its
+          strongest account is the position it took afterward: hospitals
+          should retrain the model on their own data. That is a claim about
+          patient populations differing across hospitals, not about how the
+          training label was built.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          What would settle it, a reanalysis of the model under its
+          training-time definition on an external cohort, is unpublished.
+          Wong's own numbers remain the clearest evidence: scored on the
+          harder definition, the score lost most of the advantage that made
+          it look strong on paper.
+        </p>
+        <p>
+          The failure ESM exposed is not unique to sepsis, Epic, or
+          medicine. Any score trained against an outcome defined by a
+          professional's own downstream action, a diagnosis entered once
+          treatment has started, a fraud flag set only after an
+          investigator has decided, risks learning to predict that
+          judgment instead of the thing it claims to forecast. A hospital
+          readmission score trained on which patients a discharge planner
+          already flagged for follow-up faces the same trap, and so does a
+          hiring tool trained on which resumes a recruiter already
+          advanced. The question worth asking of any of them is the one
+          Wong's team had to ask of ESM: what counted as the right answer
+          when the model was trained, and whose decision already knew it.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          ESM did not fail because sepsis is hard to predict, or because
+          hospitals are hard to model. It failed because Epic's number and
+          Wong's number answered two different questions, and only one was
+          the question a clinician needed answered: will this patient
+          develop sepsis before anyone treats them for it. Epic's version
+          counted a doctor's decision to order antibiotics as evidence the
+          model had gotten it right. Wong's did not, and the accuracy fell
+          from 0.76–0.83 to 0.63, with two out of three sepsis cases going
+          unflagged, on patients whose clinicians had an alarm they could
+          not trust the way its numbers claimed. Epic has since changed the
+          model, better at some hospitals and no better at others, because
+          nobody has published how much of the original number was the tool
+          and how much was the test. The next predictive score sold into a
+          hospital, a hiring pipeline, or a loan office will carry its own
+          version of that 0.76 to 0.83, built the same way and vulnerable to
+          the same trick. Ask, before trusting the number, whose decision
+          was already baked into what counted as correct.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a
+              href="https://www.statnews.com/2021/07/26/epic-hospital-algorithms-sepsis-investigation/"
+              >STAT's investigation into Epic's algorithms</a
+            >: the reporting that pushed past the sepsis model to Epic's
+            broader pattern of shielding proprietary scores from outside
+            audit.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a
+              href="https://www.technologyreview.com/2021/07/30/1030329/machine-learning-ai-failed-covid-hospital-diagnosis-pandemic/"
+              >Hundreds of AI tools have been built to catch covid. None of
+              them helped.</a
+            >: the same outcome-definition trap, playing out across an
+            entire pandemic's worth of clinical models at once.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://jamanetwork.com/journals/jama/fullarticle/2492881"
+              >JAMA · Singer, M., et al. "The Third International Consensus
+              Definitions for Sepsis and Septic Shock (Sepsis-3)"
+              (2016;315(8):801–810)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/2781307"
+              >JAMA Internal Medicine · Wong, A., Otles, E., Donnelly, J. P.,
+              et al. "External Validation of a Widely Implemented Proprietary
+              Sepsis Prediction Model in Hospitalized Patients"
+              (2021;181(8):1065–1070)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://jamanetwork.com/journals/jamainternalmedicine/articlepdf/2781313/"
+              >JAMA Internal Medicine · Habib, A. R., Lin, A. L., Grant, R. W.
+              "The Epic Sepsis Model Falls Short — The Importance of
+              External Validation" (2021;181(8):1040–1041)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://academic.oup.com/jamiaopen/article/7/4/ooae133/7900014"
+              >JAMIA Open · "External validation of the Epic sepsis
+              predictive model in 2 county emergency departments"
+              (2024;7(4):ooae133)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://jamanetwork.com/journals/jamanetworkopen/fullarticle/2786356"
+              >JAMA Network Open · Wong, A., Cao, J., Lyons, P. G., et al.
+              "Quantification of Sepsis Model Alerts in 24 US
+              Hospitals Before and During the COVID-19 Pandemic"
+              (2021;4(11):e2135286)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.statnews.com/2022/10/03/epic-sepsis-algorithm-revamp-training/"
+              >STAT News · "Epic overhauls popular sepsis algorithm
+              criticized for faulty alarms" (October 3, 2022)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.epic.com/epic/post/epics-director-of-nursing-discusses-new-research-on-its-sepsis-early-warning-model/"
+              >Epic Systems · "Epic's director of nursing discusses new
+              research on its sepsis early warning model"</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12949446/"
+              >JAMA Network Open · Wong, A., Currey, D., Schwinne, M., et al.
+              "Multicenter Prospective Validation of an Updated Proprietary
+              Sepsis Prediction Model" (2026;9(2):e260181)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.statnews.com/2021/09/27/epic-sepsis-algorithm-antibiotics-model/"
+              >STAT News · "Epic's sepsis algorithm is going off the rails in
+              the real world. The use of these variables may explain why."
+              (September 27, 2021)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
