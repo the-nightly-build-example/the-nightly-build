@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Gemini 2.5 Pro (Experimental 03-25) fell from 92% to 87% when the exam
+      turned over · The Instruments
+    </title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "aime",
+        "template": "lesson",
+        "title": "Gemini 2.5 Pro (Experimental 03-25) fell from 92% to 87% when the exam turned over",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-30",
+        "tags": ["aime", "benchmarks", "contamination", "evaluation"],
+        "sources": 10,
+        "words": 2197,
+        "reading_minutes": 9,
+        "dek": "With only 15 problems a year, one of them is worth 6.7 points of any headline AIME score.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">
+          Gemini 2.5 Pro (Experimental 03-25) fell from 92% to 87% when the
+          exam turned over
+        </h1>
+        <p class="nb-dekline">
+          With only 15 problems a year, one of them is worth 6.7 points of
+          any headline AIME score.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-30</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every frontier lab now puts an AIME percentage in its launch
+          materials. OpenAI, DeepSeek, and Google have each reported a
+          number from the same annual high-school math competition, and the
+          number gets read as evidence a model can reason. It is a real
+          measurement of something, and it is also a coarse one: a
+          competition written for a few thousand teenagers a year, 15
+          problems on any single sitting, repurposed into a repeatable
+          score. This lesson builds that score from the exam up: what the
+          Mathematical Association of America actually administers, how a
+          lab turns a fixed problem set into a percentage, and how much of
+          that percentage one problem is worth. Then it works through the
+          one case where a headline AIME score did not survive contact with
+          a fresh exam, and what that cost the claims built on the earlier
+          number.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/humaneval-pass-at-k.html"
+              >Hand-writing HumanEval's 164 problems solved contamination in
+              2021 and caused it by 2024</a
+            >: the full mechanics of pass@k and sampling many completions per
+            problem, assumed here rather than re-derived.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/gsm8k.html"
+              >A passing contamination check on GSM8K would not catch a
+              renamed problem</a
+            >: a different math benchmark, contaminated a different way,
+            worth contrasting with AIME's annual refresh.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A three-hour exam built for teenagers, borrowed by labs</h2>
+        <p>
+          The American Invitational Mathematics Examination is a real exam.
+          The Mathematical Association of America writes and administers it
+          every year for high schoolers who already qualified through an
+          earlier round, the AMC.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          It gives students three hours to solve 15 problems, and it runs
+          twice a year, AIME I and AIME II, so a student can sit up to 30
+          problems total across both.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Every answer is a single integer from 000 to 999. One point per
+          correct answer, no partial credit, no penalty for a wrong
+          guess.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">15</span
+            ><span class="nb-stat-l">Problems per exam</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">3 hrs</span
+            ><span class="nb-stat-l">Time limit</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">0–999</span
+            ><span class="nb-stat-l">Integer answer range</span>
+          </div>
+        </div>
+        <p>
+          A lab turns that fixed problem set into a benchmark score by
+          feeding the same 15 or 30 problems to a model instead of a
+          student, generating one or more completions per problem, and
+          checking each completion's final integer against the answer key.
+          What differs from a human sitting is what happens next: a lab can
+          run the model on a problem once and grade that single try, or run
+          it dozens of times and average the results. OpenAI's announcement
+          of o1 reports all three approaches on the same problem set and the
+          same model. Graded on a single try, pass@1, it scores 74%. Graded
+          by taking the model's most common answer across 64 tries,
+          consensus@64, it scores 83%. Graded by generating 1,000 samples
+          and re-ranking them with a separate scoring step, it scores
+          93%.<sup class="nb-cite"><a href="#s2">2</a></sup
+          >
+          Three numbers, one model, one exam. (The mechanics of sampling
+          many completions and scoring them are taught in full in this
+          course's HumanEval lesson, linked above; this lesson assumes
+          them.) A separate line of research backs the practice of
+          averaging. Grading a model on one random sample bakes in whatever
+          randomness that sample happened to carry. Repeated sampling is how
+          a lab estimates a score the single-run number cannot give on its
+          own.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="one-problem-6-7-points" id="one-problem-6-7-points">
+        <h2>One problem is worth 6.7 points of the score</h2>
+        <p>
+          Fifteen problems make a score out of fifteen possible points, so
+          answering one more or one fewer moves the percentage by
+          1/15, or 6.7 points.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Solve all but one and the score reads 93.3%, not 100%. Miss two
+          and it reads 86.7%. Pool both exams into one 30-question score and
+          each problem is worth half as much, 3.3 points, still a coarse
+          grid for a number a system card often reports to a decimal place.
+        </p>
+        <p>
+          Put that grid next to a real comparison. DeepSeek's R1 paper
+          reports 79.8% pass@1 on AIME 2024.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          OpenAI's o1 reports 74% pass@1 on the same exam, already cited
+          above. The gap between them, 5.8 points, is smaller than the value
+          of a single problem. A ranking built on a gap that size is one
+          problem's difference dressed up as a margin. Before comparing two
+          labs' AIME numbers at all, the
+          relevant question is whether each used the same convention: pass@1
+          against pass@1, consensus@64 against consensus@64. Many system
+          cards state a single percentage without naming which.
+        </p>
+        <p>
+          The 15-problem count is an extreme case of a general problem in
+          small evaluation sets: how a test is formatted and scored changes
+          the measured spread even before contamination or sample size
+          enters the picture. Reformatting MMLU's multiple-choice questions
+          into a different answer format, with the underlying model and
+          questions unchanged, moved the measured run-to-run spread for one
+          7-billion-parameter model from 0.57 down to 0.22.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Nothing about the model's actual ability changed. What changed was
+          how the test counted an answer. AIME's per-problem arithmetic is
+          just the most visible version of a fact that holds across most
+          small benchmarks. A methodology choice a headline number does not
+          disclose can move the score by more than the difference the
+          headline is built to report.
+        </p>
+      </section>
+
+      <section
+        data-nb-section="the-same-problems-for-years"
+        id="the-same-problems-for-years"
+      >
+        <h2>The same 15 problems, circulating online for years</h2>
+        <p>
+          AIME problems do not stay secret. Solutions and discussion threads
+          go up within days of each sitting, and sites built to archive
+          competition math, including the one that documents the exam's own
+          rules, host the full problem sets from prior years.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          A model trained afterward on a general web crawl can absorb the
+          answer key along with everything else. A benchmark run against
+          the same fixed problems year after year risks testing what a
+          model memorized, not what it can work out.
+        </p>
+        <p>
+          MathArena tested for exactly that on AIME 2024. The researchers
+          built their expected-score baseline from how actual human
+          contestants performed across AIME's own two sittings. A model's
+          AIME 2025 score sets a quantile, and that quantile predicts what
+          the same model should score on AIME 2024 if only the difficulty
+          had changed.<sup class="nb-cite"
+            ><a href="#s6" data-nb-locator="§4.1">6</a></sup
+          >
+          Most leading models scored 10 to 20 points above that expectation
+          on the 2024 exam. One, QwQ-Preview-32B, scored nearly 60 points
+          above it, a gap the researchers called extreme contamination.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          The same paper ran the identical check on HMMT, a competition far
+          less prominent online, and found a much smaller gap there. The
+          authors attribute the difference to exposure: HMMT is less likely
+          to have made it into training data at all.<sup class="nb-cite"
+            ><a href="#s6" data-nb-locator="§4.1">6</a></sup
+          >
+          That 60-point figure is not a raw AIME percentage. It is a gap
+          against an expected score, a different measurement answering a
+          different question than "how many of 15 problems did the model
+          solve." Both readings are true of the same result: a model can
+          score a modest raw percentage and still be flagged as extremely
+          contaminated, if that percentage is far above what its general
+          skill predicts.
+        </p>
+        <p>
+          A separate check, VAR-MATH, rewrites AIME problems with new
+          numbers plugged into the same structure and the same required
+          method, then re-scores the same models.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Accuracy fell by an average of 58.8% on the 2024 set and 72.9% on
+          the 2025 set once the specific numbers changed, with DeepSeek-R1
+          alone dropping from 81.5% to 61.3%, a 24.8% decline, on the
+          reworked 2025 problems.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The models really did answer that share of the
+          original problems correctly. What VAR-MATH exposes is how much of
+          that answering held onto the exact problem as written rather than the
+          method behind it, on years both stale and fresh. Some of what
+          reads as "solved AIME" is closer to matching a memorized problem
+          than to running its method on a new one. Benchmark leakage is not
+          unique to this exam. Scraped training data has been shown to
+          raise scores on other fixed test sets the same way, and models
+          that solve older competitive-programming problems easily often
+          struggle on problems written after their training data was
+          collected.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+      </section>
+
+      <section
+        data-nb-section="the-score-that-fell"
+        id="the-score-that-fell"
+      >
+        <h2>The score that fell when the exam turned over</h2>
+        <p>
+          Google's Gemini 2.5 Pro Preview Model Card, published April 16,
+          2025, carries the fix. It lists 92.0% on AIME 2024 and 86.7% on
+          AIME 2025 for one checkpoint, Gemini 2.5 Pro (Experimental
+          03-25), both rows labeled "single attempt (pass@1)."<sup
+            class="nb-cite"
+            ><a href="#s9" data-nb-locator="p.4, results table">9</a></sup
+          >
+          Same document, same checkpoint, same label, both years. The
+          card's own methodology note adds a caveat: Google averaged over
+          multiple trials for smaller benchmarks even under "single
+          attempt," the same noise-reducing practice the earlier section
+          described. Neither number is one raw try.<sup class="nb-cite"
+            ><a href="#s9" data-nb-locator="p.4, Approach">9</a></sup
+          >
+          What is stated plainly is the change: a 5.3-point drop, on the
+          same checkpoint, when the problems it faced changed.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Same benchmark, different question each time: model, checkpoint,
+            year, and counting rule together decide what an AIME score
+            means.<sup class="nb-cite"><a href="#s2">2</a></sup
+            ><sup class="nb-cite"><a href="#s4">4</a></sup
+            ><sup class="nb-cite"><a href="#s9">9</a></sup
+            ><sup class="nb-cite"><a href="#s10">10</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th class="txt">Exam</th>
+              <th class="txt">Counting rule</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">o1</span></td>
+              <td class="txt">AIME 2024</td>
+              <td class="txt">pass@1</td>
+              <td>74%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">o1</span></td>
+              <td class="txt">AIME 2024</td>
+              <td class="txt">consensus@64</td>
+              <td>83%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">o1</span></td>
+              <td class="txt">AIME 2024</td>
+              <td class="txt">re-rank of 1,000</td>
+              <td>93%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">DeepSeek-R1</span></td>
+              <td class="txt">AIME 2024</td>
+              <td class="txt">pass@1</td>
+              <td>79.8%</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="nb-table-token"
+                  >Gemini 2.5 Pro (Experimental 03-25)</span
+                >
+              </td>
+              <td class="txt">AIME 2024</td>
+              <td class="txt">single attempt (pass@1)</td>
+              <td>92.0%</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="nb-table-token"
+                  >Gemini 2.5 Pro (Experimental 03-25)</span
+                >
+              </td>
+              <td class="txt">AIME 2025</td>
+              <td class="txt">single attempt (pass@1)</td>
+              <td>86.7%</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="nb-table-token">Gemini 2.5 Pro (GA)</span>
+              </td>
+              <td class="txt">AIME 2025</td>
+              <td class="txt">single attempt (pass@1)</td>
+              <td>88.0%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Google's own next update to the card shows why naming the
+          checkpoint matters. Updated June 27, 2025, that document carries
+          no AIME 2024 row at all. Its only AIME 2025 figure, for the
+          shipped model, unqualified "Gemini 2.5 Pro," is 88.0%, different
+          from the preview checkpoint's 86.7% on the same exam months
+          earlier.<sup class="nb-cite"
+            ><a href="#s10" data-nb-locator="p.5, results table">10</a></sup
+          >
+          A citation that just says "Gemini 2.5 Pro scored 86.7% on AIME
+          2025" could point to either document, and only one carries an
+          AIME 2024 figure to compare against.
+        </p>
+        <p>
+          Size the drop against the arithmetic already built. A 5.3-point
+          fall is smaller than the 6.7 points a single problem is worth on
+          a 15-question sitting. Taken alone, a move that size does not
+          prove contamination. It is consistent with a checkpoint that got
+          unlucky on roughly one extra problem's worth of difficulty,
+          nothing more, and the drop by itself does not say which
+          explanation is true.
+        </p>
+        <p>
+          What makes the 2024 number suspect is the independent evidence
+          from the previous section, not its own later fall. MathArena
+          found leading models scoring 10 to 60 points above their expected
+          performance specifically on the 2024 problems. VAR-MATH found
+          accuracy on both years collapsing once the same problems were
+          reworded with new numbers. Neither result depends on the 2025
+          score existing at all, and together they point the same
+          direction. At least some of the near-saturated 2024 claims that
+          circulated through 2024 reflected exposure to problems that had
+          been public for months. They did not reflect a math ability that
+          transferred cleanly to a test the model had never seen. That is
+          what the fresh exam cost the earlier claims. None of these results
+          run a controlled test of what any one model memorized, so this is
+          not a disproof. A year and a differently worded problem set were
+          still enough to undercut the earlier headline.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          An AIME percentage measures one thing: how many of a fixed set of
+          15 or 30 integer-answer problems a model matched, under whatever
+          counting rule the lab chose to run and report. Fifteen problems
+          means one of them is worth 6.7 points, so a gap of a few points
+          between two labs is often smaller than a single problem, not a
+          real ranking. The Experimental 03-25 checkpoint of Gemini 2.5
+          Pro fell from 92.0% on AIME 2024 to 86.7% on AIME 2025, a move
+          that sits inside that same margin by itself. It reads as more
+          than noise only alongside separate evidence that the
+          2024 problems had circulated online long enough, and far enough,
+          for memorization to inflate the earlier number. Before treating
+          any AIME percentage as a verdict on a model's reasoning, ask which
+          year and which sitting produced it. Ask whether it is a single
+          pass or an average over many tries, and how many tries that
+          average is over. The exam grades to the point. A headline number
+          rarely says which question it actually answered.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://maa.org/student-programs/amc/"
+              >The Mathematical Association of America's AMC program page</a
+            >: how a student qualifies for the AIME, and where the exam's
+            own rules are published.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/html/2507.12885"
+              >Cao and colleagues, "VAR-MATH" (2025)</a
+            >: the full parametrized re-scoring methodology and per-model
+            results this lesson draws one figure from.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://maa.org/student-programs/amc/"
+              >Mathematical Association of America · American Mathematics
+              Competitions program page</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://openai.com/index/learning-to-reason-with-llms/"
+              >OpenAI · "Learning to Reason with LLMs"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/pdf/2502.08943v3"
+              >Multiple authors · "Beyond the Singular: Revealing the Value
+              of Multiple Generations in Benchmark Evaluation"</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/pdf/2501.12948"
+              >DeepSeek-AI · "DeepSeek-R1: Incentivizing Reasoning Capability
+              in LLMs via Reinforcement Learning"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/html/2406.10229"
+              >Multiple authors · "Quantifying Variance in Evaluation
+              Benchmarks"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/html/2505.23281v2"
+              >MathArena · "Evaluating LLMs on Uncontaminated Math
+              Competitions"</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/html/2507.12885"
+              >Cao and colleagues · "VAR-MATH: Probing True Mathematical
+              Reasoning via Symbolic Multi-Instance Benchmarks"</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.deeplearning.ai/the-batch/the-problem-with-benchmark-contamination-in-ai/"
+              >The Batch (DeepLearning.AI) · "The Problem with Benchmark
+              Contamination in AI"</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.rivista.ai/wp-content/uploads/2025/04/gemini-2.5-pro-preview.pdf"
+              >Google DeepMind · Gemini 2.5 Pro Preview Model Card, April 16,
+              2025 (mirror; Google's original hosted copy now returns
+              AccessDenied)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://storage.googleapis.com/deepmind-media/Model-Cards/Gemini-2-5-Pro-Model-Card.pdf"
+              >Google DeepMind · Gemini 2.5 Pro Model Card, updated June 27,
+              2025</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
