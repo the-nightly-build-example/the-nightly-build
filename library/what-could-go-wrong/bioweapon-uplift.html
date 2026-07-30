@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RAND's red-team study found no measurable AI advantage in bioweapons planning · What Could Go Wrong</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "what-could-go-wrong",
+        "slug": "bioweapon-uplift",
+        "template": "lesson",
+        "title": "RAND's red-team study found no measurable AI advantage in bioweapons planning",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-30",
+        "tags": [],
+        "sources": 9,
+        "words": 2164,
+        "reading_minutes": 10,
+        "dek": "Forty-five red-teamers spent seven weeks testing whether AI access improved biological attack plans and came back with a null result, even as two labs raised their own safeguards without similarly definitive evidence.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">What Could Go Wrong</div>
+        <h1 class="nb-title">RAND's red-team study found no measurable AI advantage in bioweapons planning</h1>
+        <p class="nb-dekline">
+          Forty-five red-teamers spent seven weeks testing whether AI access
+          improved biological attack plans and came back with a null result,
+          even as two labs raised their own safeguards without similarly
+          definitive evidence.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-30</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every frontier AI lab now publishes a biological-risk policy, and
+          two have already activated their most restrictive tier for a
+          released model, without claiming proof the model deserves it.
+          That is odd to watch from outside: safeguards tightening while
+          the two most careful public tests of whether AI helps plan a
+          biological attack came back null, or too small to trust. This
+          lesson works through what those tests measured, with enough of
+          their own arithmetic to judge yourself, and what a safety policy
+          can and cannot tell you about a model's capability. By the end
+          you should be able to tell a red-team result that closes an
+          argument from one that only narrows it, and a policy threshold
+          from a demonstrated attack.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../what-could-go-wrong/ai-persuasion.html"
+              >GPT-4 shifted opinions more than humans did, once it knew who
+              it was arguing with</a
+            >: another misuse-capability argument, tested with a randomized
+            trial instead of a red-team study.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.rand.org/pubs/research_reports/RRA2977-2.html"
+              >RAND's overview of "The Operational Risks of AI in Large-Scale
+              Biological Attacks"</a
+            >: the study's landing page, with links into the full report.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A one-hour experiment and an argument that reverses the burden of proof</h2>
+        <p>
+          In 2023, students in an MIT course called "Safeguarding the
+          Future" spent one hour with ChatGPT. None had scientific
+          training. The assignment: see how far a chatbot would take
+          someone toward the building blocks of a pandemic.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The model suggested candidate pathogens, explained a method to
+          modify them, named companies willing to synthesize the DNA, and
+          walked the group through fixes when a step failed.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          That result crystallized the worry that still drives most of the
+          argument. A large language model does not just answer questions.
+          It compresses years of specialized literacy that once required a
+          lab notebook and a mentor into a plain conversation, and it can
+          troubleshoot a failed attempt the way a static document cannot.
+        </p>
+        <p>
+          The strongest version of the argument built on that finding does
+          not claim a model makes weapons easy. It claims something
+          narrower: that even a small boost for someone who could not
+          otherwise finish the job is unacceptable, because a biological
+          attack cannot be undone once it starts. The MIT team drew a
+          practical conclusion: models should be evaluated by an
+          independent party before release, and DNA-synthesis companies
+          should screen orders against known dangerous sequences.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          On that logic, proof that a model has already helped someone is
+          not required before restricting it.
+        </p>
+        <p>
+          That argument is three years old now, old enough to have been
+          tested rather than just asserted, by two public studies with
+          openly documented methods.
+        </p>
+      </section>
+
+      <section data-nb-section="the-red-team-studies" id="the-red-team-studies">
+        <h2>Two red-team studies, one fully documented and one not</h2>
+        <p>
+          RAND ran the more demanding of the two: not whether a model
+          can answer a biology question, but whether a team using one plans
+          a biological attack any better than a team working from the
+          internet alone.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Study Design, pp. 4–5"
+              >2</a
+            ></sup
+          >
+          RAND recruited 45 red-teamers, 27 from its own staff and 18 from
+          Gryphon Scientific, a biosecurity firm, and split them into 15
+          three-person cells.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Twelve of those cells formed the actual comparison. Four
+          attack-planning scenarios each got three cells. One worked from
+          the internet alone. One had internet access plus a first model.
+          One had internet access plus a second model.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Every cell had seven weeks and up to 80 hours per person to
+          produce a written attack plan.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          Eight outside experts, four in biosecurity and four in security,
+          scored every plan on a 9-point scale for how workable it was,
+          biologically and operationally, reaching consensus at an
+          in-person session.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Across all twelve cells, plans written with a model on hand scored
+          0.22 points lower on average than plans written from the internet
+          alone, a difference RAND reports at p = 0.64 against the standard
+          0.05 threshold for statistical significance.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Research Findings, p. 7">2</a></sup
+          >
+          Split by model, one showed a 0.12-point edge over the
+          internet-only baseline (p = 0.87), the other a 0.56-point
+          deficit (p = 0.25). Neither cleared significance, and neither
+          model helped consistently across the four scenarios.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          What the study measured was planning on paper. It did not test
+          whether a team could acquire what a plan called for, or carry
+          out a written protocol in a lab, the physical and tacit half of
+          the worry beside the informational half.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          OpenAI ran a study the same month on a narrower question: whether
+          a model helps a person answer the kinds of questions that attack
+          would require along the way. Reporting on the study when it was
+          released put
+          the group at 100 participants, split evenly between biology PhDs
+          with laboratory experience and university students. Each half
+          was then split again between an internet-only control and access
+          to GPT-4, including a custom version tuned to answer
+          biosecurity questions instead of declining them.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          An independent academic review of the field's red-team studies,
+          published the following year, lists the same structure and the
+          same headline result: no statistically significant "uplift," the
+          field's own term for the advantage AI access gives someone over
+          working without it.<sup
+            class="nb-cite"
+            ><a href="#s4" data-nb-locator="Table 1, p. 6">4</a></sup
+          >
+        </p>
+        <p>
+          On a 10-point accuracy scale, the group with model access scored
+          0.88 points higher than the internet-only group among experts and
+          0.25 points higher among students, both reported as short of
+          significance.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          This is where the comparison with RAND has to stop, because the
+          two studies are not documented to the same standard. RAND's report
+          states its own p-values and its own significance threshold in the
+          text, so the finding's exact math is there to check.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          OpenAI's original write-up sits behind a bot check that blocks it
+          from being read directly. Its participant count and scores come
+          from press coverage written at the time, plus an independent
+          count published a year later, not from OpenAI's own text.
+          No primary or secondary source states
+          what threshold OpenAI used to call its own result
+          insignificant.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          ><sup class="nb-cite"><a href="#s4">4</a></sup>
+          A later OpenAI system card confirms the study's three-arm design,
+          internet alone, the production model, and the tuned research-only
+          model, but not the original sample size or statistics.<sup
+            class="nb-cite"
+            ><a href="#s5" data-nb-locator="§3.6, p. 14">5</a></sup
+          >
+        </p>
+        <p>
+          Soice's demonstration and these two null results are not really
+          the contradiction they look like. An independent review that
+          counted OpenAI's 100 participants also flags a gap in the MIT
+          team's design. They never compared what the model produced
+          against a plain internet search. That study has no baseline for
+          saying the model added anything the internet did not already
+          give a determined searcher.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          RAND and OpenAI both added that baseline, and against it, model
+          access stopped looking like an advantage.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          ><sup class="nb-cite"><a href="#s3">3</a></sup
+          ><sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-policy-thresholds" id="the-policy-thresholds">
+        <h2>Two companies crossing their own thresholds, on different timelines</h2>
+        <p>
+          Despite those results, by 2025 both companies had activated their
+          most cautious biological-risk policy for a released model, a fact
+          often cited as the industry's own admission that the risk is
+          real. The record supports a narrower reading.
+        </p>
+        <p>
+          Anthropic released Claude Opus 4 in May 2025 under what it calls
+          the ASL-3 standard, a tier of safeguards focused mainly on
+          biological risk, above the tier its other models carry.<sup
+            class="nb-cite"
+            ><a href="#s6" data-nb-locator="p. 9">6</a></sup
+          >
+          The company's own system card explains the decision plainly. Its
+          evaluations ruled out the tier above ASL-3. They could not rule
+          out that Opus 4 had the capability ASL-3 guards against.
+          Anthropic deployed the model with ASL-3 protections anyway,
+          calling the move precautionary.<sup
+            class="nb-cite"
+            ><a href="#s6" data-nb-locator="p. 87">6</a></sup
+          >
+          That is a company acting on what it could not disprove, not a
+          report that the model passed a test like RAND's or OpenAI's.
+        </p>
+        <p>
+          OpenAI's parallel decision is usually paired with the 2024
+          studies, but the record runs on a longer clock than that
+          shorthand suggests. OpenAI defined a "High"
+          capability tier for biological and chemical risk in April 2025.
+          The definition: a model that meaningfully helps a technically
+          capable novice reproduce a known biological or chemical threat,
+          benchmarked against what the internet alone already offered in
+          2021.<sup
+            class="nb-cite"
+            ><a href="#s7" data-nb-locator="Table 1, p. 5">7</a></sup
+          >
+          A model reaching High is not released until
+          the risk it poses has been brought down first.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          OpenAI first applied the classification to a named model,
+          ChatGPT Agent, in July 2025, and again to GPT-5-thinking in
+          August 2025, with the same reasoning both times.<sup
+            class="nb-cite"
+            ><a href="#s8" data-nb-locator="§5.1.1">8</a></sup
+          ><sup class="nb-cite"
+            ><a href="#s9" data-nb-locator="§5.1.1">9</a></sup
+          >
+          Neither is GPT-4, the model the 2024 studies tested.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          ><sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <p>
+          Both system cards say plainly that OpenAI does not have
+          definitive evidence the model actually clears the High bar. The
+          GPT-5 card goes further. It describes the model as still short
+          of that capability, and frames the classification as preparing
+          the organization for what comes next rather than confirming a
+          risk that is already there.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          ><sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <p>
+          So the two clearest "labs act" data points sit further from the
+          2024 studies than the usual pairing implies. Both rest on the
+          same admission: caution taken ahead of proof, not because of it.
+        </p>
+      </section>
+
+      <section data-nb-section="the-untested-model" id="the-untested-model">
+        <h2>The model this argument is really about has not been tested</h2>
+        <p>
+          The most careful independent review of this evidence, published
+          in 2025, lands in between. Current large language models do not
+          appear to pose an immediate biological risk. But the studies
+          establishing that are still few and young, so the finding is
+          provisional, not settled.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Abstract">4</a></sup
+          >
+          The RAND and MIT teams describe their own results the same way,
+          as exploratory rather than conclusive, and neither rules out a
+          more capable model changing the picture.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          Reading RAND's null result as the last word on the argument goes
+          further than RAND itself does. The study tested one stage,
+          planning by an already-assembled team, using the LLMs available in
+          summer 2023. It says nothing about whether a newer, more agentic
+          model would behave differently. It says nothing about the
+          earlier stage Soice's team tested, where a model measurably
+          helped organize and explain information a person still had to
+          act on.<sup class="nb-cite"><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s2">2</a></sup
+          ><sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Alarm runs into the opposite problem. It treats a one-hour
+          classroom result, or a company tightening its own safeguards, as
+          proof a model can already carry someone through an attack. The
+          two studies testing that harder claim came back null or
+          marginal, and the labs' own documents plainly say they lack the
+          evidence too.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          ><sup class="nb-cite"><a href="#s3">3</a></sup
+          ><sup class="nb-cite"><a href="#s8">8</a></sup
+          ><sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <p>
+          What none of the cited studies test is the version of this
+          argument that worries people most. That version needs a more
+          agentic model with real-world tool use, one that runs an
+          experiment or troubleshoots a failed step on its own, instead of
+          answering a question a person then carries out by hand. That
+          system is not the one RAND,
+          OpenAI, or the MIT team sat down with; a deployed model with that
+          kind of autonomy barely existed when these studies ran. Until one
+          is tested as plainly as its predecessors were, the evidence
+          available settles neither the alarmed reading nor the dismissive
+          one.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The two most careful public tests of AI uplift toward bioweapons
+          are RAND's red-team study and OpenAI's participant study. Both
+          came back short of statistical significance. One is documented
+          down to its own p-values. The other is reconstructed from press
+          accounts and an independent tally, because the company's original
+          write-up cannot be read directly. Neither tested the future
+          scenario the argument is really about: a model with real-world
+          tool access running an attack itself, not answering a question a
+          person then acts on. The two policy decisions most often cited
+          as the labs' own admission that AI is now dangerous, Anthropic's
+          ASL-3 tier and OpenAI's High classification, are both labs
+          saying plainly that they lack that evidence too, and would
+          rather not wait for it. That is not nothing to worry about, and
+          it is not proof of danger either. It is where the record
+          currently stops.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a
+              href="https://cdn.openai.com/pdf/18a02b5d-6b67-4cec-ab64-68cdfbddebcd/preparedness-framework-v2.pdf"
+              >OpenAI's Preparedness Framework, Version 2</a
+            >: the full policy, defining every capability tier the company
+            tracks, not only the biological one.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2412.01946"
+              >"The Reality of AI and Biorisk," Peppin et al., 2025</a
+            >: the independent academic review comparing every published
+            red-team study's design in a full table.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2306.03809"
+              >arXiv · Soice, Rocha, Cordova, Specter, and Esvelt, "Can Large
+              Language Models Democratize Access to Dual-Use
+              Biotechnology?" (2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.rand.org/content/dam/rand/pubs/research_reports/RRA2900/RRA2977-2/RAND_RRA2977-2.pdf"
+              >RAND Corporation · Mouton, Lucas, and Guest, "The Operational
+              Risks of AI in Large-Scale Biological Attacks: Results of a
+              Red-Team Study," RR-A2977-2 (January 2024)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.ccn.com/news/technology/openai-chatgpt-early-warning-system-biological-threat-creation/"
+              >CCN · "OpenAI's ChatGPT 'Early Warning System' and What It
+              Means for Biological Threat Creation"</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2412.01946"
+              >Peppin, Reuel, Casper, et al., "The Reality of AI and
+              Biorisk," Proceedings of the 2025 ACM Conference on Fairness,
+              Accountability, and Transparency</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/gpt-4o-system-card.pdf"
+              >OpenAI · GPT-4o System Card (August 2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www-cdn.anthropic.com/6be99a52cb68eb70eb9572b4cafad13df32ed995.pdf"
+              >Anthropic · System Card: Claude Opus 4 & Claude Sonnet 4 (May
+              2025)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/pdf/18a02b5d-6b67-4cec-ab64-68cdfbddebcd/preparedness-framework-v2.pdf"
+              >OpenAI · Preparedness Framework, Version 2 (April 2025)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/pdf/839e66fc-602c-48bf-81d3-b21eacc3459d/chatgpt_agent_system_card.pdf"
+              >OpenAI · ChatGPT Agent System Card (July 2025)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/gpt-5-system-card.pdf"
+              >OpenAI · GPT-5 System Card (August 2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
