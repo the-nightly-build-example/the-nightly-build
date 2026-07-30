@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Whoever else is in the batch settles a near-tied logit · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "nondeterminism",
+        "template": "lesson",
+        "title": "Whoever else is in the batch settles a near-tied logit",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-30",
+        "tags": ["nondeterminism", "floating-point", "batching", "kernels", "reproducibility"],
+        "sources": 9,
+        "words": 2200,
+        "reading_minutes": 10,
+        "dek": "At temperature zero the sampler is off, and a GPU still sums the model's math in an order that depends on which other requests share the batch.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">Whoever else is in the batch settles a near-tied logit</h1>
+        <p class="nb-dekline">
+          At temperature zero the sampler is off, and a GPU still sums the
+          model's math in an order that depends on which other requests
+          share the batch.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-30</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every serious use of a language model outside a chat window
+          depends on sending the same request twice and trusting the
+          answer. A test suite checks that a prompt still behaves the same
+          way after a code change. A support team reproduces what a model
+          told a customer. A reinforcement-learning pipeline needs its own
+          rollouts to match its own logged probabilities. All of them
+          reach for the same two settings, a temperature of zero and a
+          fixed seed, and all of them can be surprised when the output
+          still drifts. This lesson finds where that drift actually comes
+          from: a choice a GPU kernel makes about which order to add
+          numbers in, a choice that depends on whoever else's traffic is
+          running through the same chip at that moment. By the end you
+          can name the exact step where two identical requests come apart.
+          You can tell a complete answer to "is temperature zero
+          deterministic?" from one that stops a layer too early, and see
+          why closing the gap for good is a cost a provider chooses to
+          pay, not a bug someone forgot to fix.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/sampling-temperature.html">Two answers to one prompt diverge at a single draw</a>:
+            how a sampler draws one token from the distribution the model
+            computed, and what temperature does to that draw before it
+            reaches zero.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html">How a model generates one token at a time</a>:
+            why each token becomes part of the prompt for the next one,
+            so an early divergence carries forward.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Turning off the sampler leaves the tokens moving</h2>
+        <p>
+          <a href="../the-mechanics/sampling-temperature.html">Two answers to one prompt diverge at a single draw</a>:
+          a sampler picks one token from the probability distribution the
+          model computed, and a different draw picks a different token.
+          Temperature set to zero is supposed to remove the draw entirely.
+          The softmax collapses onto its single largest logit, that token
+          gets a probability of 1, and the sampler has nothing left to
+          choose between. The rule that is left, take whichever token
+          holds the highest score, is called argmax, and it has no dice in
+          it at all.
+        </p>
+        <p>
+          Send the identical prompt to a hosted model a thousand times at
+          temperature zero, and the identical-argmax rule says the
+          identical completion should come back a thousand times. Thinking
+          Machines Lab ran exactly that experiment in 2025 and got 80
+          different completions, not one.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Argmax did not misbehave. It is a pure function: the same list
+          of numbers in produces the same top entry out, every time. If
+          the winning token changed between runs, the list of numbers
+          changed. Something between the model's fixed weights and the
+          number it hands the sampler is not fixed at all.
+        </p>
+        <p>
+          Follow that back one step. A token's logit is the last number in
+          a chain of matrix multiplications and normalizations run on the
+          weights and the prompt. Underneath, every one of those
+          operations is a sum: thousands of numbers added together to
+          produce one. If that sum comes out slightly different, the
+          logit comes out slightly different. If two tokens were already
+          close, whichever one now holds the marginally larger number
+          wins the argmax instead of the other. The place to look is not
+          the model. It is the arithmetic.
+        </p>
+      </section>
+
+      <section data-nb-section="the-order-of-a-sum" id="the-order-of-a-sum">
+        <h2>The order of a sum changes its answer</h2>
+        <p>
+          Ordinary addition does not care what order it happens in: 1 plus
+          2 plus 3 is 6 whichever pair goes first. The format every number
+          in a neural network is stored in, floating point, does care. Add
+          0.1, 0.2, and 0.7 as (0.1 + 0.2) + 0.7 on a computer, and it
+          returns exactly 1.0. Add the same three numbers as
+          0.1 + (0.2 + 0.7), and it returns 0.9999999999999999, one step
+          short of 1.0. Same three numbers, same final operation. Only the
+          order of summation changed, and the two answers land as two
+          different bit patterns in memory: one ending in all zeros, the
+          other ending in all ones.
+        </p>
+        <p>
+          This is what non-associative means: (a + b) + c does not always
+          equal a + (b + c) once every intermediate result has to be
+          rounded to fit a fixed number of bits. A floating-point number
+          is exactly that, a fixed number of bits.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          A study measuring how far this error travels through a deep
+          network found the sensitivity extreme, since the small
+          differences compound across the millions of additions inside
+          every layer.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          One reordered sum, buried inside a single matrix multiplication,
+          is a lever on the final logit.
+        </p>
+      </section>
+
+      <section data-nb-section="the-kernels-reduction-order" id="the-kernels-reduction-order">
+        <h2>The kernel's reduction order is not fixed</h2>
+        <p>
+          A single entry in a neural network's output is the sum of
+          thousands of products, one row of weights times one column of
+          input, added together. A GPU does that sum, called a reduction,
+          in parallel: it splits the thousands of terms across many
+          threads and combines their partial sums back into one number.
+          Which partial sums sit next to each other, and in what order
+          they get combined, is a choice made by the kernel, the compiled
+          routine doing the multiplication. That choice depends on the
+          work there is to split. Thinking Machines Lab documents the
+          same normalization kernel switching strategy as batch size
+          moves. At a large batch, "increasing our batch size doesn't
+          affect our reduction strategy; if a batch size of 200 provides
+          sufficient parallelism to our kernel then a batch size of 2000
+          will definitely provide sufficient parallelism."<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Shrink the batch and the same kernel switches strategy, because
+          "if we have a small batch size, our data-parallel strategy may
+          no longer have sufficient parallelism to saturate our
+          cores."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A kernel tuned to run one request alone splits the work one way.
+          The same kernel handling that request alongside thirty-nine
+          others splits it another way, because the fast tiling for a
+          large batch is not the fast tiling for a small one.
+        </p>
+        <p>
+          Researchers compared a matrix multiplication run by itself
+          against the identical multiplication run inside a batch. The
+          two invoked different kernels outright, and the resulting error
+          was correlated and directional rather than scattered evenly:
+          for one common number format, close to half the variance in the
+          discrepancy lined up in a structured pattern.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The batch changed which exact computation ran. Floating-point
+          non-associativity and batch-dependent kernel behavior are not
+          in dispute. Both are
+          documented by the frameworks themselves and reproduced
+          independently: this part of the chain is settled engineering.
+        </p>
+      </section>
+
+      <section data-nb-section="who-shares-your-batch" id="who-shares-your-batch">
+        <h2>Who shares your batch decides the order</h2>
+        <p>
+          A production server does not run one request at a time. To keep
+          an expensive GPU busy, it gathers whatever requests arrived in
+          the last few milliseconds into a batch and runs them through the
+          model together. How many other requests land in your batch is a
+          property of the moment your prompt arrived, not of the prompt
+          itself. Thinking Machines Lab states the consequence directly:
+          "the primary reason nearly all LLM inference endpoints are
+          nondeterministic is that the load, and thus batch-size,
+          nondeterministically varies."<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          An independent account of the same effect describes a single
+          prompt landing in a batch by itself at some moments, and sharing
+          a batch with dozens of others at other moments. No pattern was
+          visible from outside the server.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Send the identical prompt twice, and each copy can hit a
+          different batch size, triggering a different reduction schedule
+          on the same sum.
+        </p>
+        <p>
+          Some models route each token to one of several specialist
+          sub-networks, called experts, and batch composition opens a
+          second channel here. Each expert accepts only a limited number
+          of tokens per batch, so which expert a token reaches depends on
+          who else is competing for the same slots. The routing is
+          deterministic at the batch level, one analysis notes. But the
+          token you sent can land on a different expert depending on who
+          else showed up with it, changing the outcome from where the
+          caller sits.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          Every step, the arithmetic, the kernel, the routing, is a
+          deterministic function of its inputs. What is not fixed is one of those
+          inputs: which other requests are in the batch with you. Trace
+          the effect down to where it actually lands. Two tokens with
+          logits close enough that the reordering's own numerical noise,
+          a few bits in the last decimal place, is larger than the gap
+          between them: that near-tie is where the chain ends. A different
+          reduction order nudges the trailing token's score just above the
+          leading one, and argmax returns the new winner instead of the
+          old one. Because each new token becomes part of the prompt for
+          the next, one flipped tie at the first position can leave the
+          rest of the answer with nothing in common with the run before
+          it.
+        </p>
+      </section>
+
+      <section data-nb-section="fixing-the-order-costs-throughput" id="fixing-the-order-costs-throughput">
+        <h2>Fixing the order costs throughput</h2>
+        <p>
+          Thinking Machines Lab's fix follows directly from the diagnosis:
+          write kernels whose reduction order does not depend on batch
+          composition. Their batch-invariant versions of the three key
+          operations, normalization, matrix multiplication, and attention,
+          use a fixed tiling and a consistent reduction strategy no matter
+          how many requests share the batch.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Rerun the earlier experiment, a thousand identical requests at
+          temperature zero, with the batch-invariant kernels switched on,
+          and the completions come back bit for bit identical.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The fix removes the variable that was causing the symptom.
+        </p>
+        <p>
+          That fix has a price. Forcing a fixed tiling regardless of batch
+          size gives up the freedom to pick the fastest tiling for each
+          batch size. Thinking Machines Lab measured its first
+          batch-invariant kernels running with roughly 61.5 percent more
+          overhead than the ordinary kernels they replaced.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Later engineering, folding batch-invariant kernels into the
+          inference engine SGLang, brought that down. The SGLang team's
+          own benchmarks report an average slowdown of 34.35 percent,
+          ranging from 25 to 45 percent across workloads, still a real tax
+          on every request the server handles.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Whether a hosted provider pays that tax by default is not
+          settled engineering. It is a live, practical decision, and
+          different systems are answering it differently right now.
+        </p>
+        <p>
+          This is why a seed parameter on a hosted API is not the
+          guarantee it sounds like. OpenAI's own documentation says that
+          even when the seed and the reported system configuration match
+          between two calls, "there is a small chance that responses
+          differ," because the seed fixes the sampler, not the kernels
+          computing the numbers the sampler reads.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          vLLM ships batch-invariant kernels as an option an operator has
+          to turn on, not the default the engine starts with. Even then it
+          guarantees reproducibility only on the same hardware and the
+          same version of the software.<sup class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+          A request at temperature zero removes exactly one source of
+          variation: the draw. The batch a stranger's traffic put you in
+          that millisecond is a second source, and the temperature
+          parameter was never built to reach it.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Two identical requests can produce two different completions at
+          temperature zero because argmax is deterministic only given
+          identical logits, and the logits are not guaranteed to be
+          identical. They are the output of sums a GPU carries out in an
+          order chosen by the kernel handling that batch, and
+          floating-point addition returns a different bit pattern
+          depending on order. Which kernel runs depends on how many other
+          requests share the batch with yours at that millisecond, a fact
+          set by server load, invisible from where the request was sent.
+          Trace it all the way down and it lands on a near-tie: two tokens
+          whose logits
+          differ by less than the reordering's own numerical noise,
+          decided one way this run and the other way the next. That is the
+          layer most explanations never reach, the one past "it's the
+          sampling" and past "temperature zero fixes it." Floating-point
+          non-associativity and batch-dependent kernels are settled,
+          demonstrated facts. Whether a provider builds kernels with a
+          fixed reduction order and eats the throughput cost of running
+          them is not settled. It is a decision, made differently by
+          different systems, and it is the actual reason a seed and a
+          temperature of zero are a best effort rather than a promise.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/">Thinking Machines Lab, Defeating Nondeterminism in LLM Inference</a>:
+            the full experiment and the batch-invariant kernel library it
+            introduced.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://docs.pytorch.org/docs/2.13/notes/randomness.html">PyTorch, Reproducibility</a>:
+            the framework's own list of nondeterminism sources and the
+            settings that force deterministic algorithms, at a real speed
+            cost.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="batch-invariance thesis; RMSNorm reduction-strategy switch; experiment results; kernel design; throughput cost"
+              href="https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/"
+              >Thinking Machines Lab · Defeating Nondeterminism in LLM Inference (2025)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="floating-point addition is not associative"
+              href="https://docs.pytorch.org/docs/2.13/notes/randomness.html"
+              >PyTorch · Reproducibility</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="sensitivity of deep-learning pipelines to non-associativity"
+              href="https://arxiv.org/abs/2408.05148"
+              >Shanmugavelu, Taillefumier, et al. · Impacts of floating-point non-associativity on reproducibility for HPC and deep learning applications (2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="correlated, directional noise; kernel switch between single and batched runs"
+              href="https://arxiv.org/html/2511.00025"
+              >He, et al. · On the Structure of Floating-Point Noise in Batch-Invariant GPU Matrix Multiplication (2025)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="batch composition varies request to request"
+              href="https://medium.com/@walekarayush/why-llms-give-different-answers-even-with-temperature-0-and-how-to-fix-it-2004556f17bc"
+              >Walekar · Why LLMs Give Different Answers Even With Temperature = 0 (And How to Fix It)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="MoE routing and batch-level vs. sequence-level determinism"
+              href="https://www.vincentschmalbach.com/does-temperature-0-guarantee-deterministic-llm-outputs/"
+              >Schmalbach · Does Temperature 0 Guarantee Deterministic LLM Outputs?</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="average 34.35% slowdown; 25-45% range; Measuring Offline Inference Performance"
+              href="https://lmsys.org/blog/2025-09-22-sglang-deterministic/"
+              >The SGLang Team · Towards Deterministic Inference in SGLang and Reproducible RL Training (2025)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="seed and system_fingerprint best-effort caveat"
+              href="https://developers.openai.com/cookbook/examples/reproducible_outputs_with_the_seed_parameter"
+              >OpenAI · Reproducible Outputs with the Seed Parameter</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="batch-invariance opt-in; hardware/version caveat"
+              href="https://docs.vllm.ai/en/latest/usage/reproducibility/"
+              >vLLM · Reproducibility</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
