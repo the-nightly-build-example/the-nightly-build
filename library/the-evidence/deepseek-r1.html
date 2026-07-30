@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DeepSeek trained a model to reason without ever showing it a worked example · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "deepseek-r1",
+        "template": "lesson",
+        "title": "DeepSeek trained a model to reason without ever showing it a worked example",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-30",
+        "tags": ["reinforcement-learning"],
+        "sources": 8,
+        "words": 2036,
+        "reading_minutes": 9,
+        "dek": "DeepSeek's January 2025 paper proved reinforcement learning alone can teach a model to reason at length, and the $5.6 million price tag attached to that result belongs to a different model.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">DeepSeek trained a model to reason without ever showing it a worked example</h1>
+        <p class="nb-dekline">
+          DeepSeek's January 2025 paper proved reinforcement learning alone can teach a model to reason at length,
+          and the $5.6 million price tag attached to that result belongs to a different model.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-30</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          DeepSeek-R1 is the reason "the reasoning model" argument changed shape overnight. A Chinese lab said it had
+          trained one of its two models, R1-Zero, to work through math and code problems step by step using
+          reinforcement learning alone, without a single labeled example of what a correct reasoning process looks
+          like, and it posted the weights for anyone to download. Within weeks a number, $5.6 million, was attached
+          to that claim and repeated everywhere, and it was the wrong number for what people meant it to prove. This
+          lesson goes back to the paper itself: what its two training runs actually did, how large the tests behind
+          its headline scores really are, and where the retelling swapped one project's bill for another's.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/chain-of-thought.html">Chain-of-thought prompting</a>: the step-by-step
+            reasoning behavior R1-Zero learned through reward alone instead of being shown by example.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/illusion-of-thinking.html">The illusion of thinking</a>: Apple's critique of
+            what reasoning-model benchmarks actually measure, a tension this paper's contamination findings sit
+            inside.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A reasoning model trained without a single worked example</h2>
+        <p>
+          "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning" is a January 2025
+          paper from DeepSeek-AI, later peer-reviewed and published in <em>Nature</em> in September 2025.<sup
+            class="nb-cite"><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s2">2</a></sup>
+          It documents two models. R1-Zero is the one that made the paper famous: DeepSeek trained it to work
+          through math and coding problems in long chains of reasoning, the same step-by-step behavior this course
+          covered as <a href="../the-evidence/chain-of-thought.html">chain-of-thought prompting</a>. It learned
+          that behavior using reinforcement learning alone, without a single labeled example of what a correct
+          reasoning chain looks like. On AIME 2024, a 30-problem math-competition benchmark, R1-Zero solved 71.0% of
+          its problems on one attempt each.<sup
+            class="nb-cite"><a href="#s1">1</a></sup
+          >
+          DeepSeek released the weights for both models rather than keeping them behind an API. That choice is why a
+          paper about a training method turned into an argument about whether frontier reasoning still required a
+          closed lab and a nine-figure budget.
+        </p>
+        <p>
+          Both models sit on top of DeepSeek-V3-Base, a mixture-of-experts model with 671 billion parameters in
+          total, 37 billion of which activate for any single token, pretrained on 14.8 trillion tokens.<sup
+            class="nb-cite"><a href="#s1">1</a></sup
+          >
+          Neither R1-Zero nor R1 was trained from nothing. What the paper actually tested was narrower and more
+          specific: whether reinforcement learning, applied to a base model already that capable, could produce
+          long-chain reasoning on its own.
+        </p>
+      </section>
+
+      <section data-nb-section="the-pipeline" id="the-pipeline">
+        <h2>Two training runs, each starting from the same base</h2>
+        <p>
+          The reinforcement learning behind both models is GRPO, Group Relative Policy Optimization, introduced in
+          an earlier DeepSeek paper on math reasoning.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          GRPO is a variant of the reinforcement-learning algorithm PPO, redesigned to cut its memory overhead while
+          improving reasoning performance. The "group" in the name is a batch of the model's own sampled answers to
+          the same problem. GRPO scores each answer against that group's average rather than against a separately
+          trained value model.<sup
+            class="nb-cite"><a href="#s3">3</a></sup
+          >
+          DeepSeek first deployed it in DeepSeekMath-7B, where it pushed a 7-billion-parameter model to 51.7% on a
+          competition-math benchmark.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          R1-Zero is DeepSeek-V3-Base run through GRPO with only two automatic checks on each sampled answer: is it
+          correct, and does it follow the required format. No human-labeled reasoning steps, no supervised
+          fine-tuning stage at all.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          That run, 512 H800 GPUs for about 198 hours, cost $202,000.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Partway through it the model began pausing mid-answer to re-examine its own steps, a behavior the
+          authors had not trained for directly and named the "aha moment" in the paper.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          R1-Zero was not the model DeepSeek built to last. Instead it built a second model, R1, using R1-Zero's own
+          output as raw material. Before any reinforcement learning, R1 is first fine-tuned on roughly 800,000
+          examples, built for $10,000 of compute.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          600,000 of those examples are reasoning traces, harvested by running the R1-Zero checkpoint repeatedly and
+          keeping the correct, well-formed answers. The other 200,000 are ordinary instruction examples drawn from
+          DeepSeek-V3's original pretraining data, which keep the model useful outside math and code. Only after that
+          head start does R1 go through its own reinforcement-learning run, the same kind as R1-Zero's. That run, on
+          the same 512 H800 GPUs for about four days, cost $82,000.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The paper reports all three stages in one table: R1-Zero's run at $202,000, the SFT data at $10,000, R1's
+          own run at $82,000. They sum to a $294,000 total for the whole pipeline that turns the base model into
+          R1.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-scoreboard" id="the-scoreboard">
+        <h2>Two numbers for every benchmark</h2>
+        <p>
+          DeepSeek's headline claim rests on a small set of tests, each reported two different ways. On AIME 2024, a
+          single attempt is called pass@1: one try, one answer. R1-Zero solved 71.0% of its problems pass@1 and R1
+          solved 79.8%, a result the model card DeepSeek published alongside the weights repeats exactly.<sup
+            class="nb-cite"><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s4">4</a></sup>
+          The paper also reports a second number for the same test: cons@64, short for consensus across 64 samples.
+          The model answers the same problem 64 times, and the score counts a problem correct if the majority of
+          those 64 attempts agree. Under that method, R1-Zero's AIME 2024 score rises to 86.7%, 15.7
+          points above its one-try score. The gain comes from asking the same question sixty-four times and taking a
+          vote, not from any change to the model.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          MATH-500, a 500-problem subset of a standard math benchmark, moved less between R1-Zero (95.9%) and R1
+          (97.3%) on a single attempt. Codeforces, a competitive-programming platform that rates solutions the way
+          chess rates players, put R1-Zero at 1444 and R1 at 2029.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Those numbers describe what the paper reports the model did. They say nothing about whether the model had
+          seen versions of the questions before, on this test or any other. A 2026 study tested six frontier models,
+          DeepSeek-R1 among them, for contamination on MMLU, a different, general-knowledge benchmark: whether
+          training data overlaps with test questions.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          On a 513-question sample, 13.8% of the questions themselves showed a contamination signature in a web
+          search, a property of the question set measured before any model answered, rising to 18.1% in STEM
+          questions and 66.7% in philosophy.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Averaged across all six models, accuracy on those same questions fell 7.0 percentage points when they were
+          reworded as indirect references instead of asked directly, and 19.8 points on law and ethics questions
+          specifically, the shape of an answer partly remembered rather than derived.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          DeepSeek-R1 did not follow that average. Its own accuracy on the original questions was 29.2%, far below
+          the other five models tested, and its accuracy on the reworded version barely changed, dropping about 3.2
+          points, the smallest drop of the six.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          R1's memorization signature was also unusual: 76.6% partial reconstruction of the source material but 0%
+          verbatim recall, familiarity with MMLU's content rather than its wording.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          None of this tests AIME, MATH-500, or Codeforces directly. What it shows is a model that knows something
+          about MMLU's questions without having memorized their answers outright, a different problem than the one
+          the six-model average illustrates.
+        </p>
+      </section>
+
+      <section data-nb-section="the-reproduction" id="the-reproduction">
+        <h2>An outside lab reran the recipe from scratch</h2>
+        <p>
+          DeepSeek's recipe has a fourth step beyond the two training runs: distillation. Take reasoning traces
+          produced by R1 and use them as ordinary supervised fine-tuning data for a smaller model, with no
+          reinforcement learning required for that smaller model at all.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Hugging Face's Open-R1 project, an independent reproduction with no stake in DeepSeek's own claims, rebuilt
+          this pipeline from published information rather than DeepSeek's own code. In the process it released its
+          own reasoning datasets: 350,000 verified traces called Mixture-of-Thoughts, a 220,000-problem math subset,
+          and 100,000 competitive-programming solutions.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Fine-tuning a 7-billion-parameter model on that data, Open-R1-Distill-7B reached 52.7% pass@1 on AIME 2024
+          and 89.0% on MATH-500.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Both scores sit well below R1's own 79.8% and 97.3%, unsurprising for a dense model a small fraction of
+          R1's 671-billion-parameter total size. But they track the relationship DeepSeek reported: reasoning
+          learned through reinforcement learning on a strong base model transfers into a much smaller model through
+          fine-tuning alone.
+        </p>
+      </section>
+
+      <section data-nb-section="the-price-tag" id="the-price-tag">
+        <h2>The bill that got swapped for a bigger one</h2>
+        <p>
+          The number attached to DeepSeek-R1 more than any other is $5.6 million, repeated as the cost of building a
+          frontier reasoning model. The pipeline that actually produced R1's reasoning, R1-Zero's run plus the SFT
+          data plus R1's own run, cost $294,000 in total, by the paper's own accounting.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Epoch AI, an independent analyst with no role in either paper, modeled the same training from public
+          information and arrived at a higher number: roughly $1 million for the RL phase alone and about $6 million
+          total. That estimate excludes personnel, administrative, and experiment costs, and it does not reconcile
+          against DeepSeek's own disclosed figures at all.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Where an independent estimate and a lab's own disclosed accounting disagree by roughly three to twelve
+          times on the same undisclosed line items, the honest read is a gap, not a confirmation. The $5.6 million
+          figure itself is real, and it prices a different project entirely. It is DeepSeek's own disclosed cost for
+          pretraining DeepSeek-V3-Base, the 671-billion-parameter model underneath both R1-Zero and R1: 2.788 million
+          H800 GPU-hours, $5.576 million. That figure comes from the separate technical report DeepSeek published on
+          V3 itself, not from the R1 paper or its model card.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Quoting "$5.6 million" for R1 swaps the base model's bill for the reasoning pipeline's. It understates what
+          the base model underneath R1 actually cost by treating it as part of the same project, and it overstates
+          what building R1's reasoning on top of that base model cost, by a factor of about nineteen. The same
+          retelling folded "beat OpenAI" into the same confident tone as the cost claim, a framing DeepSeek's own
+          paper does not make and that the contamination study above does not test, since it covers MMLU, not the
+          benchmarks people actually cite.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          DeepSeek-R1 demonstrated something real. Reinforcement learning against a strong base model, using nothing
+          but an automatic checker for right-or-wrong and correct format, produced a model that works through long
+          chains of reasoning on its own. That reasoning transfers into a much smaller model through plain
+          fine-tuning, no reinforcement learning required for the smaller model. Both pieces held up when a lab with
+          no stake in DeepSeek's claims rebuilt the pipeline and got a smaller but comparable result. What did not
+          hold up is the story built around it. The pipeline that produced R1's reasoning cost $294,000 in total, not
+          the $5.6 million everyone kept quoting, which is what DeepSeek spent pretraining the base model underneath
+          it, a separate and much larger project reported in a different paper. On a separate test built to catch
+          memorized answers, R1 did not show the pattern the retelling assumes. Its own accuracy was already the
+          lowest of six models tested, and it barely moved when the questions were reworded, not the inflated score
+          that collapses under scrutiny. The paper's real headline number is 71.0%, one attempt per problem,
+          not the 86.7% that took sixty-four attempts per problem and a vote to reach. Carry the one-attempt number
+          into the next R1 citation you read, not the vote.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://github.com/huggingface/open-r1">Hugging Face's Open-R1 repository</a>: the
+            reproduction's code and released reasoning datasets, for rebuilding the pipeline firsthand.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://epoch.ai/gradient-updates/what-went-into-training-deepseek-r1"
+              >Epoch AI's cost analysis</a
+            >: the full compute-cost breakdown behind the $294,000-versus-$5.6-million distinction this lesson
+            draws.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a data-nb-source data-nb-kind="primary" href="https://arxiv.org/abs/2501.12948"
+              >arXiv · DeepSeek-AI, "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement
+              Learning" (2501.12948)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nature.com/articles/s41586-025-09422-z"
+              >Nature · DeepSeek-AI, "DeepSeek-R1 incentivizes reasoning in LLMs through reinforcement learning"
+              (Vol. 645, Sept. 2025)</a
+            >
+          </li>
+          <li id="s3">
+            <a data-nb-source data-nb-kind="primary" href="https://arxiv.org/abs/2402.03300"
+              >arXiv · Shao et al., "DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language
+              Models" (2402.03300)</a
+            >
+          </li>
+          <li id="s4">
+            <a data-nb-source data-nb-kind="primary" href="https://huggingface.co/deepseek-ai/DeepSeek-R1"
+              >Hugging Face · DeepSeek-AI, DeepSeek-R1 model card</a
+            >
+          </li>
+          <li id="s5">
+            <a data-nb-source data-nb-kind="secondary" href="https://arxiv.org/abs/2603.16197"
+              >arXiv · benchmark contamination and memorization study of frontier LLMs including DeepSeek-R1
+              (2603.16197)</a
+            >
+          </li>
+          <li id="s6">
+            <a data-nb-source data-nb-kind="secondary" href="https://github.com/huggingface/open-r1"
+              >GitHub · Hugging Face, Open-R1: an independent reproduction of DeepSeek-R1's training pipeline</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://epoch.ai/gradient-updates/what-went-into-training-deepseek-r1"
+              >Epoch AI · "What went into training DeepSeek-R1"</a
+            >
+          </li>
+          <li id="s8">
+            <a data-nb-source data-nb-kind="primary" href="https://arxiv.org/abs/2412.19437"
+              >arXiv · DeepSeek-AI, "DeepSeek-V3 Technical Report" (2412.19437)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
