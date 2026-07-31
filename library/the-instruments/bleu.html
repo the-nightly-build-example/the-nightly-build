@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The system human judges ranked best at the 2005 NIST evaluation scored 6th on BLEU · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "bleu",
+        "template": "lesson",
+        "title": "The system human judges ranked best at the 2005 NIST evaluation scored 6th on BLEU",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-31",
+        "tags": ["benchmarks", "evaluation", "machine-translation"],
+        "sources": 8,
+        "words": 2170,
+        "reading_minutes": 9,
+        "dek": "BLEU scores a translation by counting matching word sequences against a human reference rather than reading what it means, and a 1-2 point difference between two systems' scores is a coin flip on whether people actually judge one better.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">The system human judges ranked best at the 2005 NIST evaluation scored 6th on BLEU</h1>
+        <p class="nb-dekline">
+          BLEU scores a translation by counting matching word sequences
+          against a human reference rather than reading what it means, and a
+          1-2 point difference between two systems' scores is a coin flip on
+          whether people actually judge one better.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-07-31</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A translation model's spec sheet almost always carries one more
+          number than its benchmark scores: a BLEU score, two decades old
+          and still on model cards for translation.
+        </p>
+        <p>
+          What that number measures is narrower than most people assume,
+          and how it was measured is easy to get wrong. By the end of this
+          lesson you can compute a BLEU score by hand and know the
+          conditions a reported score depends on that most reports never
+          state.
+        </p>
+        <p>
+          You will also see a real case where trusting the number over the
+          people reading translations sent a field's research effort in
+          the wrong direction.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/attention-is-all-you-need.html"
+              >Vaswani et al.'s 2017 paper reported BLEU translation scores
+              on two language pairs and never once trained the kind of
+              model it is now credited with inventing</a
+            >: where the reader met the 28.4 BLEU figure this lesson opens
+            on.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/perplexity.html"
+              >Tokenize the same sentence by letters instead of words, and
+              its perplexity falls 66 percent</a
+            >: another intrinsic score that moves with a measurement choice
+            no reported number states on its own.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A score built from one sentence pair</h2>
+        <p>
+          The paper this course already read reported a Transformer that
+          scored 28.4 BLEU translating English into German, more than 2
+          points above every prior system, ensembles included.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Read alone, 28.4 says almost nothing. BLEU is not a percentage of
+          sentences judged correct. It is the output of one counting
+          procedure, published in 2002 by four IBM researchers: Kishore
+          Papineni, Salim Roukos, Todd Ward, and Wei-Jing
+          Zhu.<sup class="nb-cite"><a href="#s2">2</a></sup> Run that
+          procedure once by hand and every BLEU score afterward stops being
+          a black box.
+        </p>
+        <p>
+          BLEU compares two sentences: a <strong>candidate</strong>, the
+          output a translation system produced, and a
+          <strong>reference</strong>, a translation a human wrote for the
+          same source text. Those are the paper's own terms, reused
+          exactly here.<sup class="nb-cite"><a href="#s2">2</a></sup> Hold
+          one pair fixed for the rest of this lesson.
+        </p>
+        <p>
+          Candidate: "the small brown dog chased the red ball across the
+          yard." Reference: "the small brown dog quickly chased the red
+          ball across the yard." The candidate is the reference with one
+          word removed, "quickly." Every other word, in the same order, is
+          identical: grammatically fine, missing one word's worth of
+          meaning.
+        </p>
+      </section>
+
+      <section data-nb-section="counting-and-clipping" id="counting-and-clipping">
+        <h2>Counting runs of words, then capping the count</h2>
+        <p>
+          BLEU starts by counting how many short runs of consecutive words
+          the candidate shares with the reference: runs of one word, two,
+          three, four. A run of two words is a bigram, three a trigram,
+          and the general name for a run of n words is an n-gram. Every
+          one of the candidate's 11 unigrams appears somewhere in the
+          reference, since the reference contains the same 11 words plus
+          "quickly." A first pass at scoring might just divide matches by
+          total candidate n-grams and call it precision.
+        </p>
+        <p>
+          That naive count breaks on a case the authors used to justify a
+          fix: a candidate reading "the the the the the the the," scored
+          against a reference containing "the" only twice.<sup class="nb-cite"><a href="#s2">2</a></sup> Counted
+          naively, all seven repeated words match, for a precision of 7
+          out of 7. The fix caps each word's count at how many times that
+          word appears in the reference, so "the" can contribute at most 2
+          matches no matter how many times the candidate repeats it.
+          Papineni's paper calls that cap <strong>clipping</strong>.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          Clipping changes nothing in the dog-and-ball example, since no
+          candidate word repeats more often than it appears in the
+          reference. What it changes is where matches fail: only at the
+          exact point "quickly" was removed.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Clipped n-gram matches between the candidate and the
+            reference, n=1 to 4.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>n</th>
+              <th class="txt">what fails to match</th>
+              <th>matched</th>
+              <th>total</th>
+              <th>precision</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">1-gram</span></td>
+              <td class="txt">nothing; every word appears in the reference</td>
+              <td>11</td>
+              <td>11</td>
+              <td>1.000</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">2-gram</span></td>
+              <td class="txt">"dog chased" (reference has "dog quickly")</td>
+              <td>9</td>
+              <td>10</td>
+              <td>0.900</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">3-gram</span></td>
+              <td class="txt">the 2 runs crossing "quickly"</td>
+              <td>7</td>
+              <td>9</td>
+              <td>0.778</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">4-gram</span></td>
+              <td class="txt">the 3 runs crossing "quickly"</td>
+              <td>5</td>
+              <td>8</td>
+              <td>0.625</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Precision falls every time the window widens: a single dropped
+          word costs nothing at the 1-word view and a quarter of the
+          4-word view. BLEU never asks whether the word mattered, only how
+          many fixed-length windows it broke.
+        </p>
+        <p>Two steps remain.</p>
+        <ol class="nb-steps">
+          <li>
+            <h3>Average the four precisions</h3>
+            <p>
+              Not by adding and dividing, but by geometric mean: multiply
+              all four together and take the fourth root. 1.000 &times;
+              0.900 &times; 0.778 &times; 0.625 = 0.4375, and its fourth
+              root is about 0.813. A single missed word already costs the
+              candidate almost 19 percentage points, from n-gram counting
+              alone.<sup class="nb-cite"><a href="#s2">2</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Apply the brevity penalty</h3>
+            <p>
+              Precision alone can be gamed by saying less: a candidate
+              that stopped after "the" would score 1.000 on the one word
+              it chose. Papineni's fix multiplies the score by a
+              <strong>brevity penalty</strong> whenever the candidate is
+              shorter than the reference.<sup class="nb-cite"
+                ><a href="#s2">2</a></sup
+              >
+              Here the candidate is 11 words, the reference 12, so BP =
+              e^(1&minus;12/11) = e^(&minus;1/11) &asymp; 0.913. Being one
+              word short costs another 7.1 percentage points, from 0.813 down
+              to the final score below.
+            </p>
+          </li>
+          <li>
+            <h3>Multiply the two together</h3>
+            <p>
+              BLEU is the brevity penalty times the geometric mean of the
+              precisions: 0.913 &times; 0.813 &asymp; 0.742, or 74 on the
+              common 0-to-100 scale. A candidate that is grammatically
+              perfect and missing one adverb's worth of meaning already
+              lands inside the range Google's own practitioner guidance
+              calls "quality often better than human," above 60
+              points.<sup class="nb-cite"><a href="#s3">3</a></sup>
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section data-nb-section="what-the-number-holds" id="what-the-number-holds">
+        <h2>What one score does and does not settle</h2>
+        <p>
+          The paper that defines BLEU states its own limit plainly: "BLEU
+          only needs to match human judgment when averaged over a test
+          corpus; scores on individual sentences will often vary from
+          human judgments."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          BLEU is a <strong>corpus-level</strong> statistic. Add up matches
+          across a whole test set, and the noise in any single sentence
+          washes out. Quote a BLEU score for one sentence, as the
+          dog-and-ball score above was, and Papineni's own paper says not
+          to trust it alone.
+        </p>
+        <p>
+          A subtler problem sits underneath a corpus-level score: BLEU is
+          not one metric but a family of configurations, and a bare number
+          does not say which one produced it. Matt Post, who built the
+          reproducibility tool sacreBLEU, names the hidden choices:
+          reference count, brevity-penalty handling, longest n-gram
+          length, and tokenization.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Each choice moves the number without moving the translation.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Three ways to change a reported BLEU score without changing
+            the system.<sup class="nb-cite"
+              ><a href="#s2">2</a></sup
+            ><sup class="nb-cite"><a href="#s4">4</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">what changed</th>
+              <th class="txt">measurement</th>
+              <th>swing</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">tokenization only (WMT'17 German-English, same system)</td>
+              <td class="txt">basic vs. metric-internal tokenization</td>
+              <td>1.8 pts</td>
+            </tr>
+            <tr>
+              <td class="txt">reference count only (Papineni's corpus, same translation)</td>
+              <td class="txt">4 references vs. 2 references</td>
+              <td>0.09</td>
+            </tr>
+            <tr>
+              <td class="txt">reference count only (WMT'17 English-Finnish, same system)</td>
+              <td class="txt">1 reference vs. 2 references</td>
+              <td>3.2 pts</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Two labs both reporting "BLEU 34" on the same test set can have
+          measured different things. Post's own survey of well-cited MT
+          papers found that even the Transformer paper this lesson opened
+          on does not state, in a checkable way, which tokenization
+          produced its 28.4.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          SacreBLEU closes that gap by printing a signature string
+          alongside every score, such as
+          <code>BLEU+c.mixed+l.en-de+#.1+s.exp+t.wmt14+tok.13a+v.1.2.10</code
+          >, recording the reference count, tokenizer, and dataset version
+          behind the number.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          Correlation with human judgment is a second question, above
+          tokenization. Papineni's original paper reported 0.99 and 0.96
+          with two judge groups, from 5 systems, one language pair, 250
+          rated pairs, run once.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          A structured review of 34 later papers found a wider picture:
+          system-level BLEU correlation for MT is "mostly Medium or High,"
+          on a scale where High means 0.85 or above.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          The same review's year-by-year table for German-English shows
+          why that needs qualifying. Correlation for one direction ranges
+          from 0.12 to 0.90 across ten WMT years; for the other, from
+          &minus;0.43 to 0.83.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>
+                Corpus-scale, system-level correlation with human MT
+                judgment is real across the surveyed literature.<sup class="nb-cite"
+                  ><a href="#s6">6</a></sup
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>
+                Removing the 1 or 2 clearest outlier systems drops
+                English-German correlation from 0.97 to 0.81, and
+                English-Kazakh from 0.85 to 0.58.<sup class="nb-cite"
+                  ><a href="#s7">7</a></sup
+                >
+              </li>
+              <li>
+                Across 1,362 pairwise comparisons at WMT19, a 1-2 point
+                BLEU gap, the size most papers report, reflects a real
+                human-judged improvement only about half the
+                time.<sup class="nb-cite"><a href="#s7">7</a></sup>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section data-nb-section="the-2005-nist-case" id="the-2005-nist-case">
+        <h2>The evaluation where the ranking flipped</h2>
+        <p>
+          In 2005, NIST ran an Arabic-English machine translation
+          evaluation with seven entries. Six were phrase-based statistical
+          systems trained on the same parallel corpus, most tuned by
+          directly maximizing BLEU on their own training data.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          The seventh was a hybrid: monolingual English speakers with no
+          Arabic selecting among alternative machine-generated
+          translations of phrases from the source, then post-editing the
+          result.<sup class="nb-cite"><a href="#s8">8</a></sup> Human
+          judges ranked that hybrid entry 1st. BLEU ranked it
+          6th.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          Callison-Burch, Osborne, and Koehn traced the gap to that one
+          system. Correlate the seven entries' BLEU scores against human
+          adequacy ratings and R² comes out to 0.14, barely any
+          relationship. Drop the hybrid entry and R² jumps to
+          0.87; fluency correlation moves from 0.002 to 0.742 under the
+          same removal.<sup class="nb-cite"><a href="#s8">8</a></sup> One
+          system alone accounted for nearly all of BLEU's disagreement
+          with the people reading the translations.
+        </p>
+        <p>
+          A sentence pair from that evaluation shows why. One hypothesis
+          matched more reference words overall; a second matched fewer.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Matched n-grams for two hypotheses on the same 2005 NIST
+            sentence pair.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>n</th>
+              <th>matched more overall</th>
+              <th>matched fewer overall</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">1-gram</span></td>
+              <td>27</td>
+              <td>24</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">2-gram</span></td>
+              <td>20</td>
+              <td>19</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">3-gram</span></td>
+              <td>15</td>
+              <td>15</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">4-gram</span></td>
+              <td>10</td>
+              <td>12</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Human judges scored the hypothesis with fewer total matches
+          higher on both adequacy and fluency.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The wording BLEU could not credit</span>
+          <p>
+            The higher-scoring hypothesis used fluent English synonyms the
+            reference did not contain: "will not attend" for "would
+            boycott," "interfering" for "meddling."<sup class="nb-cite"
+              ><a href="#s8">8</a></sup
+            >
+            Clipping caps a matched word's count at how often it appears
+            in the reference; it has no rule at all for a word that never
+            appears there. A correct synonym and a wrong word are the same
+            to it: zero matches either way.
+          </p>
+        </div>
+        <p>
+          Word order compounds the problem. A candidate with k words and b
+          matching bigrams has (k&minus;b)! ways to permute around every
+          bigram break without changing the BLEU score. In the actual 2005
+          NIST data, that count exceeds 10<sup>73</sup> for some
+          sentences.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          Callison-Burch, Osborne, and Koehn drew a narrow conclusion:
+          BLEU works for tracking incremental change within one system,
+          and for comparing systems built on similar strategies. It fails
+          across different strategies, on gains it was never built to
+          model, and on gains that surface rarely in a test
+          corpus.<sup class="nb-cite"><a href="#s8">8</a></sup> The 2005
+          field had spent years optimizing statistical systems directly
+          against BLEU. The one entry that broke from that strategy, built
+          by people rather than tuned against the metric, was the one BLEU
+          ranked worst.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A BLEU score is the product of two numbers computed by hand. One
+          is a geometric mean of clipped n-gram precisions, matches capped
+          at how often a word appears in the human reference. The other is
+          a brevity penalty that punishes a candidate shorter than the
+          reference. Nothing in that arithmetic reads meaning; it counts
+          overlapping runs of words and stops.
+        </p>
+        <p>
+          A bare BLEU score is not enough on its own: the same system and
+          test sentences can report different scores depending on the
+          tokenizer and the number of references, choices a headline
+          number almost never states. Ask, of any reported BLEU: measured
+          how, against how many references, with what tokenizer?
+          SacreBLEU's signature string answers that; a bare number on a
+          model card usually does not.
+        </p>
+        <p>
+          And a small BLEU gap is weak evidence of anything. At the 2005
+          NIST evaluation, the system human judges liked best finished 6th
+          on BLEU out of seven, because it used fluent wording the
+          metric's word-matching could not recognize as correct. Across
+          WMT19, a 1-2 point BLEU difference, the size most papers report,
+          reflected a real improvement only about half the time.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://github.com/mjpost/sacrebleu"
+              >mjpost/sacrebleu on GitHub</a
+            >: the tool built to make a reported BLEU score reproducible,
+            with the signature string this lesson quoted.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://aclanthology.org/J18-3002/"
+              >Reiter, "A Structured Review of the Validity of BLEU"
+              (2018)</a
+            >: the full 34-paper review behind this lesson's correlation
+            numbers, with its year-by-year WMT table.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Table 2, Transformer (big), EN-DE, 28.4; §6.1 running text"
+              href="https://arxiv.org/abs/1706.03762"
+              >Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser
+              &amp; Polosukhin &middot; Attention Is All You Need
+              (2017)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§2.1 clipping and modified precision (p.312); §2.2.2-2.3 brevity penalty and final score (p.313-314); §3 reference-count effect, 0.3468 vs 0.2571 (p.314); §4-5 correlation study, sample sizes and r=0.99/0.96 (p.315-316); footnote 4, sentence-level caveat (p.312)"
+              href="https://aclanthology.org/P02-1040/"
+              >Papineni, Roukos, Ward &amp; Zhu &middot; Bleu: a Method for
+              Automatic Evaluation of Machine Translation (ACL 2002)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Practitioner quality-tier table for the 0-100 BLEU scale"
+              href="https://docs.cloud.google.com/translate/docs/bleu-scores"
+              >Google Cloud &middot; The BLEU translation quality metric</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§2.1 hidden configuration parameters; Table 1, 1.8-point tokenization swing (p.3); §2.1, 3.2-point reference-count swing (p.2); Table 2, Vaswani et al. tokenization listed unclear (p.3)"
+              href="https://arxiv.org/abs/1804.08771"
+              >Post &middot; A Call for Clarity in Reporting BLEU Scores
+              (WMT18)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Signature-string format recording reference count, case, tokenizer, and version"
+              href="https://github.com/mjpost/sacrebleu"
+              >Post &middot; sacreBLEU GitHub repository README</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="§3 correlation classification scale and 'mostly Medium or High' conclusion (p.397); Table 1, ten-year WMT German-English/English-German correlation series (p.399)"
+              href="https://aclanthology.org/J18-3002/"
+              >Reiter &middot; A Structured Review of the Validity of BLEU
+              (Computational Linguistics, 2018)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§4.1, aggregate correlation above r=0.8 for all WMT19 language pairs (p.4986); Table 1-2, outlier removal drops r from 0.97 to 0.81 (EN-DE) and 0.85 to 0.58 (EN-KK) (p.4989); Conclusion, 1,362 pairwise comparisons, 1-2 point gap right about half the time (p.4992)"
+              href="https://aclanthology.org/2020.acl-main.448/"
+              >Mathur, Baldwin &amp; Cohn &middot; Tangled up in BLEU:
+              Reevaluating the Evaluation of Automatic Machine Translation
+              Evaluation Metrics (ACL 2020)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§4, 2005 NIST Arabic-English ranking (1st by humans, 6th by BLEU) and Table 4 sentence pair (p.253); §4, R² 0.14 to 0.87 and fluency 0.002 to 0.742 (p.254); §3.1, permutation count exceeding 10^73 (p.251-252); §6, appropriate/inappropriate uses (p.255)"
+              href="https://aclanthology.org/E06-1032/"
+              >Callison-Burch, Osborne &amp; Koehn &middot; Re-evaluating
+              the Role of Bleu in Machine Translation Research (EACL
+              2006)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
