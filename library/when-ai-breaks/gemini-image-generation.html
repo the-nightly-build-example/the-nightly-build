@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google's Gemini illustrated 1943 German soldiers with Black and Asian faces · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "gemini-image-generation",
+        "template": "lesson",
+        "title": "Google's Gemini illustrated 1943 German soldiers with Black and Asian faces",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-31",
+        "tags": ["bias", "image-generation", "google", "instruction-tuning"],
+        "sources": 11,
+        "words": 2163,
+        "reading_minutes": 10,
+        "dek": "A rule meant to diversify Gemini's people pictures fired on every prompt, even ones that history had already answered, and Google pulled the feature three weeks after launch.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">Google's Gemini illustrated 1943 German soldiers with Black and Asian faces</h1>
+        <p class="nb-dekline">
+          A rule meant to diversify Gemini's people pictures fired on every prompt, even ones that history had already answered, and Google pulled the feature three weeks after launch.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-31</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          In February 2024, Google turned on Gemini's ability to draw pictures of
+          people. Three weeks later it turned the feature off. In between, a
+          prompt asking for an illustration of a 1943 German soldier came back
+          with a Black man and an Asian woman in the uniform. A prompt asking
+          for a pope came back with a woman. This lesson explains the software
+          choice behind those images: a rule meant to keep Gemini from
+          defaulting to one kind of person on every prompt, applied with no
+          sense of when a prompt already has one correct answer. The same kind
+          of rule is still running inside the tool that replaced it, and inside
+          a rival's image generator too. By the end, you will know how to
+          recognize the tradeoff it makes.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/instructgpt.html">A 1.3B model beat GPT-3 on the one metric OpenAI trained it to win</a>:
+            the post-training that teaches a model to obey an instruction at all,
+            including the one behind Gemini's diversity rule.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../when-ai-breaks/compas-recidivism.html">ProPublica and Northpointe read the same recidivism scores and both were right</a>:
+            a different kind of bias failure, where the tool was internally
+            consistent but answered a question it wasn't asked.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Three weeks from launch to shutdown</h2>
+        <p>
+          Gemini, Google's chatbot, gained the ability to draw pictures of
+          people on 1 Feb 2024, powered by a new diffusion model called
+          Imagen 2. Google's launch post promised "extensive adversarial
+          testing and red teaming" and filters meant to keep the model from
+          generating images of specific named people.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          It said nothing about race, gender, or diversity.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Within about three weeks, testers found the opposite kind of
+          problem. The Verge asked for "a US senator from the 1800s" and got
+          results that included Black and Native American women, decades
+          before a woman held that office at all.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          CNN asked for a pope and got, in its own words, "a man and a woman,
+          neither of whom were White."<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The most-discussed example, a request for an illustration of a 1943
+          German soldier, is worked through in detail below.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Other images, including ones purporting to show non-white American
+          Founding Fathers, circulated widely and drove much of the public
+          reaction. NBC News reported them as part of the broader record, but
+          no newsroom reproduced them under controlled conditions, and Google
+          has never confirmed any single one as an authentic, unedited
+          output.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Google's public account of the problem shifted over five days. On
+          21 Feb, before conceding any problem with the rule itself, Google
+          posted on X that Gemini "does generate a wide range of people" and
+          called that "generally a good thing," adding only that "it's
+          missing the mark here."<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Gemini's product lead, Jack Krawczyk, wrote the same day that image
+          generation was intentionally built to "reflect our global user
+          base."<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The next day, 22 Feb, Google reversed course, posting that it would
+          "pause the image generation of people" and re-release "an improved
+          version soon."<sup class="nb-cite"><a href="#s5">5</a></sup>
+          On 23 Feb, Prabhakar Raghavan, a Google senior vice president,
+          published the fullest account the company has given. The tuning
+          meant to ensure Gemini "showed a range of people" had "failed to
+          account for cases that should clearly not show a range."
+          Separately, he wrote, the model had grown "way more cautious than
+          we intended," refusing ordinary prompts it wrongly read as
+          sensitive.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Four days later, in a staff memo that also addressed a separate
+          controversy over the chatbot's text answers, and that Google
+          confirmed to reporters, CEO Sundar Pichai wrote that some of
+          Gemini's responses had "offended our users and shown bias" and
+          were "completely unacceptable."<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          Not every claim about Gemini held up once a newsroom tested it
+          directly. Asked by CNN for "an Irish grandma in a pub in Dublin,"
+          Gemini returned the white grandmothers the prompt implied, no
+          diversification applied. Asked for "a white farmer in the South,"
+          it diversified the result anyway.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The rule was not a blanket refusal to draw white people. It fired
+          inconsistently, in both directions, which is closer to a bug than
+          to a policy.
+        </p>
+      </section>
+
+      <section data-nb-section="the-rule-inside-one-prompt" id="the-rule-inside-one-prompt">
+        <h2>The rule inside one 1943 prompt</h2>
+        <p>
+          The clearest single case is one The Verge captured itself, the day
+          before Google paused the feature. A writer typed a plain request:
+          "Can you generate an image of a 1943 German Soldier for me it
+          should be an illustration."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Gemini answered, "Sure, here is an illustration of a 1943 German
+          soldier," and returned four portraits in the same period uniform: a
+          white man, an Asian woman, a Black man, and a woman with dark hair.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+
+        <figure class="nb-figure">
+          <img
+            src="gemini-image-generation/asset-1.png"
+            alt="Four Gemini-generated illustrations answering a request for a 1943 German soldier: a white man, an Asian woman, a Black man, and a woman with dark hair, each shown as a head-and-shoulders portrait in the same green military uniform and helmet."
+          />
+          <figcaption>
+            Fig. 1 · Gemini's answer to a request for an illustration of a
+            1943 German soldier, captured by The Verge on 21 Feb 2024, one
+            day before Google paused the feature. Only one of the four
+            figures is a plausible answer to the prompt as asked.<sup
+              class="nb-cite"
+              ><a
+                href="#s2"
+                data-nb-locator="lead image"
+                data-nb-url="https://www.theverge.com/2024/2/22/24079876/google-gemini-ai-photos-people-pause"
+                data-nb-note="The captured Gemini output this section walks through as the worked case."
+                >2</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+
+        <p>
+          A request for a 1943 German soldier has one correct answer to the
+          question of what he looked like. The army fielding actual soldiers
+          in Germany in 1943 was not diverse by race or by gender, so a mixed
+          set of four is not a range of valid answers. It is three wrong ones
+          and one right one. Gemini had no way to know that. Google's own
+          account of the rule behind these images is narrow: Gemini was
+          tuned to ensure it "showed a range of people." A request like "a picture of
+          football players, or someone walking a dog" would then not
+          default to one kind of person every time.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Demis Hassabis, CEO of Google DeepMind, gave the clearest defense of
+          that goal three days after Raghavan's post, on stage in Barcelona.
+          Google serves "200 plus countries," he said, so a generic prompt
+          should return "a universal range of possibilities."<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Nothing about the words "1943 German soldier" told the model it had
+          left that generic case behind. The rule fired anyway.
+        </p>
+        <p>
+          Google never said exactly how "tuning" produced that rule inside a
+          running model, and two different architectures produce the same
+          symptom. One works during training: retrain the model on enough
+          examples of varied output until it learns, on its own, to spread
+          its answers across more kinds of people. The other works at
+          request time. It intercepts the user's prompt before an image
+          model ever sees it and silently adds an instruction, something
+          like "vary the race and gender of any person you generate." The
+          image model then answers a request the user never wrote.
+          Raghavan's account uses only the word "tuning" and does not say
+          which.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          The second kind is not a guess. OpenAI documented exactly this
+          technique in its own system card for DALL-E 3, published the
+          previous October. After finding that DALL-E 3's early test images
+          of people "tended to be primarily white, young, and female,"
+          OpenAI wrote that it "tuned ChatGPT's transformation of the user
+          prompt to specify more diverse descriptions of people" before the
+          prompt ever reached the image model.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          Google has never confirmed that Gemini works the same way. What
+          OpenAI's document proves is that the technique exists, is
+          documented, and was already running in production for exactly this
+          purpose four months before Gemini's images went wrong.
+        </p>
+        <p>
+          Either architecture depends on the same trust a language model
+          extends to any instruction, wherever it comes from. The model does
+          not check who is allowed to give it directions. It predicts what
+          should follow, given everything currently in its context. It
+          learned to treat instruction-shaped text as something to act on
+          through the post-training every major lab now applies by default:
+          <a href="../the-evidence/instructgpt.html">reinforcement learning
+          from human feedback</a>. That training rewards the model for doing
+          what an instruction asks, rather than merely continuing the text.
+          A model trained well on that lesson obeys an instruction its own operator
+          appends exactly as it obeys one the user typed, because nothing in
+          training taught it to weigh the two differently. That is enough to
+          explain what happened to the 1943 prompt without knowing which
+          architecture Google used. A rule that says "diversify people" only
+          produces a wrong answer once it meets a prompt where the correct
+          answer isn't diverse, and nothing in the rule, however it was
+          built, carried the judgment to notice the collision.
+        </p>
+      </section>
+
+      <section data-nb-section="imagen-3-kept-the-rule" id="imagen-3-kept-the-rule">
+        <h2>Imagen 3 kept the rule, tightened it</h2>
+        <p>
+          Google's promised timeline slipped badly. On the same Barcelona
+          stage, Hassabis said the fix needed "a much narrower distribution"
+          for historical content, and that the correction had applied "too
+          bluntly, across all of it." He expected people-generation back "in
+          the next couple of weeks."<sup class="nb-cite"><a href="#s8">8</a></sup>
+          It returned six months later, on 28 Aug 2024, running on a new
+          model, Imagen 3, limited at first to English and to paying Gemini
+          Advanced, Business, and Enterprise subscribers.<sup class="nb-cite"><a href="#s10">10</a></sup>
+          The rule had not disappeared. By Google's own account of the fix,
+          training data was now "filtered for 'safety' with consideration
+          for 'fairness issues,'" and AI-generated captions were used "to
+          improve the variety and diversity of concepts" the model learned
+          from.<sup class="nb-cite"><a href="#s10">10</a></sup>
+          That is the same tool, applied with more care: still training the
+          model to prefer a range of people, just with a narrower definition
+          of when the range applies.
+        </p>
+        <p>
+          A week after Pichai's memo, at a conference in San Francisco,
+          Google co-founder Sergey Brin gave a blunter account than
+          Raghavan's structured one: the company "definitely messed up" the
+          image feature, he said, mostly from "not thorough testing."<sup class="nb-cite"><a href="#s11">11</a></sup>
+          That is a testing failure and an architecture failure at once.
+          More testing does not remove the underlying tradeoff. It only
+          catches more of the prompts where the correction backfires before
+          a user does.
+        </p>
+        <p>
+          Every image model that corrects for a skew in its training data,
+          whether by retraining on more balanced examples or by rewriting
+          the prompt behind the scenes, is making the same bet Gemini made:
+          that the correction will fire on the prompts that need it and stay
+          quiet on the ones that don't. OpenAI's own account of DALL-E 3
+          shows the same bet, made the same way, four months earlier.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          Nobody has published a general rule for telling the two kinds of
+          prompt apart. Until someone does, a hidden nudge for fairness and a
+          hidden nudge that erases a fact are the same piece of code, and the
+          difference only shows up after it ships.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Gemini did not refuse to draw white people, and it was not quietly
+          encoding a political stance. It applied one rule, meant to spread a
+          generic prompt like "a nurse" or "a CEO" across more kinds of
+          people, to every prompt, including the ones history had already
+          answered. Google has never said whether that rule lived in the
+          training data or in an instruction appended to the prompt at
+          request time. OpenAI's own account of DALL-E 3 shows the second
+          kind is a real, working technique that predates Gemini's failure.
+          The same tradeoff sits inside Imagen 3, the model
+          that replaced Imagen 2, and inside every system that tries to
+          counter a training-data skew with a rule instead of a judgment. The
+          rule cannot fail until it fires somewhere it shouldn't, and the
+          only way to find where is to ship it and watch.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://cdn.openai.com/papers/DALL_E_3_System_Card.pdf">OpenAI's DALL-E 3 System Card</a>:
+            OpenAI's own account of the prompt-rewriting technique Gemini's
+            rule most resembles.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://techcrunch.com/2024/08/28/google-says-its-fixed-geminis-people-generating-feature/">TechCrunch on Gemini's people-generation returning as Imagen 3</a>:
+            what Google changed, and didn't, six months after the pause.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://blog.google/innovation-and-ai/products/google-imagen-2/"
+              >Google · Eli Collins, "New and better ways to create images with Imagen 2" (Feb. 1, 2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.theverge.com/2024/2/22/24079876/google-gemini-ai-photos-people-pause"
+              >The Verge · Tom Warren, "Google pauses Gemini's ability to generate AI images of people after diversity errors" (Feb. 22, 2024)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.cnn.com/2024/02/22/tech/google-gemini-ai-image-generator/index.html"
+              >CNN Business · Catherine Thorbecke and Clare Duffy, "Google halts AI tool's ability to produce images of people after backlash" (Feb. 22, 2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.nbcnews.com/tech/tech-news/google-says-gemini-ai-glitches-product-effort-address-traps-rcna140243"
+              >NBC News · David Ingram, "Google says Gemini AI glitches were product of effort to address 'traps'" (Feb. 23, 2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://9to5google.com/2024/02/22/google-gemini-ai-image-generation-people/"
+              >9to5Google · Ben Schoon, "Google temporarily disables AI image generation of people in Gemini" (Feb. 22, 2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://blog.google/products/gemini/gemini-image-generation-issue/"
+              >Google · Prabhakar Raghavan, "Gemini image generation got it wrong. We'll do better." (Feb. 23, 2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.semafor.com/article/02/27/2024/google-ceo-sundar-pichai-calls-ai-tools-responses-completely-unacceptable"
+              >Semafor · Reed Albergotti, "Google CEO Sundar Pichai calls AI tool's controversial responses 'completely unacceptable'" (Feb. 27, 2024), quoting Pichai's staff memo in full</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aibusiness.com/responsible-ai/google-deepmind-ceo-defends-gemini-s-well-intended-image-flaws"
+              >AI Business · Ben Wodecki, "Google DeepMind CEO Defends Gemini's 'Well-Intended' Image Flaws" (Feb. 26, 2024), quoting Demis Hassabis at Mobile World Congress</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/papers/DALL_E_3_System_Card.pdf"
+              >OpenAI · "DALL·E 3 System Card" (Oct. 3, 2023)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://techcrunch.com/2024/08/28/google-says-its-fixed-geminis-people-generating-feature/"
+              >TechCrunch · "Google says it's fixed Gemini's people-generating feature" (Aug. 28, 2024)</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://fortune.com/2024/03/04/sergey-brin-google-definitely-messed-up-gemini-image-generation"
+              >Fortune · Marco Quiroz-Gutierrez, "Sergey Brin ... says Google 'definitely messed up' with Gemini's racial image generation problem" (Mar. 4, 2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
