@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rich Sutton's essay has four examples and zero citations · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "the-bitter-lesson",
+        "template": "lesson",
+        "title": "Rich Sutton's essay has four examples and zero citations",
+        "mode": "open",
+        "order": null,
+        "date": "2026-07-31",
+        "tags": ["scaling-laws", "compute", "architecture"],
+        "sources": 11,
+        "words": 2198,
+        "reading_minutes": 10,
+        "dek": "Each of Sutton's four examples for search beating human knowledge carries more hand-built structure than his 1,100-word essay says, from Deep Blue's tuned evaluation function to the human-labeled game data inside the AlphaGo run he actually cites.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Rich Sutton's essay has four examples and zero citations</h1>
+        <p class="nb-dekline">
+          Each of Sutton's four examples for search beating human knowledge carries more hand-built structure than
+          his 1,100-word essay says, from Deep Blue's tuned evaluation function to the human-labeled game data
+          inside the AlphaGo run he actually cites.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-07-31</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          "The bitter lesson says so" is a common reason a research team gives for spending more on compute instead
+          of a cleverer design. It justifies scaling a model up, dismisses a hand-built pipeline, and waves off an
+          architecture change. The essay behind it claims none of that on its own: four historical examples and a
+          diagnosis, signed by one researcher on his own website, with no data or citation of its own. This lesson
+          checks those examples against the record the systems left behind, then holds the result against what came
+          after: scaling evidence with real curves and numbers, and the human-designed systems the field kept
+          building anyway. By the end you can say what the bitter lesson establishes, and catch it the next time
+          it gets cited for more.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/scaling-laws-kaplan.html">Scaling laws for neural language models</a>: the
+            curve-fit evidence this lesson uses as the measured counterweight to Sutton's four examples.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/chinchilla.html">Chinchilla beat a model four times its size on the same
+            compute</a>: the correction to Kaplan's own scaling recipe, arrived at with 400 more trained models.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Sutton read seventy years of AI history down to one page</h2>
+        <p>
+          "The Bitter Lesson" is about 1,100 words, posted on 13 March 2019 on a personal website with no
+          institutional letterhead, signed only "Rich Sutton" and a date.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          It has no data table, no chart, and no citation of its own. The argument rests entirely on Sutton's own
+          reading of AI's history. He co-authored the field's standard reinforcement-learning textbook, and in March
+          2019 held two research posts at once: professor at the University of Alberta, and distinguished research
+          scientist at DeepMind. Five years later he and his co-author, Andrew Barto, won the 2024 Turing Award for
+          the foundations of reinforcement learning.<sup
+            class="nb-cite"><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          The essay's claim arrives in its first sentence, stated as an established finding rather than a proposal.
+          "The biggest lesson that can be read from 70 years of AI research is that general methods that leverage
+          computation are ultimately the most effective, and by a large margin. The ultimate reason for this is
+          Moore's law, or rather its generalization of continued exponentially falling cost per unit of
+          computation."<sup class="nb-cite"><a href="#s1" data-nb-locator="opening paragraph">1</a></sup>
+          The mechanism is simple. Computer time keeps getting cheaper. Hand-built domain knowledge does not. A
+          method built to use more compute eventually beats one that depends on a person's understanding of the
+          problem, however sophisticated that understanding was at the start.
+        </p>
+        <p>
+          Sutton's clearest worked example is computer chess. In 1997 IBM's Deep Blue beat the reigning world
+          champion, Garry Kasparov, in a six-game rematch, 3.5 games to 2.5, evaluating 200 million chess positions
+          per second across 32 processors.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Chess researchers of the time had built their systems on human understanding of the game's special
+          structure. Sutton describes them losing to "massive, deep search" instead: "these researchers wanted
+          methods based on human input to win and were disappointed when they did not."<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Sutton draws four steps from that pattern, common to all four examples. Researchers build knowledge into a
+          system, which "helps in the short term" and satisfies the researcher. "In the long run it plateaus and
+          even inhibits further progress," until a general method wins instead by search and learning.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="examples-under-the-record" id="examples-under-the-record">
+        <h2>Chess and Go carried more human design than the essay says</h2>
+        <p>
+          Sutton names Deep Blue as evidence that search alone beat the field's prior approach. IBM's own account
+          describes something more particular. The team that built the 1997 version "improved the
+          databases dealing with chess endgames, created a more powerful evaluation function for chess positions,
+          hired additional chess grandmasters to advise the team." IBM's C. J. Tan put it this way: "Garry prepared
+          to play against a computer. But we programmed it to play like a grandmaster."<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="1997 match section">3</a></sup
+          >
+          The 200 million positions a second did the work Sutton credits. What they were scored against was tuned
+          by people the essay never mentions.
+        </p>
+        <p>
+          Sutton's essay treats Go as one case, not two: "enormous initial efforts went into avoiding search by
+          taking advantage of human knowledge... all those efforts proved irrelevant, or worse, once search was
+          applied effectively at scale."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          But the program that first beat a human champion this way, AlphaGo, was not knowledge-free. Its 2016
+          Nature paper says its networks "are trained by a novel combination of supervised learning from human
+          expert games, and reinforcement learning from games of self-play."<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Before it ever played itself, it studied thousands of human games. Playing that way, AlphaGo won 99.8% of
+          its games against other Go programs and beat the human European champion, Fan Hui, five games to none.<sup
+            class="nb-cite"><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          The essay's stronger case exists, under the same name as the weaker one. AlphaGo Zero, published
+          before Sutton's essay, dropped the human game data entirely and started from random play. After
+          three days training against itself, it beat the previously published AlphaGo 100 games to 0. After forty
+          days it outperformed a further version known as "Master."<sup class="nb-cite"><a href="#s5">5</a></sup>
+          That is the result Sutton's description of Go actually fits: search and self-play, no human data at all.
+          His essay names it "Go" without telling which of two systems, one built on human data and one
+          without it, the sentence is about.
+        </p>
+      </section>
+
+      <section data-nb-section="the-measured-evidence" id="the-measured-evidence">
+        <h2>Kaplan and Chinchilla measured what Sutton only observed</h2>
+        <p>
+          Sutton's
+          argument is an induction: a pattern read off four historical cases by one person, no denominator, no
+          held-out test, no citation trail. Two papers, both filed under the name
+          scaling laws, did something different. They ran experiments and fit curves to the results.
+        </p>
+        <p>
+          <a href="../the-evidence/scaling-laws-kaplan.html">Kaplan et al.'s 2020 paper</a> measured how a language
+          model's loss changes with model size, training data, and compute. The relationship followed a power law,
+          "with some trends spanning more than seven orders of magnitude."<sup class="nb-cite"
+            ><a href="#s6" data-nb-locator="abstract">6</a></sup
+          >
+          Two years later, <a href="../the-evidence/chinchilla.html">Hoffmann et al.'s Chinchilla paper</a> tested
+          how a fixed compute budget should split between model size and training data. It trained over 400
+          language models, from 70 million to more than 16 billion parameters, on 5 billion to 500 billion
+          tokens.<sup class="nb-cite"><a href="#s7" data-nb-locator="abstract">7</a></sup
+          >
+        </p>
+        <p>
+          The two papers also corrected each other, which an essay with no data of its own cannot do. Kaplan's
+          headline recommendation was to train "very large models on a relatively modest amount of data."<sup
+            class="nb-cite"><a href="#s6">6</a></sup
+          >
+          Hoffmann's team, with 400 more trained models to check that recommendation against, found current large
+          models were "significantly undertrained." For compute-optimal training, model size and token count should
+          grow together, not stay fixed.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Their own compute-matched test model, Chinchilla, had 70 billion parameters and four times the training
+          data of the 280-billion-parameter Gopher. It beat Gopher, GPT-3, and two other larger models across a
+          range of benchmarks, including a score of 67.5% on the 57-subject exam MMLU, more than 7 points above
+          Gopher.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            What each document's claim about compute actually rests on.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            ><sup class="nb-cite"><a href="#s6">6</a></sup><sup class="nb-cite"><a href="#s7">7</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Document</th>
+              <th>Evidence base</th>
+              <th class="txt">What was tested</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Essay</span></td>
+              <td>4 examples</td>
+              <td class="txt">One researcher's reading of AI history, no data or citation of its own.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Kaplan</span></td>
+              <td>7+ orders of mag.</td>
+              <td class="txt">Power-law curves fit to measured loss against model size, data, and compute.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Chinchilla</span></td>
+              <td>400+ models</td>
+              <td class="txt">70M-16B+ parameter models trained on 5B-500B tokens to test the optimal split.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          That is what measured evidence about compute looks like: hundreds of trained models, curves spanning
+          orders of magnitude, an earlier recommendation checked and revised by more experiments. Sutton's examples
+          are real, but his essay predates this kind of test and offers nothing comparable in its place. It is a
+          pattern noticed, not a pattern measured.
+        </p>
+      </section>
+
+      <section data-nb-section="what-came-after" id="what-came-after">
+        <h2>The transformer and RLHF are the human design that stayed</h2>
+        <p>
+          The essay's citation record shows how far its four examples now travel. Wikipedia's page on the essay
+          counts "hundreds of formal citations according to Google Scholar," including a 2022 benchmark paper that
+          argues against spending research effort on problems "likely to be solved by scale alone."<sup
+            class="nb-cite"><a href="#s8">8</a></sup
+          >
+        </p>
+        <p>
+          Those citations describe systems built on an architecture Sutton's essay never mentions. The Transformer,
+          introduced by Vaswani and colleagues at Google in 2017, replaced recurrent and convolutional networks with
+          attention, a specific, hand-designed structural choice. It beat the previous best machine-translation
+          results: 28.4 BLEU on one 2014 English-German benchmark, more than 2 points above
+          the prior best including model ensembles.<sup class="nb-cite"
+            ><a href="#s9" data-nb-locator="abstract">9</a></sup
+          >
+          The Transformer is the substrate every model in Kaplan's and Chinchilla's curves runs on. Citing Sutton to
+          say architecture stopped mattering runs into that paper's own premise: someone still had to design it.
+        </p>
+        <p>
+          Scale alone did not produce the systems users actually noticed, either. OpenAI's 2022
+          <a href="../the-evidence/instructgpt.html">InstructGPT paper</a> fine-tuned GPT-3 on demonstrations and
+          rankings written by human labelers. In human evaluations, outputs from the resulting 1.3-billion-parameter
+          model were preferred to outputs from the 175-billion-parameter base model, "despite having 100x fewer
+          parameters."<sup class="nb-cite"><a href="#s10">10</a></sup>
+          A smaller model, shaped by curated human feedback, beat a larger one on the task users judged it on. That
+          is not the outcome the essay's opening claim predicts for a model with a hundred times fewer parameters.
+        </p>
+        <p>
+          Rodney Brooks, a robotics researcher who has built systems on hand-designed structure, published a
+          response six days later. His target is not the chess or speech examples but the architecture claim: "the
+          very essence of CNNs is that the front end of the network is designed by humans to manage translational
+          invariance." More broadly: "for most machine learning problems today a human is needed to design a
+          specific network architecture for the learning to proceed well."<sup class="nb-cite"
+            ><a href="#s11">11</a></sup
+          >
+          His example: a stop sign with a few pieces of tape on it, misread by a trained self-driving CNN as a 45
+          mph speed limit sign. "No human makes that error because they know that stop signs are red, and speed
+          limit signs are white. The CNN doesn't know that."<sup class="nb-cite"><a href="#s11">11</a></sup>
+          Brooks does not contest Sutton's narrower claim, that hand-coded heuristics lose to search and learning.
+          He targets what happens when that claim gets stretched to cover architecture and curated training signal
+          too, exactly the stretch the essay's own citation record shows happening.
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>
+                Hand-coded, domain-specific heuristics did lose to general search and learning: chess-specific
+                pruning rules, hand-designed Go evaluation, and, in Sutton's vision example, hand-built features
+                like SIFT.<sup class="nb-cite"><a href="#s1">1</a></sup>
+              </li>
+              <li>
+                AlphaGo Zero removed human game data entirely and still improved, beating the previously published
+                AlphaGo 100 games to 0 within three days of self-play.<sup class="nb-cite"
+                  ><a href="#s5">5</a></sup
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>
+                Deep Blue's search ran through an evaluation function tuned with hired grandmasters, and the first
+                AlphaGo to beat a human champion used supervised learning from human games before any self-play
+                began.<sup class="nb-cite"><a href="#s3">3</a></sup
+                ><sup class="nb-cite"><a href="#s4">4</a></sup>
+              </li>
+              <li>
+                The Transformer architecture underneath every model in the scaling-law record is a specific human
+                design choice, not a discovery of search.<sup class="nb-cite"><a href="#s9">9</a></sup>
+              </li>
+              <li>
+                InstructGPT's smaller, feedback-tuned model beat a hundred-times-larger base model on the task
+                users judged it on, not through added compute.<sup class="nb-cite"><a href="#s10">10</a></sup>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Sutton's pattern is real where he keeps it narrow. Hand-coded domain heuristics, chess-specific pruning,
+          hand-tuned Go evaluation, hand-built vision features, lost to general search and learning. AlphaGo Zero
+          proved a knowledge-free version of that pattern works on its own. But the essay's own examples carried
+          more human design than its four sentences report. Deep Blue's evaluation function was tuned by hired
+          grandmasters, and the AlphaGo game the essay names first learned from thousands of human matches. The five
+          years after the essay did not remove human design. They moved it: a hand-authored attention architecture
+          is what Kaplan's and Chinchilla's curves run on, and a hundred-times-smaller model beat a
+          hundred-times-larger one once fine-tuned on curated human feedback, not once scaled up. What the essay
+          establishes is a pattern about domain heuristics, read off four cases with no data of its own. What it
+          gets cited for today, that human design has stopped mattering, is a claim its own examples argue against.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.incompleteideas.net/IncIdeas/BitterLesson.html">"The Bitter Lesson," in full</a>:
+            the roughly 1,100 words the whole argument fits in, read straight from Sutton's own page.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://rodneybrooks.com/a-better-lesson/">Rodney Brooks, "A Better Lesson"</a>: the direct
+            response, published six days later, arguing human design moved to architecture rather than
+            disappearing.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.incompleteideas.net/IncIdeas/BitterLesson.html"
+              >Rich Sutton, "The Bitter Lesson" (13 March 2019)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://en.wikipedia.org/wiki/Richard_S._Sutton"
+              >Wikipedia · "Richard S. Sutton"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.ibm.com/history/deep-blue"
+              >IBM · "Deep Blue" retrospective</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://research.google/pubs/mastering-the-game-of-go-with-deep-neural-networks-and-tree-search/"
+              >Silver et al., "Mastering the Game of Go with Deep Neural Networks and Tree Search" (Nature,
+              2016)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://deepmind.google/discover/blog/alphago-zero-starting-from-scratch/"
+              >DeepMind · "AlphaGo Zero: Starting from Scratch"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2001.08361"
+              >arXiv · Kaplan et al., "Scaling Laws for Neural Language Models" (2001.08361)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.15556"
+              >arXiv · Hoffmann et al., "Training Compute-Optimal Large Language Models" (2203.15556)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://en.wikipedia.org/wiki/Bitter_lesson"
+              >Wikipedia · "Bitter lesson"</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.03762"
+              >arXiv · Vaswani et al., "Attention Is All You Need" (1706.03762)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.02155"
+              >arXiv · Ouyang et al., "Training Language Models to Follow Instructions with Human Feedback"
+              (2203.02155)</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://rodneybrooks.com/a-better-lesson/"
+              >Rodney Brooks · "A Better Lesson"</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
