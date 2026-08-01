@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Groq's 270 tokens a second and Anyscale's 185 are both true · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "tokens-per-second",
+        "template": "lesson",
+        "title": "Groq's 270 tokens a second and Anyscale's 185 are both true",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-01",
+        "tags": ["throughput", "benchmarks", "inference", "mlperf"],
+        "sources": 16,
+        "words": 2197,
+        "reading_minutes": 11,
+        "dek": "The 85-token-per-second gap between them comes down to where Groq starts its stopwatch and how long the test runs, one of at least four choices that decide what any published tokens-per-second figure means.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">Groq's 270 tokens a second and Anyscale's 185 are both true</h1>
+        <p class="nb-dekline">
+          The 85-token-per-second gap between them comes down to where Groq
+          starts its stopwatch and how long the test runs, one of at least
+          four choices that decide what any published tokens-per-second
+          figure means.
+        </p>
+        <div class="nb-byline">
+          <span>11 min read</span><span>2026-08-01</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every model launch and every inference vendor now leads with a
+          speed number: 250 tokens per second, 1,000-plus, "the fastest model
+          available." It reads like a spec sheet figure, until two honest
+          sources measure the same system and land 85 tokens per second
+          apart, the way Groq's own dashboard and an independent tester did
+          on the same Groq service. This lesson works out where that gap
+          comes from. By the end, you can take any tokens-per-second claim
+          and ask four questions. Which phase was timed. How many requests
+          shared the chip. Whose tokenizer counted. What hardware and prompt
+          length produced the run.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html">The instant a model writes a token, it becomes fact</a>: why a model
+            writes one token at a time and cannot skip ahead.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/letter-counting.html">A model can recognize strawberry's letters and still miscount them</a>: how
+            a tokenizer cuts text into chunks.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The number Groq quotes, and the number Anyscale measured</h2>
+        <p>
+          Groq's own dashboard reports its chips run Llama 2 70B at 270-plus
+          tokens per second per user, a figure it has used to market its
+          inference engine since 2024.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Anyscale tells a different story. It built a tool called LLMPerf to
+          check vendor throughput claims, pointed it at the same Groq
+          service running the same model, and measured a median of 185
+          tokens per second.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Both are real measurements of the same system.
+        </p>
+        <p>
+          The instinct is to treat one number as honest and the other as
+          spin. That assumes a chip has a single speed, the way a car has one
+          top speed. It does not. A tokens-per-second figure depends on which
+          phase is timed, how many requests share the chip during the test,
+          whose definition of "a token" is counting, and what hardware,
+          precision, and prompt length produced the run. The Groq-Anyscale
+          gap comes from exactly one of these.
+        </p>
+      </section>
+
+      <section data-nb-section="where-the-stopwatch-starts" id="where-the-stopwatch-starts">
+        <h2>Where the stopwatch starts</h2>
+        <p>
+          A model produces an answer in two phases that behave nothing alike.
+          First it reads the prompt: every prompt token is already known, so
+          the chip processes all of them in one parallel matrix
+          multiplication. This phase is called prefill.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Then it writes the answer one token at a time, and each new token
+          depends on every token before it. That dependency is why decoding
+          cannot be sped up by computing two tokens at once, the mechanic
+          the earlier lesson on
+          <a href="../the-mechanics/autoregressive-generation.html">how a model generates one token at a time</a>
+          works through. Decode is the phase that produces most of a
+          request's total latency.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Two clocks separate the phases. Time to first token, TTFT, measures
+          how long a request waits for the first output token, mostly
+          prefill. Everything after that is decode, and its per-token rate is
+          the number most "tokens per second" claims describe, only for what
+          happens after TTFT, not the request end to end.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          This is exactly the gap between Groq's number and Anyscale's.
+          Groq's 270-plus figure starts the clock after the first token and
+          averages over a roughly 1,000-token completion, pure decode speed
+          once the prompt-processing cost is paid.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Anyscale's LLMPerf test used shorter completions, about 150 output
+          tokens, and folded prompt-processing time into the same per-token
+          average instead of splitting it out. Median time to first token on
+          Groq's service was 0.22 seconds.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Spread a fixed startup cost over 150 tokens instead of 1,000 and
+          the average falls, roughly the size of the 270-to-185 gap. Groq
+          says as much itself: "if you were to test with 1000 output tokens,
+          the result would be closer to the 270+ tokens/s per user you see
+          on groq.com."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Neither side is wrong. They answered different questions with the
+          same words.
+        </p>
+      </section>
+
+      <section data-nb-section="more-users-less-speed-each" id="more-users-less-speed-each">
+        <h2>More users, less speed each</h2>
+        <p>
+          The default guess is that tokens per second is a property of the
+          chip, the way clock speed is a property of a CPU. It is not. It is
+          a property of how many requests share that chip at once, and the
+          same hardware running the same model reports very different
+          numbers depending only on that count. MLPerf's own audited results
+          make the range visible directly. 20 hardware platforms in the same
+          round report throughput for the identical Llama 2 70B model under
+          three latency policies, and on every one, tightening the policy
+          cuts throughput by roughly a third to two-thirds.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="tokens-per-second/chart-1.png"
+            alt="Grouped bar chart showing tokens-per-second throughput for three MLPerf-audited hardware platforms — Nebius B200x8, Nebius H200x8, and AMD 8xMI300X — each under three latency policies: Offline (no bound), Server (200 ms per token), and Interactive (40 ms per token). Throughput falls from Offline to Interactive on every platform, by different amounts."
+          />
+          <figcaption>
+            Fig. 1 · Same model, Llama 2 70B, on three audited platforms.
+            Tightening the latency bound from Server (200 ms/token) to
+            Interactive (40 ms/token) cuts throughput on every one, hardware
+            and model held fixed.<sup class="nb-cite"
+              ><a href="#s5">5</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Batching raises the total because it reclaims the efficiency
+          prefill already had: the chip multiplies a whole batch of thin
+          per-token vectors at once, the same weights doing more work per
+          pass. vLLM, the system that popularized this, reports 2 to 4 times
+          the throughput of earlier serving software at the same latency.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <p>
+          What the total hides is what one person feels, and there the
+          direction reverses. A GPU splits its attention across every
+          request each decode step. More riders mean a longer wait for the
+          next token.
+        </p>
+        <p>
+          MLPerf sets an explicit floor on that wait. Its Server scenario
+          requires a system to answer randomly timed requests within a
+          latency bound. The bound MLCommons set for Llama 2 70B in 2024 was
+          200 milliseconds per token, anchored to "approximately 240 words
+          per minute," an average adult's reading speed: about 5 tokens a
+          second per user.<sup class="nb-cite"><a href="#s6">6</a></sup
+          ><sup class="nb-cite"><a href="#s7">7</a></sup>
+          By 2025 MLCommons judged that floor too slow for real chat use.
+          It added a tighter Interactive scenario: 40 milliseconds per
+          token, a floor of 25 tokens per second per user.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+        <p>
+          One of the platforms in the chart above makes the arithmetic
+          concrete. A system built from eight Nebius B200 GPUs sustains
+          101,611 tokens per second under the looser Server bound and
+          59,622.7 under the Interactive bound. A 41 percent drop on
+          identical silicon, with nothing changed but how many tokens per
+          second must reach each user.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Loosen the bound and the system can batch more work into each
+          step, so total output climbs; tighten it and that room shrinks.
+        </p>
+      </section>
+
+      <section data-nb-section="the-tokenizer-the-chip-and-the-prompt-length" id="the-tokenizer-the-chip-and-the-prompt-length">
+        <h2>The tokenizer, the chip, and the prompt length</h2>
+        <p>
+          A token is not a fixed unit of text. It is whatever chunk a
+          tokenizer cuts the input into, and different models use different
+          tokenizers, the mechanic
+          <a href="../the-mechanics/letter-counting.html">the earlier lesson on tokenization</a>
+          works through. Artificial Analysis, an independent benchmarking
+          firm, runs every model's output through one shared tokenizer,
+          OpenAI's tiktoken, "because different tokenizers create pricing
+          [and count] incomparability across models."<sup class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+          Two models producing the identical sentence can report different
+          token counts for it. Two tokens-per-second numbers are not
+          comparable unless both sides count the same way, or someone
+          normalizes them.
+        </p>
+        <p>
+          Even holding the model, the text, and the tokenizer fixed, hardware
+          moves the number just as far. Artificial Analysis's own
+          measurements of Llama 3.1 70B, run through an identical test across
+          providers, found output speeds from 37.9 tokens per second on one
+          DeepInfra configuration to 119.6 on Amazon Bedrock's
+          latency-optimized tier. A threefold spread on the same weights,
+          driven by serving stack and quantization: the reduced precision a
+          provider stores weights in to trade accuracy for speed.<sup
+            class="nb-cite"
+            ><a href="#s10">10</a></sup
+          >
+          Context length is a fourth lever. NVIDIA's own H200 benchmarks
+          report a 1.9x speedup over the prior H100 on a 2,048-input
+          summarization job, and a smaller 1.6x on an 80-input chat
+          exchange. The two examples also differ in model and parallelism,
+          not context length alone, so neither isolates length by itself.<sup
+            class="nb-cite"
+            ><a href="#s11">11</a></sup
+          >
+          Even so, the two figures agree on the shape of the effect: speed
+          at 1,000 tokens of context and speed at 100,000 are not the same
+          claim, even from the same chip.
+        </p>
+      </section>
+
+      <section data-nb-section="the-audited-number-and-the-marketing-number" id="the-audited-number-and-the-marketing-number">
+        <h2>The audited number and the marketing number</h2>
+        <p>
+          MLPerf exists because the industry needed one audited way to settle
+          this. MLCommons, the nonprofit that runs it, publishes its rules
+          and reviews every submission. Its Inference benchmark defines
+          three scenarios for one task. Single-Stream sends one query at a
+          time, latency only, no throughput figure. Offline issues every
+          sample as one giant batch with no latency limit, the largest,
+          most quotable number, and the condition live traffic never meets.
+          Server sits between them: queries arrive at random, and the
+          reported figure is the fastest rate the system sustains inside the
+          latency bound above.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          One model, one machine, three legitimate numbers.
+        </p>
+        <p>
+          NVIDIA supplies a case where a headline figure and an audited
+          figure appear to disagree and, once normalized, do not. Ahead of
+          MLPerf's 2025 round, NVIDIA told reporters a full rack of its
+          GB200 systems, 72 GPUs, reached 869,200 tokens per second on Llama
+          2 70B. IEEE Spectrum flagged the figure as unverified, distinct
+          from "the officially reported MLPerf benchmarks."<sup
+            class="nb-cite"
+            ><a href="#s12">12</a></sup
+          >
+          NVIDIA's own audited submission, an 8-GPU B200 system reviewed by
+          MLCommons the same round, reported 98,858 tokens per second under
+          Offline.<sup class="nb-cite"><a href="#s13">13</a></sup>
+          Divide each by its GPU count and the two land close: about 12,357
+          tokens per second per GPU audited, versus about 12,072 for the
+          rack. What differed was procedural: one figure went through
+          MLCommons's review and one did not.
+        </p>
+        <p>
+          Cerebras holds up under the same scrutiny. Its Llama 3.1 70B chips
+          launched at 450 tokens per second per user in August 2024. The
+          company later reported 2,100 for the same model after adding
+          speculative decoding, both figures labeled "output speed per
+          user," a single-stream number, not an aggregate.<sup
+            class="nb-cite"
+            ><a href="#s14">14</a></sup
+          >
+          Cerebras pointed to Artificial Analysis as the party that
+          "rigorously tested" the update, with its own disclaimer: "20%
+          higher or lower... is normal."<sup class="nb-cite"
+            ><a href="#s15">15</a></sup
+          >
+          A peak number can be real and narrow at once, if the vendor names
+          the conditions.
+        </p>
+        <p>
+          The costlier version of this problem is not one buyer fooled by one
+          company. It is a market comparing hardware on throughput measured
+          at an interactivity level no shipped product would use.
+          SemiAnalysis built an open benchmark, InferenceMAX, for exactly
+          this. A GPU that wins on aggregate throughput at 5 tokens per
+          second per user, a speed the group calls "far too slow to be
+          practical" for a chatbot, is not winning at anything a user would
+          run.<sup class="nb-cite"><a href="#s16">16</a></sup>
+          MLCommons made the same correction from the standards side, adding
+          the Interactive scenario because the old 5-tokens-per-second floor
+          "no longer represented" real chat use.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          Both built new instruments for one reason: the old number was read
+          at a speed nobody would accept.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Six published tokens-per-second figures, decoded by phase,
+            concurrency, and latency bound.
+          </caption>
+          <thead>
+            <tr>
+              <th>Claim</th>
+              <th>Number</th>
+              <th class="txt">What produced it</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Groq</span></td>
+              <td>270+ tok/s</td>
+              <td class="txt">
+                Decode only, after first token, ~1,000-token completion.<sup
+                  class="nb-cite"
+                  ><a href="#s1">1</a></sup
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Anyscale</span></td>
+              <td>185 tok/s</td>
+              <td class="txt">
+                Same Groq service; TTFT folded in, 150-token completion, 5
+                concurrent requests.<sup class="nb-cite"
+                  ><a href="#s2">2</a></sup
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Cerebras</span></td>
+              <td>2,100 tok/s</td>
+              <td class="txt">
+                Single-stream, speculative decoding, third-party tested.<sup
+                  class="nb-cite"
+                  ><a href="#s15">15</a></sup
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">NVIDIA (press)</span></td>
+              <td>869,200 tok/s</td>
+              <td class="txt">
+                Offline, batch aggregate, 72-GPU rack, not audited.<sup
+                  class="nb-cite"
+                  ><a href="#s12">12</a></sup
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">NVIDIA (MLPerf)</span></td>
+              <td>98,858 tok/s</td>
+              <td class="txt">
+                Offline, batch aggregate, 8-GPU system, audited.<sup
+                  class="nb-cite"
+                  ><a href="#s13">13</a></sup
+                >
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">MLPerf Interactive</span></td>
+              <td>59,622.7 tok/s</td>
+              <td class="txt">
+                Same 8-GPU class, audited, 25-tok/s-per-user floor
+                enforced.<sup class="nb-cite"><a href="#s5">5</a></sup>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Groq's 270 and Anyscale's 185 were never in conflict. They answered
+          different questions about the same service: decode speed measured
+          after the first token, against a test that folds the wait for it
+          into the average. NVIDIA's audited 98,858 and its own unverified
+          869,200 agreed too, once someone divided by GPU count. A published
+          tokens-per-second figure describes one specific run. It is not a
+          fixed property of the chip.
+        </p>
+        <p>
+          The next time a launch or a chip vendor states a bare
+          tokens-per-second figure, the number by itself is not yet an
+          answer. Ask what phase it timed, how many requests shared the chip,
+          whose tokenizer counted, and what hardware and context length
+          produced it. Only once those four are named does the figure
+          describe anything you can compare to your own workload.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://github.com/mlcommons/inference_policies/blob/master/inference_rules.adoc">MLPerf Inference rules (MLCommons)</a>: the
+            full scenario and latency-bound definitions this lesson quotes
+            from.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://newsletter.semianalysis.com/p/inferencemax-open-source-inference">InferenceMAX (SemiAnalysis)</a>: the open
+            benchmark built to catch throughput cited at unrealistic
+            interactivity levels.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Comparison of Anyscale's LLMPerf figure to Groq's own throughput"
+              href="https://groq.com/blog/groq-lpu-inference-engine-crushes-first-public-llm-benchmark"
+              >Groq · Groq LPU™ Inference Engine Crushes First Public LLM Benchmark (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Groq Llama 2 70B row: output tokens/sec and time-to-first-token"
+              href="https://github.com/ray-project/llmperf-leaderboard"
+              >Anyscale/Ray · LLMPerf leaderboard (ray-project/llmperf-leaderboard)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Section 2.2-2.3; Abstract"
+              href="https://arxiv.org/abs/2309.06180"
+              >Kwon et al. · Efficient Memory Management for Large Language Model Serving with PagedAttention (2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Metrics-definition section"
+              href="https://docs.nvidia.com/nim/large-language-models/1.0.0/optimization.html"
+              >NVIDIA · NIM for LLMs, Optimization (docs, v1.0.0)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="20-platform Llama2-70B series, Offline/Server/Interactive; Nebius B200x8, Nebius H200x8, and AMD 8xMI300X rows charted"
+              href="https://raw.githubusercontent.com/mlcommons/inference_results_v5.1/main/summary_results.json"
+              >MLCommons · MLPerf Inference v5.1 results (summary_results.json)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Server, Offline, and Single-Stream scenario definitions"
+              href="https://github.com/mlcommons/inference_policies/blob/master/inference_rules.adoc"
+              >MLCommons · MLPerf Inference rules (inference_policies)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Dataset, scenario, and latency-constraint sections"
+              href="https://mlcommons.org/2024/03/mlperf-llama2-70b/"
+              >MLCommons · Llama 2 70B: An MLPerf Inference Benchmark for Large Language Models (2024)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Llama2-70B-Interactive scenario paragraphs"
+              href="https://mlcommons.org/2025/04/llm-inference-v5/"
+              >MLCommons · MLPerf Inference v5.0 Advances Language Model Capabilities for GenAI (2025)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Output Speed and Time to First Token definitions; Key Caveats"
+              href="https://artificialanalysis.ai/methodology/performance-benchmarking"
+              >Artificial Analysis · Language Model API Performance Benchmarking (methodology)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Provider comparison table"
+              href="https://artificialanalysis.ai/models/llama-3-1-instruct-70b/providers"
+              >Artificial Analysis · Llama 3.1 70B, provider comparison</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="H200 FP8 Max throughput table and footnotes; Max Throughput TP1/TP8 workload comparisons"
+              href="https://github.com/NVIDIA/TensorRT-LLM/blob/main/docs/source/blogs/H200launch.md"
+              >NVIDIA/TensorRT-LLM · H200 launch performance blog</a
+            >
+          </li>
+          <li id="s12">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Paragraphs on the unverified full-rack figure"
+              href="https://spectrum.ieee.org/ai-inference"
+              >IEEE Spectrum · Nvidia Blackwell Ahead in AI Inference, AMD Second (2025)</a
+            >
+          </li>
+          <li id="s13">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Llama2-70B and Llama2-70B-Interactive results tables"
+              href="https://developer.nvidia.com/blog/nvidia-blackwell-delivers-massive-performance-leaps-in-mlperf-inference-v5-0/"
+              >NVIDIA · NVIDIA Blackwell Delivers Massive Performance Leaps in MLPerf Inference v5.0</a
+            >
+          </li>
+          <li id="s14">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Headline figures and footer disclaimer"
+              href="https://www.cerebras.ai/blog/introducing-cerebras-inference-ai-at-instant-speed"
+              >Cerebras · Introducing Cerebras Inference: AI at Instant Speed (2024)</a
+            >
+          </li>
+          <li id="s15">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Opening paragraphs and variance disclaimer"
+              href="https://www.cerebras.ai/blog/cerebras-inference-3x-faster"
+              >Cerebras · Cerebras Inference now 3x faster: Llama3.1-70B breaks 2,100 tokens/s (2024)</a
+            >
+          </li>
+          <li id="s16">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Throughput/interactivity tradeoff section"
+              href="https://newsletter.semianalysis.com/p/inferencemax-open-source-inference"
+              >SemiAnalysis · InferenceMAX: Open Source Inference Benchmarking (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
