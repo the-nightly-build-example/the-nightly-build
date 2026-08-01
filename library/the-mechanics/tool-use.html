@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A model that calls a tool never runs it · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "tool-use",
+        "template": "lesson",
+        "title": "A model that calls a tool never runs it",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-01",
+        "tags": ["tool-use", "function-calling", "agents", "react"],
+        "sources": 8,
+        "words": 2139,
+        "reading_minutes": 10,
+        "dek": "The JSON a model writes when it \"calls\" a tool executes nothing on its own — a program outside the model performs the real action and writes the answer back as text.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A model that calls a tool never runs it</h1>
+        <p class="nb-dekline">
+          The JSON a model writes when it "calls" a tool executes nothing on
+          its own &mdash; a program outside the model performs the real
+          action and writes the answer back as text.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-08-01</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Ask a chatbot for today's weather, a stock price, or a search
+          result, and it answers as if it just went and looked. It didn't,
+          and it can't. Nothing in a language model connects to the
+          internet, a calculator, or a filesystem. What actually happens is
+          a documented, five-step contract between the model and a separate
+          piece of software, and every lab that ships "tool use" or
+          "function calling" implements the same contract. By the end of
+          this lesson you can trace one real tool call through all five
+          steps, say which step is the model and which is the program, and
+          name what even the labs cannot yet explain.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/instructions-are-data.html"
+              >Language models draw no line between instructions and
+              data</a
+            >: why a tool's description in the prompt is no different from
+            anything else the model reads.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html"
+              >The instant a model writes a token, it becomes fact</a
+            >: how a model produces text one token at a time, all it is
+            doing when it "calls" a tool.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/knowledge-cutoff.html"
+              >A model's weights freeze the moment its training run
+              ends</a
+            >: the reason tools exist at all &mdash; a frozen model needs a
+            channel to anything after training.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Ask Claude for San Francisco's weather and nothing checks it</h2>
+        <p>
+          Send Claude a message asking for the weather in San Francisco,
+          alongside a tool named <code>get_weather</code> that your code
+          knows how to run. A few seconds later you get back a plain
+          English sentence: the temperature, the sky. It reads like the
+          model went and looked. It did not. Nothing in a language model
+          has a network socket, a calculator, or a way to run code. The
+          model has one channel in and one channel out, and both carry
+          text.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Here is what a tool actually is to the model: a block of text in
+          the prompt, next to the user's question, describing a function it
+          may ask for. Anthropic's API calls this an <code
+            >input_schema</code
+          >, a JSON object naming the function (<code>get_weather</code>),
+          describing what it does, and listing its arguments and which are
+          required.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          OpenAI's API calls the same kind of object a <code
+            >function</code
+          >
+          entry inside a <code>tools</code> array, with the same three
+          parts: name, description, and a JSON Schema of parameters.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          An independent write-up puts it the same way: the model "can
+          recognize that a specific action
+          needs to happen and request that action from an external
+          function."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Neither schema is a switch that turns on a capability. It is a
+          paragraph the model reads before it starts writing, structurally
+          no different from
+          <a href="../the-mechanics/instructions-are-data.html"
+            >anything else typed into the same prompt</a
+          >. It is the model's training, not a wire running from its
+          weights to a real weather service, that decides whether and when
+          to reach for <code>get_weather</code>.
+        </p>
+      </section>
+
+      <section data-nb-section="the-call-is-still-just-text" id="the-call-is-still-just-text">
+        <h2>The model's "call" is a paragraph it writes, not a button it presses</h2>
+        <p>
+          When Claude decides the weather tool applies, it does not reach
+          outside itself. It keeps doing the only thing a language model
+          ever does: predicting the next token, one at a time.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          What changes is the shape of the tokens it writes. The same
+          generation process
+          <a href="../the-mechanics/autoregressive-generation.html"
+            >that writes an ordinary sentence</a
+          >
+          instead writes a structured object, because that is the pattern
+          its training rewarded here. Anthropic's API surfaces that object
+          as a <code>tool_use</code> content block, signaled by <code
+            >stop_reason: "tool_use"</code
+          >.
+        </p>
+        <figure class="nb-code">
+          <div class="nb-code-head">
+            <span class="nb-code-file">Claude's response</span
+            ><span>JSON</span>
+          </div>
+          <pre><code class="language-json">{
+  "stop_reason": "tool_use",
+  "content": [
+    {
+      "type": "tool_use",
+      "name": "get_weather",
+      "input": { "location": "San Francisco, CA" }
+    }
+  ]
+}</code></pre>
+          <figcaption class="nb-code-cap">
+            Fig. 1 &middot; The entire "call": a labeled span inside the
+            model's ordinary text output. Nothing has executed, and nothing
+            outside the model knows yet.<sup
+              class="nb-cite"
+              ><a href="#s2">2</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          OpenAI's models write the same information into a different
+          envelope, one whose arguments field arrives as a JSON string
+          rather than a native object, so the caller has to parse it a
+          second time.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The field names differ. The fact underneath them does not.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The same emitted call, two documented shapes.<sup
+              class="nb-cite"
+              ><a href="#s2">2</a></sup
+            ><sup class="nb-cite"><a href="#s3">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Claude (Anthropic)</th>
+              <th class="txt">GPT (OpenAI)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Signal</span></td>
+              <td>stop_reason: "tool_use"</td>
+              <td class="txt">an entry appears in a tool_calls array</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Name</span></td>
+              <td>name field in the tool_use block</td>
+              <td class="txt">function.name</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Arguments</span></td>
+              <td>input, a native JSON object</td>
+              <td class="txt">
+                function.arguments, a JSON object re-encoded as a string
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Match-back id</span></td>
+              <td>id field on the tool_use block</td>
+              <td class="txt">
+                id, e.g. call_k2QgGc9GT9WjxD76GvR0Ot8q
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The shape is not a chat-API invention either. The call is text,
+          and text alone does not check a website.
+        </p>
+      </section>
+
+      <section data-nb-section="a-program-you-wrote-does-the-rest" id="a-program-you-wrote-does-the-rest">
+        <h2>A program you wrote reads that text and does the rest</h2>
+        <p>
+          Anthropic states the boundary directly: "The model never executes
+          anything on its own. It emits a structured
+          request, your code (or Anthropic's servers) runs the operation,
+          and the result flows back into the conversation."<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          That sentence names the actor everyone skips when they say "the
+          AI checked the weather." It is a piece of software sitting
+          between the model and the world: watching for a <code
+            >tool_use</code
+          >
+          block, calling the real API, and formatting the result as a new
+          message. The Model Context
+          Protocol is an open-source standard for connecting what it calls
+          "AI applications" to external tools.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          It names that piece of software the "host," and its own
+          pseudocode gives the mechanism: the host intercepts the tool
+          call, routes it to the right server, executes it, and returns the
+          result.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Whatever a team calls it, agent loop, orchestrator, MCP host, it
+          is ordinary code running on a computer the model cannot reach.
+          The weather API answers to that program, never to the model.
+        </p>
+        <p>
+          Once that program has the weather, it hands the result back the
+          same way the model handed out the request: as text, appended to
+          the conversation.
+        </p>
+        <figure class="nb-code">
+          <div class="nb-code-head">
+            <span class="nb-code-file">your reply, next request</span
+            ><span>JSON</span>
+          </div>
+          <pre><code class="language-json">{
+  "type": "tool_result",
+  "tool_use_id": "...",
+  "content": "15 degrees Celsius, partly cloudy"
+}</code></pre>
+          <figcaption class="nb-code-cap">
+            Fig. 2 &middot; The observation, pasted back in. Claude reads
+            this the same way it reads the user's original question: as
+            more tokens in the same prompt.<sup class="nb-cite"
+              ><a href="#s2">2</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Claude runs again on that extended prompt and writes an ordinary
+          sentence: "The current weather in San Francisco is 15 degrees
+          Celsius with partly cloudy skies."<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Nothing about that sentence is privileged. It is generated the
+          same way the tool call was, prose instead of JSON.
+        </p>
+      </section>
+
+      <section data-nb-section="the-loop-has-a-name" id="the-loop-has-a-name">
+        <h2>Send, call, paste back, resume: the loop has a name</h2>
+        <p>
+          One round trip rarely finishes a real task, so the same moves
+          repeat. Anthropic documents the repetition as a five-step cycle.
+          Send the request and the tool list, get back
+          <code>stop_reason: "tool_use"</code>, execute the tool, and format
+          a <code>tool_result</code>. Send a new request carrying that
+          result, and repeat from step two until Claude answers with
+          ordinary text instead.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          This pattern has a name: reasoning in text, acting by calling
+          something external, reading back what happened, and reasoning
+          again. Yao et al.'s 2022 paper called it ReAct, for "reason and
+          act." The trace below, from that paper's own example, is one
+          model answering a trivia question this way. It writes a Thought,
+          turns the thought into a Search action, reads the Observation an
+          external API returns, and uses it to write the next Thought.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="tool-use/asset-1.png"
+            alt="A four-step ReAct trace on a HotpotQA trivia question: Thought 1 states what to search for, Act 1 issues a Search call, Observation 1 returns the looked-up text, and the pattern repeats through Thought 4 and a final Act 4 that answers correctly."
+          />
+          <figcaption>
+            Fig. 3 &middot; One ReAct trace, from Yao et al.'s own example:
+            "Aside from the Apple Remote, what other device can control the
+            program Apple Remote was originally designed to interact with?"
+            Each Act line is a call out of the model; each Observation line
+            is the answer pasted back in, like the weather result above.<sup
+              class="nb-cite"
+              ><a
+                href="#s7"
+                data-nb-locator="Figure 1(1d)"
+                data-nb-url="https://ar5iv.labs.arxiv.org/html/2210.03629"
+                data-nb-note="The ReAct panel of Figure 1, cropped to keep the Thought/Action/Observation trace intact."
+                >7</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Interleaving reasoning
+          with acting measurably changes what a model gets right. On a
+          sample of failures the authors hand-annotated across HotpotQA and
+          a fact-verification benchmark, chain-of-thought prompting alone
+          hallucinated a fact in 14% of failures; ReAct's failures in the
+          same sample carried a 6% false-positive rate.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          That is a failure-sample comparison, not a population-wide error
+          rate. In a household-chores game called ALFWorld, the gap
+          shows up as raw task completion: ReAct's best trial solved 71% of
+          tasks against 45% for acting with no reasoning step at all.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The weather exchange above is one iteration of this loop. A
+          harder question just runs it more than once.
+        </p>
+      </section>
+
+      <section data-nb-section="what-is-settled-and-what-is-not" id="what-is-settled-and-what-is-not">
+        <h2>What training decided, and what nobody can point to</h2>
+        <p>
+          The loop itself is settled: the schema in the prompt,
+          the structured span the model writes, the external program that
+          executes and pastes back a result, the repeat-until-prose exit.
+          What is not settled is why a model reaches for a tool at the
+          moment it does. Toolformer's own history shows why that is a
+          training question, not an architectural one. Schick et al. did
+          not change GPT-J's architecture to add tool use. They ran a
+          self-supervised fine-tuning pass: candidate API calls were
+          sampled, tried, and kept only when they measurably improved the
+          model's ability to predict the following tokens, then fine-tuned
+          the model on the calls that survived.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          That interruption, generation pausing until a response is
+          spliced in, is trained.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+        <p>
+          Training that decisive can also misfire in ways nobody can
+          explain. Ask for a tool whose required arguments
+          are missing, and Opus usually recognizes the gap and asks. Sonnet
+          sometimes asks and sometimes infers a plausible value instead.
+          Neither behavior is guaranteed, especially on an ambiguous prompt
+          or a smaller model.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Which model calls which tool, correctly filled, is a fact about
+          what the fine-tuning run rewarded. Nobody, including the labs,
+          can point to a weight and say that is where the decision lives.
+        </p>
+        <p>
+          A tool call that never leaves the vendor's servers looks like
+          evidence the capability is architectural. Anthropic's
+          server-executed tools, <code>web_search</code> and <code
+            >code_execution</code
+          >
+          among them, run without the calling application touching
+          execution at all: enable the tool and "the server handles
+          everything else."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          That is the strongest case for "built in." Anthropic's own
+          documentation forecloses it in the same breath: those tools still
+          run on its infrastructure, a server process outside the model's
+          forward pass, and the model still only sees the result as
+          inserted text.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          What varies is only which external program does the executing,
+          never whether one does.
+        </p>
+        <p>
+          Nor does the training reliably help. Toolformer, 6.7 billion
+          parameters with a search tool available, still trailed plain
+          GPT-3's 175 billion parameters and no tool at all on two
+          open-domain question-answering benchmarks: 26.3% against 29.0% on
+          WebQuestions, 17.7% against 22.6% on Natural Questions.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          Training a model to call a tool does not guarantee it calls the
+          tool well.
+        </p>
+        <p>
+          The same gap makes a fetched page dangerous: a page can tell the
+          model to call a tool it was told not to, or quietly drift the
+          arguments it fills.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          "The AI checked the weather" describes two actors as if they were
+          one. The model wrote a paragraph of JSON asking for the weather
+          in San Francisco. A separate program, code running on a machine
+          the model cannot reach, read that paragraph, called the real
+          weather service, and typed the answer back into the conversation
+          as more text. The model resumed
+          on that extended text and wrote the sentence you read. Every
+          documented tool-use format, from Anthropic's and OpenAI's APIs to
+          Toolformer's training run to the Model Context Protocol's host,
+          divides the labor the same way. The model only ever writes and
+          reads text. Everything that touches the world sits outside it,
+          running the send, call, paste-back, resume loop the ReAct paper
+          named. What training decided is when to make a call and how to
+          fill it in, and that decision is exactly where the explanation
+          runs out. Nobody can point to the moment inside the
+          weights where a model chooses to ask, guess, or stay silent. The
+          next time an assistant says it searched, ran, or looked something
+          up, hold onto the sentence Anthropic states outright: the model
+          never executes anything on its own.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://simonwillison.net/2023/Jun/13/function-calling/"
+              >OpenAI: Function calling and other API updates</a
+            >, Simon Willison: a practitioner's first notes on this same
+            request/response shape, written the day OpenAI shipped it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a
+              href="https://www.anthropic.com/research/building-effective-agents"
+              >Building Effective Agents</a
+            >, Anthropic: what teams build once one call is not enough, and
+            when a simpler prompt chain beats a full agent.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/how-tool-use-works"
+              >Anthropic &middot; How tool use works</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
+              >Anthropic &middot; Tool use with Claude (overview)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://developers.openai.com/cookbook/examples/how_to_call_functions_with_chat_models"
+              >OpenAI Cookbook &middot; How to call functions with chat
+              models</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.apideck.com/blog/llm-tool-use-and-function-calling"
+              >Apideck (Saurabh Rai) &middot; An introduction to function
+              calling and tool use</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://modelcontextprotocol.io/introduction"
+              >Model Context Protocol &middot; What is the Model Context
+              Protocol (MCP)?</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://modelcontextprotocol.io/docs/2026-07-28/learn/architecture"
+              >Model Context Protocol &middot; Architecture overview</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2210.03629"
+              >Yao et al. &middot; ReAct: Synergizing Reasoning and Acting in
+              Language Models (arXiv:2210.03629)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2302.04761"
+              >Schick et al. &middot; Toolformer: Language Models Can Teach
+              Themselves to Use Tools (arXiv:2302.04761)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
