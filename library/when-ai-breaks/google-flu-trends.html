@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google's flu predictor overshot the CDC for 100 of 108 weeks · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "google-flu-trends",
+        "template": "lesson",
+        "title": "Google's flu predictor overshot the CDC for 100 of 108 weeks",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-01",
+        "tags": ["distribution-shift", "big-data", "public-health", "overfitting"],
+        "sources": 7,
+        "words": 2199,
+        "reading_minutes": 10,
+        "dek": "Nature validated Google's search-based flu model in 2009, and the search engine feeding it kept changing underneath a relationship the model never got to refit.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">Google's flu predictor overshot the CDC for 100 of 108 weeks</h1>
+        <p class="nb-dekline">
+          Nature validated Google's search-based flu model in 2009, and the
+          search engine feeding it kept changing underneath a relationship
+          the model never got to refit.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-08-01</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Google Flu Trends is still the example people reach for when a
+          company's user data seems to outperform institutional measurement:
+          fifty million search queries standing in for a national
+          surveillance network, updated daily instead of weekly. It worked,
+          well enough that Nature published it and public-health researchers
+          cited it. Then it stopped working, without a bug, a hack, or a bad
+          actor anywhere in the story. This lesson traces exactly where that
+          happened. It shows why a search engine changing underneath the
+          model was enough to break it, and where that blind spot is running
+          in systems built long after Google shut this one down.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/knowledge-cutoff.html"
+              >A model's weights freeze the moment its training run ends</a
+            >: the general mechanism behind this lesson's specific case, a
+            fitted relationship that cannot see the world moving underneath
+            it.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The number Google published about itself</h2>
+        <p>
+          For the week starting January 13, 2013, the Centers for Disease
+          Control and Prevention counted influenza-like illness in 4.52
+          percent of the doctor visits it tracked. Google Flu Trends, the
+          model built to estimate that same figure before the CDC could
+          confirm it, put the number at 10.56 percent: more than twice the
+          CDC's count.<sup class="nb-cite"><a href="#s1">1</a></sup> Google's
+          own engineers published both numbers, in a paper explaining what
+          had gone wrong with a product they had built five years earlier.
+        </p>
+        <p>
+          That earlier team had built Google Flu Trends to do exactly what
+          it was now getting wrong: estimate flu activity in the United
+          States from the search terms people were already typing into
+          Google, faster than the CDC's own network could confirm it. Jeremy
+          Ginsberg, Matthew Mohebbi, and colleagues at Google, with a CDC
+          co-author, published the method in Nature in February 2009. The
+          method was mechanical. Test 50 million common search queries,
+          logged 2003 to 2008, against the CDC's regional flu numbers. Fit
+          450 million models across hundreds of machines. Keep whichever
+          combination tracked the CDC's figures best. Forty-five queries,
+          combined, gave the best fit.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          The team held back nine months of the 2007-2008 season from the
+          fitting process. On that held-back stretch, the estimate
+          correlated with the CDC's own later, confirmed numbers at 0.97,
+          and arrived one to two weeks before the CDC's report did.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The forty-five queries were not chosen by anyone for being about
+          flu. They were chosen automatically, for having moved with the
+          CDC's numbers in the past. The paper's own figure shows what that
+          risks. Performance rose steadily as more top-scoring queries were
+          added, then the 81st candidate, "oscar nominations," caused a
+          steep drop: a query that moved with flu season without having
+          anything to do with flu.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The forty-five kept queries simply had not tripped that same
+          test yet. The model went into service for the
+          2008-2009 season, the same season a new flu strain would reach the
+          United States from Mexico.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="winter-flu-summer-pandemic" id="winter-flu-summer-pandemic">
+        <h2>Winter flu, summer pandemic</h2>
+        <p>
+          The 2009 H1N1 pandemic, "swine flu," emerged in the spring and
+          summer, months before the fall and winter season the model had been
+          trained on.<sup class="nb-cite"><a href="#s3">3</a></sup> During its
+          initial wave, from late March to early August 2009, Google's model
+          nearly stopped tracking the CDC at all. Correlation collapsed from
+          a training-period average around 0.90 to 0.29. The model
+          underestimated the true level of illness by an average of 0.014
+          percentage points, nearly three times its error in any prior
+          season.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Google's own researchers, two years later, traced the cause to
+          the query set itself. People search differently
+          for flu in July than in January. Forty-eight percent of the
+          original model's query weight sat in categories like "influenza
+          complication," terms that track a bad winter flu season. Only
+          eight percent sat in general symptom terms like "fever" or
+          "cough," the words people actually typed during a pandemic that
+          arrived out of season.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The forty-five queries had not learned to detect flu. They had
+          learned to detect winter, and the pandemic exposed the
+          difference.
+        </p>
+        <p>
+          Google revised the model on September 24, 2009, quadrupling the
+          query set from about 40 terms to about 160 and rebalancing it
+          toward general symptoms, which rose from 8 percent to 69 percent of
+          the model's weight.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The revision recovered most of the lost accuracy:
+        </p>
+        <table class="nb-table">
+          <caption>
+            Correlation with CDC-reported flu activity, original model versus
+            the September 2009 revision.<sup class="nb-cite"
+              ><a href="#s3">3</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Period</th>
+              <th>Original model</th>
+              <th>Revised model</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Pre-pandemic</span></td>
+              <td>0.906</td>
+              <td>0.942</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Wave 1</span></td>
+              <td>0.290</td>
+              <td>0.945</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Wave 2</span></td>
+              <td>0.916</td>
+              <td>0.985</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The model had been fit on too few seasons to tell a flu signal
+          from a winter signal, and the pandemic exposed it: the query
+          weights were correct for the seasons that produced them, and
+          untested against anything else.
+        </p>
+      </section>
+
+      <section
+        data-nb-section="signal-answering-different-question"
+        id="signal-answering-different-question"
+      >
+        <h2>A signal answering a different question</h2>
+        <p>
+          The revised model went back into production in the fall of 2009.
+          Two years later, beginning August 21, 2011, it started missing
+          again: not undercounting the flu now, but overcounting it, for
+          100 of the next 108 weeks, through September 1, 2013.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The 2011-2012 season alone, the model overshot the actual level of
+          flu by more than 50 percent.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          A model that simply repeated the CDC's last report, delayed by
+          publication time, would have beaten Google's early-warning system
+          over that stretch: a mean absolute error of 0.311, against 0.486
+          for Google's model.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          The query terms, now roughly 160 of them, were never a direct
+          count of flu cases. They were search terms that had moved together with the
+          CDC's numbers during 2003 to 2009, for whatever reason. When a flu
+          season gets heavy news coverage, people search flu-related terms
+          out of concern. The model, built to
+          treat search volume as an illness signal, counted that concern as
+          new cases. Meanwhile Google's own search product kept changing
+          underneath it. In June 2011 Google began suggesting additional
+          search terms as people typed. In February 2012 it started
+          surfacing possible diagnoses for symptom searches like "fever" and
+          "cough." In June and July 2012 alone, Google made 86 separate
+          changes to its search algorithm.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Each change altered how many searches reached the terms the model
+          was counting. The same real amount of flu now produced a
+          different volume of search traffic than it had when the model was
+          fit, years earlier. The query weights stayed frozen at that
+          earlier fit. The searches underneath them kept moving, the same
+          problem a
+          <a href="../the-mechanics/knowledge-cutoff.html"
+            >model's weights face once a training run ends</a
+          >: the fitted relationship stops changing while the world it
+          describes keeps moving.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Written four years early</span>
+          <p>
+            Ginsberg's 2009 paper had already named this exact risk:
+            "panic and concern among healthy individuals may cause a surge
+            in the ILI-related query fraction and exaggerated estimates of
+            the ongoing ILI percentage."<sup class="nb-cite"
+              ><a href="#s2">2</a></sup
+            >
+            That is close to what both Google's own team and its outside
+            critics later concluded had happened. The authors had not
+            missed the failure mode. They shipped a model with no way to
+            check for it while running.
+          </p>
+        </div>
+      </section>
+
+      <section data-nb-section="two-accounts-one-timeline" id="two-accounts-one-timeline">
+        <h2>Two accounts, one gap in the timeline</h2>
+        <p>
+          None of this harmed anyone the way a self-driving car or
+          wrongful arrest can. The harm was epistemic: a wrong number
+          treated as true. Ginsberg's own paper had hedged the tool's
+          role, stating it was "not designed to be a replacement for
+          traditional surveillance networks."<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          By 2013 the tool was reported and used as if it settled the
+          question its own authors had disclaimed. That February, Nature,
+          which had published Ginsberg's design as a validated method in
+          2009, ran its own reckoning under the headline "When Google got
+          flu wrong."<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          Google's own engineers, writing up what had happened, concluded
+          their algorithm "were susceptible to bias in situations where
+          searches for flu-related terms on Google.com were
+          uncharacteristically high within a short time period." They
+          hypothesized that "concerned people were reacting to heightened
+          media coverage."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Their spike detector had been built years earlier to catch
+          news-driven surges lasting three to seven days. An entire season
+          was a different problem.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Lazer, Kennedy, King, and Vespignani published their critique in
+          Science. They rejected media panic as a full
+          explanation: "Although this may have been a factor, it cannot
+          explain why GFT has been missing high by wide margins for more
+          than 2 years."<sup class="nb-cite"><a href="#s4">4</a></sup> They
+          pointed instead to the same search-algorithm changes described
+          above.
+        </p>
+        <p>
+          The two accounts describe different stretches of the same
+          timeline. Google's spike-detector explanation fits one season:
+          the acute overestimate that peaked the week of January 13,
+          2013.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Lazer's algorithm-dynamics explanation shows why the
+          overestimate was already running by August 21, 2011, a year and a
+          half before that peak and well before any season's media coverage
+          had reason to inflate it.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Read together instead of against each other, the record fits a
+          single system. Google's changing search product had already
+          raised the baseline for two years running. A media-driven spike
+          then landed on top of that raised baseline, in the season that
+          made headlines.
+        </p>
+        <p>
+          Google tried several fixes after 2013, including regression
+          methods to dampen spikes. Even the best of them, an Elastic Net
+          model, still overpredicted the week of January 13: 5.82 percent,
+          against the CDC's 4.52.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          On August 20, 2015, Google shut the public site down and handed
+          its data to outside institutions, including Columbia's Mailman
+          School, Boston Children's Hospital and Harvard, and the CDC
+          itself.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The shutdown post never used the words "overestimate," "error," or
+          "wrong." It never mentioned the 2012-2013 episode, or the Lazer
+          paper published seventeen months earlier.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <p>
+          The underlying idea had defenders. Months before the shutdown,
+          researchers with no Google affiliation built a different model,
+          ARGO, using lower-quality public search data than Google Flu
+          Trends had ever needed. They reported it "outperforms all previously
+          available Google-search-based tracking models, including the
+          latest version of Google Flu Trends."<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Fitting flu rates to search terms was not inherently hopeless.
+          Google's own model, fixed once and never refit against the search
+          product changing beneath it, was.
+        </p>
+      </section>
+
+      <section data-nb-section="same-blind-spot-today" id="same-blind-spot-today">
+        <h2>Where the same blind spot runs today</h2>
+        <p>
+          The transferable failure is narrower than "big data is
+          unreliable." A model fit once to a moving target, where the
+          target reacts to the model's presence or drifts for reasons the
+          fit cannot see, will eventually measure something other than what
+          it was trained to measure. Nothing about running correctly will
+          tell it so.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          A recommendation system fit on last year's clicks keeps ranking
+          content while what's available, and who is watching, keeps
+          changing underneath it. A fraud or
+          predictive-policing score fit on historical records changes what
+          gets investigated next. That changes what data the next version
+          is fit on: the model's own output joins next year's training set,
+          the same loop that ran through Google's changing search results. A
+          large language model's weights freeze at a cutoff date while the
+          facts and events people ask about keep moving. In each
+          case, the question a fitted model cannot ask itself is the one
+          Google Flu Trends never got to ask: does this input still mean
+          what it meant when the model was built.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Google Flu Trends never broke a rule of statistics or a line of
+          code. It fit a relationship between search terms and flu once,
+          then kept using that fit while the world producing those search
+          terms kept moving. First a pandemic that did not match the season
+          the model was trained on, then a search engine and a news cycle
+          that changed what the same query terms meant. The lesson is to
+          ask, of any model whose inputs come from a reacting world, not "is the fit
+          still correlated," but "does this input still mean what it meant
+          when the model was built." Google Flu Trends never got to ask
+          itself that question. Nothing in its design let it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a
+              href="https://static.googleusercontent.com/media/research.google.com/en//archive/papers/detecting-influenza-epidemics.pdf"
+              >Detecting influenza epidemics using search engine query
+              data</a
+            >, Ginsberg et al., Nature 2009: the original method in full,
+            including the caveat about media panic the authors wrote four
+            years before it happened.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.sciencemag.org/content/343/6176/1203"
+              >The Parable of Google Flu: Traps in Big Data Analysis</a
+            >, Lazer et al., Science 2014: the full post-mortem, including
+            the replication analysis and proposed fixes this lesson does not
+            have room for.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/41763.pdf"
+              >Google · Copeland, Romano, Zhang, Hecht, Zigmond, Stefansen,
+              "Google Disease Trends: An Update" (2013)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://static.googleusercontent.com/media/research.google.com/en//archive/papers/detecting-influenza-epidemics.pdf"
+              >Nature · Ginsberg, Mohebbi, Patel, Brammer, Smolinski,
+              Brilliant, "Detecting influenza epidemics using search engine
+              query data" (2009)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0023610"
+              >PLoS ONE · Cook, Conrad, Fowlkes, Mohebbi, "Assessing Google
+              Flu Trends Performance in the United States during the 2009
+              Influenza Virus A (H1N1) Pandemic" (2011)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.sciencemag.org/content/343/6176/1203"
+              >Science · Lazer, Kennedy, King, Vespignani, "The Parable of
+              Google Flu: Traps in Big Data Analysis" (2014)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.nature.com/articles/494155a"
+              >Nature News · Declan Butler, "When Google got flu wrong"
+              (2013)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://research.google/blog/the-next-chapter-for-flu-trends/"
+              >Google Research Blog · "The Next Chapter for Flu Trends"
+              (2015)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1505.00864"
+              >Yang, Santillana, Kou, "Accurate estimation of influenza
+              epidemics using Google search data via ARGO," PNAS (2015)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
