@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The model that drives safety to zero needs a lead nobody has held · What Could Go Wrong</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "what-could-go-wrong",
+        "slug": "racing-dynamics",
+        "template": "lesson",
+        "title": "The model that drives safety to zero needs a lead nobody has held",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-02",
+        "tags": ["coordination", "competitive-pressure", "ai-safety", "governance"],
+        "sources": 12,
+        "words": 2190,
+        "reading_minutes": 9,
+        "dek": "Armstrong, Bostrom, and Shulman's 2016 model finds that giving competing developers full information about each other's progress makes the outcome less safe, not more, and every capability gap tracked since 2023 has closed in months, not never.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">What Could Go Wrong</div>
+        <h1 class="nb-title">The model that drives safety to zero needs a lead nobody has held</h1>
+        <p class="nb-dekline">
+          Armstrong, Bostrom, and Shulman's 2016 model finds that giving
+          competing developers full information about each other's progress
+          makes the outcome less safe, not more, and every capability gap
+          tracked since 2023 has closed in months, not never.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-02</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every developer shipping a powerful new model faces some version
+          of the same choice: slow down to test more, or match a rival's
+          pace and ship what is ready. A 2016 paper turned that choice into
+          a formal model and solved for its equilibrium. The answer is
+          stark: when finishing first matters enough, the rational
+          equilibrium is to spend nothing on safety. The model's second,
+          less obvious result: giving every team more information about
+          who is ahead makes that equilibrium more likely, not less. This
+          lesson builds the model from one team's decision, shows why more
+          information turns out dangerous, then checks its assumptions
+          against three years of releases.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../what-could-go-wrong/intelligence-explosion.html"
+              >AI is getting measurably better at building AI</a
+            >: the decisive, discontinuous capability jump this model's
+            payoff structure assumes, tested on its own.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-levers/responsible-scaling-policies.html"
+              >The people who can halt a dangerous model launch all work for
+              the lab shipping it</a
+            >: a live version of the if-then commitments this lesson's
+            proponents point to.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A runner-up lab's choice becomes a formal model</h2>
+        <p>
+          Picture a lab in second place, a year into a research push it
+          thinks can close the gap with the leader. Its board will not
+          fund another year without a working demo, and its researchers
+          track the leader's release calendar the way a following ship
+          tracks the wake ahead of it. Spend the extra months on safety
+          testing, and the lab may publish late and lose the funding
+          round. Match the leader's pace instead, and it ships on
+          schedule, whatever it did not have time to catch.
+        </p>
+        <p>
+          That is the choice Stuart Armstrong, Nick Bostrom, and Carl
+          Shulman built into a formal model in 2016, generalized to any
+          number of teams.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§2, pp. 2–5">1</a></sup
+          >
+          Each team has a capability level: how good its underlying
+          research program is, drawn at random from a range the paper
+          calls µ. A small µ means the teams are bunched close together in
+          ability. A large µ means some teams can pull far ahead on
+          capability alone, whatever they do about safety.
+        </p>
+        <p>
+          Each team also picks a safety level between zero, no precautions,
+          and one, full precautions. Safety costs time: spending more of it
+          means moving slower. A team's score is its capability minus its
+          safety spending, <span class="nb-math-in">c - s</span>, and the
+          highest score wins. The winner's system then works with
+          probability s, its own safety level. Otherwise, with probability
+          1 − s, it causes what the paper calls an AI disaster. Losing
+          costs something too, set by "enmity," from 0 (indifferent who
+          wins) to 1 (a rival's success is as bad as disaster).<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§2, pp. 2–3">1</a></sup
+          >
+        </p>
+        <p>
+          The paper solves for the Nash equilibrium, the choices where no
+          team could improve its result by changing only its own, holding
+          everyone else's fixed. Take the simplest case: two teams, no
+          information, enmity at its maximum.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§2, p. 3">1</a></sup
+          >
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            s = \dfrac{\mu}{en} \quad \text{for } \mu < en, \quad \text{else }
+            s = 1
+          </div>
+          <figcaption>
+            Equilibrium safety with no information, two teams and enmity at
+            its maximum: s = µ/2. As capability's importance (µ) shrinks
+            toward zero, so does the safety level every team chooses.<sup
+              class="nb-cite"
+              ><a href="#s1" data-nb-locator="§2, p. 3">1</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          At µ = 0.5, equilibrium safety is 0.25. At µ = 0.05, it drops to
+          0.025. The paper states the general result plainly: "around
+          µ = 0 (i.e. when capability is nearly irrelevant to producing
+          the first AI), the only Nash equilibrium is to take no safety
+          precautions at all."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.1, p. 4">1</a></sup
+          >
+          When finishing first buys almost nothing on capability alone,
+          every team's rational choice is to spend nothing on safety, even
+          though every team would prefer, collectively, that none of them
+          did. The model also assumes just a few comparable teams.
+        </p>
+      </section>
+
+      <section data-nb-section="curse-of-information" id="curse-of-information">
+        <h2>Knowing everyone's capability is worse than knowing none of it</h2>
+        <p>
+          The equilibrium above assumed no team knows anyone's capability,
+          including its own. Armstrong, Bostrom, and Shulman also solve
+          two more informed versions of the same setup. The ranking across
+          all three is the paper's most surprising result: "The
+          no-information case is always safer than the other two cases...
+          It is always better if none of the teams have any idea about
+          anyone's capability."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.3, pp. 6–7">1</a></sup
+          >
+        </p>
+        <p>
+          Under private information, a team that knows it is ahead has
+          nothing to gain by cutting corners, since its capability alone
+          already wins. A disaster then requires every team,
+          independently, to have drawn low capability, a probability
+          that shrinks fast, at the rate 1/µⁿ. Under public information,
+          the leader cuts corners whenever the runner-up is close behind,
+          since a close race is exactly when skimping on safety can
+          decide the winner. A near-tie between the top two happens far
+          more often than every team independently drawing low
+          capability, so the danger shrinks only as slowly as 1/µ.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.3, p. 7">1</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            The model's three information regimes and each one's
+            equilibrium safety level.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="§2–§3.3, pp. 2–7">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Regime</th>
+              <th class="txt">Who knows what</th>
+              <th class="txt">Equilibrium, in plain terms</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">No information</span></td>
+              <td class="txt">
+                No team knows any team's capability, including its own
+              </td>
+              <td class="txt">
+                Every team plays it safe unless capability barely matters at
+                all
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Private information</span></td>
+              <td class="txt">Each team knows only its own capability</td>
+              <td class="txt">
+                A team cuts corners only when it knows it drew low capability
+                itself
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Public information</span></td>
+              <td class="txt">Every team knows every team's capability</td>
+              <td class="txt">
+                The leader cuts corners whenever the runner-up is close behind
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Plenty of people reject the racing framing's real-world premise,
+          covered below. But no technical critique addresses whether this
+          ranking survives once the model's assumptions relax, in a
+          repeated game, say, or with capability that changes over time.
+          The information result is the model's own claim; its robustness
+          outside this exact setup is untested, not settled.
+        </p>
+      </section>
+
+      <section data-nb-section="first-mover-gap" id="first-mover-gap">
+        <h2>Every measured capability lead has closed within months</h2>
+        <p>
+          The model's danger rests on one assumption under the score
+          itself: that finishing first is worth enough to justify cutting
+          safety for it. That means a payoff close to winner-take-all,
+          where a rival's success can be nearly as costly as a disaster.
+          Enmity at its maximum, e = 1, is the model's own name for that
+          stake, a narrower version of the decisive, discontinuous
+          capability jump this desk
+          <a href="../what-could-go-wrong/intelligence-explosion.html"
+            >tested separately</a
+          >.
+        </p>
+        <p>
+          Epoch AI's own Capabilities Index has not recorded a lead that
+          lasted. The US-China frontier gap has
+          averaged seven months since 2023, ranging from four to
+          fourteen.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="US-China ECI data insight, 2 Jan 2026">2</a></sup
+          >
+          The closed-open gap has run three to four months.<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="open-closed ECI gap data insight">3</a></sup
+          >
+          And OpenAI's o1, released September 2024, was matched by
+          DeepSeek's R1 about four months later, "exhibiting mastery of
+          the new paradigm."<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="19 May 2026">4</a></sup
+          >
+        </p>
+        <p>
+          None of this shows a lead lasting long enough to become the
+          exclusive advantage the model assumes. Every gap on record is a
+          head start measured in months, not a permanent edge, and the
+          open-closed gap has, if anything, widened slightly rather than
+          closed to zero.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          This is the assumption the record contradicts most directly.
+        </p>
+      </section>
+
+      <section data-nb-section="testing-time" id="testing-time">
+        <h2>Testing time did shrink, just not to the "days" the headlines claimed</h2>
+        <p>
+          The model's second assumption, that safety trades directly
+          against speed, has a genuine admission from at least one
+          developer. OpenAI's Preparedness Framework, updated April 2025,
+          names this exact scenario. If a rival ships a system with
+          dangerous capability "without instituting comparable
+          safeguards," OpenAI says it may adjust its own safeguards to
+          match. It commits first to keeping them "more protective than
+          the other AI developer," precisely "in order to avoid a race to
+          the bottom on safety."<sup class="nb-cite"
+            ><a href="#s5" data-nb-locator="§4.3, p. 12">5</a></sup
+          >
+          That is one developer's account, not proof the field bends to
+          it.
+        </p>
+        <p>
+          One independent evaluator has an on-record account of that
+          pressure. METR, brought in by OpenAI to test
+          o3 and o4-mini ahead of their April 2025 release, states its
+          "work reported here was conducted over only three weeks." It
+          warns that "more thorough evaluations are likely to reveal
+          additional capabilities."<sup class="nb-cite"
+            ><a href="#s6" data-nb-locator="16 April 2025">6</a></sup
+          >
+          Compare that with GPT-4's own account of roughly seven months of
+          evaluation before its March 2023 launch.<sup class="nb-cite"
+            ><a href="#s7" data-nb-locator="Introduction, p. 42">7</a></sup
+          >
+        </p>
+        <p>
+          Reporting traced to a Financial Times investigation, read only
+          through the outlets that carried it, puts the shrinkage
+          further: "The company used to allow months for safety testing,
+          but now gives just days."<sup class="nb-cite"
+            ><a href="#s8" data-nb-locator="11 April 2025">8</a></sup
+          >
+          That figure is relayed at second hand, attributed to unnamed
+          sources, and is more dramatic than METR's own three weeks for a
+          related but not identical claim. The three weeks carries a
+          named, on-record source. Treat "days" as reported, not
+          established.
+        </p>
+      </section>
+
+      <section data-nb-section="if-then-commitments" id="if-then-commitments">
+        <h2>Today's commitments all take the same if-then shape</h2>
+        <p>
+          Most people who invoke this model today want developers to
+          commit in advance to what they will do if warning signs appear,
+          not to prove a disaster is coming. At the 2024 Seoul summit,
+          sixteen companies signed a UK-brokered commitment, joined by
+          four more the following year. Signatories agree to "set out
+          explicit processes they intend to follow if their model or
+          system poses risks that meet or exceed the pre-defined
+          thresholds," up to not deploying "at all" past that
+          threshold.<sup class="nb-cite"
+            ><a href="#s9" data-nb-locator="Outcome 1, 21 May 2024">9</a></sup
+          >
+          This desk has covered a version of this
+          <a href="../the-levers/responsible-scaling-policies.html"
+            >if-then proposal</a
+          >
+          from inside individual labs.
+        </p>
+        <p>
+          Holden Karnofsky, then a visiting scholar at the Carnegie
+          Endowment for International Peace, made the same case more
+          concretely that year: commitments of the form "if an AI model
+          has capability X, risk mitigations Y must be in place." His
+          conclusion: voluntary versions of this "alone are unlikely to
+          keep risks low."<sup class="nb-cite"
+            ><a href="#s10" data-nb-locator="13 September 2024">10</a></sup
+          >
+        </p>
+        <p>
+          The starkest ask came earlier. In March 2023, the Future of
+          Life Institute's open letter was signed by over 30,000 people,
+          including Yoshua Bengio, Stuart Russell, and Elon Musk. It
+          called on "all AI labs to immediately pause for at least 6
+          months the training of AI systems more powerful than
+          GPT-4."<sup class="nb-cite"
+            ><a href="#s11" data-nb-locator="22 March 2023">11</a></sup
+          >
+        </p>
+        <p>
+          Two serious critics reject the premise these proposals share.
+          Yonathan Arbel and Matthew Tokson argue that AI knowledge is
+          leaky, "rapidly copied, distilled, and reverse-engineered," so
+          no lead lasts long enough to justify racing for it, matching
+          the fast-follow pattern shown above.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Paul Scharre rejects the label on more technical grounds. A
+          classical arms race, he argues, needs defense spending growing
+          10 to 25 percent a year, a pace military AI spending has not
+          matched. He calls the underlying concern "real but driven by
+          perception, not inevitability," while granting, citing the V-22
+          Osprey program, that schedule pressure causes incomplete
+          testing.<sup class="nb-cite"
+            ><a href="#s12" data-nb-locator="28 June 2021">12</a></sup
+          >
+        </p>
+        <p>
+          Both camps agree that competitive pressure exists and can
+          degrade safety in principle. Where they split is whether the
+          model's actual stakes, a payoff big enough that a rival's win is
+          nearly as costly as a disaster, are on the table at all. The
+          commitments above are what signatories say they will do, not
+          proof any has been tested. The dismissers' point, that leads do
+          not last, is the best-evidenced claim either side has.
+          Confidence runs ahead of proof, on both sides, over how likely a
+          genuine, winner-take-all race is to occur before fast-following
+          catches up.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The model is real game theory, not a metaphor. Given its
+          assumptions, the Nash equilibrium is to spend nothing on safety
+          when a rival's win costs almost as much as a disaster. Giving
+          every team full information does make that equilibrium more
+          likely, not less. What three years of releases
+          have not shown is the assumption the result leans on hardest: a
+          lead that lasts. Every capability gap on record, US to China,
+          closed model to open, has closed within months. The
+          safety-speed tradeoff has a genuine admission behind it too: one
+          developer wrote it into policy, and one independent evaluator
+          has an on-record account of a compressed testing window.
+          Whether that adds up to the
+          stark equilibrium the model predicts, or to something milder a
+          fast-following field keeps correcting on its own, is the
+          question the record leaves open.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a
+              href="https://ora.ox.ac.uk/objects/uuid:d87d8e34-22d6-4597-ac31-041fcb63903f/files/s5q47rq79d"
+              >Armstrong, Bostrom & Shulman's full paper</a
+            >: every equation and figure this lesson compresses, open
+            access through Oxford's repository.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a
+              href="https://archive.org/details/superintelligence-paths-dangers-strategies-by-nick-bostrom"
+              >Bostrom's <em>Superintelligence</em>, Chapter 14</a
+            >: the same race model restated in prose, in the book that
+            named it "a risk-race to the bottom."
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://ora.ox.ac.uk/objects/uuid:d87d8e34-22d6-4597-ac31-041fcb63903f"
+              >Oxford Research Archive · Armstrong, S., Bostrom, N. &
+              Shulman, C., "Racing to the precipice: a model of artificial
+              intelligence development" (2016)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://epoch.ai/data-insights/us-vs-china-eci"
+              >Epoch AI · "Chinese AI models have lagged the US frontier by 7
+              months on average since 2023"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://epoch.ai/data-insights/open-closed-eci-gap"
+              >Epoch AI · "Open models lag state-of-the-art closed models by
+              4 months"</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.lawfaremedia.org/article/the-ai-race-isn-t-real"
+              >Lawfare · Arbel, Y. & Tokson, M., "The AI Race Isn't Real"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/pdf/18a02b5d-6b67-4cec-ab64-68cdfbddebcd/preparedness-framework-v2.pdf"
+              >OpenAI · "Preparedness Framework," Version 2</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://metr.org/evaluations/openai-o3-report/"
+              >METR · "Details about METR's preliminary evaluation of
+              OpenAI's o3 and o4-mini"</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/papers/gpt-4-system-card.pdf"
+              >OpenAI · "GPT-4 System Card"</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.semafor.com/article/04/11/2025/openai-slashes-time-given-to-safety-testing-as-it-races-to-innovate"
+              >Semafor · "OpenAI slashes time given to safety testing as it
+              races to innovate"</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.gov.uk/government/publications/frontier-ai-safety-commitments-ai-seoul-summit-2024/frontier-ai-safety-commitments-ai-seoul-summit-2024"
+              >UK Government · "Frontier AI Safety Commitments," AI Seoul
+              Summit 2024</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://carnegieendowment.org/research/2024/09/if-then-commitments-for-ai-risk-reduction"
+              >Carnegie Endowment for International Peace · Karnofsky, H.,
+              "If-Then Commitments for AI Risk Reduction"</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://futureoflife.org/open-letter/pause-giant-ai-experiments/"
+              >Future of Life Institute · "Pause Giant AI Experiments: An
+              Open Letter"</a
+            >
+          </li>
+          <li id="s12">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://tnsr.org/2021/06/debunking-the-ai-arms-race-theory/"
+              >Texas National Security Review · Scharre, P., "Debunking the
+              AI Arms Race Theory"</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
