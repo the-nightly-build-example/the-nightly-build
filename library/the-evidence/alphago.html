@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AlphaGo's Nature paper never mentions Lee Sedol · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "alphago",
+        "template": "lesson",
+        "title": "AlphaGo's Nature paper never mentions Lee Sedol",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-02",
+        "tags": ["reinforcement-learning", "self-play", "monte-carlo-tree-search", "deepmind"],
+        "sources": 6,
+        "words": 2172,
+        "reading_minutes": 10,
+        "dek": "Its one human match is a 5-0 win over Fan Hui, Europe's champion and a professional 2 dan, from a network trained first on 30 million human Go positions.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">AlphaGo's Nature paper never mentions Lee Sedol</h1>
+        <p class="nb-dekline">
+          Its one human match is a 5-0 win over Fan Hui, Europe's champion and a professional 2 dan, from a
+          network trained first on 30 million human Go positions.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-08-02</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          AlphaGo is one of the two or three facts about AI that everyone already carries around: a computer beat a
+          human champion at the hardest board game there is. That much is true. It names the wrong match, though,
+          and skips how the system that made the news actually learned to play. This lesson works through what the
+          paper people actually cite built: two neural networks and a search, trained first on human moves, then
+          sharpened against itself, then measured against a European champion. It also works through what came two
+          years later. A version of the same idea threw the human moves away and still got further. And it works
+          through where that recipe, search plus self-play, does and does not carry over today. By the end you can
+          say which document backs which claim about AlphaGo, and which claim is bigger than any document actually
+          supports.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/the-bitter-lesson.html">Rich Sutton's essay has four examples and zero
+            citations</a>: Sutton names AlphaGo as his central proof that search and self-play beat hand-built
+            knowledge. This lesson gives the numbers behind that one example.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://karpathy.medium.com/alphago-in-context-c47718cb95a5">Andrej Karpathy, "AlphaGo, in
+            context"</a>: a plain-language read on what AlphaGo's architecture did and did not represent, written
+            the week of the Lee Sedol match.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>AlphaGo's actual opponent was a European champion</h2>
+        <p>
+          "Mastering the Game of Go with Deep Neural Networks and Tree Search" was published in <i>Nature</i> on 28
+          January 2016. It reports one formal head-to-head match: AlphaGo against Fan Hui, a professional 2 dan and
+          the winner of the 2013, 2014, and 2015 European Go championships. AlphaGo won five games to none, played
+          over 5-9 October 2015, in what the paper calls the first time a computer Go program had defeated a human
+          professional player without a handicap.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="p. 488">1</a></sup
+          >
+          Say "AlphaGo" to almost anyone today, though, and a different match comes to mind: a computer beating the
+          best Go player alive, on camera, in Seoul. In March 2016, a later DeepMind system beat the professional 9
+          dan Lee Sedol four games to one. Lee Sedol's only win came in game four, by resignation.<sup
+            class="nb-cite"><a href="#s2">2</a></sup
+          ><sup class="nb-cite"><a href="#s3">3</a></sup>
+          Google's own announcement, before the match, called him "the top Go player of the past decade."<sup
+            class="nb-cite"><a href="#s4">4</a></sup
+          >
+          Go crowns no single world champion.
+          None of this is in the <i>Nature</i> paper. Read it start to finish and Lee Sedol's name never appears in
+          it.
+        </p>
+        <p>
+          DeepMind's own follow-up paper, published in 2017, gives the two systems different names, because they
+          are different systems. The one that beat Fan Hui is "AlphaGo Fan." The one that beat Lee Sedol, "the
+          winner of 18 international titles," a separate system trained over several months, is "AlphaGo Lee."<sup
+            class="nb-cite"><a href="#s5" data-nb-locator="pp. 2, 8">5</a></sup
+          >
+          One <i>Nature</i> paper, two matches. The paper covers only the earlier, smaller win.
+        </p>
+      </section>
+
+      <section data-nb-section="two-networks-one-search" id="two-networks-one-search">
+        <h2>A policy network and a value network share the search</h2>
+        <p>
+          Picture one move, partway through a game, with several plausible replies on the board. AlphaGo's search
+          tracks three numbers for each candidate reply. One is how many times it has already been tried. One is a
+          running average of how well it did when tried, its action value. One is how likely a strong human would
+          play it there before any searching happens at all, its prior probability.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="p. 486">1</a></sup
+          >
+          The search keeps returning to whichever candidate scores best on action value plus a bonus tied to that
+          prior. The bonus shrinks the more times the candidate has already been tried. Try a candidate, update its
+          value, let the prior steer what to try next, and repeat. That cycle is Monte Carlo tree search: a way of
+          reading a small, promising slice of a game tree instead of every branch to the end.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="p. 484">1</a></sup
+          >
+        </p>
+        <p>
+          The prior probability comes from the first of AlphaGo's two networks, the policy network. It is trained
+          to guess a human's actual next move. Tested on professional games it had never trained on, its top guess
+          matched the real move 57.0 percent of the time, 13 points ahead of the best previous Go program's 44.4
+          percent.<sup class="nb-cite"><a href="#s1" data-nb-locator="p. 485">1</a></sup>
+          The action value draws on the second network, the value network. It does a different job. Instead of
+          proposing a move, it looks at an entire board and returns one number: an estimate of who is winning from
+          that position.<sup class="nb-cite"><a href="#s1" data-nb-locator="p. 484">1</a></sup>
+          AlphaGo's search runs both at once, sampling candidate moves with the policy network and scoring the
+          positions they lead to with the value network.
+        </p>
+        <p>
+          Neither network plays Go by itself. The single-machine version of AlphaGo ran 40 of these search threads
+          at once, each following its own path through the tree, all steered by the same two networks.<sup
+            class="nb-cite"><a href="#s1" data-nb-locator="p. 487">1</a></sup
+          >
+          The advance was running the two networks and the search together, each one leaning on the other two.
+        </p>
+      </section>
+
+      <section data-nb-section="training-pipeline-and-scale" id="training-pipeline-and-scale">
+        <h2>Thirty million human positions came before any self-play</h2>
+        <p>
+          The policy network's first teacher was 29.4 million board positions, taken from 160,000 games played by
+          humans ranked 6 to 9 dan on the KGS Go server.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Methods, p. 485">1</a></sup
+          >
+          The paper's main text rounds this to 30 million positions from the KGS Go Server. A person working
+          through 160,000 games at one a day would need about 440 years to play them all firsthand. AlphaGo studied
+          them as still positions to imitate, before it ever chose a move of its own.
+        </p>
+        <p>
+          Only after that came reinforcement learning. A copy of the trained policy network played games against
+          randomly selected earlier versions of itself, and the winner's moves reinforced its weights. Head to
+          head, this self-play network beat the network that had only imitated humans more than 80 percent of the
+          time.<sup class="nb-cite"><a href="#s1" data-nb-locator="p. 485">1</a></sup>
+          Using no search at all, it beat Pachi, an open-source program that runs 100,000 simulations per move, 85
+          percent of the time. The value network came last, trained on a fresh set of 30 million self-play
+          positions, one per game.<sup class="nb-cite"><a href="#s1" data-nb-locator="p. 486">1</a></sup>
+          Its error rate on both sets was low enough that the paper reports minimal overfitting.
+        </p>
+        <p>
+          AlphaGo ran in two configurations. The single-machine version, 40 search threads, 48 CPUs, 8 GPUs, won 494
+          of 495 games against other Go programs, a 99.8 percent win rate.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="pp. 487-488">1</a></sup
+          >
+          The stronger, distributed version is the one that played Fan Hui. It won five games to none.<sup
+            class="nb-cite"><a href="#s1" data-nb-locator="p. 488">1</a></sup
+          >
+          The paper anchors its whole rating scale to Fan Hui's own score, 2,908. The distributed version rated
+          3,140 on that same scale.<sup class="nb-cite"><a href="#s1" data-nb-locator="Methods, Evaluation">1</a></sup
+          >
+          A gap that size, about 230 points, works out by the paper's own conversion to roughly one amateur dan
+          rank. That is about a 79 percent chance of winning any single game.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Fig. 4 caption">1</a></sup
+          >
+          Fan Hui's own rank, professional 2 dan, sits second-lowest of nine professional ranks.<sup
+            class="nb-cite"><a href="#s1" data-nb-locator="Fig. 4a">1</a></sup
+          >
+          The paper's own claim is narrower than the one people repeat. Its own words are that AlphaGo "plays at
+          the level of the strongest human players."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="p. 488, Discussion">1</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">99.8%</span><span class="nb-stat-l">TOURNAMENT WIN RATE</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">29.4M</span
+            ><span class="nb-stat-l">HUMAN POSITIONS FIRST</span>
+          </div>
+        </div>
+      </section>
+
+      <section data-nb-section="alphago-zero" id="alphago-zero">
+        <h2>AlphaGo Zero beat the system that beat Lee Sedol</h2>
+        <p>
+          The 2017 follow-up, "Mastering the Game of Go without Human Knowledge," removed the human data entirely.
+          AlphaGo Zero trained, in the paper's own word, tabula rasa: no human games, no supervised pretraining,
+          nothing beyond the rules of Go.<sup class="nb-cite"><a href="#s5" data-nb-locator="abstract">5</a></sup>
+          Its search worked a little differently too: one neural network instead of two, and no separate rollouts
+          inside the tree.<sup class="nb-cite"><a href="#s5" data-nb-locator="p. 2">5</a></sup>
+          Its first training run generated 4.9 million self-play games over about three days. Each move ran 1,600
+          simulations of that same tree search, about 0.4 seconds of thinking time.<sup class="nb-cite"
+            ><a href="#s5" data-nb-locator="p. 6">5</a></sup
+          >
+          Run the arithmetic on that game count: 4.9 million games across three days averages to roughly 19 games
+          a second, continuously, for 72 hours straight.
+        </p>
+        <p>
+          After those 72 hours, DeepMind evaluated Zero against the exact version of AlphaGo Lee that had defeated
+          Lee Sedol, under the same time controls used in Seoul. Zero ran on one machine with 4 TPUs, chips built
+          for this kind of computation. AlphaGo Lee ran distributed across 48 of them. Zero won 100 games to
+          0.<sup class="nb-cite"><a href="#s5" data-nb-locator="p. 8">5</a></sup>
+          That 100-0 score is AlphaGo Lee's alone. AlphaGo Fan, the system the <i>Nature</i> paper actually
+          measured against Fan Hui, never played that match.
+        </p>
+        <p>
+          A second, larger training run went on for about 40 days and generated 29 million self-play games, using
+          a bigger network.<sup class="nb-cite"><a href="#s5" data-nb-locator="p. 10">5</a></sup>
+          A final tournament compared every version at the same time control, 5 seconds a move. The raw network
+          alone, with no search at all, rated 3,055. AlphaGo Zero rated 5,185, AlphaGo Master 4,858, AlphaGo Lee
+          3,739, and AlphaGo Fan 3,144.<sup class="nb-cite"><a href="#s5" data-nb-locator="p. 12">5</a></sup>
+          In a separate, direct match, Zero beat Master 89 games to 11.
+        </p>
+        <figure class="nb-figure">
+          <img src="alphago/chart-1.png" alt="Line chart of Elo rating by AlphaGo system: AlphaGo Fan 3,144, AlphaGo Lee 3,739, AlphaGo Master 4,858, AlphaGo Zero 5,185" />
+          <figcaption>
+            Fig. 1 · Four systems, one rating scale: each later version reached a higher Elo than the one before
+            it, and the last reached it with no human game data at all.<sup class="nb-cite"
+              ><a href="#s5" data-nb-locator="p. 12">5</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          The 2017 paper states plainly what this revises. A pure reinforcement learning approach needs only a few
+          more hours to train. It reaches much better performance in the end than training on human expert data
+          first does.<sup class="nb-cite"><a href="#s5" data-nb-locator="p. 13, Conclusion">5</a></sup>
+          The human games behind AlphaGo Fan and AlphaGo Lee turned out to be optional. Zero got further without
+          them, in less training time.
+        </p>
+        <p>
+          Go has a rule book and a clear winner. That property, and what happens without it, is exactly the line a
+          2025 reasoning-model paper ran into. DeepSeek's technical report on its R1 model describes trying to
+          import AlphaGo and AlphaZero's approach: a search guided by a trained value model, improved through
+          self-play.<sup class="nb-cite"><a href="#s6" data-nb-locator="Section 4.2">6</a></sup>
+          It did not transfer cleanly. Token generation "presents an exponentially larger search space" than a
+          board game does.<sup class="nb-cite"><a href="#s6" data-nb-locator="Section 4.2">6</a></sup>
+          Training a fine-grained value model for it "is inherently difficult," the paper reports. It concludes that
+          "iteratively boosting model performance through self-search remains a significant challenge."<sup
+            class="nb-cite"><a href="#s6" data-nb-locator="Section 4.2">6</a></sup
+          >
+          The lab that cites AlphaGo in 2025 used it to mark exactly where its own recipe stopped working.
+        </p>
+      </section>
+
+      <section data-nb-section="what-each-document-proved" id="what-each-document-proved">
+        <h2>What each document actually proved</h2>
+        <p>
+          Three separate records collapse into one AlphaGo story in casual memory. Each established something
+          narrower.
+        </p>
+        <table class="nb-table">
+          <caption>
+            What three cited documents establish, next to the claim each now gets used to support.<sup
+              class="nb-cite"><a href="#s1">1</a></sup
+            ><sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s3">3</a></sup
+            ><sup class="nb-cite"><a href="#s4">4</a></sup><sup class="nb-cite"><a href="#s5">5</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Document</th>
+              <th class="txt">What it actually establishes</th>
+              <th class="txt">The claim it gets cited for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">2016 paper</span></td>
+              <td class="txt">
+                AlphaGo Fan beat Fan Hui, Europe's champion and a professional 2 dan, five games to none, after
+                training on 29.4 million human positions.
+              </td>
+              <td class="txt">
+                "AlphaGo beat the world's best." The paper's own words are that AlphaGo plays at the level of the
+                strongest human players.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Lee Sedol match</span></td>
+              <td class="txt">
+                AlphaGo Lee, a separate system trained over several months, beat Lee Sedol four games to one in
+                March 2016.
+              </td>
+              <td class="txt">
+                Folded into "the AlphaGo paper." That paper was published two months earlier and never mentions
+                Lee Sedol at all.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">2017 Zero paper</span></td>
+              <td class="txt">
+                AlphaGo Zero, trained with no human game data, beat AlphaGo Lee 100 games to 0.
+              </td>
+              <td class="txt">
+                "AlphaGo learned Go from nothing." True of Zero. False of the systems that beat Fan Hui and Lee
+                Sedol, both trained first on human games.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          AlphaGo, as most people remember it, is not one fact. It is three. A paper beat a European champion with
+          a system trained on tens of millions of human moves. A separate match, two months later, beat the player
+          everyone actually remembers. A third system, two years on, reached higher ratings than either one without
+          any human moves at all. Only that third system, AlphaGo Zero, earns the claim that a program can learn
+          Go from nothing. The first one earns a narrower, still real claim: two trained networks and a search,
+          pointed at a game with a rule book and a knowable winner, beat a strong professional. What made that
+          result citable was never one clever idea. It was 29.4 million imitated positions, a search that tried and
+          re-tried its own guesses, and a value estimate that got sharper the more of it ran. Reach for AlphaGo to
+          argue that a system can bootstrap ability from nothing, and check first which of the three you actually
+          mean.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://discovery.ucl.ac.uk/id/eprint/10045895/1/agz_unformatted_nature.pdf">Silver et al.,
+            "Mastering the Game of Go without Human Knowledge," in full</a>: how a system trained without any human
+            games reached a higher rating than every version that used them.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2501.12948">DeepSeek-AI, "DeepSeek-R1," in full</a>: a 2025 lab's own
+            account of trying, and failing, to carry AlphaGo's search-plus-self-play recipe into language
+            generation.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://storage.googleapis.com/deepmind-media/alphago/AlphaGoNaturePaper.pdf"
+              >Silver et al., "Mastering the Game of Go with Deep Neural Networks and Tree Search" (Nature,
+              2016)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://en.wikipedia.org/wiki/AlphaGo_versus_Lee_Sedol"
+              >Wikipedia · "AlphaGo versus Lee Sedol"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://en.people.cn/n3/2016/0315/c202936-9030581.html"
+              >People's Daily Online · "AlphaGo defeats Lee Sedol 4-1 in historic Go match" (15 March 2016)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://blog.google/technology/ai/alphagos-ultimate-challenge/"
+              >Google · "AlphaGo's ultimate challenge: a five-game match against the legendary Lee Sedol"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://discovery.ucl.ac.uk/id/eprint/10045895/1/agz_unformatted_nature.pdf"
+              >Silver et al., "Mastering the Game of Go without Human Knowledge" (Nature, 2017)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2501.12948"
+              >arXiv · DeepSeek-AI, "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement
+              Learning" (2501.12948)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
