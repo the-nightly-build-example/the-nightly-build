@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A chatbot reads your whole prompt at once but writes its reply one word at a time · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "prefill-and-decode",
+        "template": "lesson",
+        "title": "A chatbot reads your whole prompt at once but writes its reply one word at a time",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-03",
+        "tags": [],
+        "sources": 8,
+        "words": 2037,
+        "reading_minutes": 9,
+        "dek": "The reply costs more than the prompt because generating each word means rereading the prompt's cached keys and values from memory.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A chatbot reads your whole prompt at once but writes its reply one word at a time</h1>
+        <p class="nb-dekline">
+          The reply costs more than the prompt because generating each word means rereading the prompt's cached keys and values from memory.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-03</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have felt this without naming it. You send a chatbot a long
+          message, wait through a pause, and then watch the answer arrive one
+          word at a time at a steady pace. Two different jobs produce that
+          sequence, and both run on the same model. This lesson names them: the
+          pause is the model reading your prompt, and the stream is the model
+          writing its reply. By the end you will know why the pause grows with
+          the length of what you typed, and why the reply arrives at a walking
+          pace no matter how fast your hardware is. You will know why the short
+          answer, not the long prompt, is the part that costs. And you will be
+          able to catch an explanation that skips the step in the middle: a
+          cache of numbers the model rereads for every word it writes.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">An attention head is a weighted average that computes its own weights</a>: what the keys and values are that this lesson's cache stores.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html">The instant a model writes a token, it becomes fact</a>: why a model generates one token at a time and cannot revise what it wrote.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The pause and the stream are two different jobs</h2>
+        <p>
+          Send a model a paragraph and watch what happens in time. First a
+          pause, while nothing appears. Then the reply, arriving one word at a
+          time at a roughly steady pace until it stops. That is not one process
+          running slow and then fast. It is two jobs, and engineers measure each
+          with its own number. The pause is the time to first token: the gap
+          between sending your prompt and seeing the first word come back. The
+          pace of the stream is the inter-token latency, also called the time
+          per output token, the average gap between one streamed word and the
+          next.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Both jobs run on the same model, on the same weights, reading the same
+          kind of tokens. What differs is how many tokens each handles at once.
+          The first job, prefill, reads your entire prompt in a single parallel
+          pass. The second, decode, writes the reply one token per step, running
+          the whole model again for each word.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="prefill" id="prefill">
+        <h2>The pause is the model reading your prompt</h2>
+        <p>
+          The pause scales with how much you typed. A one-line question barely
+          pauses; paste in a long document and the wait before the first word
+          grows with it. That is because prefill does work in proportion to the
+          prompt. It runs every token of your prompt through the model at once,
+          in a single forward pass.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Because all the prompt tokens are known up front, the hardware
+          processes them together as one large matrix multiplication, and a
+          modern GPU is built to do exactly that kind of dense arithmetic
+          fast.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          This makes prefill compute-bound: the time it takes is set by how many
+          arithmetic operations there are, not by how fast the chip can move
+          numbers in and out of memory.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The prompt has to be long enough to saturate the chip's arithmetic
+          units before that bites. DistServe reports
+          that prefilling a 512-token prompt is already enough to make an A100
+          GPU compute-bound for a 13-billion-parameter model.<sup class="nb-cite"><a href="#s4" data-nb-locator="Section 2.1">4</a></sup>
+          The exact length depends on the model and the GPU, but the direction
+          does not: a longer prompt means more arithmetic, which means a longer
+          pause. The time to first token is, in essence, the duration of this
+          phase.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Prefill does one more thing while it reads. As it passes each prompt
+          token through the attention layers, it produces two vectors for that
+          token, a key and a value, and it saves them. That saved set is the
+          cache the next job depends on.
+        </p>
+      </section>
+
+      <section data-nb-section="kv-cache" id="kv-cache">
+        <h2>What the pass leaves behind is a cache of keys and values</h2>
+        <p>
+          To see why that cache matters, look at what the next word would cost
+          without it. Attention, the mechanism at the core of the model, works
+          by having each token compare itself against every earlier token and
+          pull information from them. For that comparison it needs, for every
+          earlier token, two vectors computed back when that token was
+          processed: its key and its value.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The <a href="../the-mechanics/attention.html">attention lesson</a>
+          builds up what these are and how the comparison works. Here we need
+          only that they exist. And a past token's key and value never change
+          once computed, because the token itself does not
+          change.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          So the model saves them. This is the key-value cache, usually just the
+          KV cache: the per-token keys and values, held in GPU memory, so that no
+          step ever has to recompute them.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Without it, generating each new word would mean recomputing the keys
+          and values for the entire prompt and everything written so far, from
+          scratch, at every step. The output would be identical; the cost would
+          be enormous. The cache trades memory for that repeated work.
+        </p>
+        <p>
+          Memory is the right word, because the cache is large. For OPT-13B, a
+          13-billion-parameter model, storing the keys and values for a single
+          token takes about 800 kilobytes.<sup class="nb-cite"><a href="#s2" data-nb-locator="Section 3">2</a></sup>
+          Hold a full 2,048-token sequence and that one request's cache can reach
+          1.6 gigabytes.<sup class="nb-cite"><a href="#s2" data-nb-locator="Section 3">2</a></sup>
+          Both figures are specific to that model and to 16-bit numbers; a bigger
+          model or a longer context makes them bigger. The point that carries is
+          the shape: the cache grows with every token in the conversation, and it
+          lives in the same scarce GPU memory the model's own weights already
+          fill.
+        </p>
+      </section>
+
+      <section data-nb-section="decode" id="decode">
+        <h2>The stream is slow because each word rereads the whole cache</h2>
+        <p>
+          Now the second job. Decode writes the reply one token at a time. To
+          produce the next word, the model runs a full forward pass, but over
+          just one new token, the last word it wrote. Everything else it needs,
+          the keys and values of every token before, it reads out of the
+          cache.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Then it appends the new word's own key and value to the cache and
+          repeats. Each step waits for the one before it, because the next word
+          depends on the word just written. This is the sequential generation
+          the <a href="../the-mechanics/autoregressive-generation.html">autoregressive-generation lesson</a>
+          covers.
+        </p>
+        <p>
+          Here is the twist that makes the stream slow. For that single new
+          token the model does very little arithmetic, but it has to read the
+          entire cache back from memory, along with all the model's
+          weights.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The work is almost all memory traffic and almost no math. That makes
+          decode memory-bandwidth-bound: its speed is set by how fast the
+          hardware can move the cache and the weights out of memory, not by how
+          fast it can compute.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          A faster arithmetic unit barely helps, because the tokens still arrive
+          at the pace memory can feed them. This is the standard way inference
+          engineers describe the two phases, and it is why they watch memory
+          bandwidth more closely than peak compute when they predict token
+          speed.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          The cost gap between the two jobs is stark, and it runs the opposite
+          way from intuition. Reading a token during prefill is nearly free,
+          because the chip amortizes one load of the weights across the whole
+          prompt at once. Writing a token during decode reloads those weights for
+          that one token alone. On a Mistral-7B model on a single A100,
+          Sarathi-Serve measures the cost of the main computation for one decode
+          token as close to the cost of 128 prefill
+          tokens.<sup class="nb-cite"><a href="#s8" data-nb-locator="Section 3.2">8</a></sup>
+          That ratio is specific to that model and that GPU, but the asymmetry it
+          names is general. The long prompt you took minutes to type is the cheap
+          part. The short reply the model writes back is the slow, expensive
+          part. It is also why output tokens are priced higher than input tokens,
+          though the dollars are a separate lesson.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The step an explanation skips</span>
+          <p>
+            A common shortcut calls decode slow because the model is "working
+            harder" or doing more computation per word. It is the opposite:
+            decode does almost no arithmetic per token and is slow because it
+            waits on memory. The same shortcut treats the KV cache as an optional
+            speed trick. It is not optional to the behavior. The cache is exactly
+            what each new word must reread, and rereading it is what sets the pace
+            of the stream.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </p>
+        </div>
+        <table class="nb-table">
+          <caption>
+            The two phases behind one reply, running on the same model and
+            weights.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Phase</th>
+              <th class="txt">What it processes</th>
+              <th class="txt">Bound by</th>
+              <th class="txt">You feel it as</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Prefill</span></td>
+              <td class="txt">The whole prompt, in one parallel pass</td>
+              <td class="txt">Compute, the count of arithmetic operations</td>
+              <td class="txt">The pause before the first word; cheap per token</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Decode</span></td>
+              <td class="txt">One new token per step, rereading the cache</td>
+              <td class="txt">Memory bandwidth, the speed of moving the cache</td>
+              <td class="txt">The word-by-word stream; expensive per token</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section data-nb-section="frontier" id="frontier">
+        <h2>Where to run the two phases is still unsettled</h2>
+        <p>
+          Everything so far is settled engineering. Every primary systems paper
+          that characterizes the two phases agrees on the direction: prefill is
+          compute-bound and parallel, decode is memory-bandwidth-bound and
+          sequential, and the KV cache is what ties them
+          together.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          What is not settled is what to do about the mismatch, because the two
+          jobs want different things from hardware. Prefill wants raw arithmetic
+          and gains little from being batched with other requests; decode wants
+          memory bandwidth and gets far more efficient when many requests are
+          batched together.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Run both on the same GPU and each phase interferes with the other's
+          ideal schedule.
+        </p>
+        <p>
+          Two camps of researchers, each building working systems, disagree on
+          the fix. One camp splits the phases apart. Splitwise and DistServe run
+          prefill and decode on separate machines, each tuned for its own job,
+          and pass the KV cache between them. Splitwise reports about 1.4 times
+          the throughput at roughly 20 percent lower cost from that
+          separation.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The other camp fuses them more tightly instead. Sarathi-Serve keeps
+          both on the same GPU and breaks each prompt's prefill into small
+          chunks, interleaving those chunks with ongoing decode steps so that
+          neither stalls the other.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Both sides argue from measured results on real hardware. Which
+          organization wins, or whether the answer depends on the workload, is a
+          live question, not a solved one.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The pause and the stream are two jobs on one model. The pause is
+          prefill: the model reading your whole prompt in one parallel pass,
+          limited by arithmetic, filling a cache of keys and values as it goes.
+          The stream is decode: the model writing one word at a time, each word
+          rereading that whole cache from memory, limited by how fast memory can
+          be moved. That is why a longer prompt lengthens the wait while the reply
+          still arrives at a walking pace, and why the short answer costs more
+          than the long question that prompted it. The one thing still argued over
+          is not the mechanism but the floor plan: whether to split the two jobs
+          across separate machines or fuse them on one. The next time a reply
+          pauses and then streams, you will know which job you are waiting on, and
+          why the second one cannot simply be sped up with a faster chip.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://kipp.ly/transformer-inference-arithmetic/">Transformer Inference Arithmetic</a> (kipply): the point where compute-bound flips to memory-bound, worked out in real hardware numbers.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2311.18677">Splitwise</a> (Patel et al.): the full case for splitting prefill and decode across separate machines.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://docs.nvidia.com/nim/benchmarking/llm/latest/metrics.html"
+              >NVIDIA · NIM LLM benchmarking: metrics and definitions</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2309.06180"
+              >Kwon et al. · Efficient Memory Management for Large Language Model Serving with PagedAttention</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2205.14135"
+              >Dao et al. · FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2401.09670"
+              >Zhong et al. · DistServe: Disaggregating Prefill and Decoding for Goodput-optimized LLM Serving</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.03762"
+              >Vaswani et al. · Attention Is All You Need</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2311.18677"
+              >Patel et al. · Splitwise: Efficient Generative LLM Inference Using Phase Splitting</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.databricks.com/blog/llm-inference-performance-engineering-best-practices"
+              >Databricks · LLM Inference Performance Engineering: Best Practices</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2403.02310"
+              >Agrawal et al. · Taming Throughput-Latency Tradeoff in LLM Inference with Sarathi-Serve</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
