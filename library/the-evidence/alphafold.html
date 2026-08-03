@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AlphaFold predicts a protein's shape, not what it does · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "alphafold",
+        "template": "lesson",
+        "title": "AlphaFold predicts a protein's shape, not what it does",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-03",
+        "tags": [],
+        "sources": 8,
+        "words": 1710,
+        "reading_minutes": 7,
+        "dek": "DeepMind's 2021 paper measured how closely predicted protein shapes match the ones labs solve, and beat every rival on a blind test by a margin worth understanding before the Nobel-season shorthand runs past it.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">AlphaFold predicts a protein's shape, not what it does</h1>
+        <p class="nb-dekline">
+          DeepMind's 2021 paper measured how closely predicted protein shapes match the ones labs solve, and beat every rival on a blind test by a margin worth understanding before the Nobel-season shorthand runs past it.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-08-03</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A protein is a molecular tool, and what a tool does depends on its
+          shape. For fifty years, biologists could read a protein's underlying
+          sequence in hours but had almost no way to see the shape it folds
+          into without months of laboratory work. AlphaFold, the program that
+          won its makers a share of the 2024 Nobel Prize in Chemistry, changed
+          that: it predicts the folded shape from the sequence, and DeepMind has
+          now published predicted shapes for more than 200 million proteins. It
+          is the single most-cited proof that artificial intelligence transforms
+          science, and the claim arrives faster than anyone can check it. By the
+          end of this lesson you will be able to read AlphaFold's own numbers,
+          tell exactly what its famous result measured, and see where the
+          "AI solved biology" shorthand reaches past the test it is standing on.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.quantamagazine.org/how-ai-revolutionized-protein-science-but-didnt-end-it-20240626/">Quanta Magazine: how AI reshaped protein science without ending it</a>: a plain-language history of the field AlphaFold entered.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://predictioncenter.org/">The CASP Prediction Center</a>: the blind assessment that produced AlphaFold's headline score.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What the prize citation actually says</h2>
+        <p>
+          In 2024 the Royal Swedish Academy of Sciences awarded half of
+          the Nobel Prize in Chemistry to Demis Hassabis and John Jumper of
+          Google DeepMind. The citation is five words long: "for protein
+          structure prediction."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The same announcement, explaining the award in plainer terms, says the
+          two built "an AI model to solve a 50-year-old problem."<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+          DeepMind's own release four years earlier had gone further, under the
+          title "a solution to a 50-year-old grand challenge in
+          biology."<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          When the result first appeared, Nature's news desk ran the line "It
+          will change everything."<sup class="nb-cite"><a href="#s3">3</a></sup>
+          That is the shorthand a reader keeps meeting: AI solved biology, or
+          solved protein folding, or made the wet lab optional. The formal
+          citation is narrower on purpose. AlphaFold measured one thing on a
+          blind test, precisely and by a wide margin, and that one thing is
+          smaller than the shorthand built on top of it.
+        </p>
+      </section>
+
+      <section data-nb-section="sequence-to-shape" id="sequence-to-shape">
+        <h2>A sequence in, a shape out</h2>
+        <p>
+          A protein is a chain. The cell builds it from a fixed alphabet of
+          twenty small molecules called amino acids, reading a gene and adding
+          one amino acid at a time in a set order. That order is the protein's
+          sequence, and it can be written out as a string of twenty
+          letters.<sup class="nb-cite"><a href="#s4">4</a></sup> The chain does
+          not stay a string. It folds, in water, into one particular
+          three-dimensional shape, and that shape is what lets the protein do its
+          work: a differently folded chain is a different tool. Reading the
+          sequence is easy and cheap. Seeing the folded shape is neither, and for
+          most proteins it had never been done.
+        </p>
+        <p>
+          Predicting the folded shape from the sequence alone is the "protein
+          folding problem," and it had stood open for more than fifty
+          years.<sup class="nb-cite"><a href="#s4">4</a></sup> The Jumper paper
+          is careful about which part of that problem it takes on: the
+          structure-prediction component, the final folded coordinates, not the
+          process by which a chain finds them.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup> AlphaFold reads a sequence together with a
+          multiple sequence alignment, the same protein stacked up across many
+          species so the model can see which positions in the chain tend to vary
+          together, and it returns the atom coordinates of the folded
+          shape.<sup class="nb-cite"><a href="#s4">4</a></sup> It was trained on
+          the roughly 100,000 experimentally solved protein structures known at
+          the time, plus a further set of about 350,000 sequences that the model
+          labeled for itself and then learned from again.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-blind-test" id="the-blind-test">
+        <h2>The jump CASP measured</h2>
+        <p>
+          The number that matters came from a test AlphaFold could not study for.
+          A community experiment called CASP, the Critical Assessment of
+          Structure Prediction, runs a recurring blind trial. Its organizers take
+          proteins whose shapes have just been solved in the lab but not yet
+          published, hand out only the sequences, and collect predictions before
+          the real structures are released. Because the answer is withheld, no
+          team can memorize it, so the score measures prediction and not recall.
+          In the 2020 round, CASP14, DeepMind entered as group
+          427.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          CASP scores a prediction with GDT, the Global Distance Test, on a scale
+          from 0 to 100. Read it as the share of the protein's positions that
+          land close to where the real structure puts them. The scale is
+          calibrated by what a score lets a biologist conclude: CASP's chair, John
+          Moult, treats a result around 90 as the point where a prediction sits
+          about as close to the experimental structure as two separate
+          experiments on the same protein sit to each
+          other.<sup class="nb-cite"><a href="#s2">2</a></sup> AlphaFold's median
+          across all CASP14 targets was 92.4.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup> Past that line, the leftover disagreement is
+          about the size of experimental error itself.
+        </p>
+        <p>
+          The paper's own hardest number is finer. Measured on the backbone of
+          the chain, AlphaFold's predictions missed the true positions by a
+          median of 0.96 ångströms; the next-best method in CASP14 missed by
+          2.8.<sup class="nb-cite"><a href="#s4">4</a></sup> An ångström is a
+          ten-billionth of a metre, about the width of a single atom, so the
+          median error was under one atom's width against nearly three for the
+          runner-up. Counting every atom rather than the backbone alone, the
+          figures were 1.5 ångströms against 3.5.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup> CASP's own tally, summed across the assessed
+          targets, put DeepMind's group at 244.02 and the next group at
+          90.82.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img src="alphafold/chart-1.png" alt="Grouped bar chart of median prediction error in ångströms. Backbone: AlphaFold 0.96, next-best method 2.8. All-atom: AlphaFold 1.5, next-best method 3.5. AlphaFold's bars are far shorter in both groups." />
+          <figcaption>
+            Fig. 1 · Median CASP14 error in ångströms, AlphaFold against the
+            next-best method; shorter is closer to the experimental
+            structure.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          </figcaption>
+        </figure>
+      </section>
+
+      <section data-nb-section="past-the-test" id="past-the-test">
+        <h2>Where the shorthand overshoots the test</h2>
+        <p>
+          Everything above is one measurement: how close a predicted static shape
+          is to the solved one, for a single protein chain, on a blind test.
+          Three of the claims AlphaFold is now cited for reach past that
+          measurement.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Three claims AlphaFold is cited for, against what the paper and an
+            independent check actually show.
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">The popular claim</th>
+              <th class="txt">What the record shows</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">AlphaFold predicts what a protein does.</td>
+              <td class="txt">
+                It predicts the folded shape only; the companion paper offers
+                its shapes as inputs to "generate biological hypotheses," a
+                start for experiments rather than an
+                answer.<sup class="nb-cite"><a href="#s6">6</a></sup>
+              </td>
+            </tr>
+            <tr>
+              <td class="txt">AlphaFold solved protein folding.</td>
+              <td class="txt">
+                It predicts the shape a chain settles into, not the folding
+                process or the way the folded protein
+                moves.<sup class="nb-cite"><a href="#s4">4</a></sup>
+              </td>
+            </tr>
+            <tr>
+              <td class="txt">AlphaFold replaces solving structures in the lab.</td>
+              <td class="txt">
+                Even its top-confidence atoms miss the experiment by about twice
+                the gap between two experiments; the authors call the
+                predictions hypotheses.<sup class="nb-cite"
+                  ><a href="#s7">7</a></sup>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The third claim is the one an outside group has measured directly.
+          Comparing AlphaFold predictions against experimental crystal
+          structures, Terwilliger and colleagues measured the gap that remains.
+          Even in the model's highest-confidence regions, the predicted atom
+          positions differed from the experimental ones by a median of 0.6
+          ångströms. About one in ten differed by more than 2 ångströms, roughly
+          twice the gap between two experiments on the same
+          protein.<sup class="nb-cite"><a href="#s7">7</a></sup> Their verdict is
+          a promotion, not a retirement, of experimental biology: AlphaFold
+          predictions are "exceptionally useful hypotheses."<sup class="nb-cite"
+            ><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          The model also reports its own uncertainty, and reading it is part of
+          reading AlphaFold. Alongside each predicted shape it gives a
+          per-position confidence score called pLDDT, again on a 0-to-100 scale;
+          a low pLDDT marks a position the model is unsure of, often a floppy
+          region with no fixed shape to predict. The honest ceiling shows up at
+          scale. When DeepMind ran the model across 98.5% of human proteins, 58%
+          of positions came back with a confident prediction and 36% at very high
+          confidence, up from the 17% of positions that had an experimental
+          structure before.<sup class="nb-cite"><a href="#s6">6</a></sup> That
+          still leaves roughly 42% of the human proteome without a confident
+          prediction. The paper names its weak case as well: where the sequence
+          alignment is shallow, fewer than about thirty related sequences,
+          accuracy falls off.<sup class="nb-cite"><a href="#s4">4</a></sup> By
+          2022 DeepMind and its partners had released predicted structures for
+          over 200 million proteins, a database roughly the size of the known
+          protein world, and every entry carries the same confidence coloring
+          that tells a user which parts to trust.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          On CASP14, AlphaFold matched the accuracy of a laboratory at finding a
+          single chain's folded shape, and what that protein does, how it moves,
+          and whether it can replace an experiment are three separate questions
+          the test never scored.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          AlphaFold did one thing and did it superbly. On a blind test it
+          predicted the folded shape of a single protein chain about as
+          accurately as a laboratory measures it: 92.4 out of 100, where 90
+          already counts as experiment-grade, and a median error smaller than
+          the width of one atom. That result is real, and it is narrow. Predicting a protein's shape is not the same as knowing what
+          the protein does, watching it fold, or retiring the experiments that
+          still catch what the model gets wrong. The next time you meet "AI
+          solved biology," ask the question CASP asked: solved which number, on
+          which test? AlphaFold has a precise answer, and it is worth more than
+          the shorthand.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://alphafold.ebi.ac.uk/">The AlphaFold Protein Structure Database</a>: open a predicted structure and see the pLDDT confidence coloring for yourself.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.technologyreview.com/2020/11/30/1012712/deepmind-protein-folding-ai-solved-biology-science-drugs-disease/">MIT Technology Review: DeepMind's protein-folding AI has solved a 50-year-old grand challenge of biology</a>: a readable account of the CASP14 moment, framing and all.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nobelprize.org/prizes/chemistry/2024/press-release/"
+              >The Nobel Prize · The Nobel Prize in Chemistry 2024 (press release)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://deepmind.google/blog/alphafold-a-solution-to-a-50-year-old-grand-challenge-in-biology/"
+              >DeepMind · AlphaFold: a solution to a 50-year-old grand challenge in biology</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.nature.com/articles/d41586-020-03348-4"
+              >Nature News (Ewen Callaway) · 'It will change everything': DeepMind's AI makes gigantic leap in solving protein structures</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nature.com/articles/s41586-021-03819-2"
+              >Jumper et al., Nature 2021 · Highly accurate protein structure prediction with AlphaFold</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://predictioncenter.org/casp14/zscores_final.cgi"
+              >CASP14 Prediction Center · Final assessment Z-scores</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nature.com/articles/s41586-021-03828-1"
+              >Tunyasuvunakool et al., Nature 2021 · Highly accurate protein structure prediction for the human proteome</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nature.com/articles/s41592-023-02087-4"
+              >Terwilliger et al., Nature Methods 2024 · AlphaFold predictions are valuable hypotheses and accelerate but do not replace experimental structure determination</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://deepmind.google/discover/blog/alphafold-reveals-the-structure-of-the-protein-universe/"
+              >DeepMind · AlphaFold reveals the structure of the protein universe</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
