@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Amazon's resume screener taught itself to penalize the word 'women's' · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "amazon-hiring-tool",
+        "template": "lesson",
+        "title": "Amazon's resume screener taught itself to penalize the word 'women's'",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-03",
+        "tags": [],
+        "sources": 8,
+        "words": 1822,
+        "reading_minutes": 8,
+        "dek": "Everything known about the scrapped experiment traces to a single 2018 Reuters investigation and five anonymous sources, and the flaw it describes now lives inside the resume screeners companies use today.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">
+          Amazon's resume screener taught itself to penalize the word
+          'women's'
+        </h1>
+        <p class="nb-dekline">
+          Everything known about the scrapped experiment traces to a single
+          2018 Reuters investigation and five anonymous sources, and the flaw
+          it describes now lives inside the resume screeners companies use
+          today.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-03</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Companies now run software that reads resumes and ranks applicants
+          before a person sees them. The oldest cautionary case is Amazon's:
+          a scoring engine, built in the mid-2010s, that its own engineers
+          found had taught itself to mark down women. This lesson walks
+          through what the tool did, how firmly anyone actually knows it, and
+          why the flaw behind it is not an Amazon bug but a property of any
+          model trained to copy past decisions. By the end you will be able
+          to say what deleting a biased field does and does not fix, and why
+          "a person made the final call" is a weaker safeguard than it
+          sounds.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/gradient-descent.html"
+              >One gradient step drops the loss from 7.0 to 0.225</a
+            >: how a model is fit to its training data, the step that here
+            copied a decade of Amazon's own hiring.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../ai-in-the-world/nyc-hiring-bias-audits.html"
+              >Employers decide whether New York City's hiring-bias audit
+              applies to them</a
+            >: the audit law written in response to tools like this, and
+            whether it bites.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A resume engine that learned to prefer men</h2>
+        <p>
+          In 2018, Reuters reported that Amazon had quietly built, and then
+          abandoned, a machine-learning tool that scored job applicants and
+          had learned to penalize women.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The account is Jeffrey Dastin's investigation, sourced to five
+          people who worked on the effort and spoke on condition of
+          anonymity.<sup class="nb-cite"><a href="#s1">1</a></sup> Every
+          specific that follows traces to those five people.
+        </p>
+        <p>
+          By that reporting, a team began building the programs in 2014 to
+          rate applicants from one to five stars, much as shoppers rate
+          products on the site.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          They created about 500 models, each tied to a particular job
+          function and location and each trained to recognize some 50,000
+          terms pulled from past applicants' resumes.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The training set was ten years of resumes Amazon had received, most
+          of them from men.<sup class="nb-cite"><a href="#s1">1</a></sup> The
+          system, Reuters wrote, "taught itself that male candidates were
+          preferable."<sup class="nb-cite"><a href="#s1">1</a></sup> It
+          penalized resumes containing the word "women's," as in "women's
+          chess club captain," and it downgraded graduates of two all-women's
+          colleges the report did not name.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="no-guarantee" id="no-guarantee">
+        <h2>The fix carried no guarantee</h2>
+        <p>
+          Amazon's engineers edited the programs to make them neutral to
+          those particular terms. That, Reuters reported, was no guarantee the
+          models would not find other ways of sorting candidates that turned
+          out to be discriminatory.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          By the start of 2017, with executives having lost hope in the
+          project, the team was disbanded.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The tool was reported in October 2018, a year and a half after it
+          had already been shut down.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          That timeline, and every figure in it, rests on one origin. The
+          Reuters story was carried word for word by wire subscribers,
+          including the Irish Times and RTÉ, but a reprint of the same report
+          is not a second source; each is Dastin's article
+          again.<sup class="nb-cite"><a href="#s2">2</a></sup> Amazon itself
+          declined to discuss the engine with Reuters.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          When other outlets asked, the company said the tool "was never used
+          by Amazon recruiters to evaluate candidates" and had been "only ever
+          used in a trial and developmental phase."<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          That sits against what Reuters' sources described: recruiters who
+          "looked at the recommendations generated by the tool ... but never
+          relied solely on those rankings."<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Both accounts agree on the point that bounds the harm. The ratings
+          were never the sole basis for a hire, and the tool never became a
+          live screen. Nothing in the record says it rejected real applicants
+          at scale.
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>
+                Amazon confirms a resume-scoring tool existed and was tested.
+              </li>
+              <li>
+                The failure it illustrates is established on its own, in the
+                fairness literature below.
+              </li>
+              <li>
+                The same bias is measurable in resume screeners tested in
+                2024.
+              </li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>
+                Every specific, the 500 models, the "women's" penalty, the two
+                colleges, rests on five anonymous sources.
+              </li>
+              <li>
+                No one in a position to know has confirmed those details on
+                the record.
+              </li>
+              <li>
+                Amazon disputes that recruiters used the tool to evaluate
+                candidates at all.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section data-nb-section="proxies" id="proxies">
+        <h2>Why deleting the word did not delete the bias</h2>
+        <p>
+          A model trained to reproduce a decade of Amazon's hiring reproduced
+          its skew toward men.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The training data recorded whom Amazon had hired, and Amazon had
+          mostly hired men. A model built to predict which resumes resemble
+          past
+          hires will, when past hiring favored men, learn to favor the signals
+          that came with being a man.
+        </p>
+        <p>
+          So the engineers deleted the obvious signal and made the models
+          ignore the word "women's."<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          It did not fix the bias, because being a woman was written into the
+          data in more than one place. A women's college, a sport, a verb more
+          common on one group's resumes than another's: any of these can stand
+          in for the field that was removed. A feature that carries the
+          information of a protected trait without naming it is a proxy. The
+          formal name for the failure is redundant encoding, the trait encoded
+          redundantly across correlated features, so a model can rebuild it
+          after the direct field is gone.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Redundant encoding</span>
+          <p>
+            Remove the column that names a protected trait and a model can
+            often rebuild it from the columns that remain, because the trait is
+            spread across features that correlate with it. Deleting "women's"
+            did not delete what "women's" was standing in for.<sup
+              class="nb-cite"
+              ><a href="#s4">4</a></sup
+            >
+          </p>
+        </div>
+        <p>
+          This is not particular to Amazon. Solon Barocas and Andrew Selbst
+          named redundant encoding as the core obstacle to fair machine
+          learning in employment. Membership in a protected class is often
+          "encoded in other data," they wrote, so scrubbing the explicit field
+          leaves the model able to reconstruct it.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Cynthia Dwork and colleagues described the same move in formal
+          terms. They called the strategy of dropping protected attributes
+          "fairness through blindness," and showed it can be beaten by a test
+          built from correlated data that is "in practice, essentially
+          equivalent."<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          No one has to intend this. Take a screener
+          that is never shown an applicant's gender (illustrative, not
+          something Amazon's tool is known to have done). Say the resumes it
+          learns from show that people who list a certain hobby, or a certain
+          two-year gap, tend to match past hires. The model will reward or
+          punish that signal, and through it the trait behind the signal. No
+          field is labeled for the trait, and the people reading the output
+          would see only a ranking.
+        </p>
+        <p>
+          This is also why the last line of defense does not hold. Recruiters
+          at Amazon looked at the tool's ranking, by the sources' own
+          account.<sup class="nb-cite"><a href="#s1">1</a></sup> A biased score
+          that a person then approves, or merely starts from, has still shaped
+          the decision. Deleting the variable does not delete the bias, and
+          adding a human does not launder it.
+        </p>
+      </section>
+
+      <section data-nb-section="lives-today" id="lives-today">
+        <h2>The same weakness in today's screeners</h2>
+        <p>
+          Amazon's tool never went live. The failure behind it did.
+          Automated resume screening is common enough now that regulators
+          have written rules for it. The EEOC treats an algorithm that rates
+          applicants as a "selection procedure" under Title VII. It applies
+          the four-fifths rule: if one group's selection rate is less than 80%
+          of the highest group's rate, that is a rule-of-thumb sign of adverse
+          impact.<sup class="nb-cite"><a href="#s6">6</a></sup> The agency
+          stresses it is only a rule of thumb, and that an employer stays
+          liable even when a vendor built the tool.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          In the EEOC's own worked example, if 80 white and 40 Black
+          applicants apply and 48 and 12 advance, the selection rates are 60%
+          and 30%; their ratio, 50%, sits below the 80% line.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <p>
+          New York City went further. Local Law 144 has been in effect since
+          January 2023 and enforced since that July. It bars employers in the
+          city from using an automated employment decision tool unless an
+          independent bias audit has first measured the tool's selection rates
+          and impact ratios across sex and race categories. The audit results
+          must be published.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Whether the
+          audit changes anything is a separate question: a companion lesson on
+          <a href="../ai-in-the-world/nyc-hiring-bias-audits.html"
+            >how that law works in practice</a
+          >
+          found that employers largely decide for themselves whether they are
+          even covered.
+        </p>
+        <p>
+          And the bias Amazon's engineers saw by 2015 is measurable in current
+          tools. In 2024, University of Washington researchers tested three
+          open-source language models on more than 550 real resumes. They
+          swapped in 120 names associated with white and Black men and women
+          across nine occupations, more than three million comparisons in
+          all.<sup class="nb-cite"><a href="#s8">8</a></sup> The models
+          favored white-associated names 85% of the time and Black-associated
+          names 9%; male-associated names 52% and female-associated names 11%.
+          Black-male-associated names were never preferred over
+          white-male-associated ones.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="amazon-hiring-tool/chart-1.png"
+            alt="Bar chart of how often each name group was favored: white-associated 85 percent, Black-associated 9 percent, male-associated 52 percent, female-associated 11 percent."
+          />
+          <figcaption>
+            Fig. 1 · Share of paired comparisons in which each name group was
+            the one favored, across three open-source language models
+            screening resumes.<sup class="nb-cite"
+              ><a href="#s8">8</a></sup
+            >
+          </figcaption>
+        </figure>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Amazon's recruiting tool is worth remembering for what is certain
+          about it, not for the details that are not. What is certain, because
+          it does not lean on the anonymous account, is the failure it stands
+          for. A model trained to reproduce past decisions reproduces the bias
+          in them, and deleting the biased word does not fix that, because the
+          model rebuilds the trait from proxies. A person reviewing the output
+          does not undo it. That is why the same pattern turns up in resume
+          screeners running today, and why the law has begun to demand that
+          someone measure it. The Amazon story may rest on five people. The
+          lesson does not rest on them at all.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a
+              href="https://www.technologyreview.com/2019/02/04/137602/this-is-how-ai-bias-really-happensand-why-its-so-hard-to-fix/"
+              >This is how AI bias really happens</a
+            >: Karen Hao walks the same failure through each stage of a
+            machine-learning pipeline, the Amazon case among her examples.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.npr.org/transcripts/412481743"
+              >What Makes Algorithms Go Awry?</a
+            >: Zeynep Tufekci on how a hiring model can select against a trait
+            no one ever programmed in.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.reuters.com/article/us-amazon-com-jobs-automation-insight/amazon-scraps-secret-ai-recruiting-tool-that-showed-bias-against-women-idUSKCN1MK08G"
+              data-nb-note="Jeffrey Dastin, Oct. 10, 2018; sourced to five people familiar with the effort, speaking anonymously. The origin report for every specific about the Amazon tool."
+              >Reuters · Amazon scraps secret AI recruiting tool that showed
+              bias against women</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.irishtimes.com/business/technology/amazon-scraps-secret-ai-recruiting-tool-that-showed-bias-against-women-1.3658651"
+              data-nb-note="The Irish Times carried the Reuters wire verbatim; used to read the origin text where the Reuters page is gated. Same origin, not independent corroboration."
+              >The Irish Times · Amazon scraps secret AI recruiting tool that
+              showed bias against women (Reuters wire)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.vice.com/en/article/amazon-ai-recruitment-hiring-tool-gender-bias/"
+              data-nb-note="Carries Amazon's on-record statement that the tool was never used by recruiters to evaluate candidates and was only ever in a trial and developmental phase."
+              >VICE (Motherboard) · Report on Amazon's recruiting tool
+              carrying Amazon's on-record response</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.cs.yale.edu/homes/jf/BarocasSelbst.pdf"
+              data-nb-locator="Part I.D 'Proxies', pp. 691, 720"
+              >California Law Review · Solon Barocas &amp; Andrew D. Selbst,
+              "Big Data's Disparate Impact" (2016)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1104.3913"
+              data-nb-locator="§1.2 and Appendix A, 'Discrimination Based on Redundant Encoding'"
+              >ITCS 2012 · Cynthia Dwork, Moritz Hardt, Toniann Pitassi, Omer
+              Reingold, Richard Zemel, "Fairness Through Awareness"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://web.archive.org/web/20250125163154/https://www.eeoc.gov/laws/guidance/select-issues-assessing-adverse-impact-software-algorithms-and-artificial"
+              data-nb-locator="Q&amp;A 3–6"
+              data-nb-note="Internet Archive capture of the EEOC's own page; eeoc.gov bot-gates the canonical URL"
+              >EEOC · Select Issues: Assessing Adverse Impact in Software,
+              Algorithms, and Artificial Intelligence Used in Employment
+              Selection Procedures Under Title VII (May 18, 2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nyc.gov/site/dca/about/automated-employment-decision-tools.page"
+              data-nb-locator="AEDT FAQ, 06/29/2023, §§ I–II"
+              >NYC Department of Consumer and Worker Protection · Automated
+              Employment Decision Tools (Local Law 144)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.washington.edu/news/2024/10/31/ai-bias-resume-screening-race-gender/"
+              data-nb-note="Wilson &amp; Caliskan, presented at AAAI/ACM AIES 2024. Firsthand report of the authors' own study."
+              >University of Washington News · AI tools show biases in ranking
+              job applicants' names by race and gender (Oct. 31, 2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
