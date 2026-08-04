@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A chatbot quotes your PDF without learning a word of it · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "retrieval",
+        "template": "lesson",
+        "title": "A chatbot quotes your PDF without learning a word of it",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-04",
+        "tags": [],
+        "sources": 9,
+        "words": 2177,
+        "reading_minutes": 9,
+        "dek": "To answer, the model rewrites your file as points in space and reads back the few passages that land nearest your question.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A chatbot quotes your PDF without learning a word of it</h1>
+        <p class="nb-dekline">
+          To answer, the model rewrites your file as points in space and reads back the few passages that land nearest your question.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-04</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have done this. You upload a document the chatbot has never seen,
+          a contract or a web page, and ask a question about it. Back comes an
+          answer with the exact passage quoted. It feels
+          like the model read your file and learned it. It did not. Its weights
+          were frozen long before your file existed, and nothing about your upload
+          changes them. This lesson walks down from that behavior to the parts
+          that produce it. You will see how a system decides which few passages of
+          your document to show the model, how it finds them fast, and how the
+          model reads them to write its answer. By the end you can trace the path
+          from your question to the quoted line, and say where the familiar
+          failure comes from: the confident citation to a passage that does not
+          support the claim.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/knowledge-cutoff.html">A model's knowledge stops on the day its training data ends</a>: why frozen weights mean the model never learned your uploaded file.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/word-embeddings.html">A model turns every word into a point in space, and nearby points mean similar things</a>: the trick this lesson applies to whole passages instead of single words.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The document the model never trained on</h2>
+        <p>
+          Upload a forty-page apartment lease as a PDF and ask the chatbot a plain
+          question: can you sublet the place while you travel. It answers in a
+          sentence, and it quotes the exact clause that settles the matter, one
+          line out of forty pages. But its training finished months ago, and your
+          lease was never part of it. The model's weights were frozen when
+          training ended, so it never
+          <a href="../the-mechanics/knowledge-cutoff.html">learned your lease</a>
+          the way it learned the rest of the world. It still found the clause and
+          used it. Where did that clause come from.
+        </p>
+        <p>
+          Rule out the obvious guess first: that the system handed the whole lease
+          to the model and let it read the pages. It did not. For one lease it
+          could, but the same feature runs over a folder of files, or a corpus of
+          millions, and a model takes in only so much text at once.
+          So the system does something narrower. It retrieves a few passages it
+          judges relevant and inserts just those into the prompt, then asks the
+          model to answer over them. This is retrieval-augmented generation, named
+          by Lewis and colleagues in
+          2020.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Two mechanisms do the real work. A search over meaning picks the few
+          passages worth showing, and the model reads them as ordinary prompt text
+          and answers over them.
+        </p>
+      </section>
+
+      <section data-nb-section="closeness" id="closeness">
+        <h2>Relevance becomes a distance you can measure</h2>
+        <p>
+          Before the model sees anything, the system picks which passages of your
+          lease bear on the word "sublet." It does this without reading for
+          meaning the way you do, using the trick from
+          <a href="../the-mechanics/word-embeddings.html">word embeddings</a>. An
+          embedding model reads a span of text and turns it into a vector, a list
+          of a few hundred numbers that names a single point in a
+          high-dimensional space. Text that means similar things lands at nearby
+          points. The word-embeddings lesson built this for single words. The same
+          idea runs on whole passages, so one chunk of your lease becomes one
+          point, placed by what the passage means rather than by any single word
+          in it.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The pipeline is short. The lease is split into chunks, and each chunk is
+          embedded to a point once, in advance. Your question is embedded the same
+          way the moment you ask it. Relevance is then just closeness: the system
+          returns the chunks whose points sit nearest your question's point.
+          Follow the sublet query through it. The governing clause reads "the
+          Tenant shall not assign or transfer occupancy of the unit to another
+          party," and it never contains the word "sublet." A plain keyword search
+          for "sublet" finds nothing in that line. But "can I sublet" and "assign
+          or transfer occupancy" mean nearly the same thing, so the embedding
+          model places their points close together, and the clause rises to the
+          top. Nearness of meaning found the line that shared no words with the
+          question.
+        </p>
+        <p>
+          How is closeness measured. Two answers are common, and they nearly
+          agree. Sentence-BERT, the method that made one fixed vector
+          per passage practical, compares two vectors by cosine similarity, the
+          angle between the directions they
+          point.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The retrieval lineage RAG is built on, Dense Passage Retrieval, instead
+          ranks by the raw dot product of the two
+          vectors.<sup class="nb-cite"><a href="#s3" data-nb-locator="Section 3.1">3</a></sup>
+          Cosine is that same dot product after both vectors are scaled to the
+          same length, so the two measure the same nearness. Cosine is the common
+          default, not the metric every system uses. The claim that survives the
+          choice is the one to hold: relevance is geometric closeness of
+          whole-passage embeddings.
+        </p>
+        <p>
+          Does closeness of meaning beat matching words? In its own domain,
+          clearly. The standard keyword baseline is BM25, a bag-of-words score
+          that rewards a document for sharing query terms, with diminishing credit
+          for repeats and an adjustment for length, and no notion of meaning at
+          all.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Measured against it on Natural Questions, dense embeddings win by a wide
+          margin.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Share of questions whose retrieved passages contain the answer, dense
+            embeddings versus keyword matching, on Natural
+            Questions.<sup class="nb-cite"><a href="#s3" data-nb-locator="Table 2, test set">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Retrieval</th>
+              <th>Top-20</th>
+              <th>Top-100</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Embeddings (DPR)</span></td>
+              <td>78.4%</td>
+              <td>85.4%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Keywords (BM25)</span></td>
+              <td>59.1%</td>
+              <td>73.7%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Across other open-domain sets that gap runs from 9 to 19
+          points.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          In the setting it was trained for, closeness of meaning beats shared
+          words.
+        </p>
+      </section>
+
+      <section data-nb-section="fast-search" id="fast-search">
+        <h2>Finding the nearest points, at a billion of them</h2>
+        <p>
+          Closeness says which passages to return, not how to find them without
+          measuring the distance to every point in the index. For one lease that
+          cost is nothing. For a corpus of millions of chunks, checking every one
+          on every query is unaffordable. This is
+          approximate nearest-neighbor search, and it is the one step in the
+          pipeline that counts as settled engineering. The trick is to avoid
+          looking at most of the points. One standard method, HNSW, wires the
+          points into a layered graph and searches from a coarse top layer down to
+          a fine one, hopping toward the query's neighborhood and examining only a
+          small fraction of the index. Its cost grows with the logarithm of the
+          collection size rather than in proportion to it, so ten times the data
+          adds a little, not ten times.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          At the largest scale the numbers are blunt: the FAISS library connects a
+          billion vectors into a searchable index in under twelve hours on four
+          GPUs.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The lookup is not where the difficulty lives, so treat it as solved and
+          climb back up.
+        </p>
+      </section>
+
+      <section data-nb-section="generation" id="generation">
+        <h2>What the model does with the passages it is handed</h2>
+        <p>
+          Now the model finally enters. The few top-ranked chunks, your lease's
+          sublet clause among them, are placed into the prompt as ordinary text,
+          right next to your question. The model does not open a database or follow
+          a link. It reads the retrieved clause the same way it reads anything else
+          in its input, as
+          <a href="../the-mechanics/instructions-are-data.html">tokens in the prompt</a>.
+          It answers conditioned on those tokens, and it produces the citation by
+          quoting or pointing back to the chunk it leaned on.
+        </p>
+        <p>
+          This is the whole arrangement, and it is looser than its famous name
+          suggests. The 2020 paper that named RAG built something more integrated
+          than the products that now borrow the term. It kept the document encoder
+          and the document index fixed and fine-tuned the query encoder and the
+          generator together, so the searcher and the writer were trained as a
+          pair on knowledge
+          tasks.<sup class="nb-cite"><a href="#s1" data-nb-locator="Section 2, training">1</a></sup>
+          The RAG in a typical shipped product trains neither. It embeds with an
+          off-the-shelf model, searches, and pastes the top chunks into the prompt
+          of a frozen chat model that was never tuned for the job.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            Shipped "RAG" usually means three moves bolted onto a model nobody
+            retrained: embed your document into points, search for the points
+            nearest your question, and paste those passages into the prompt. A
+            recent survey calls this the Naive RAG
+            pipeline.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          </p>
+        </div>
+      </section>
+
+      <section data-nb-section="failure" id="failure">
+        <h2>The confident citation the passage does not support</h2>
+        <p>
+          Anyone who has used this has also watched it fail in one particular way.
+          The answer arrives with a citation, you click through to check, and the
+          quoted passage does not actually say what the answer claimed. It is not
+          rare. A human audit of four shipped generative search engines found
+          that, on average, only 51.5% of their generated sentences were fully
+          supported by the citations attached to them, and only 74.5% of citations
+          actually supported the sentence they were pinned
+          to.<sup class="nb-cite"><a href="#s8" data-nb-locator="Abstract">8</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">51.5%</span><span class="nb-stat-l">Sentences fully supported by their citations</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">74.5%</span><span class="nb-stat-l">Citations that support their sentence</span>
+          </div>
+        </div>
+        <p>
+          The ladder we climbed down lets us point at where this breaks, and the
+          honest answer names two rungs. The same wrong quote can be born at
+          either, and from the outside it looks identical.
+        </p>
+        <p>
+          The first rung is retrieval. The nearest passage is not always the right
+          one. Closeness of meaning is a good guess, but it is a guess, and on text
+          unlike what the embedding model was trained on it misses. The BEIR
+          benchmark tested retrievers across eighteen datasets outside their
+          training domains and found that plain dense retrievers often
+          underperform, with real room to improve how they
+          generalize.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          When the top passage handed to the model is the wrong one, the model can
+          cite it faithfully and still be wrong, because it was pointed at the
+          wrong line to begin with.
+        </p>
+        <p>
+          The second rung is generation. The right passage was retrieved and sat in
+          the prompt, and the model answered from its own weights anyway, inventing
+          support the passage does not contain. That is the failure the
+          <a href="../the-mechanics/hallucination.html">hallucination lesson</a>
+          describes, now wearing a citation. That the correct passage can be
+          present and the model still not use it is its own open problem, the one
+          the <a href="../the-mechanics/losing-the-thread.html">losing-the-thread lesson</a>
+          takes up.
+        </p>
+        <p>
+          No cited study cleanly separates the two. The audit measures the outcome
+          across whole systems and cannot say, for any one bad citation, whether
+          retrieval fetched the wrong line or generation ignored the right
+          one.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          That is the honest edge of what is known. Below it the ground is firm.
+          Embedding a query and passages, ranking them by closeness, and returning
+          the nearest few fast is settled and works. Above it the open choices sit
+          unresolved. How to cut a document into chunks has no settled rule and no
+          paper that prescribes one. Whether to add a slower, more careful
+          reranking pass is a cost you weigh, not a solved
+          default.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          And whether the model uses the passage it was handed is, on the current
+          evidence, not something you can count on.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The chatbot never learned your document. A retrieval system did the
+          finding for it. Your file was split into passages, and each passage was
+          turned into a point in space. Your question was turned into a point the
+          same way. The passages whose points sit nearest your question were pulled
+          out and pasted into the prompt as ordinary text. The model wrote its
+          answer over them and quoted back the one it used. Finding the nearest
+          points fast is solved engineering. What is not solved is everything that
+          touches meaning: whether the nearest passage is really the right one, and
+          whether the model uses the passage it was handed or falls back on its own
+          weights. That is where the bad citation is born, at retrieval or at
+          generation, and the same wrong quote can come from either. The next time
+          a chatbot quotes your own file back to you, you will know it searched a
+          map of that file rather than remembering it, and which rung to check when
+          the quote does not hold.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://simonwillison.net/2023/Oct/23/embeddings/">Embeddings: What they are and why they matter</a> (Simon Willison): a hands-on walk through turning text into points and using their locations, with real models and real output.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://jalammar.github.io/illustrated-retrieval-transformer/">The Illustrated Retrieval Transformer</a> (Jay Alammar): the embed, look up, and generate sequence drawn out step by step in pictures.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2005.11401"
+              >Lewis et al. · Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1908.10084"
+              >Reimers &amp; Gurevych · Sentence-BERT: Sentence Embeddings Using Siamese BERT-Networks</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2004.04906"
+              >Karpukhin et al. · Dense Passage Retrieval for Open-Domain Question Answering</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://doi.org/10.1561/1500000019"
+              >Robertson &amp; Zaragoza · The Probabilistic Relevance Framework: BM25 and Beyond</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1603.09320"
+              >Malkov &amp; Yashunin · Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1702.08734"
+              >Johnson, Douze &amp; Jégou · Billion-Scale Similarity Search with GPUs</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2312.10997"
+              >Gao et al. · Retrieval-Augmented Generation for Large Language Models: A Survey</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2304.09848"
+              >Liu, Zhang &amp; Liang · Evaluating Verifiability in Generative Search Engines</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2104.08663"
+              >Thakur et al. · BEIR: A Heterogeneous Benchmark for Zero-shot Evaluation of Information Retrieval Models</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
