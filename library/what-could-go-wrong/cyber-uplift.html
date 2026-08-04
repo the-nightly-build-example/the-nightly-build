@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI's strongest bug-finding results so far came out of defensive research · What Could Go Wrong</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "what-could-go-wrong",
+        "slug": "cyber-uplift",
+        "template": "lesson",
+        "title": "AI's strongest bug-finding results so far came out of defensive research",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-04",
+        "tags": ["cyber-security", "dangerous-capabilities", "autonomous-agents"],
+        "sources": 9,
+        "words": 2195,
+        "reading_minutes": 10,
+        "dek": "Google's Big Sleep found a real flaw in SQLite and DARPA's finalists found eighteen more, every one surfaced by a team whose job was to fix it.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">What Could Go Wrong</div>
+        <h1 class="nb-title">AI's strongest bug-finding results so far came out of defensive research</h1>
+        <p class="nb-dekline">
+          Google's Big Sleep found a real flaw in SQLite and DARPA's finalists found eighteen more, every one surfaced by a team whose job was to fix it.
+        </p>
+        <div class="nb-byline">
+          <span>N min read</span><span>2026-08-04</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every few weeks a headline says AI has learned to hack, or that it
+          never will. Both readings come from the same small pile of evidence.
+          This lesson takes the strongest form of the worry: that AI hands
+          attackers a decisive edge in finding flaws, writing exploits, and
+          breaking in at machine speed. It splits that worry into three separate
+          claims, because they carry very different weights of proof. You will
+          see one real bug an AI found in SQLite, the eighteen flaws that came
+          out of a DARPA challenge, and the benchmark scores where the same
+          systems stall. By the end you should be able to take any confident
+          claim about AI and cyberattacks and place it: which of the three is
+          it, and what has been shown for that one?
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../what-could-go-wrong/self-replication.html">Frontier models clear self-replication's substeps and fail the loop itself</a>: how well a model chains a long, multi-step task on its own when the whole job is tested end to end.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.schneier.com/blog/archives/2018/03/artificial_inte.html">Artificial Intelligence and the Attack/Defense Balance</a>: Bruce Schneier on why the same tools arm both sides, and how to weigh which one gains more.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The bug Big Sleep found in SQLite</h2>
+        <p>
+          In early October 2024, an AI agent called Big Sleep read the source
+          code of SQLite, the database engine that ships inside nearly every
+          phone and browser. It found a flaw no human had reported: a stack
+          buffer underflow in the code that plans how to answer a query. The
+          bug fired on one edge case, a query constraint on a column the engine
+          marks with the placeholder −1, which the function mishandled into a
+          write past the start of an array. Project Zero and DeepMind, who built
+          the agent and reported the find, called it the first public case of an
+          AI agent finding a previously unknown, exploitable memory-safety bug
+          in widely used software.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The flaw was caught in the development version and fixed the same day,
+          so no shipped copy of SQLite was
+          exposed.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Two things sit inside that result. The team that scored the find
+          also built the tool, so the significance claim comes from an
+          interested party. And the write-up says plainly that a target-specific
+          fuzzer, a standard automated bug-finder, would likely have found the
+          same bug at least as
+          fast.<sup class="nb-cite"><a href="#s1">1</a></sup> What Big Sleep
+          established is narrow and real: a system found one genuine bug, once.
+        </p>
+        <p>
+          The worry it speaks to is older than the tool. In February 2018,
+          twenty-six researchers from Oxford, Cambridge, OpenAI and elsewhere
+          published <em>The Malicious Use of Artificial Intelligence</em>, the
+          report that gave the modern argument its shape, and their case was
+          careful. AI would widen who could attack, how fast, and how many
+          targets at once, and automating vulnerability discovery and the
+          writing of exploit code was one named
+          scenario.<sup class="nb-cite"><a href="#s2">2</a></sup> They put it as
+          a trajectory, not a present fact: AI hacking tools "may exhibit much
+          better performance" than what has been possible, and beat humans
+          "ultimately (though perhaps not for some
+          time)."<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Seven years on, that worry is usually stated as one claim. It is
+          really three, resting on different evidence. One: AI can
+          find real, previously unknown vulnerabilities. Two: AI can run an
+          intrusion end to end, finding the way in, writing the exploit, and
+          moving through a hardened target on its own, at scale. Three: this
+          hands attackers a decisive advantage, because attack gets cheaper
+          faster than defense can adapt. The evidence shows the first, gestures
+          at the second, and says little about the third. Keeping them apart is
+          what most cyber-uplift claims fail to do.
+        </p>
+      </section>
+
+      <section data-nb-section="found-at-scale" id="found-at-scale">
+        <h2>Eighteen real flaws in 54 million lines</h2>
+        <p>
+          Big Sleep was one bug. The clearest sign this is a real capability
+          came ten months later. In August 2025, DARPA
+          ran the finals of its AI Cyber Challenge at DEF CON. Seven finalist
+          systems were pointed at roughly 54 million lines of real open-source
+          code. On a synthetic test set seeded with known bugs they found 54 of
+          63, about 86%, and wrote working patches for 43. In the real code,
+          they surfaced 18 genuine, previously unknown vulnerabilities, six in C
+          and twelve in Java, and patched eleven. Every team found at least one.
+          They worked at a pace no human review matches: about 45
+          minutes per task, at a machine cost near
+          $152.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">18</span><span class="nb-stat-l">previously unknown flaws found</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">86%</span><span class="nb-stat-l">of seeded bugs caught</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">~45 min</span><span class="nb-stat-l">average time to a patch</span>
+          </div>
+        </div>
+        <p>
+          The challenge was defensive. Scoring
+          rewarded finding a bug and shipping a fix, and DARPA's program manager
+          said it changed what is possible in automatically finding, and more
+          importantly fixing,
+          vulnerabilities.<sup class="nb-cite"><a href="#s3">3</a></sup> Both of
+          the strongest demonstrations of AI finding real bugs, Big Sleep and
+          this challenge, came from teams trying to protect software rather than
+          break into it.
+        </p>
+      </section>
+
+      <section data-nb-section="ceiling" id="ceiling">
+        <h2>Where the tests hit a ceiling</h2>
+        <p>
+          Finding a bug is one step. Running an intrusion is many: finding the
+          way in, writing an exploit that beats the target's defenses, and
+          moving through unmapped ground without being caught. This is the same
+          long, multi-step autonomy that models have
+          <a href="../what-could-go-wrong/self-replication.html">struggled with elsewhere in this course</a>.
+          The published tests of that fuller capability all stop well short of
+          it.
+        </p>
+        <p>
+          Cybench is an academic benchmark of 40 professional capture-the-flag
+          tasks: security puzzles where solving means prying a hidden token out
+          of a deliberately vulnerable system. It scores agents against the time
+          human teams first took to solve each. Working unguided, with no hints
+          toward the sub-steps, the best agent, Claude 3.5 Sonnet, solved 17.5%,
+          seven of the forty. GPT-4o solved five; Claude 3 Opus and
+          o1-preview four each. No unguided agent solved a single task that had
+          taken a human team longer than eleven minutes, and the hardest task in
+          the set took human experts nearly 25
+          hours.<sup class="nb-cite"><a href="#s4">4</a></sup> The systems clear
+          the quick puzzles and stall on everything that takes real time.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Best published agent scores on public cyber benchmarks, each far below what the task's harder cases demand.<sup class="nb-cite"><a href="#s4">4</a></sup><sup class="nb-cite"><a href="#s5">5</a></sup><sup class="nb-cite"><a href="#s6">6</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Agent · test</th>
+              <th>Score</th>
+              <th class="txt">Where it stops</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Claude 3.5 Sonnet</span> · Cybench</td>
+              <td>7 / 40</td>
+              <td class="txt">nothing above an 11-minute human task, unguided</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Gemini 1.0 Ultra</span> · in-house CTFs</td>
+              <td>3 / 13</td>
+              <td class="txt">0 of 13 on the harder Hack The Box set</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GPT-4</span> · Fang one-day set</td>
+              <td>13 / 15</td>
+              <td class="txt">falls to 1 / 15 once the public write-up is withheld</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          DeepMind ran a similar test on its own Gemini models and reported the
+          same shape. Its best agent, Gemini 1.0 Ultra, solved 3 of 13
+          easy-to-medium challenges the lab built in-house and none of 13 harder
+          Hack The Box puzzles. Reading the number as a lab grading its own
+          homework, the authors concluded they had found no strong dangerous
+          capability, only early warning signs, and set the bar they were
+          testing against as "poorly protected" assets, not hardened
+          ones.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          The one paper that reports a high success rate at autonomous
+          exploitation carries its own correction. Fang and colleagues at
+          Illinois gave a GPT-4 agent 15 already-disclosed vulnerabilities, each
+          with its public write-up. It exploited 13 of 15, 87%, where every
+          other model and scanner scored zero. Withhold the write-up and the
+          same agent exploited one of
+          fifteen.<sup class="nb-cite"><a href="#s6">6</a></sup> The system was
+          executing a known bug's public description, not discovering anything.
+          The authors built the agent themselves. Even their best case
+          describes exploiting disclosed bugs, the ordinary work of the lag
+          between a patch and its installation, not the novel-intrusion
+          capability the second claim needs.
+        </p>
+        <p>
+          The most eye-catching present-day figure comes from a vendor selling
+          the capability. In mid-2025, an autonomous penetration-testing system
+          called XBOW reached number one on HackerOne's US bug-bounty
+          leaderboard, filing more than a thousand vulnerability reports in a
+          few months. The targets were public web applications that bug-bounty
+          programs invite anyone to probe, not hardened systems. And
+          the reports were not fully unattended: to satisfy HackerOne's rules on
+          AI tools, human staff reviewed the findings before
+          submission.<sup class="nb-cite"><a href="#s7">7</a></sup> It is a real
+          capability against soft targets with a person still in the loop, not
+          an autonomous operation against a defended one.
+        </p>
+      </section>
+
+      <section data-nb-section="advantage" id="advantage">
+        <h2>Who gets the advantage</h2>
+        <p>
+          The third claim is the one people usually mean: not that AI can find a
+          bug, but that it tips the whole balance toward attackers. Here the
+          evidence is thinnest, and it is contested by the very demonstrations
+          offered for it.
+        </p>
+        <p>
+          Start with what a national agency will say on the record. In January
+          2024 the UK's National Cyber Security Centre judged that AI will
+          almost certainly increase the volume and impact of cyber attacks over
+          the next two years. But it placed that uplift almost entirely in
+          reconnaissance and social engineering: sharper phishing, with the
+          grammar tells gone. It rated the uplift to malware and exploit
+          development only a "realistic possibility."<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <div class="nb-position">
+          <div class="nb-position-top">
+            <span class="nb-position-who">UK National Cyber Security Centre, Jan 2024</span>
+            <span class="nb-position-pill">Position</span>
+          </div>
+          <p class="nb-position-statement">
+            AI will almost certainly raise the volume and impact of cyber attacks over the next two years, but the advanced offensive gains will stay with actors who are already highly capable.
+          </p>
+          <p class="nb-position-summary">
+            Advanced offensive uplift stays with actors who already have the expertise, data, and resources. Novices are lifted mainly in low-skill access work.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          </p>
+        </div>
+        <p>
+          That judgment collides with the origin of the argument. Brundage's
+          2018 report worried that AI would widen the set of actors who could
+          attack, lifting the floor so less-skilled people could do
+          more.<sup class="nb-cite"><a href="#s2">2</a></sup> The NCSC picture is
+          closer to the opposite. At the hard end, AI concentrates advantage
+          among those already expert. It lifts novices mainly in low-skill work,
+          phishing and gaining access, where the task was never the
+          barrier.<sup class="nb-cite"><a href="#s8">8</a></sup> Both cannot be
+          the whole story, and no source here reconciles them. The benchmark
+          ceilings point the same way: models help most where a skilled human
+          already could.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Then there is the symmetry the doom version skips. Every capability
+          that finds a bug for an attacker also finds it for a defender, and the
+          strongest evidence on the table was produced by defenders. Big Sleep's
+          flaw was fixed before it shipped.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The DARPA challenge rewarded patches, and its director described the
+          tools as giving defenders an edge in finding and fixing flaws at speed
+          and scale.<sup class="nb-cite"><a href="#s9">9</a></sup> AI also shortens
+          the window between a bug becoming public and being exploited, which
+          cuts the other way and which NCSC
+          flags.<sup class="nb-cite"><a href="#s8">8</a></sup> The balance could
+          tip toward either side. No result on record shows it tipping decisively
+          toward attack.
+        </p>
+        <p>
+          So the two loud versions of this argument each overreach, in opposite
+          directions, and each is missing a specific thing. The doom version,
+          that AI collapses the cost of attack faster than defense can adapt and
+          breaks it, has no demonstrated result behind it. NCSC's measured
+          "almost certainly more volume" is the strongest sourced claim, and it
+          sits a long way from a decisive edge. The dismissal version, that this
+          is just a chatbot regurgitating known bugs, cannot explain Big Sleep
+          or the eighteen novel flaws the DARPA systems found. The evidence sits
+          between the poles, and neither gets to borrow its confidence from the
+          other.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Three claims, three different amounts of evidence. AI has found real,
+          previously unknown vulnerabilities in software the world runs. That
+          one is shown, twice over. Whether it can run a full intrusion by
+          itself, against a target built to resist it, no public test has
+          demonstrated. The benchmarks stop at tasks a human cracks in minutes.
+          And whether all this favors attackers over defenders is the claim with
+          the least behind it, contested by the fact that today's best offensive
+          results came out of defensive labs. So when you next read that AI is
+          about to break cybersecurity, or that it is nothing but hype, ask which
+          of the three claims is meant, and what has been shown for that one. The
+          evidence will not tell you how worried to be. It will tell you which
+          sentences carry more confidence than proof.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://nicholas.carlini.com/writing/2025/are-llms-worth-it.html">Are large language models worth it?</a>: Nicholas Carlini sorts AI risks by how much evidence stands behind each, immediate to far-off.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2408.08926">The Cybench paper</a>: the full benchmark, its task list, and the human first-solve times the agent scores are measured against.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://projectzero.google/2024/10/from-naptime-to-big-sleep.html"
+              >Google Project Zero &amp; DeepMind · From Naptime to Big Sleep</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1802.07228"
+              >Brundage et al. · The Malicious Use of Artificial Intelligence</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.darpa.mil/news/2025/aixcc-results"
+              >DARPA · AI Cyber Challenge (AIxCC) results</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2408.08926"
+              >Zhang et al. · Cybench</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2403.13793"
+              >Phuong et al., Google DeepMind · Evaluating Frontier Models for Dangerous Capabilities</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.08144"
+              >Fang et al., UIUC · LLM Agents can Autonomously Exploit One-day Vulnerabilities</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.techrepublic.com/article/news-ai-xbow-tops-hackerone-us-leaderboad/"
+              >TechRepublic · AI-Powered XBOW Tops US HackerOne Leaderboard</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.ncsc.gov.uk/report/impact-of-ai-on-cyber-threat"
+              >UK NCSC · The near-term impact of AI on the cyber threat</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://therecord.media/darpa-ai-code-competition-winner-def-con"
+              >Recorded Future News · DARPA AI code competition winner named at DEF CON</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
