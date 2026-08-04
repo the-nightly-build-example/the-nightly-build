@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>nH Predict sets one patient's discharge date from six million others · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "nh-predict",
+        "template": "lesson",
+        "title": "nH Predict sets one patient's discharge date from six million others",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-04",
+        "tags": ["distribution-shift", "medicare-advantage", "prior-authorization", "health-insurance", "automation-bias"],
+        "sources": 9,
+        "words": 2170,
+        "reading_minutes": 9,
+        "dek": "A class action against UnitedHealth says an algorithm's length-of-stay estimate became the deadline that ended nursing coverage for elderly patients whose doctors wanted them to stay.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">nH Predict sets one patient's discharge date from six million others</h1>
+        <p class="nb-dekline">
+          A class action against UnitedHealth says an algorithm's length-of-stay estimate became the deadline that ended nursing coverage for elderly patients whose doctors wanted them to stay.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-04</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          More than thirty million Americans get their health coverage through
+          Medicare Advantage, and when one of these plans decides how long it
+          will pay for a nursing-home stay, software now helps make the call.
+          This lesson follows one such tool, nH Predict, into a class action
+          that says UnitedHealth used it to cut short the recovery of elderly
+          patients. The case teaches a mistake that reaches well beyond health
+          insurance: what goes wrong when a prediction about a group is turned
+          into a decision about a person. By the end you will
+          see why a high rate of overturned denials is evidence that the
+          denials were wrong, and why so few of them were ever challenged.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../ai-foundations/distribution-shift.html">Move a tumor detector to a new hospital and it loses twenty-three points</a>:
+            why a model's accuracy on one population can mislead on a different case.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../when-ai-breaks/dutch-childcare-benefits.html">The Dutch tax office turned a non-Dutch passport into a fraud score</a>:
+            another automated system whose targets the people it judged could not see or appeal.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What nH Predict was built to compute</h2>
+        <p>
+          nH Predict is software built by naviHealth, a company that
+          UnitedHealth's Optum unit bought in 2020 for $2.5 billion. It reads
+          a few facts about a patient: diagnosis, age, living situation,
+          physical function. It finds people who look similar in a database of
+          six million past cases. Then it returns an estimate of how many days
+          this patient will need to recover after the hospital, and a target
+          date to send them home.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          The care in question is post-acute care, the nursing-home and
+          rehabilitation care a person needs after a hospital stay, such as
+          relearning to walk after a stroke or healing a fractured leg in a
+          skilled nursing facility. Most of the patients here are on Medicare
+          Advantage, the private insurance plans that cover many Americans on
+          Medicare. Under these plans the government pays the insurer a fixed
+          sum to manage each member's care, so every extra day of nursing care
+          the plan approves is a day the insurer itself pays for. And approval
+          is required: before that care continues, the plan has to authorize
+          it, a sign-off the industry calls prior authorization. Prior
+          authorization is where the coverage decision gets made.
+        </p>
+        <p>
+          In November 2023, a class action filed in federal court in Minnesota,
+          <em>Estate of Gene B. Lokken v. UnitedHealth Group</em>, said the
+          company used nH Predict's target dates to make those decisions,
+          ending coverage on or near the date the model picked and overriding
+          the judgment of the patients' own doctors.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The suit is still being litigated. No one disputes what the tool
+          produces. The fight is over what it was allowed to decide.
+        </p>
+      </section>
+
+      <section data-nb-section="patients" id="patients">
+        <h2>The days two patients did not get</h2>
+        <p>
+          Gene Lokken was 91. In May 2022 he fell, fractured his leg and ankle,
+          and moved into a skilled nursing facility in Tomahawk, Wisconsin, to
+          recover. His UnitedHealth plan paid for about nineteen days of that
+          stay and then stopped, around July 20, 2022. His doctors wanted him
+          to stay longer. The plan rejected the family's appeal. For the year
+          that followed they paid roughly $12,000 to $14,000 a month out of
+          pocket. He died on July 17, 2023.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          Dale Henry Tetzloff was 74. He had a stroke in October 2022, and his
+          doctor referred him for at least 100 days of skilled nursing care.
+          The plan denied continued coverage after about 20 days. On appeal, a
+          UnitedHealth physician agreed he needed more time. He was denied
+          again after 40 days. His family spent more than $70,000 over about
+          ten months before he was discharged to assisted living. He died on
+          October 11, 2023.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          One physician ordered at
+          least 100 days. A second, reviewing the appeal on the insurer's own
+          side, agreed the patient needed more. Coverage ended at 40.
+        </p>
+      </section>
+
+      <section data-nb-section="average-to-cap" id="average-to-cap">
+        <h2>How an average becomes a cap</h2>
+        <p>
+          The estimate nH Predict produces is an average. Match a patient to
+          six million others and you get a number that describes the group: on
+          average, patients who look like this go home in so many days.<sup
+            class="nb-cite"><a href="#s1">1</a></sup
+          >
+          That average can be a good guess about the group and still be wrong
+          about the person in the bed, because a real patient is not the
+          average of a crowd. This paper has a lesson on why a number measured
+          across one population can mislead when it is applied to a single
+          different case, called
+          <a href="../ai-foundations/distribution-shift.html">distribution shift</a>.
+          A recovery estimate used as one patient's deadline is a sharp instance
+          of it.
+        </p>
+        <p>
+          An estimate becomes a cap when someone stops treating it as a guess
+          and starts treating it as the answer. Internal targets did exactly
+          that, the complaint and STAT News reporting say. naviHealth set a
+          goal for 2023 to keep patients' rehab stays within 1% of the days the
+          algorithm projected, and case managers who fell outside that narrow
+          band risked discipline, up to being fired, whether or not the extra
+          days were justified under Medicare's rules.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          When a reviewer is punished for departing from the model's date, the
+          date has stopped being advice.
+        </p>
+        <p>
+          The complaint alleges
+          that more than 90% of these denials, counting only the patients who
+          appealed, were reversed on internal appeal or before a federal
+          administrative law judge.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The figure is an allegation, pleaded "upon information and belief,"
+          with no denominator and no outside source behind it, so treat it as a
+          claim the suit will still have to prove, not as a fact. But follow
+          its logic. If nearly every denial that gets challenged is overturned,
+          then most of the challenged denials were wrong. And almost no one
+          challenges: appeals are slow, and most patients never file one. The
+          complaint puts the share who appeal at about 0.2%, though its own
+          footnote traces that figure to a study of a different insurance
+          market, so lean on it lightly. A denial that is wrong and never
+          appealed simply stands. A reversal rate that high among the few who
+          do appeal implies a much larger body of wrong denials that no one
+          ever touched. That is the tell that a population average was doing
+          work it could not do, capping the care of individuals whose own
+          records said they needed more.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The regulator's line</span>
+          <blockquote>
+            "An algorithm or software tool can be used to assist providers or
+            MA plans in predicting a potential length of stay, but that
+            prediction alone cannot be used as the basis to terminate
+            post-acute care services."<sup class="nb-cite"
+              ><a href="#s4">4</a></sup
+            >
+            <span class="nb-note-who">Centers for Medicare &amp; Medicaid Services, coverage-criteria FAQ, February 2024</span>
+          </blockquote>
+        </div>
+        <p>
+          CMS, the federal agency that regulates these plans, issued that
+          guidance in February 2024, after the events in the suit, so it is the
+          regulator's stated position and not a ruling against UnitedHealth. It
+          states the exact move the mechanism turns on: a predicted length of
+          stay, on its own, cannot end coverage.<sup
+            class="nb-cite"><a href="#s4">4</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="dispute" id="dispute">
+        <h2>The dispute discovery would settle</h2>
+        <p>
+          UnitedHealth's answer is that none of this describes what nH Predict
+          does.
+        </p>
+        <div class="nb-position">
+          <div class="nb-position-top">
+            <span class="nb-position-who">naviHealth / UnitedHealth</span>
+            <span class="nb-position-pill">Position</span>
+          </div>
+          <p class="nb-position-statement">
+            nH Predict is a guide, not a tool that makes coverage
+            determinations.
+          </p>
+          <p class="nb-position-summary">
+            The company says coverage is decided by clinicians against Medicare
+            criteria and the member's plan terms, and that the tool only helps
+            providers and families anticipate the care a patient may need. On
+            this account a high reversal rate is not proof the first denial was
+            wrong. An appeal is decided later, on a fuller record that can
+            include new clinical information, so a reversal can reflect changed
+            facts rather than an original mistake.<sup class="nb-cite"
+              ><a href="#s5">5</a></sup
+            >
+          </p>
+        </div>
+        <p>
+          The plaintiffs say the guide was decisive in practice. The 1% target
+          and the discipline behind it, they argue, made the model's date the
+          operative decision, and the members' policies said coverage
+          determinations would be made by clinical staff rather than by an
+          algorithm.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Two things would settle which account is right, and both sit in
+          discovery, where the court has ordered UnitedHealth to open its
+          records. The first is the internal directions: how tightly the 1%
+          target actually bound reviewers, and whether departing from the tool
+          was really punished. The second is the denial-and-appeal data with
+          its denominators: how many post-acute denials there were, how many
+          patients appealed, and whether reversals corrected the original
+          decision or reflected genuinely new facts. The complaint's 90% is
+          precisely the number that data would confirm or break.
+        </p>
+        <p>
+          Away from the suit, a Senate investigation found the denials climbing
+          as the automation spread. The Permanent Subcommittee on
+          Investigations reported in October 2024, drawing on more than 280,000
+          pages of the insurers' own documents, that UnitedHealthcare's denial
+          rate for post-acute prior authorization roughly doubled in three
+          years.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            UnitedHealthcare's denial rate for post-acute prior-authorization
+            requests, as its review was automated.<sup class="nb-cite"
+              ><a href="#s6">6</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Denial rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">2020</span></td>
+              <td>10.9%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">2021</span></td>
+              <td>16.3%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">2022</span></td>
+              <td>22.7%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Those numbers do not come from the litigants, but the subcommittee
+          stopped short of the causal claim. It described nH Predict only as an
+          algorithm "linked in media reports" to denials, not as a proven
+          cause.<sup class="nb-cite"><a href="#s6">6</a></sup> The case
+          itself is moving. In February 2025 a judge let the core contract
+          claims proceed while dismissing most of the other counts, according
+          to a legal-industry summary of the order, which was the reading
+          available; the underlying opinion could not be retrieved
+          directly.<sup class="nb-cite"><a href="#s7">7</a></sup> The case
+          remains open, with class-certification steps scheduled into September
+          2026.<sup class="nb-cite"><a href="#s8">8</a></sup> No court has yet
+          ruled on whether nH Predict drove the denials.
+        </p>
+      </section>
+
+      <section data-nb-section="cigna" id="cigna">
+        <h2>The same move at Cigna</h2>
+        <p>
+          The nH Predict pattern, taking a prediction built to describe a group
+          and using it to decide one person's case, is not unique to
+          UnitedHealth or to nursing care. In 2023, ProPublica and The Capitol
+          Forum reported that the insurer Cigna used a system called PXDX to
+          deny more than 300,000 payment requests over two months, at an
+          average of about 1.2 seconds per case. One medical director denied
+          roughly 60,000 in a single month. A former Cigna doctor described the
+          work plainly: "We literally click and submit. It takes all of 10
+          seconds to do 50 at a time." Cigna called the reporting biased and
+          incomplete and said the system speeds payment for routine
+          claims.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <p>
+          The common thread runs through both. Wherever a number built to
+          summarize a population is wired straight to a decision about one
+          person, and the people it decides against cannot see it or easily
+          contest it, the same failure waits. Automated prior
+          authorization is spreading across insurers, and every system that
+          adopts it inherits the question this suit asks: is the model a guide,
+          or the decision.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          nH Predict was built to estimate how long a patient like this one
+          tends to need care. That estimate is an average, and an average is a
+          fact about a crowd, not a promise about the person in the bed. The
+          class action's charge is that UnitedHealth wired the average straight
+          to the decision, holding stays to within 1% of the projected days and
+          ending coverage near the model's date, so that a guess about similar
+          patients became a cap on this one. No court has ruled on whether that
+          is what happened, and the numbers that would settle it are still in
+          discovery. What you can carry away is the shape of the error, because
+          it turns up wherever insurers automate. A prediction is safe as
+          advice and dangerous as a verdict. The surest sign the line was
+          crossed is a run of denials that fall apart the moment someone
+          appeals, while most are never appealed at all.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.statnews.com/2023/03/13/medicare-advantage-plans-denial-artificial-intelligence/">STAT News, "Denied by AI"</a>:
+            the investigation that first described nH Predict from naviHealth's own material.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.hsgac.senate.gov/wp-content/uploads/2024.10.17-PSI-Majority-Staff-Report-on-Medicare-Advantage.pdf">Senate PSI, "Refusal of Recovery"</a>:
+            the subcommittee's findings on how Medicare Advantage insurers denied post-acute care.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.statnews.com/2023/03/13/medicare-advantage-plans-denial-artificial-intelligence/"
+              >STAT News · Denied by AI: how a UnitedHealth algorithm predicts patients' needs</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://litigationtracker.law.georgetown.edu/wp-content/uploads/2023/11/Estate-of-Gene-B.-Lokken-et-al_20231114_COMPLAINT.pdf"
+              >U.S. District Court, D. Minn. · Estate of Gene B. Lokken et al. v. UnitedHealth Group, complaint (No. 0:23-cv-03514)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.statnews.com/2023/11/14/unitedhealth-algorithm-medicare-advantage-investigation/"
+              >STAT News · UnitedHealth pushed employees to follow an algorithm to cut off Medicare patients' rehab care</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.cms.gov/files/document/hpms-memo-faq-coverage-criteria-and-utilization-management-020604pdf.pdf"
+              >Centers for Medicare &amp; Medicaid Services · FAQ on coverage criteria and utilization management (CMS-4201-F)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.cbsnews.com/news/unitedhealth-lawsuit-ai-deny-claims-medicare-advantage-health-insurance-denials/"
+              >CBS News · naviHealth statement on the nH Predict tool ("not used to make coverage determinations")</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.hsgac.senate.gov/wp-content/uploads/2024.10.17-PSI-Majority-Staff-Report-on-Medicare-Advantage.pdf"
+              >U.S. Senate Permanent Subcommittee on Investigations · Refusal of Recovery: How Medicare Advantage Insurers Have Denied Patients Access to Post-Acute Care</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.legalhie.com/judge-decides-class-action-lawsuit-can-proceed-against-unitedhealth-for-use-of-ai/"
+              >LegalHIE · Judge decides class-action lawsuit can proceed against UnitedHealth for use of AI</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://litigationtracker.law.georgetown.edu/litigation/estate-of-gene-b-lokken-the-et-al-v-unitedhealth-group-inc-et-al/"
+              >Georgetown Health Care Litigation Tracker · Estate of Gene B. Lokken et al. v. UnitedHealth Group, Inc. et al.</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.propublica.org/article/cigna-pxdx-medical-health-insurance-rejection-claims"
+              >ProPublica · How Cigna Saves Millions by Having Its Doctors Reject Claims Without Reading Them</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
