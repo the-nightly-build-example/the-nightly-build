@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPT-4 sits above the EU's systemic-risk line on a number OpenAI never disclosed · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "training-compute",
+        "template": "lesson",
+        "title": "GPT-4 sits above the EU's systemic-risk line on a number OpenAI never disclosed",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-04",
+        "tags": ["training-compute", "flop", "regulation", "eu-ai-act", "estimation"],
+        "sources": 12,
+        "words": 2186,
+        "reading_minutes": 10,
+        "dek": "Training compute is the FLOP count regulators now write into law to mark the AI frontier, and almost no lab measures it: the headline figure is reconstructed after the run, two ways, each an estimate with a loose joint.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">GPT-4 sits above the EU's systemic-risk line on a number OpenAI never disclosed</h1>
+        <p class="nb-dekline">
+          Training compute is the FLOP count regulators now write into law to mark the AI frontier, and almost no lab measures it: the headline figure is reconstructed after the run, two ways, each an estimate with a loose joint.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-08-04</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every few months a model arrives with a headline about its size:
+          trained on so many chips, for so many weeks, at a cost of so many
+          millions. The single number underneath those headlines is training
+          compute, the count of arithmetic operations it took to build the
+          model. It has become the figure the field uses to rank scale, and
+          since 2024 the figure two governments use to decide which models are
+          capable enough, or dangerous enough, to regulate. This lesson shows
+          where the number comes from, why it is an estimate and not a
+          measurement, and how much weight it can honestly carry. By the end you
+          will read a training-compute figure the way the people who produce it
+          do: as a careful reconstruction with known soft spots, not a reading
+          off a meter.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/scaling-laws-kaplan.html">Scaling Laws for Neural Language Models</a>:
+            where the six-operations-per-parameter rule was first derived.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/chinchilla.html">Training Compute-Optimal Large Language Models</a>:
+            how a compute budget is split between parameters and training tokens.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The number the law now draws on</h2>
+        <p>
+          Training compute is the total number of floating-point operations, the
+          additions and multiplications on decimal numbers, that a computer runs
+          to train a model from scratch. Bigger runs need more operations, so
+          the field uses the figure to rank models by scale. Since 2024 it is
+          also where two governments draw the frontier. The European Union's AI
+          Act presumes that a general-purpose model has high-impact capabilities,
+          and so poses systemic risk, once the compute used to train it passes
+          10<sup>25</sup> floating-point operations.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The United States set a reporting trigger an order of magnitude higher,
+          at 10<sup>26</sup> operations, in Executive Order 14110.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The odd thing about these lines is that the number they rest on is
+          almost never measured. Consider GPT-4, which sits just above the EU
+          threshold. Its training compute is usually given as about
+          2.1&#8239;&#215;&#8239;10<sup>25</sup> operations, a figure the research
+          group Epoch AI reconstructed from the hardware GPT-4 was believed to run
+          on and how long it trained. OpenAI has never published the
+          number.<sup class="nb-cite"><a href="#s3">3</a></sup> The quantity that
+          would place GPT-4 on the wrong side of Europe's systemic-risk line is an
+          outside estimate, not a disclosure.
+        </p>
+        <p>
+          Training compute measures the size of a training run and nothing else.
+          It is not the model's capability, not the dollars a lab spent, not the
+          energy a finished model burns answering a single query, and not how
+          fast it answers. Each of those is a separate number this course
+          measures on its own: the
+          <a href="../the-instruments/cost-per-token.html">price of a token</a>, the
+          <a href="../the-instruments/energy-per-query.html">energy a query costs</a>, the
+          <a href="../the-instruments/tokens-per-second.html">tokens per second</a> it
+          produces. Training compute answers one question: how large the run was.
+        </p>
+      </section>
+
+      <section data-nb-section="rebuild" id="rebuild">
+        <h2>Rebuilding a run's compute after the fact</h2>
+        <p>
+          Because the true operation count is rarely reported, it has to be
+          rebuilt, and there are two standard ways to do it. The first works
+          from the hardware. Multiply the number of chips by each chip's peak
+          speed in operations per second, by the wall-clock time the run took,
+          by the fraction of that peak the run actually
+          reached.<sup class="nb-cite"><a href="#s4">4</a></sup> That last
+          fraction has a name: model FLOPs utilization, or MFU, the ratio of the
+          work a run really did to the theoretical maximum if every chip ran flat
+          out the whole time.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          The second method skips the hardware and works from the model's own
+          dimensions. For a standard dense transformer, training costs about six
+          floating-point operations for every parameter, for every token it
+          trains on. Multiply the parameters by the tokens by six and you have
+          the compute. The rule comes from the 2020
+          <a href="../the-evidence/scaling-laws-kaplan.html">scaling-laws work</a>
+          of Kaplan and colleagues.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The <a href="../the-evidence/chinchilla.html">Chinchilla</a> team relied
+          on the same approximation and checked it against an exact operation
+          count, finding the difference very
+          small.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          The six is not arbitrary. A forward pass through the network costs
+          about two operations per parameter per token, one multiply and one add.
+          Training also runs a backward pass to work out how to adjust each
+          parameter, and that pass costs about twice the forward one. Two for the
+          forward pass, times three for forward-plus-backward, gives
+          six.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \htmlClass{nb-mc1}{C} \;=\; \htmlClass{nb-mc2}{6}\,\htmlClass{nb-mc3}{N}\,\htmlClass{nb-mc4}{D}
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">C</span
+              ><span>the estimated training compute, in floating-point operations.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">6</span
+              ><span>two operations per parameter in the forward pass, tripled to add the backward pass.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">N</span
+              ><span>the number of parameters in the model.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc4">D</span
+              ><span>the number of tokens it trains on.</span>
+            </li>
+          </ul>
+          <figcaption>
+            The analytic estimate: six operations per parameter, per training
+            token.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          </figcaption>
+        </figure>
+
+        <p>
+          Meta's Llama 3.1 405B makes the rule concrete. It is a dense model with
+          405 billion parameters, trained on 15.6 trillion tokens. Six times 405
+          billion times 15.6 trillion is about
+          3.8&#8239;&#215;&#8239;10<sup>25</sup> operations, and
+          3.8&#8239;&#215;&#8239;10<sup>25</sup> is exactly the figure Meta
+          reported.<sup class="nb-cite"><a href="#s8">8</a></sup> When both methods
+          can be run on the same model they rarely disagree by more than a factor
+          of 1.7.<sup class="nb-cite"><a href="#s4">4</a></sup> For a disclosed,
+          dense model, the estimate is a good one.
+        </p>
+      </section>
+
+      <section data-nb-section="loose-joints" id="loose-joints">
+        <h2>The loose joints</h2>
+        <p>
+          Both methods hide a soft spot, and the soft spots are physical. Start
+          with utilization. A chip's peak speed is a ceiling it reaches only when
+          every arithmetic unit stays fed with data. In a real run spread across
+          thousands of chips, they spend time waiting on memory and on messages
+          to one another, so throughput lands well below peak. Google's PaLM
+          reached 46.2% MFU, and that was high for the field, managed only after
+          heavy engineering.<sup class="nb-cite"><a href="#s5">5</a></sup> Llama
+          3.1 405B logged between 38% and
+          43%.<sup class="nb-cite"><a href="#s8">8</a></sup> When a lab discloses
+          nothing, an estimator has to pick a fraction. Epoch defaults to 30% for
+          large language models.<sup class="nb-cite"><a href="#s4">4</a></sup> For
+          older models with no details at all, earlier work assumed 10% and
+          guessed the chip from the year of
+          publication.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+
+        <table class="nb-table">
+          <caption>
+            Model FLOPs utilization, the fraction of a chip's peak speed a run
+            actually reaches: measured on disclosed runs, assumed when a lab
+            discloses nothing.<sup class="nb-cite"><a href="#s5">5</a></sup><sup class="nb-cite"><a href="#s8">8</a></sup><sup class="nb-cite"><a href="#s4">4</a></sup><sup class="nb-cite"><a href="#s9">9</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Run or estimator</th>
+              <th>MFU</th>
+              <th class="txt">What the figure is</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">PaLM 540B</td>
+              <td>46.2%</td>
+              <td class="txt">Measured; high for the field, after heavy optimization.</td>
+            </tr>
+            <tr>
+              <td class="txt">Llama 3.1 405B</td>
+              <td>38&#8211;43%</td>
+              <td class="txt">Measured across a frontier run on H100 GPUs.</td>
+            </tr>
+            <tr>
+              <td class="txt">Epoch default</td>
+              <td>30%</td>
+              <td class="txt">Assumed for language models when a lab discloses nothing.</td>
+            </tr>
+            <tr>
+              <td class="txt">Older models</td>
+              <td>10%</td>
+              <td class="txt">Assumed, with the chip guessed from the publication year.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          That single fraction moves the whole answer. Get the utilization wrong
+          by a factor of two and the compute estimate is wrong by a factor of
+          two, before any other error enters. For Llama, where the parameters and
+          tokens are known, the guess only nudges a number the 6ND rule already
+          pins down. For GPT-4, where nothing is disclosed, the utilization is a
+          guess sitting on top of a guessed chip count and a guessed training
+          time, and the wide error bars never appear next to the tidy
+          2.1&#8239;&#215;&#8239;10<sup>25</sup>.
+        </p>
+        <p>
+          The 6ND rule has its own blind spot. It assumes every parameter does
+          work on every token, which is true for a dense model like Llama but
+          false for a mixture-of-experts model, the now-common design that routes
+          each token to a few specialist sub-networks and leaves the rest idle.
+          Counting all the parameters when only a fraction fire overstates the
+          compute, so the rule has to be run on the active parameters instead.
+          And both methods count only the final training run. The failed runs,
+          the abandoned experiments, and the later rounds of tuning on human
+          feedback that turn a raw model into a usable one are all left
+          out.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <p>
+          So the number is almost never measured. GPT-4 exists in public only as
+          an estimate, and even Llama's disclosed figure is Meta's own
+          6ND-and-hardware accounting, not a reading from an instrument.
+          Disclosure is the exception, and a disclosed figure is still an
+          estimate. It is just the lab's own.
+        </p>
+      </section>
+
+      <section data-nb-section="risk-class" id="risk-class">
+        <h2>From run size to risk class</h2>
+        <p>
+          Everything so far reads the number forward, from a run to its size.
+          Meta discloses 3.8&#8239;&#215;&#8239;10<sup>25</sup> to say how big
+          Llama's run was; Epoch's database catalogs runs by scale. Read that
+          way, the number does honest work.
+        </p>
+        <p>
+          Regulation reads it the other way, from the size back to a judgment
+          about the model. The EU AI Act treats crossing 10<sup>25</sup>
+          operations as a reason to presume high-impact capabilities and systemic
+          risk.<sup class="nb-cite"><a href="#s1">1</a></sup> Executive Order 14110
+          set its 10<sup>26</sup> reporting trigger the same way. It added a far
+          lower line of 10<sup>23</sup> operations for models trained mainly on
+          biological sequence data, and a separate line of 10<sup>20</sup>
+          operations per second for the computing clusters
+          themselves.<sup class="nb-cite"><a href="#s2">2</a></sup> That order was
+          revoked on 20 January 2025 by Executive Order 14148, so the US trigger
+          is no longer in force, though the EU line remains and the reasoning
+          behind both is the same.<sup class="nb-cite"><a href="#s10">10</a></sup>
+        </p>
+
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">10<sup>25</sup></span
+            ><span class="nb-stat-l">EU systemic-risk line</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">10<sup>26</sup></span
+            ><span class="nb-stat-l">US reporting trigger, revoked</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">3.8&#8239;&#215;&#8239;10<sup>25</sup></span
+            ><span class="nb-stat-l">Llama 3.1 405B, disclosed</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">2.1&#8239;&#215;&#8239;10<sup>25</sup></span
+            ><span class="nb-stat-l">GPT-4, estimated</span>
+          </div>
+        </div>
+
+        <p>
+          The law is not naive about this. The EU threshold is a rebuttable
+          presumption, a starting assumption a developer can argue against rather
+          than a fixed verdict.<sup class="nb-cite"><a href="#s1">1</a></sup> The
+          Act's own text calls training compute only one of several approximations
+          for a model's capabilities, to be revised as hardware and methods
+          improve.
+        </p>
+
+        <div class="nb-note">
+          <span class="nb-note-label">In the law's words</span>
+          <blockquote>
+            Cumulative training compute in floating-point operations is "one of
+            the relevant approximations for model
+            capabilities."<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">EU AI Act, Recital 111</span>
+          </blockquote>
+        </div>
+
+        <p>
+          Whether the line is a good one is genuinely contested. Heim and
+          Koessler argue that training compute is the best early-warning metric
+          available: it can be known before a model ships, it correlates with
+          capability and risk, and an outside auditor can verify it. They still
+          grant that it is "an imperfect proxy for risk" and belongs only as a
+          first filter inside a broader
+          regime.<sup class="nb-cite"><a href="#s11">11</a></sup> Sara Hooker
+          argues the other side. The link between compute and risk is uncertain
+          and moving. Better algorithms and data let a smaller, cheaper model
+          match a larger one, so a fixed FLOP line will wave through some
+          dangerous systems and stop some harmless
+          ones.<sup class="nb-cite"><a href="#s12">12</a></sup>
+        </p>
+        <p>
+          The two frontier cases show the strain. The model the public most wants
+          classified, GPT-4, is on the wrong side of the EU line only by Epoch's
+          estimate. The one that disclosed, Llama 3.1 405B, gave a figure that is
+          still its own accounting. As of June 2025 Epoch counted 33 announced
+          models above the EU line, most of them estimates rather than
+          disclosures.<sup class="nb-cite"><a href="#s3">3</a></sup> The frontier
+          is being drawn with a ruler whose markings are, for the most part,
+          inferred.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Training compute honestly measures one thing: roughly how big a
+          training run was. Even at its most solid the figure is an accounting
+          estimate, either the six-per-parameter rule applied to a model's
+          parameters and tokens or a chip count multiplied by an assumed
+          utilization. GPT-4's 2.1&#8239;&#215;&#8239;10<sup>25</sup> is an
+          outside guess OpenAI never confirmed; Llama 3.1 405B's
+          3.8&#8239;&#215;&#8239;10<sup>25</sup> is Meta's own accounting, not a
+          metered quantity. The law asks this number to do more than it can: to
+          certify that a model is capable enough, or dangerous enough, to warrant
+          oversight. That is reading a run's size backward into a claim about what
+          the model can do, and it is why the EU wrote its 10<sup>25</sup> line as
+          a presumption a developer can rebut. The number tells you how big the
+          run was. Whether that makes the model dangerous is a different question,
+          and the FLOP count cannot answer it alone.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://epoch.ai/blog/estimating-training-compute">Epoch AI, Estimating Training Compute</a>:
+            the two methods worked through in full, with the assumptions named.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2407.05694">Hooker, On the Limitations of Compute Thresholds</a>:
+            the case that a FLOP line is a poor proxy for risk.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2405.10799">Heim &amp; Koessler, Training Compute Thresholds</a>:
+            the case for compute as a first filter, and its limits.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://eur-lex.europa.eu/eli/reg/2024/1689/oj/eng"
+              >Official Journal of the EU · Regulation (EU) 2024/1689 (AI Act), Article 51 and Recital 111</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.govinfo.gov/content/pkg/FR-2023-11-01/pdf/2023-24283.pdf"
+              >Federal Register · Executive Order 14110, Section 4.2(b) (88 FR 75191)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://epoch.ai/data-insights/models-over-1e25-flop"
+              >Epoch AI · Models over 10^25 FLOP</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://epoch.ai/blog/estimating-training-compute"
+              >Epoch AI · Estimating Training Compute of Deep Learning Models</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2204.02311"
+              >Chowdhery et al. · PaLM: Scaling Language Modeling with Pathways</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2001.08361"
+              >Kaplan et al. · Scaling Laws for Neural Language Models</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.15556"
+              >Hoffmann et al. · Training Compute-Optimal Large Language Models (Chinchilla)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2407.21783"
+              >Llama 3 team, Meta · The Llama 3 Herd of Models</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2202.05924"
+              >Sevilla et al. · Compute Trends Across Three Eras of Machine Learning</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.presidency.ucsb.edu/documents/executive-order-14148-initial-rescissions-harmful-executive-orders-and-actions"
+              >American Presidency Project · Executive Order 14148 (Initial Rescissions)</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2405.10799"
+              >Heim &amp; Koessler · Training Compute Thresholds: Features and Functions in AI Regulation</a
+            >
+          </li>
+          <li id="s12">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2407.05694"
+              >Hooker · On the Limitations of Compute Thresholds as a Governance Strategy</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
