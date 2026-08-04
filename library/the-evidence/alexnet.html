@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AlexNet won ImageNet 2012 on two gaming GPUs · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "alexnet",
+        "template": "lesson",
+        "title": "AlexNet won ImageNet 2012 on two gaming GPUs",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-04",
+        "tags": [],
+        "sources": 8,
+        "words": 2141,
+        "reading_minutes": 9,
+        "dek": "Krizhevsky, Sutskever, and Hinton beat the runner-up by roughly ten points in 2012, a margin that pushed computer vision toward depth, data, and compute for good.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">AlexNet won ImageNet 2012 on two gaming GPUs</h1>
+        <p class="nb-dekline">
+          Krizhevsky, Sutskever, and Hinton beat the runner-up by roughly ten
+          points in 2012, a margin that pushed computer vision toward depth,
+          data, and compute for good.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-04</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have heard that 2012 was the year deep learning arrived, and that a
+          network called AlexNet proved it. The proof is a single paper: eight
+          pages of network diagrams and error tables from three researchers at
+          the University of Toronto. This lesson reads it closely. What was the
+          network? What did it score, and against whom? What hardware did it run
+          on? And of the ideas that made it work, which are still in use fourteen
+          years later? By the end you can separate what the paper demonstrated
+          from the larger claim the field has built on top of it, without docking
+          a point from either.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/gradient-descent.html">One gradient step
+            drops the loss from 7.0 to 0.225</a>: how a network learns from its
+            own errors, one step at a time.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">An attention head is a
+            weighted average that computes its own weights</a>: the mechanism
+            behind the Vision Transformer that later challenged convolutional
+            networks.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Ten points clear of the field</h2>
+        <p>
+          In the 2012 ImageNet Large Scale Visual Recognition Challenge, the
+          standard test of whether a program can name what is in a photograph,
+          AlexNet placed first with a top-5 error of 15.3 percent. The
+          second-best entry scored 26.2 percent.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Top-5 error is a forgiving measure: the program offers five guesses for
+          each image and is charged an error only when the correct label is in
+          none of them. On that measure AlexNet was wrong about one image in
+          seven, the runner-up worse than one in four. A gap that wide, in a
+          contest usually decided in tenths of a percent, is why people remember
+          the year.
+        </p>
+        <p>
+          The famous 15.3 percent is worth reading closely, because it is not the
+          number the paper spends most of its pages on. That entry was an
+          ensemble: seven copies of the network with their guesses averaged, two
+          of the seven pre-trained on an extra slice of ImageNet released the
+          previous fall.<sup class="nb-cite"><a href="#s1">1</a></sup> The single
+          network the paper actually describes and dissects scored 18.2 percent
+          on the validation set. Averaging five of them, all trained on the
+          provided data, reached 16.4 percent.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s2">2</a></sup> None of this shrinks the
+          achievement. At 18.2 percent the one network still sat about eight
+          points ahead of the 26.2 percent runner-up, and every row in the table
+          beat the field. It is only that the round figure everyone quotes
+          belongs to the stacked version, not the single model.
+        </p>
+        <table class="nb-table">
+          <caption>
+            ILSVRC-2012 top-5 error: the entries behind AlexNet's headline
+            number, set against the runner-up.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            ><sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Entry</th>
+              <th>Top-5 error</th>
+              <th class="txt">What it was</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Single net</span></td>
+              <td>18.2%</td>
+              <td class="txt">The one network the paper describes; validation set.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Five nets</span></td>
+              <td>16.4%</td>
+              <td class="txt">Five copies averaged, provided data only; validation set.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Seven nets</span></td>
+              <td>15.3%</td>
+              <td class="txt">The winning entry; two nets pre-trained on extra 2011 data; test set.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Runner-up</span></td>
+              <td>26.2%</td>
+              <td class="txt">Best entry from any other team; test set.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The paper reports the same pattern a year earlier. On the 2010 data,
+          where organizers still held the test labels, its network reached 17.0
+          percent top-5 error against 25.7 percent for the best result published
+          before it.<sup class="nb-cite"><a href="#s1">1</a></sup> Whichever entry
+          you count, the win was real and the margin was large.
+        </p>
+      </section>
+
+      <section data-nb-section="the-network" id="the-network">
+        <h2>How eight layers turned pixels into a guess</h2>
+        <p>
+          AlexNet is a convolutional neural network with eight learned layers:
+          five convolutional layers followed by three fully connected ones, about
+          60 million adjustable numbers in all.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The word convolutional names the single operation the whole network is
+          built from. Picture a small square stencil, eleven pixels on a side in
+          the first layer, slid across the image one step at a time. At each stop
+          it multiplies the pixels beneath it by a fixed grid of weights and adds
+          the products into one number.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Slide it everywhere and you get a new, smaller image that lights up
+          wherever the picture matched the stencil's pattern: an edge at a certain
+          angle, a patch of a certain color. The first layer runs 96 such
+          stencils at once. Later layers slide their own stencils over the outputs
+          of earlier ones, so edges compose into textures, textures into parts,
+          and parts into objects. The last layer turns the final numbers into a
+          probability for each of the 1000 categories the contest asks about.
+        </p>
+        <p>
+          The weights in every stencil are not set by hand. They are
+          <a href="../the-mechanics/gradient-descent.html">learned</a>, nudged
+          toward better values one training step at a time until the network's
+          guesses stop improving. The eight layers stacked this way are what makes
+          the network deep. The paper is unusually direct that the depth is doing
+          the work: each convolutional layer holds less than one percent of the
+          network's weights, yet removing any single one of them measurably worsens
+          the result.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            The paper's central claim is about depth, not any one trick. Given
+            enough labeled images and enough compute to train on them, stacking
+            more layers keeps improving what the network can recognize, and that
+            claim, unlike most of the techniques around it, is still
+            standing.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </p>
+        </div>
+      </section>
+
+      <section data-nb-section="the-constraints" id="the-constraints">
+        <h2>The constraints did the designing</h2>
+        <p>
+          Read the paper as a list of engineering decisions and a pattern
+          appears: nearly every one answers a limit the authors could not remove.
+          The two hardest limits were the size of the graphics cards and the size
+          of the dataset.
+        </p>
+        <p>
+          The network was too big for the memory on one card. So the authors
+          split it across two NVIDIA GTX 580s, the graphics cards sold for gaming
+          PCs that year, with three gigabytes of memory each, and let the halves
+          exchange information only at certain layers.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The two-GPU split was not a theory about how vision should work. It was
+          a way to fit a large network into six gigabytes total. Training the
+          whole thing took five to six days.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          To make training that fast, they replaced the usual smooth activation
+          function with the rectified linear unit, which passes positive values
+          straight through and zeroes out the rest. On a test network it reached a
+          given training error about six times faster than the standard
+          choice.<sup class="nb-cite"><a href="#s1">1</a></sup> Two smaller
+          adjustments, local response normalization and overlapping pooling, each
+          shaved off another point or so.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The dataset was the other hard limit, and it created the opposite
+          problem. A network with 60 million weights can memorize its training
+          images outright, learning the specific pictures rather than what a dog
+          looks like, and then fail on anything new. That failure is overfitting,
+          and two of the paper's techniques exist only to prevent it.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The first, data augmentation, manufactures fresh training images from
+          the ones on hand by cropping, flipping, and shifting the colors. That
+          enlarged the effective training set by a factor of more than two
+          thousand.<sup class="nb-cite"><a href="#s1">1</a></sup> The second,
+          dropout, randomly switches off half the neurons in the large final
+          layers on every pass, so no neuron can lean on any particular other one.
+          Each must instead learn a feature that stands on its own. Dropout
+          roughly doubled the number of passes needed to converge, and the authors
+          paid that cost on purpose.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-ground" id="the-ground">
+        <h2>AlexNet stood on ImageNet and DanNet</h2>
+        <p>
+          None of this would have made a headline without the thing the network
+          trained on. ImageNet was a database of labeled photographs assembled at
+          Princeton starting in 2009, sorted into categories by hand through
+          Amazon's Mechanical Turk at a reported labeling precision of 99.7
+          percent.<sup class="nb-cite"><a href="#s3">3</a></sup> The contest subset
+          AlexNet used held about 1.2 million training images across 1000
+          categories.<sup class="nb-cite"><a href="#s2">2</a></sup> Collecting and
+          labeling images at that scale was itself the precondition the result
+          rested on: a network that learns from examples is worth nothing without
+          more than a million correct examples to learn from. The authors say as
+          much, opening the paper by crediting the dataset.
+        </p>
+        <p>
+          The method was not new in 2012 either. Convolutional networks go back to
+          the 1980s, and, more pointedly, deep convolutional networks trained on
+          graphics cards had already been winning vision contests. A group at the
+          Swiss lab IDSIA, led by Dan Ciresan and later nicknamed DanNet, used
+          GPU-trained deep networks to reach 0.23 percent error on handwritten
+          digits. On a traffic-sign benchmark the same approach beat people
+          outright, making half as many mistakes as the human
+          entrants.<sup class="nb-cite"><a href="#s4">4</a></sup> That work was
+          published months before AlexNet, and AlexNet cites it.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          What 2012 changed was not the existence of deep networks on graphics
+          cards but the arena. ImageNet's thousand categories and million images
+          were a far harder test than digits or traffic signs, and winning there
+          is what drew the industry in.
+        </p>
+        <p>
+          Read this way, AlexNet was less an invention than a convergence. A
+          retrospective from the Computer History Museum names three ingredients
+          that had to arrive together: labeled data at ImageNet's scale, graphics
+          cards fast enough to train on it, and the deep-network methods
+          themselves. "Each of these needed the other," it
+          says.<sup class="nb-cite"><a href="#s5">5</a></sup> AlexNet was the
+          first result to hold all three at once on a problem the whole field was
+          watching.
+        </p>
+      </section>
+
+      <section data-nb-section="what-held" id="what-held">
+        <h2>The bet on scale outlived its techniques</h2>
+        <p>
+          In the years after, most of AlexNet's specific techniques were
+          replaced, and it is worth seeing who replaced which one. Local response
+          normalization, one of its error-shaving tricks, was retired outright.
+          The 2015 batch normalization paper, building a network without it,
+          reported that "with Batch Normalization it is not necessary."<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          The two-GPU split vanished as soon as card memory grew enough to hold a
+          network on one chip. Even the convolutional design at the center of the
+          paper was later challenged. The 2021 Vision
+          <a href="../the-mechanics/attention.html">Transformer</a> drops
+          convolution entirely. Pre-trained on enough data, it matched and passed
+          the best convolutional networks on ImageNet, and its authors summed the
+          lesson up as "large scale training trumps inductive
+          bias."<sup class="nb-cite"><a href="#s7">7</a></sup> No single document
+          overturned AlexNet. Three separate ones each retired a different part of
+          it.
+        </p>
+        <p>
+          What survived was the bet underneath those parts: that piling on depth,
+          data, and compute would keep paying off. It did. The winning error on
+          the same contest kept falling after 2012, from AlexNet's 15.3 percent to
+          6.7 percent by 2014, a more-than-fourfold reduction across the
+          challenge's first five years.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="alexnet/chart-1.png"
+            alt="Bar chart of the winning top-5 error at three ImageNet challenges: 28.2 percent in 2010, 15.3 percent in 2012 when AlexNet won, and 6.7 percent in 2014. The 2011 and 2013 contests are not plotted."
+          />
+          <figcaption>
+            Fig. 1 · Winning top-5 error at the ImageNet challenge for 2010,
+            2012, and 2014; the 2011 and 2013 contests are not plotted. AlexNet
+            won in 2012.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          That falling number carries its own caution. In 2019 researchers built
+          a fresh ImageNet test set, drawn the same way as the original, and
+          re-scored the established models on it. They lost 11 to 14 points of
+          accuracy.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The 2012 result does not lean on any of this. AlexNet's margin was far
+          too large to be a test-set artifact. But the leaderboard it started is
+          worth reading with the same care the paper itself earns.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          So what did AlexNet prove? Something precise: that a deep convolutional
+          network, trained on ImageNet's labeled images across two consumer
+          graphics cards, could win the 2012 vision contest by a margin wider than
+          any tweak to the old hand-built methods had ever produced. That result
+          was real, and it was large. What it did not do was invent the pieces it
+          used. The network form, the graphics-card training, even superhuman
+          accuracy on a vision task all came earlier. ImageNet's labeled scale was
+          built by someone else. The contest kept improving for years afterward.
+          AlexNet's achievement was to be the first to bring depth, data, and
+          compute together on a problem the whole field was watching, and to win
+          so clearly that the field reorganized around it. When you next hear
+          that 2012 was the year deep learning was proved, you can hold both
+          halves at once. The paper earned its place, and it earned it by
+          confirming a direction rather than opening one out of nothing.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a
+              href="https://papers.nips.cc/paper_files/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html"
+              >ImageNet Classification with Deep Convolutional Neural
+              Networks</a>: the eight pages themselves, short and readable.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://computerhistory.org/blog/chm-releases-alexnet-source-code/"
+              >CHM Releases AlexNet Source Code</a>: the win seen in hindsight,
+            with the original code now public.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://papers.nips.cc/paper_files/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html"
+              >NeurIPS 2012 · Krizhevsky, Sutskever & Hinton, ImageNet
+              Classification with Deep Convolutional Neural Networks</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1409.0575"
+              >Russakovsky et al. · ImageNet Large Scale Visual Recognition
+              Challenge (2015)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.image-net.org/static_files/papers/imagenet_cvpr09.pdf"
+              >CVPR 2009 · Deng et al., ImageNet: A Large-Scale Hierarchical Image
+              Database</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1202.2745"
+              >Ciresan, Meier & Schmidhuber · Multi-column Deep Neural Networks
+              for Image Classification (2012)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://computerhistory.org/blog/chm-releases-alexnet-source-code/"
+              >Computer History Museum · Hsu, CHM Releases AlexNet Source Code
+              (2025)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1502.03167"
+              >Ioffe & Szegedy · Batch Normalization (2015)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2010.11929"
+              >Dosovitskiy et al. · An Image Is Worth 16x16 Words: Transformers
+              for Image Recognition at Scale (2021)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1902.10811"
+              >Recht et al. · Do ImageNet Classifiers Generalize to ImageNet?
+              (2019)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
