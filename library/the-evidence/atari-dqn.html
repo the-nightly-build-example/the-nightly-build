@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DQN reached &lsquo;human-level&rsquo; Atari on 29 of the 49 games · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "atari-dqn",
+        "template": "lesson",
+        "title": "DQN reached ‘human-level’ Atari on 29 of the 49 games",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-05",
+        "tags": ["reinforcement-learning", "q-learning", "deepmind", "atari", "deep-rl"],
+        "sources": 7,
+        "words": 2193,
+        "reading_minutes": 10,
+        "dek": "The human in ‘human-level’ was one professional games tester playing about twenty short sessions, and the paper’s lasting contribution was two tricks that first made Q-learning stable on a neural network.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">DQN reached &lsquo;human-level&rsquo; Atari on 29 of the 49 games</h1>
+        <p class="nb-dekline">
+          The human in &lsquo;human-level&rsquo; was one professional games tester playing about twenty short
+          sessions, and the paper&rsquo;s lasting contribution was two tricks that first made Q-learning stable on a
+          neural network.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-08-05</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Almost every system now described as &ldquo;trained by reinforcement,&rdquo; from game-playing agents to
+          the reasoning models of 2025, descends from one 2015 result. It was the first time a deep neural network,
+          learning only by trial and error against a game score, taught itself to do something hard. That result
+          arrived wrapped in a phrase, &ldquo;human-level control,&rdquo; which has been doing more work ever since
+          than the paper&rsquo;s own tables support. By the end you will know three things: what the network
+          computed to choose each move, the two tricks without which it would have learned nothing, and what
+          &ldquo;human-level&rdquo; actually counted when DeepMind wrote the number down. You will be able to say
+          what the paper proved, and where its citation has drifted from that.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/gradient-descent.html">One gradient step drops the loss from 7.0 to
+            0.225</a>: the weight-update rule this lesson leans on at the training step, rather than re-teaching.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/alphago.html">AlphaGo&rsquo;s Nature paper never mentions Lee Sedol</a>: the
+            same lab&rsquo;s later system, built on search and self-play, a different branch of reinforcement
+            learning from the value-based one taught here.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One network learned 49 Atari games from raw pixels</h2>
+        <p>
+          In February 2015, a team at Google DeepMind published &ldquo;Human-level control through deep
+          reinforcement learning&rdquo; in <i>Nature</i>. A single convolutional neural network, with one fixed set
+          of hyperparameters, learned to play 49 different Atari 2600 games.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="abstract; p. 529">1</a></sup
+          >
+          Its only inputs were the raw screen pixels and the running game score. The paper reported
+          that it &ldquo;performed at a level that was comparable to that of a professional human games tester
+          across the set of 49 games.&rdquo;<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="abstract">1</a></sup
+          >
+          That sentence, compressed to two words, is why the paper is famous.
+        </p>
+        <p>
+          Those two words, &ldquo;human-level,&rdquo; hide a specific and checkable meaning.
+        </p>
+      </section>
+
+      <section data-nb-section="one-breakout-decision" id="one-breakout-decision">
+        <h2>Inside one Breakout paddle decision</h2>
+        <p>
+          Picture the Breakout screen: a paddle along the bottom, a ball falling toward it, a wall of bricks up
+          top. The network never sees &ldquo;a ball&rdquo; or &ldquo;a paddle.&rdquo; What it sees is four
+          grayscale snapshots of the screen, each shrunk to 84 pixels square and stacked into one block of 84 by
+          84 by 4 numbers.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="p. 530; Methods, Preprocessing">1</a></sup
+          >
+          Four frames rather than one, because a single still cannot tell you which way the ball is heading.
+        </p>
+        <p>
+          Now run the decision the network runs. Feed that block in. Out comes one number for each thing the
+          joystick can do: move the paddle left, move it right, hold still. Each number is the network&rsquo;s
+          estimate of the total future score if you take that action now and keep playing afterward. Pick the
+          action with the largest number. That is the entire decision.
+        </p>
+        <p>
+          That estimate has a name. It is <span class="nb-math-in">Q(s,a)</span>, the value of
+          taking action <span class="nb-math-in">a</span> in state <span class="nb-math-in">s</span>, defined as
+          the total reward you can expect from that point on if you keep playing well. An algorithm called
+          Q-learning, first described in 1989, learns this value function from experience. It converges toward the
+          best possible values however clumsily the agent played while learning. The agent then acts greedily,
+          taking the highest-valued action at each step.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 6.5, Eq. 6.8">2</a></sup
+          >
+          Learning a value and acting on it, with no model of the game and no search over future moves, is what
+          makes this a value-based method.
+        </p>
+        <p>
+          The network learns <span class="nb-math-in">Q</span> by correcting itself. After each action, it has a
+          better estimate of what the earlier state was worth: the reward just collected, plus the largest
+          <span class="nb-math-in">Q</span>-value available in the state it landed in. It nudges its weights, by
+          <a href="../the-mechanics/gradient-descent.html">gradient descent</a>, to pull the earlier estimate
+          toward that updated one.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 6.5">2</a></sup
+          >
+          This is bootstrapping: the target the network trains toward is built partly from the network&rsquo;s own
+          current guess about the next state.
+        </p>
+      </section>
+
+      <section data-nb-section="two-tricks" id="two-tricks">
+        <h2>Two tricks stop the training from diverging</h2>
+        <p>
+          Build the plain version anyone would try. Take a neural network, show it the stacked frames, have it
+          predict a <span class="nb-math-in">Q</span>-value for each action, and train it by gradient descent on
+          that bootstrapped target as the agent plays. Do that and it does not learn; it diverges. Two separate
+          problems wreck it, and each of the paper&rsquo;s two tricks removes one.
+        </p>
+        <p>
+          The first problem is that consecutive frames are nearly identical. As the agent plays, each frame it
+          trains on looks almost exactly like the one just before, so the network learns from a stream of
+          near-duplicates and forgets whatever it saw a few seconds earlier. It is like studying for an exam by
+          reading one paragraph ten thousand times and never turning the page. The fix is experience replay. Store
+          each transition the agent lives through, its state, action, reward, and next state, in a memory of the
+          last million. Then train on a random batch drawn from that memory rather than on the latest frame.
+          Drawing at random &ldquo;breaks these correlations and therefore reduces the variance
+          of the updates.&rdquo;<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Sec. 4.1">3</a></sup
+          >
+          Experience replay was already present in the 2013 precursor to this work, a seven-game version the same
+          team posted two years earlier.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Algorithm 1">3</a></sup
+          >
+        </p>
+        <p>
+          The second problem is subtler, and fixing it is what the 2015 paper added. The target the network trains
+          toward is computed from the network&rsquo;s own weights, the very weights each update changes. Every
+          time the network shifts toward the target, the target itself moves, because it was built from the
+          weights that just moved. The network is chasing a number it is simultaneously pushing away. The fix is a
+          separate target network. Keep a second, frozen copy of the network and compute the training targets from
+          that copy. In the paper&rsquo;s words, &ldquo;every <span class="nb-math-in">C</span> updates
+          we clone the network <span class="nb-math-in">Q</span> to obtain a target network&rdquo; and use it to
+          generate targets for the following <span class="nb-math-in">C</span> updates.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Methods, Target network">1</a></sup
+          >
+          The 2013 version had no such frozen copy; its targets came from the previous iteration&rsquo;s
+          weights.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Sec. 3">3</a></sup
+          >
+        </p>
+        <p>
+          How much do the two tricks matter? The authors turned each one off and measured. On Breakout, removing
+          experience replay alone collapsed the score about thirtyfold, and removing both dropped it to the floor
+          of random play.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Breakout under the paper&rsquo;s ablation: removing either trick lowers the score, and removing both
+            collapses it. Ten-million-frame runs, best average episode score.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Extended Data Table 3">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Configuration</th>
+              <th>Breakout score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Both tricks on</td>
+              <td>316.8</td>
+            </tr>
+            <tr>
+              <td class="txt">Experience replay only</td>
+              <td>240.7</td>
+            </tr>
+            <tr>
+              <td class="txt">Target network only</td>
+              <td>10.2</td>
+            </tr>
+            <tr>
+              <td class="txt">Neither</td>
+              <td>3.2</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Breakout is not special. Every one of the five games the authors tested collapsed the same way when both
+          tricks came off.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Extended Data Table 3">1</a></sup
+          >
+          This is the paper&rsquo;s durable contribution: not that a network reached some particular score, but
+          that these two changes made &ldquo;a neural network trained by Q-learning&rdquo; stop diverging and
+          start working at all.
+        </p>
+      </section>
+
+      <section data-nb-section="human-level-bar" id="human-level-bar">
+        <h2>What the &lsquo;human-level&rsquo; bar actually counted</h2>
+        <p>
+          &ldquo;Human-level&rdquo; was not a judgment call. It was a formula. The paper
+          set the top of each game&rsquo;s scale to a professional human games tester&rsquo;s score and the bottom
+          to random play. It called the agent &ldquo;human-level&rdquo; on a game once the agent reached at least
+          75% of the way from random up to that tester.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="p. 531; Fig. 3">1</a></sup
+          >
+          The threshold is written down plainly in the paper: performance &ldquo;operationalized as a level of 75%
+          or above.&rdquo;<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="p. 531">1</a></sup
+          >
+          On that 75% bar, DQN cleared 29 of the 49 games.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="p. 531">1</a></sup
+          >
+        </p>
+        <p>
+          Two facts sit underneath that number. The first is the human it was measured against: one professional
+          games tester, playing each game for about twenty sessions of up to five minutes each, with no pausing,
+          saving, or reloading.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Methods">1</a></sup
+          >
+          Every &ldquo;human-level&rdquo; claim in the paper rests on that one person&rsquo;s afternoon. The second
+          is the height of the bar. It sits at 75%, not at the human&rsquo;s actual score. Raise it to the full
+          human score, matched or beaten, and the count drops to 23 of 49. NBC News reported exactly that figure
+          the day the paper appeared: &ldquo;The AI outscored humans on 23 out of 49 games.&rdquo;<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The six games that sit between the 75% line and the human&rsquo;s real score are where the phrase
+          &ldquo;human-level&rdquo; is doing its quiet work.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">29 / 49</span><span class="nb-stat-l">GAMES AT 75% OF HUMAN</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">23 / 49</span><span class="nb-stat-l">GAMES AT THE HUMAN&rsquo;S SCORE</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">0</span><span class="nb-stat-l">POINTS ON MONTEZUMA&rsquo;S REVENGE</span>
+          </div>
+        </div>
+        <p>
+          The bottom of the scale is the sharpest case. On Montezuma&rsquo;s Revenge, DQN scored 0. The tester
+          scored 4,367 and random play scores 0, so DQN&rsquo;s 0 lands at 0.0% of human, the lowest of all 49
+          games.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Extended Data Table 2">1</a></sup
+          >
+          The reason is built into value learning. Q-learning can only raise the value of an action that led,
+          somewhere down the line, to a reward. Montezuma&rsquo;s Revenge pays its first point only after a long,
+          exact sequence: climb down a ladder, cross a floor, collect a key, backtrack to a door. An agent
+          flailing at random almost never completes that sequence by chance, so it never once sees the reward, and
+          an action that is never rewarded is never reinforced.
+        </p>
+      </section>
+
+      <section data-nb-section="template-versus-agent" id="template-versus-agent">
+        <h2>The template spread faster than the agent improved</h2>
+        <p>
+          Two claims travel under &ldquo;human-level control,&rdquo; and the decade since has split them. The
+          first, that a deep network trained by reinforcement learning could work at all, held and spread: the
+          search-and-self-play systems behind AlphaGo and the reasoning models of 2025 are its descendants. The
+          second, that this particular agent was general or robust, did not survive contact.
+        </p>
+        <p>
+          Each of those 49 results came from 50 million frames of play per game,
+          about 38 days of game experience.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Methods, Training details">1</a></sup
+          >
+          The agent needed weeks of play on a single game to reach a score the tester reached in an afternoon.
+        </p>
+        <p>
+          Robustness has fared worse. Deep reinforcement learning as a field turned out to be fragile. In 2018,
+          Henderson and colleagues ran several deep-RL algorithms with the same settings, changing only the random
+          seed. Ten identical runs, split into
+          two sets of five, gave averages that differed at <span class="nb-math-in">t = -9.09</span>,
+          <span class="nb-math-in">p = 0.0016</span>.<sup
+            class="nb-cite"
+            ><a href="#s5" data-nb-locator="Random Seeds and Trials; Fig. 5">5</a></sup
+          >
+          Their tests were policy-gradient methods on simulated robot control, not DQN and not Atari, so this is
+          not a measurement of DQN&rsquo;s own runs. It is evidence about the wider field DQN founded.
+        </p>
+        <p>
+          Montezuma&rsquo;s Revenge stayed hard for years. Reviewing the lineage in 2020, MIT Technology Review
+          noted that agents still failed on the games that demand exploration, and that even the system which
+          finally beat all 57 could not play them without retraining for each.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          DeepMind&rsquo;s own retrospective is blunter. For years, it writes, &ldquo;all deep reinforcement
+          learning agents have consistently failed to score&rdquo; on four games, Montezuma&rsquo;s Revenge among
+          them. Only in 2020 did one clear the human baseline across the full set.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          &ldquo;Human-level control&rdquo; gets cited today as the moment
+          machines reached human competence at Atari. The
+          scores span an enormous range, from 0% of human on one game to many multiples on others, all measured
+          against one tester on a bar set at 75%. The phrase &ldquo;human-level&rdquo; describes the middle of that
+          spread and neither of its ends.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          DQN earned a real place in the story. It was the first time a deep network learned hard tasks from raw
+          pixels by reinforcement alone, and the two tricks that made it work, experience replay and the target
+          network, are still in use. What it did not earn is the plain reading of &ldquo;human-level control.&rdquo;
+          That phrase was a bar set at 75% of one professional games tester&rsquo;s score. DQN cleared it on 29 of
+          49 games and met the tester&rsquo;s real score on only 23. On the games that need a plan it failed
+          outright, and Montezuma&rsquo;s Revenge sat at zero. The agent held no model of any game and searched
+          nothing. It learned a value for each action and took the largest. The next time you see DQN cited as the
+          arrival of human-level AI, the honest version is smaller and sturdier: a network learned to score, and
+          two ideas made that learning stable. The scores were uneven. The two ideas lasted.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://karpathy.github.io/2016/05/31/rl/">Andrej Karpathy, &ldquo;Deep Reinforcement
+            Learning: Pong from Pixels&rdquo;</a>: a from-scratch walk through training an agent on Atari pixels,
+            from the policy-gradient side rather than the value-based one.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.andrew.cmu.edu/course/10-703/textbook/BartoSutton.pdf">Sutton &amp; Barto,
+            &ldquo;Reinforcement Learning: An Introduction&rdquo;</a>: the standard text; Chapter 6 develops
+            Q-learning and bootstrapped value targets in full.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nature.com/articles/nature14236"
+              >Mnih, Kavukcuoglu, Silver et al., &ldquo;Human-level control through deep reinforcement
+              learning&rdquo; (Nature 518, 529&ndash;533, 2015)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.andrew.cmu.edu/course/10-703/textbook/BartoSutton.pdf"
+              >Sutton &amp; Barto, &ldquo;Reinforcement Learning: An Introduction,&rdquo; 2nd ed. (MIT Press,
+              2018)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1312.5602"
+              >arXiv · Mnih et al., &ldquo;Playing Atari with Deep Reinforcement Learning&rdquo; (1312.5602,
+              2013)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.nbcnews.com/tech/innovation/ai-learned-atari-games-humans-do-now-it-beats-them-n312206"
+              >NBC News · &ldquo;AI Learned Atari Games the Way Humans Do. Now It Beats Them&rdquo; (25 Feb
+              2015)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1709.06560"
+              >arXiv · Henderson et al., &ldquo;Deep Reinforcement Learning that Matters&rdquo; (1709.06560, AAAI
+              2018)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.technologyreview.com/2020/04/01/974997/deepminds-ai-57-atari-games-but-its-still-not-versatile-enough/"
+              >MIT Technology Review · Will Douglas Heaven, &ldquo;DeepMind&rsquo;s AI can now play all 57 Atari
+              games&rdquo; (1 Apr 2020)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://deepmind.google/blog/agent57-outperforming-the-human-atari-benchmark/"
+              >Google DeepMind · &ldquo;Agent57: Outperforming the human Atari benchmark&rdquo; (31 Mar 2020)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
