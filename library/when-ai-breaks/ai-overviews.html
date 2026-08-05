@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google's AI restated a real Reddit glue joke as fact · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "ai-overviews",
+        "template": "lesson",
+        "title": "Google's AI restated a real Reddit glue joke as fact",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-05",
+        "tags": ["retrieval", "rag", "google", "ai-search", "trust"],
+        "sources": 8,
+        "words": 1934,
+        "reading_minutes": 8,
+        "dek": "Days after the May 2024 launch, the same feature was also telling people to eat a rock a day, and in both answers Google's AI had read its source correctly: the sources were a Reddit troll and The Onion.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">Google's AI restated a real Reddit glue joke as fact</h1>
+        <p class="nb-dekline">
+          Days after the May 2024 launch, the same feature was also telling
+          people to eat a rock a day, and in both answers Google's AI had read
+          its source correctly: the sources were a Reddit troll and The Onion.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-05</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Most people now meet an AI-written answer before they meet a single
+          search result. Google's version of it, AI Overviews, sits on top of
+          the most-used page on the internet, assembled on the spot from
+          whatever web pages match the question. That design makes a promise
+          worth examining: the answer is grounded in real sources, not conjured
+          out of the model's memory. In May 2024, days after switching the
+          feature on, Google gave the clearest possible demonstration of what
+          that promise does and does not buy. If the AI read its sources
+          correctly, how did it end up telling people to eat rocks and glue
+          their pizza? By the end you will
+          know why retrieving a real page is not the same as retrieving a
+          trustworthy one, and where that gap sits in the tools you use every
+          day.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/retrieval.html"
+              >A chatbot quotes your PDF without learning a word of it</a
+            >: how an answer engine pulls the web pages that match a question
+            and writes its reply from them, the mechanism underneath AI
+            Overviews.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/hallucination.html"
+              >A model builds a fake citation the same way it builds a true
+              one</a
+            >: why nothing inside a model checks whether what it states
+            deserves to be believed, the same gap this incident exposes from
+            the retrieval side.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>From the I/O stage to glue in the sauce</h2>
+        <p>
+          On May 14, 2024, at its I/O developer conference, Google began
+          putting an AI-written answer at the very top of Search. Elizabeth
+          Reid, the vice president who runs Search, announced that AI Overviews
+          would "begin rolling out to everyone in the U.S.," reaching hundreds
+          of millions of people that week, with a target of more than a billion
+          by the end of the year.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          An AI Overview is a short summary the system writes above the ordinary
+          list of blue links. It does not answer from memory. It runs the
+          user's query, pulls a handful of web pages that match, and composes
+          its answer from what those pages say. That design has a name:
+          <a href="../the-mechanics/retrieval.html"
+            >retrieval-augmented generation, where a model fetches text and
+            writes its reply from what it fetched</a
+          >.
+        </p>
+        <p>
+          Within about two weeks, people began sharing the answers they got.
+          Asked why the cheese would not stick to a homemade pizza, the AI
+          Overview offered, among ordinary tips, "adding about ⅛ cup of
+          non-toxic glue to the sauce to give it more tackiness."<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The Daily Dot's Marlon Ettinger traced the line, on May 23, 2024, to
+          an eleven-year-old Reddit comment by a user posting as u/fucksmith,
+          who had written it as a joke.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The original comment could not be pulled up on its own page, so its
+          wording and age rest on that reporting and on Google's own later
+          acknowledgment of the example, not on the thread itself. The next
+          day, NBC News confirmed the pizza answer and added a caution that
+          would matter: some of the more alarming screenshots then circulating
+          "seem to be fake."<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="rock-a-day" id="rock-a-day">
+        <h2>A rock a day</h2>
+        <p>
+          A second answer spread alongside the first. To the question "How many
+          rocks should I eat?" the Overview relayed that geologists recommend
+          eating at least one small rock a day.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The advice was real in one narrow sense: a real page said it. The
+          page was a 2021 article from The Onion, the satirical newspaper,
+          headed "Geologists Recommend Eating At Least One Small Rock Per Day,"
+          crediting the recommendation to a fictional Berkeley geologist and
+          advising readers to hide loose rocks "inside different foods, like
+          peanut butter or ice cream."<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          Reid would later explain this answer differently from the pizza one.
+          Before the screenshots went viral, she wrote, "practically no one
+          asked Google that question," and the only matching content was the
+          satire, which "happened to be republished on a geological software
+          provider's website."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          So the system did not reach past better sources to dig up The Onion.
+          There were almost no other sources to reach past. Google has a term
+          for that condition.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Data void</span>
+          <p>
+            A query so rare that almost no page has been written to answer it
+            honestly. When only one page matches, retrieval has nothing to
+            weigh it against, so the closest text match can be the only match,
+            even when that match is a joke.<sup class="nb-cite"
+              ><a href="#s4">4</a></sup
+            >
+          </p>
+        </div>
+      </section>
+
+      <section data-nb-section="about-last-week" id="about-last-week">
+        <h2>About last week</h2>
+        <p>
+          On May 30, 2024, Reid published a postmortem titled "AI Overviews:
+          About last week." She granted that "some odd, inaccurate or unhelpful
+          AI Overviews certainly did show up."<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          She also drew a firm line around what had actually happened. A large
+          batch of the scariest screenshots then spreading, telling people it
+          is safe to leave a dog in a hot car, that smoking during pregnancy is
+          fine, and giving dangerous answers about depression, were
+          fabrications. "Those AI Overviews never appeared," she wrote, and she
+          urged anyone who saw them to run the search and check.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The glue and the rocks were real. Much of what went viral around them
+          was not.
+        </p>
+        <p>
+          On scale, Google put a number forward in its own defense: it had
+          found a content-policy violation on "less than one in every 7 million
+          unique queries" on which an Overview appeared.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Set against a feature just switched on for hundreds of millions of
+          Americans,<sup class="nb-cite"><a href="#s1">1</a></sup> even a rate
+          that low is a large count of bad answers, and the disagreement is
+          really about which figure to hold in view, the rare rate or the
+          enormous surface it runs on. Google made more than a dozen fixes:
+          better detection of nonsensical queries, new limits on drawing from
+          satire and from user-generated forum posts, and added care on health
+          questions.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="joke-to-answer" id="joke-to-answer">
+        <h2>How a real joke became an answer</h2>
+        <p>
+          So how does an eleven-year-old joke end up stated as fact at the top
+          of the most-used page on the internet?
+        </p>
+        <p>
+          Three pieces the course has already covered combine here. The first
+          is retrieval itself: the system matched the query about cheese
+          sliding off pizza to a comment thread that was, word for word, about
+          cheese sliding off pizza. As a text match, u/fucksmith's comment was
+          excellent. The second is that a language model
+          <a href="../the-mechanics/instructions-are-data.html"
+            >draws no line between an instruction and a fact</a
+          >; the glue tip arrived as a run of words like any other, with
+          nothing in it marked as a joke. The third is what happens at the
+          output: the model's task is to write one fluent, confident answer,
+          and nothing in that step
+          <a href="../the-mechanics/hallucination.html"
+            >checks whether the source it is repeating deserves to be
+            believed</a
+          >. Retrieval finds the closest text. It has no reading of who wrote
+          the page, or why.
+        </p>
+        <p>
+          This is a different failure from the ones this desk has covered
+          before. When
+          <a href="../when-ai-breaks/air-canada-chatbot.html"
+            >Air Canada's chatbot invented a refund policy</a
+          >
+          or a lawyer's
+          <a href="../when-ai-breaks/mata-v-avianca.html"
+            >ChatGPT brief cited six court cases that did not exist</a
+          >, the system made something up. Here it made nothing up. The joke
+          was real, the satire was real, and the AI repeated both accurately.
+          The gap is not invention. It is that retrieval carries no model of
+          whether a real source can be trusted.
+        </p>
+        <p>Google's own account pushes back on that reading.</p>
+        <div class="nb-position">
+          <div class="nb-position-top">
+            <span class="nb-position-who">Google</span>
+            <span class="nb-position-pill">Position</span>
+          </div>
+          <p class="nb-position-statement">
+            The failures were the model misreading pages and hallucinating, not
+            the model faithfully repeating bad sources.
+          </p>
+          <p class="nb-position-summary">
+            Reid attributed most errors to the system "misinterpreting queries,
+            misinterpreting a nuance of language on the web, or not having a lot
+            of great information available."<sup class="nb-cite"
+              ><a href="#s6">6</a></sup
+            >
+            Google's chief executive, Sundar Pichai, told The Verge around the
+            same time that hallucination is "still an unsolved problem" and "in
+            some ways ... an inherent feature" of these models.<sup
+              class="nb-cite"
+              ><a href="#s7">7</a></sup
+            >
+          </p>
+        </div>
+        <p>
+          That account is partly right, and the rocks answer is where it fits
+          best. A data void is exactly "not having a lot of great information
+          available," and whether the system fully grasped that The Onion was
+          joking is a fair question. Reid separately noted that in some cases
+          the system had "misinterpret[ed] language on webpages."<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+        <p>
+          But the glue answer defeats the misinterpretation reading. The
+          Overview did not misread u/fucksmith. It reproduced the joke exactly:
+          the same ⅛ cup, the same non-toxic glue, the same tackiness.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Nothing was lost or garbled on the way from the source to the answer.
+          The comprehension was perfect. What was missing was any sense that the
+          perfectly understood source was a troll. That is the harder failure to
+          fix, because you cannot patch it by teaching the model to read pages
+          better. It already read the page.
+        </p>
+      </section>
+
+      <section data-nb-section="gap-now" id="gap-now">
+        <h2>Where the gap is now</h2>
+        <p>
+          That gap did not close when Google patched these particular queries.
+          It is built into any system that answers by retrieving web text and
+          restating it, which now takes in AI Overviews itself and the
+          AI-answer features in the search engines and assistants the reader
+          opens daily. Each can tell you, accurately, what some page on the
+          internet says. None of them can tell you whether that page deserved to
+          be believed. The fixes Google shipped were mostly a hand-written list
+          of sources to distrust: satire, forum posts, nonsense
+          queries.<sup class="nb-cite"><a href="#s4">4</a></sup> A list like
+          that is not the same as a system that knows, on its own, when a strong
+          text match is a bad source.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          AI Overviews failed in a way that is easy to mistake for a familiar
+          one. It looked like a machine making things up, and much of what went
+          viral was indeed faked. But the two answers Google confirmed were the
+          opposite of invention: a real Reddit joke and a real Onion satire,
+          retrieved and repeated faithfully. The lesson to keep is that an AI
+          answer built by retrieving the web is only as trustworthy as the page
+          it happened to match, and the part of the system that fetches the page
+          is not a part that can judge it. When an answer engine quotes the web
+          to you, it is telling you what a page said. It is not telling you the
+          page was right.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a
+              href="https://blog.google/products-and-platforms/products/search/ai-overviews-update-may-2024/"
+              >AI Overviews: About last week</a
+            >, Liz Reid, Google: the operator's own postmortem, its account of
+            the two answers, the faked screenshots, and the fixes.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a
+              href="https://www.theverge.com/24158374/google-ceo-sundar-pichai-ai-search-gemini-future-of-the-internet-web-openai-decoder-interview"
+              >The Decoder interview with Sundar Pichai</a
+            >, The Verge: Google's chief executive on why hallucination may be
+            inherent, recorded as the feature shipped to millions.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://blog.google/products-and-platforms/products/search/generative-ai-google-search-may-2024/"
+              >Google · Liz Reid, "Generative AI in Search: Let Google do the
+              searching for you" (May 14, 2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://dailydot.com/google-search-results-reddit-pizza-glue-cheese"
+              >The Daily Dot · Marlon Ettinger, on the Reddit origin of the
+              pizza-glue answer (May 23, 2024)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.nbcnews.com/tech/tech-news/google-ai-im-feeling-depressed-cheese-not-sticking-to-pizza-error-rcna153301"
+              >NBC News · Kat Tenbarge, on the pizza-glue answer and the faked
+              screenshots circulating with it (May 24, 2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://blog.google/products-and-platforms/products/search/ai-overviews-update-may-2024/"
+              >Google · Liz Reid, "AI Overviews: About last week" (May 30,
+              2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://theonion.com/geologists-recommend-eating-at-least-one-small-rock-per-1846655112/"
+              >The Onion · "Geologists Recommend Eating At Least One Small Rock
+              Per Day" (April 13, 2021)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.pbs.org/newshour/politics/google-makes-fixes-to-ai-generated-search-summaries-after-outlandish-answers-went-viral"
+              >Associated Press, via PBS NewsHour · Matt O'Brien, "Google makes
+              fixes to AI-generated search summaries after outlandish answers
+              went viral" (May 31, 2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.theverge.com/24158374/google-ceo-sundar-pichai-ai-search-gemini-future-of-the-internet-web-openai-decoder-interview"
+              >The Verge · Nilay Patel, Decoder interview with Sundar Pichai on
+              AI, Search, and the future of the web (May 2024)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.cbsnews.com/news/google-ai-overview/"
+              >CBS News · Megan Cerullo, on Google's response to the AI Overview
+              errors (updated May 31, 2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
