@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DeepSeek-V3 lists 671 billion parameters and runs 37 billion per token · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "parameter-count",
+        "template": "lesson",
+        "title": "DeepSeek-V3 lists 671 billion parameters and runs 37 billion per token",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-05",
+        "tags": [],
+        "sources": 9,
+        "words": 1671,
+        "reading_minutes": 7,
+        "dek": "The count is an exact tally of a model's frozen weights, and a mixture-of-experts model can advertise one far larger than the slice that fires on any given token.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">DeepSeek-V3 lists 671 billion parameters and runs 37 billion per token</h1>
+        <p class="nb-dekline">
+          The count is an exact tally of a model's frozen weights, and a
+          mixture-of-experts model can advertise one far larger than the slice
+          that fires on any given token.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-08-05</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have met this number. A model is &ldquo;175 billion parameters,&rdquo;
+          or &ldquo;a 70B,&rdquo; or, lately, &ldquo;671B,&rdquo; and the figure
+          stands in for how big and how good the thing is. The number is real and
+          easy to check. What it counts, and what it quietly stops counting once a
+          model sends each word to a fraction of itself, is what almost no one who
+          quotes it can say. By the end of this lesson you will know what a
+          parameter count actually tallies, and why a bigger one has not meant a
+          better model since at least 2022. You will also know how to read the
+          two numbers a mixture-of-experts model really has, without falling for
+          the multiplication that fools people.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/training-compute.html">Training compute</a>:
+            the other &ldquo;how big is this model&rdquo; number, the one
+            regulators actually write into law.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/chinchilla.html">Chinchilla</a>: the result
+            that broke &ldquo;more parameters is better&rdquo; even for dense
+            models.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What the number literally counts</h2>
+        <p>
+          A parameter is one number the model learned. Training nudges each one up
+          or down until the model predicts text well; after training every
+          parameter is frozen, and running the model only multiplies these fixed
+          numbers into the values passing through it and sums the results. So
+          counting parameters is not an estimate. The total is set by the
+          architecture, and it is almost all weight matrices: the attention blocks
+          and the feed-forward blocks inside each layer, plus the embedding table
+          that turns each token into a vector. Add layers, or make each layer
+          wider, and the count grows, roughly as the number of layers times the
+          width squared.
+        </p>
+        <p>
+          GPT-3 is the anchor most readers already carry: 175 billion parameters,
+          which its authors described as ten times the size of any previous dense
+          model, meaning one that puts all of its parameters to work on every
+          token.<sup class="nb-cite"><a href="#s1">1</a></sup> Every one of
+          GPT-3's 175 billion is multiplied into every token it reads or writes.
+          That property is the one to hold onto. It is true of GPT-3, and false of
+          the models now posting the biggest numbers.
+        </p>
+      </section>
+
+      <section data-nb-section="count-vs-quality" id="count-vs-quality">
+        <h2>The count never promised quality</h2>
+        <p>
+          For a while the count was a fair proxy. Inside one model family trained
+          the same way, from GPT-2 to GPT-3, adding parameters did reliably buy
+          capability, and people learned to read a bigger number as a better
+          model. Two things broke that reading.
+        </p>
+        <p>
+          The first was Chinchilla. In 2022 a DeepMind team trained a
+          70-billion-parameter model on four times more data than a
+          280-billion-parameter model built on the same compute budget. The
+          smaller model won across the board, beating the 280B Gopher, GPT-3, and
+          models larger still.<sup class="nb-cite"><a href="#s2">2</a></sup> The
+          finding was not that parameters had stopped mattering. It was that a
+          parameter count and a training budget have to grow together, so at a
+          fixed budget a larger model trained on less data is the worse trade. The
+          desk's <a href="../the-instruments/training-compute.html">training-compute</a>
+          lesson covers how that budget is measured, and the-evidence's
+          <a href="../the-evidence/chinchilla.html">Chinchilla</a> lesson covers
+          the result in full. The point to carry here is narrower: the count, on
+          its own, had stopped predicting quality across models that spent their
+          compute differently.
+        </p>
+      </section>
+
+      <section data-nb-section="routing" id="routing">
+        <h2>Routing sends each token to a few experts</h2>
+        <p>
+          The second break was architectural. A mixture-of-experts model splits
+          part of each layer into many parallel sub-networks, called experts, and
+          adds a small router that, for each token, picks a few experts to run and
+          skips the rest. The idea is old. A 2017 Google Brain paper showed that a
+          gating network could select a sparse handful of experts per example out
+          of thousands, raising a model's capacity by more than a thousandfold
+          while adding little computation per example.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The 2021 Switch Transformer pushed the routing to a single expert per
+          token and stated the consequence plainly: parameter counts can grow to
+          outrageous sizes while the computation spent on each token stays about
+          constant.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          That sentence is where the parameter count and the work parted. A dense
+          model runs all of its parameters on every token. A sparse
+          mixture-of-experts model stores a large pile of parameters and runs a
+          small, changing subset of them on each one.
+        </p>
+      </section>
+
+      <section data-nb-section="mixtral-arithmetic" id="mixtral-arithmetic">
+        <h2>Why 8 times 7 is not 56</h2>
+        <p>
+          The counting is where a mixture-of-experts model misleads, because the
+          obvious way to size one is wrong. Take Mixtral 8x7B, released by Mistral
+          AI at the end of 2023. The name reads like eight seven-billion-parameter
+          models joined together, so the tempting total is 8 times 7: 56 billion.
+          The real total is 46.7 billion.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          The difference is not rounding. Only the feed-forward block of each
+          layer is copied into eight experts. The attention layers, the embedding
+          table, and the normalization weights exist in a single shared copy,
+          counted once no matter which expert runs.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Eight standalone 7B models would duplicate all of that eight times over.
+          Mixtral duplicates only the feed-forward part, so the honest total lands
+          well under 56 billion.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Three ways to size Mixtral 8x7B. Only the feed-forward blocks are
+            replicated across the eight experts; the shared parts are counted
+            once. The 46.7 and 12.9 figures are Mistral's; 56 is the 8&times;7
+            product the split corrects.<sup class="nb-cite"
+              ><a href="#s5">5</a></sup
+            ><sup class="nb-cite"><a href="#s6">6</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Reading of Mixtral 8x7B</th>
+              <th>Parameters (B)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Eight standalone 7B models, 8 &times; 7</td>
+              <td>56.0</td>
+            </tr>
+            <tr>
+              <td class="txt">Actual total, attention and embeddings shared</td>
+              <td>46.7</td>
+            </tr>
+            <tr>
+              <td class="txt">Active per token, 2 of 8 experts fire</td>
+              <td>12.9</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The shared parts also fix the active count. For each token the router
+          picks 2 of the 8 experts, so the parameters that actually compute are
+          the shared attention and embeddings plus two feed-forward experts, not
+          two whole 7B models. Mistral gives the figure: 12.9 billion active per
+          token, and not 14 billion, for the same reason 56 was too
+          high.<sup class="nb-cite"><a href="#s5">5</a></sup> Mixtral's own paper
+          rounds the pair to 47 billion and 13 billion, and the Hugging Face model
+          card lists the size, flatly, as &ldquo;47B params.&rdquo;<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          ><sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="two-costs" id="two-costs">
+        <h2>The total is still the memory bill</h2>
+        <p>
+          Set a mixture-of-experts total beside a dense model's and a fair-looking
+          comparison forms. DeepSeek-V3's 671 billion parameters next to GPT-3's
+          175 billion suggests a model near four times the size, four times the
+          cost, and presumably stronger. Each of those three inferences fails in
+          its own way.
+        </p>
+        <p>
+          Size, in the sense of memory, is the one that holds. Every parameter has
+          to sit in the accelerator's memory before a token arrives, because the
+          router may send the next token to any expert. DeepSeek-V3 holds all 671
+          billion parameters in memory to compute with 37 billion of them per
+          token, about one part in eighteen; Mixtral holds all 46.7 billion to run
+          12.9.<sup class="nb-cite"><a href="#s9">9</a></sup
+          ><sup class="nb-cite"><a href="#s5">5</a></sup> On memory the total is
+          the honest number, and the big model really is the big one.
+        </p>
+        <p>
+          Cost per token is the inference that flips. Because only 37 billion
+          parameters compute on a DeepSeek-V3 token, its arithmetic per token runs
+          below a dense 175-billion model's, even though its total towers over it.
+          Mistral makes the same point for Mixtral: 12.9 billion active means it
+          &ldquo;processes input and generates output at the same speed and for
+          the same cost as a 12.9 billion model.&rdquo;<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Nathan Lambert, writing on Mixtral, put the trade plainly: a sparse
+          model spends more memory to buy cheaper, faster
+          inference.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="parameter-count/chart-1.png"
+            alt="Grouped bar chart of total parameters versus active parameters per token for three models, in billions. GPT-3 dense: 175 total and 175 active, all of them running. Mixtral 8x7B: 46.7 total and 12.9 active, 28 percent. DeepSeek-V3: 671 total and 37 active, about 5.5 percent."
+          />
+          <figcaption>
+            Fig. 1 &middot; Total parameters against the parameters that run on a
+            single token. GPT-3 is dense and runs all of them; the two
+            mixture-of-experts models run a small, fixed slice. Figures from each
+            model's own paper or announcement.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            ><sup class="nb-cite"><a href="#s5">5</a></sup
+            ><sup class="nb-cite"><a href="#s9">9</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Capability is the third inference, and the totals settle none of it.
+          Chinchilla already showed a smaller model beating a larger one at equal
+          compute, and sparse routing only widens the space between the advertised
+          number and anything you would want to conclude from it. What the count
+          counts exactly is the size of the stored weight stack. That size sets
+          the memory bill. It does not set the speed, and it never set the skill.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A parameter count is the most exact number in public AI and the most
+          misread. It tallies the model's frozen weights, the ones in the
+          attention and feed-forward blocks and the embedding table, and it
+          tallies them exactly. What it does not tell you is how much of that stack
+          runs on any given token, and on a mixture-of-experts model the answer is
+          a small, fixed slice. So read the pair, not the headline. The total is
+          the memory the model needs. The active count is the speed and compute
+          each token costs. Neither, since Chinchilla, tells you whether the model
+          is any good. The next time you meet &ldquo;N billion parameters,&rdquo;
+          ask two things. The first is whether all N of them run, or only a few
+          billion do. The second is what the person quoting the number wants you
+          to conclude from it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.interconnects.ai/p/mixtral">Nathan Lambert, &ldquo;Mixtral&rdquo; (Interconnects)</a>:
+            a working researcher walking through why 8&times;7 is not 56, and the
+            memory-for-speed trade a sparse model makes.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2101.03961">Switch Transformers (Fedus et al., 2021)</a>:
+            the design that scales parameters to the trillions while holding the
+            compute per token roughly flat.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2005.14165"
+              >Brown et al. · Language Models are Few-Shot Learners (GPT-3)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.15556"
+              >Hoffmann et al. · Training Compute-Optimal Large Language Models (Chinchilla)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1701.06538"
+              >Shazeer et al. · Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2101.03961"
+              >Fedus et al. · Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://mistral.ai/news/mixtral-of-experts/"
+              >Mistral AI · Mixtral of Experts (announcement)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.interconnects.ai/p/mixtral"
+              >Nathan Lambert (Interconnects) · Mixtral, mixture of experts explained</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2401.04088"
+              >Jiang et al. · Mixtral of Experts</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/mistralai/Mixtral-8x7B-v0.1"
+              >Mistral AI · Mixtral-8x7B-v0.1 model card (Hugging Face)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2412.19437"
+              >DeepSeek-AI · DeepSeek-V3 Technical Report</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
