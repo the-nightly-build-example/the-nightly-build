@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The GAN paper credited with deepfakes generated blurry thumbnails · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "gans",
+        "template": "lesson",
+        "title": "The GAN paper credited with deepfakes generated blurry thumbnails",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-06",
+        "tags": [],
+        "sources": 9,
+        "words": 1900,
+        "reading_minutes": 8,
+        "dek": "Ian Goodfellow's 2014 paper invented adversarial training, then judged its blurry samples with a metric its own authors distrusted.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">The GAN paper credited with deepfakes generated blurry thumbnails</h1>
+        <p class="nb-dekline">
+          Ian Goodfellow's 2014 paper invented adversarial training, then judged its blurry samples with a metric its own authors distrusted.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-06</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Almost every image generator you have heard of, from the app that ages
+          your selfie to the tools that invent faces of people who do not exist,
+          gets traced back to one paper from 2014. This lesson opens that paper.
+          You will see what it built, what it actually generated, how those
+          results were judged, and where the reputation it now carries runs ahead
+          of the evidence it put on the page. The invention inside it is real and
+          it lasted. The sharp, photoreal images most people picture when they
+          hear its name are not in it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/reading-images.html">How a network reads an image</a>:
+            how a neural network takes in a picture and turns it into a judgment,
+            which is the discriminator's whole job in this paper.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/word-embeddings.html">Word embeddings</a>:
+            how a model represents data as points in a continuous space of
+            numbers, the kind of space the generator draws its input from.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What the citation count points at</h2>
+        <p>
+          &ldquo;Generative Adversarial Nets&rdquo; is a 2014 paper by Ian
+          Goodfellow and seven coauthors at the University of
+          Montreal.<sup class="nb-cite"><a href="#s1">1</a></sup> Google Scholar
+          puts it at roughly 97,000 citations, read on 6 August 2026, an
+          order-of-magnitude marker of fame rather than an exact
+          count.<sup class="nb-cite"><a href="#s2">2</a></sup> That is among the
+          largest citation totals in machine learning, the kind of number usually
+          attached to a field's founding documents. The paper ran nine pages in
+          the proceedings of the NIPS 2014
+          conference.<sup class="nb-cite"><a href="#s3">3</a></sup> It is short.
+          The reputation is not. The machine-made image era points back to a
+          proof-of-concept that fits in those nine pages.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-invention" id="the-invention">
+        <h2>The invention that genuinely holds up</h2>
+        <p>
+          Start with what the paper got right, because it is a real idea and it
+          lasted. Before 2014, getting a computer to produce a new image meant
+          wrestling with probability models that were slow to draw samples from
+          and hard to train. Goodfellow's paper replaced that with a contest
+          between two networks.<sup class="nb-cite"><a href="#s1">1</a></sup> One
+          network, the generator, takes a string of random numbers and turns it
+          into an image. The second, the discriminator, looks at an image and
+          estimates one thing: whether it is a real example from the training data
+          or a fake from the generator. The two train together. The discriminator
+          learns to catch fakes; the generator learns to make fakes the
+          discriminator cannot catch. Push that contest far enough and, in
+          principle, the generator produces images the discriminator can no longer
+          tell from real ones.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The elegant part is what the scheme does without. It needs no Markov
+          chains and no separate inference network, both of which earlier
+          generative models relied on to draw a sample. Both halves are ordinary
+          neural networks trained by the standard method,
+          backpropagation.<sup class="nb-cite"><a href="#s1">1</a></sup> That
+          simplicity is why the idea spread. Adversarial training, a generator
+          improving by trying to fool a critic, is the part of this paper that
+          held up, and later work carried it a long way.
+        </p>
+      </section>
+
+      <section data-nb-section="the-proof" id="the-proof">
+        <h2>A proof the real networks cannot honor</h2>
+        <p>
+          The paper does not just describe the contest. It proves the contest has
+          a clean solution. Written out, the training objective is a two-player
+          game: the discriminator tries to be right as often as possible, the
+          generator tries to make it wrong.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The paper's central theorem says this game has a single best outcome,
+          and it is exactly the one you would want. The generator wins when the
+          images it produces follow the same distribution as the real data,
+          matching it everywhere. At that point the discriminator is reduced to a
+          coin flip, outputting one-half for every image because real and fake
+          have become genuinely indistinguishable, and the objective settles at
+          the value minus log four, about minus 1.386.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The proof holds under one assumption the paper states plainly. It is
+          carried out in &ldquo;the space of probability density functions,&rdquo;
+          a setting with infinite capacity where a network can represent any
+          distribution at all.<sup class="nb-cite"><a href="#s1">1</a></sup> Real
+          generators are not that. They are finite networks with a fixed number of
+          adjustable weights, and the paper concedes the point directly: using a
+          neural network to define the generator &ldquo;introduces multiple
+          critical points,&rdquo; and the method is left with &ldquo;no
+          theoretical guarantees.&rdquo;<sup class="nb-cite"><a href="#s1">1</a></sup>
+          In practice the training is touchy. The paper names one failure mode
+          itself, the &ldquo;Helvetica scenario,&rdquo; in which the generator
+          collapses many different random inputs onto the same output and stops
+          producing variety, the opposite of what it was supposed to
+          learn.<sup class="nb-cite"><a href="#s1">1</a></sup> The clean proof and
+          the collapse describe the same method. Only one of them assumes infinite
+          room.
+        </p>
+      </section>
+
+      <section data-nb-section="the-evidence" id="the-evidence">
+        <h2>The evidence the paper printed</h2>
+        <p>
+          Set the theory aside and look at what the paper generated. It trained
+          the generator on three sets of images. MNIST is a standard collection
+          of handwritten digits. The Toronto Face Database holds small grayscale
+          photographs of faces. CIFAR-10 is sixty thousand color photographs of
+          objects and animals, each thirty-two by thirty-two
+          pixels.<sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s4">4</a></sup>
+          Thirty-two by thirty-two is about a thousand pixels, smaller than one
+          app icon on a phone home screen. The samples were small because the
+          training images were small.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="gans/asset-1.png"
+            alt="Four panels of generated samples. Panel a: legible white handwritten digits on black. Panel b: blurry grayscale human faces. Panels c and d: heavily blurred 32-by-32 color patches in which objects and animals are barely recognizable. Each panel's rightmost column has a yellow border."
+          />
+          <figcaption>
+            Fig. 1 &middot; Everything the 2014 paper showed its generator could
+            produce: handwritten digits (a), Toronto Face Database faces (b), and
+            CIFAR-10 color images (c, d). The yellow column in each panel is the
+            nearest real training image, printed to show the model was not
+            copying.<sup class="nb-cite"><a
+              href="#s1"
+              data-nb-locator="Fig. 2 &middot; p. 6"
+              data-nb-url="https://arxiv.org/pdf/1406.2661"
+              data-nb-note="The paper's four qualitative sample panels, the closest it comes to the photoreal output it is now credited with."
+              >1</a
+            ></sup>
+          </figcaption>
+        </figure>
+        <p>
+          The digits in panel (a) are legible. The faces in panel (b) are gray and
+          soft, closer to a smudged memory of a face than a photograph. The color
+          images in panels (c) and (d) are blurred patches in which you can just
+          make out a horse, a bird, a green field.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The panel of faces is the one to pause on, because it is the closest
+          thing in the paper to the &ldquo;faces of people who do not exist&rdquo;
+          the technique later became known for. These are blurry reconstructions
+          in the manner of a real face database, not sharp invented identities.
+        </p>
+        <p>
+          How were these judged? Two ways, and neither is what a modern benchmark
+          would use. The first was looking at the panels above. The second was a
+          single number per dataset, a Gaussian Parzen-window log-likelihood
+          estimate, a score for how probable the real test images look under the
+          spread of the generator's samples.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The paper is unusually candid about how much weight that number can bear.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In the authors' words</span>
+          <blockquote>
+            This method of estimating the likelihood has somewhat high variance and
+            does not perform well in high dimensional spaces but it is the best
+            method available to our knowledge.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">Goodfellow et al., Section 5</span>
+          </blockquote>
+        </div>
+        <p>
+          The paper's own numerical results are two scores, one on MNIST and one on
+          the Toronto Face Database, set against three earlier methods in a single
+          small table.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Parzen-window log-likelihood estimates from the paper; higher is
+            better. The adversarial model's own results are the bottom row; the
+            rest are earlier methods it is compared against.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th>MNIST</th>
+              <th>TFD</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">DBN</td>
+              <td>138 ± 2</td>
+              <td>1909 ± 66</td>
+            </tr>
+            <tr>
+              <td class="txt">Stacked CAE</td>
+              <td>121 ± 1.6</td>
+              <td>2110 ± 50</td>
+            </tr>
+            <tr>
+              <td class="txt">Deep GSN</td>
+              <td>214 ± 1.1</td>
+              <td>1890 ± 29</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Adversarial nets</span></td>
+              <td>225 ± 2</td>
+              <td>2057 ± 26</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          On MNIST the adversarial model came first. On the Toronto Face Database
+          it came second, behind Stacked CAE.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          CIFAR-10, the blurriest of the three, received no score at all; it was
+          shown only as pictures. A method now credited with a revolution in image
+          generation was introduced with a first place on digits, a second place
+          on faces, and a metric its own authors distrusted.
+        </p>
+      </section>
+
+      <section data-nb-section="what-came-later" id="what-came-later">
+        <h2>The photoreal faces that came later</h2>
+        <p>
+          So where did the photoreal faces come from? They are real, and they do
+          descend from this paper, just not from anything printed in it. The line
+          runs through other labs and later years. In 2015, DCGAN gave adversarial
+          training a stable convolutional design, the first version that trained
+          reliably on images.<sup class="nb-cite"><a href="#s5">5</a></sup> In
+          2017, Progressive Growing of GANs reached face images of 1024 by 1024
+          pixels, a full megapixel.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          In 2018 and 2019, StyleGAN produced the sharp, invented human faces that
+          circulated online as people who do not exist.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          A megapixel face has about a thousand times the pixels of a CIFAR
+          sample, and it arrived three to five years after the 2014 paper, from
+          Karras and colleagues at NVIDIA.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The 2014 paper is the correct origin of the technique. It is not the
+          origin of the images people picture.
+        </p>
+        <p>
+          The reputation gets a second thing wrong, in the other direction. The
+          GAN line did not stay on top. By 2020, denoising diffusion models, a
+          different approach that builds an image by removing noise a step at a
+          time, matched the best GANs on standard
+          tests.<sup class="nb-cite"><a href="#s8">8</a></sup> A 2021 paper said so
+          in its title, &ldquo;Diffusion Models Beat GANs on Image Synthesis,&rdquo;
+          and reported a standard image-quality score of 2.97 on ImageNet at 128
+          pixels, where lower is better, beating BigGAN-deep, the strongest GAN of
+          the day.<sup class="nb-cite"><a href="#s9">9</a></sup> The leading image
+          generators today are diffusion models, not GANs. The idea from 2014 held
+          up as an idea. As the reigning way to make images, it has already been
+          replaced.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The reputation and the paper can now sit in the same frame.
+          &ldquo;Generative Adversarial Nets&rdquo; introduced adversarial
+          training, one generator improving by trying to fool one critic, and that
+          idea was strong enough to launch a decade of work. What the paper itself
+          generated was small: legible handwritten digits, soft gray faces, and
+          thirty-two-pixel color blobs you can just resolve into a horse or a bird.
+          It judged them by eye and by one number per dataset, drawn from a metric
+          its own authors called high-variance and poor in high dimensions, and on
+          faces that metric did not even rank the new method first. The photoreal
+          faces came three to five years later, from other labs, and the tools
+          leading image generation today are diffusion models, not GANs. If
+          someone tells you this paper made deepfakes, the accurate version is
+          narrower: it made the training idea that, several inventions later, made
+          them possible, and it proved that idea worked using pictures you would
+          now mistake for thumbnails.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.inference.vc/how-to-train-your-generative-models-why-generative-adversarial-networks-work-so-well-2/">Ferenc Huszár, &ldquo;How to Train your Generative Models?&rdquo;</a>:
+            why adversarial training works better than the obvious alternatives,
+            and where its guarantees stop.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://aiguide.substack.com/p/magical-thinking-on-ai">Melanie Mitchell, &ldquo;Magical Thinking on AI&rdquo;</a>:
+            how to check a confident public claim about AI against the technical
+            document underneath it.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1406.2661"
+              >arXiv &middot; Ian J. Goodfellow et al., &ldquo;Generative Adversarial Nets&rdquo; (2014)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://scholar.google.com/scholar?q=Generative+Adversarial+Nets+Goodfellow+2014"
+              >Google Scholar &middot; Citation record for &ldquo;Generative Adversarial Nets&rdquo;</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://dblp.org/rec/conf/nips/GoodfellowPMXWOCB14.html"
+              >dblp &middot; &ldquo;Generative Adversarial Nets,&rdquo; NIPS 2014, pp. 2672&ndash;2680</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cave.cs.toronto.edu/kriz/cifar.html"
+              >Alex Krizhevsky &middot; The CIFAR-10 dataset</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1511.06434"
+              >arXiv &middot; Radford, Metz &amp; Chintala, &ldquo;Unsupervised Representation Learning with Deep Convolutional GANs&rdquo; (2015)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1710.10196"
+              >arXiv &middot; Karras et al., &ldquo;Progressive Growing of GANs for Improved Quality, Stability, and Variation&rdquo; (2017)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1812.04948"
+              >arXiv &middot; Karras, Laine &amp; Aila, &ldquo;A Style-Based Generator Architecture for GANs&rdquo; (2018)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2006.11239"
+              >arXiv &middot; Ho, Jain &amp; Abbeel, &ldquo;Denoising Diffusion Probabilistic Models&rdquo; (2020)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2105.05233"
+              >arXiv &middot; Dhariwal &amp; Nichol, &ldquo;Diffusion Models Beat GANs on Image Synthesis&rdquo; (2021)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
