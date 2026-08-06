@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The &lsquo;human-level&rsquo; language score is an average of nine English tests · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "glue",
+        "template": "lesson",
+        "title": "The 'human-level' language score is an average of nine English tests",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-06",
+        "tags": ["benchmarks", "language-understanding", "evaluation"],
+        "sources": 9,
+        "words": 1724,
+        "reading_minutes": 7,
+        "dek": "The line they crossed was a hurried crowd estimate, measured on tasks that leak their own answers.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">The &lsquo;human-level&rsquo; language score is an average of nine English tests</h1>
+        <p class="nb-dekline">
+          The line they crossed was a hurried crowd estimate, measured on tasks that leak their own answers.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-08-06</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A claim that an AI system reached &ldquo;human level&rdquo; almost
+          always traces back to a benchmark, and a benchmark is a number with a
+          recipe. GLUE is the number behind one of the loudest such claims: that
+          by 2019 machines could understand written English about as well as
+          people. This lesson takes that number apart. What nine tasks go into
+          it, what the &ldquo;human baseline&rdquo; it beat actually was, and why
+          a model can pass that baseline while failing one task outright and
+          leaning on shortcuts on others. By the end you should be able to read
+          &ldquo;surpassed the human baseline&rdquo; and say plainly what was
+          measured and what was not.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/mmlu.html">The lab that ships an MMLU score rarely says how it was measured</a>:
+            an earlier lesson on how a single benchmark number can hide the
+            procedure that produced it.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>When the number passed the humans</h2>
+        <p>
+          On 6 June 2019, a Microsoft model called MT-DNN scored 87.6 on GLUE, a
+          public leaderboard for English, and passed the 87.1 that a group of
+          human annotators had scored on the same tests.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Nineteen months later, on 6 January 2021, a model called DeBERTa scored
+          89.9 on GLUE&rsquo;s harder successor, SuperGLUE, and passed the human
+          mark of 89.8 there too.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          In the coverage that followed, one line kept recurring: machines had
+          reached human-level understanding of language. Pretty good, if true.
+        </p>
+        <p>
+          A single headline score can hide how it was produced, the way an
+          <a href="../the-instruments/mmlu.html">MMLU score</a> hides how it was
+          measured. GLUE hides something more specific: what got averaged. The
+          number that crossed each human line is
+          not one measurement. It is an average of nine.
+        </p>
+      </section>
+
+      <section data-nb-section="what-averages" id="what-averages">
+        <h2>What the score averages</h2>
+        <p>
+          GLUE, introduced by Wang and colleagues in 2018, bundles nine separate
+          English tasks under one leaderboard.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          They do not test the same skill, and they are not even scored in the
+          same units.
+        </p>
+        <table class="nb-table">
+          <caption>
+            GLUE&rsquo;s nine tasks, each with its own question, metric, and
+            training-set size; the leaderboard number is their unweighted
+            average.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th class="txt">What it asks</th>
+              <th>Metric</th>
+              <th>Train</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">CoLA</span></td>
+              <td class="txt">Is the sentence grammatical?</td>
+              <td>Matthews corr.</td>
+              <td>~8 500</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">SST-2</span></td>
+              <td class="txt">Is the review positive or negative?</td>
+              <td>Accuracy</td>
+              <td>~67 000</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">MRPC</span></td>
+              <td class="txt">Do the two sentences mean the same?</td>
+              <td>Accuracy / F1</td>
+              <td>~3 700</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">STS-B</span></td>
+              <td class="txt">How close in meaning, on a scale?</td>
+              <td>Pearson / Spearman</td>
+              <td>~7 000</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">QQP</span></td>
+              <td class="txt">Are the two questions duplicates?</td>
+              <td>Accuracy / F1</td>
+              <td>~364 000</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">MNLI</span></td>
+              <td class="txt">Does sentence one imply sentence two?</td>
+              <td>Accuracy</td>
+              <td>~393 000</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">QNLI</span></td>
+              <td class="txt">Does the sentence answer the question?</td>
+              <td>Accuracy</td>
+              <td>~105 000</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">RTE</span></td>
+              <td class="txt">Does the first sentence entail the second?</td>
+              <td>Accuracy</td>
+              <td>~2 500</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">WNLI</span></td>
+              <td class="txt">Who does the pronoun refer to?</td>
+              <td>Accuracy</td>
+              <td>~634</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Some tasks are scored in plain accuracy, one (CoLA) in a correlation
+          coefficient, one (STS-B) in two more, and three pair accuracy with F1.
+          To reach the headline number, each task is scored in its own unit, the
+          paired-metric tasks are averaged internally first, and the nine results
+          are then averaged together with equal weight.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          A task with 634 training examples counts exactly as much as one with
+          393,000.
+        </p>
+        <p>
+          The human baseline is a
+          measurement, not a fixed ceiling. Nangia and Bowman built it in 2019 by
+          hiring non-expert crowd workers, giving each brief instructions and
+          about twenty example items, and scoring their majority answers on the
+          same test sets.<sup class="nb-cite"><a href="#s4">4</a></sup> Their
+          average was 87.1, and it beat the best models of the moment on six of
+          the nine tasks.<sup class="nb-cite"><a href="#s4">4</a></sup> The
+          number labeled &ldquo;human&rdquo; on the leaderboard is that: a quick
+          estimate from untrained annotators, published in late May 2019 and
+          passed by MT-DNN about two weeks later.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          When models saturated GLUE, its authors did not declare language
+          solved. They read the shrinking headroom as a reason to raise the bar,
+          and in 2019 they released SuperGLUE: eight harder tasks, the same
+          averaging recipe, and a fresh human baseline of 89.8.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          The per-task human scores folded into that 89.8 ranged from 80.0 on one
+          task to a perfect 100.0 on another.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="task-at-chance" id="task-at-chance">
+        <h2>The task that sat at chance</h2>
+        <p>
+          Return to that first crossing. MT-DNN reached 87.6, just above the
+          human 87.1. Averaged across nine tasks, the model looked essentially
+          human. Did it read English like one?
+        </p>
+        <p>
+          On one of the nine tasks, WNLI, the answer is no. WNLI has two possible
+          answers, and always guessing the more common one scores 65.1. Before
+          MT-DNN, the strongest models, BERT included, could not beat that
+          majority-vote floor. Human annotators scored 95.9.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The task was a wall. MT-DNN cleared the human line overall only after a
+          special method lifted its WNLI score to 89.0.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Fix the one task the model was failing, and the nine-task average steps
+          over the human mark.
+        </p>
+        <p>
+          This is the first thing the aggregate hides. A model can sit at human
+          level on the average while performing no better than guessing on one of
+          the nine tasks inside it. The single number reports the middle and says
+          nothing about the spread.
+        </p>
+      </section>
+
+      <section data-nb-section="leaked-answers" id="leaked-answers">
+        <h2>Answers that leak into the tasks</h2>
+        <div class="nb-note">
+          <span class="nb-note-label">Annotation artifact</span>
+          <p>
+            A statistical shortcut left in a dataset by the way it was collected,
+            unrelated to the ability the task is meant to measure. A model that
+            learns the shortcut scores well without doing the thing the task was
+            built to test.
+          </p>
+        </div>
+        <p>
+          Even where a model beats the floor, a high score can come from a
+          shortcut rather than comprehension. Take natural language inference,
+          the format behind several GLUE tasks: the model is shown two sentences,
+          a premise and a hypothesis, and must say whether the first implies the
+          second, contradicts it, or neither, one label out of three.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          In 2018, Gururangan and colleagues ran a control. They hid the premise
+          and showed a classifier only the hypothesis. Guessing blindly among
+          three labels scores about 33%. The hypothesis-only model instead scored
+          about 67% on one standard inference set and about 53% on MultiNLI, the
+          set GLUE folds in as MNLI.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The people who wrote the data had left tells. Negation words tracked
+          contradiction. Vague hypotheses tracked entailment. A model can learn
+          those tells and never weigh the premise at all.
+        </p>
+        <p>
+          A shortcut in the data does not mean every high scorer used it. On
+          COPA, a SuperGLUE task where the model picks the more plausible cause or
+          effect, a baseline reading only surface cues in the answer options
+          scores 59.6 against 50 for chance.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The cues are real. But whether a model leans on them varies by the
+          model.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Rebuild COPA to neutralize its single-token cues and BERT-large loses
+            ground, while RoBERTa-large holds steady.<sup class="nb-cite"
+              ><a href="#s7">7</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>System</th>
+              <th>Original COPA</th>
+              <th>Cues neutralized</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">BERT-large</span></td>
+              <td>76.5</td>
+              <td>74.5</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">RoBERTa-large</span></td>
+              <td>87.7</td>
+              <td>89.0</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          BERT had leaned on the cues, and lost ground when they went away.
+          RoBERTa had not, and if anything did better on the cleaned task.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          A high GLUE or SuperGLUE score
+          is consistent with shortcut exploitation, and does not by itself rule it
+          out.
+        </p>
+      </section>
+
+      <section data-nb-section="called-understanding" id="called-understanding">
+        <h2>Who called it understanding</h2>
+        <p>
+          So where did &ldquo;machines understand language&rdquo; come from? Not
+          from the people who built the benchmarks or topped them. GLUE&rsquo;s
+          authors treated saturation as a reason to build SuperGLUE.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          When DeBERTa passed SuperGLUE&rsquo;s human baseline, the team behind it
+          said plainly what the score did not show.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The builders&rsquo; own caveat</span>
+          <blockquote>
+            Despite its promising results on SuperGLUE, the model is by no means
+            reaching the human-level intelligence of NLU.<sup class="nb-cite"
+              ><a href="#s2">2</a></sup
+            >
+            <span class="nb-note-who">Microsoft Research, on DeBERTa, 6 January 2021</span>
+          </blockquote>
+        </div>
+        <p>
+          The overreach lived in the shorthand between the leaderboard and the
+          headline. &ldquo;Surpassed the human baseline&rdquo; became
+          &ldquo;reached human-level understanding,&rdquo; and the two are not the
+          same claim. Bender and Koller made the underlying point in 2020: a
+          system trained only on the form of language has, in principle, no path
+          from form to meaning, so clearing a form-based benchmark is not evidence
+          of comprehension.<sup class="nb-cite"><a href="#s8">8</a></sup> They
+          named the reading directly, warning against hype in which these models
+          &ldquo;are being described as &lsquo;understanding&rsquo;
+          language.&rdquo;<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Saturation is not comprehension.
+        </p>
+        <p>
+          The careful readers kept the claim narrow. A trade outlet reporting
+          DeBERTa&rsquo;s result repeated the same scores, 89.9 for the single
+          model and 90.3 for an ensemble against the 89.8 human mark, and called
+          it a macro-average on this benchmark rather than human comprehension.<sup
+            class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+          The number was accurate. The story stacked on top of it was the part
+          that broke.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The GLUE score is an average of nine English tasks, measured in four
+          different units, set against a quick estimate from untrained crowd
+          workers. Two models passed that human mark, on 6 June 2019 and 6 January
+          2021, and neither event showed that machines understand language. The
+          teams behind them did not claim it had. A model reached the human line
+          on GLUE only after lifting its one failing task off the floor, and the
+          tasks it was scored on carry shortcuts a high score can quietly use.
+          When you next read that an AI system &ldquo;passed the human
+          baseline,&rdquo; the number answers three questions badly, so ask them:
+          an average over which tasks, against whose baseline, on data that leaks
+          what.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://hackingsemantics.xyz/2019/leaderboards/">How the Transformers broke NLP leaderboards</a>
+            (Anna Rogers): on how leaderboard incentives reward compute and data
+            more than understanding.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2111.15366">AI and the Everything in the Whole Wide World Benchmark</a>
+            (Raji et al.): on why one aggregate score cannot stand in for general
+            ability.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://learn.microsoft.com/en-us/archive/blogs/stevengu/microsoft-achieves-human-performance-estimate-on-glue-benchmark"
+              >Microsoft · Microsoft achieves human performance estimate on the GLUE benchmark</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.microsoft.com/en-us/research/blog/microsoft-deberta-surpasses-human-performance-on-the-superglue-benchmark/"
+              >Microsoft Research · DeBERTa surpasses human performance on the SuperGLUE benchmark</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1804.07461"
+              >Wang et al. · GLUE: A Multi-Task Benchmark and Analysis Platform for Natural Language Understanding</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1905.10425"
+              >Nangia &amp; Bowman · Human vs. Muppet: A Conservative Estimate of Human Performance on the GLUE Benchmark</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1905.00537"
+              >Wang et al. · SuperGLUE: A Stickier Benchmark for General-Purpose Language Understanding Systems</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1803.02324"
+              >Gururangan et al. · Annotation Artifacts in Natural Language Inference Data</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1911.00225"
+              >Kavumba et al. · When Choosing Plausible Alternatives, Clever Hans can be Clever</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2020.acl-main.463/"
+              >Bender &amp; Koller · Climbing towards NLU: On Meaning, Form, and Understanding in the Age of Data</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://gilbane.com/2021/01/microsoft-announces-deberta-surpasses-human-performance-on-superglue/"
+              >The Gilbane Advisor · Microsoft announces DeBERTa surpasses human performance on SuperGLUE</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
