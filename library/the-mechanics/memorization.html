@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A verbatim quote comes out of the weights, not a lookup · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "memorization",
+        "template": "lesson",
+        "title": "A verbatim quote comes out of the weights, not a lookup",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-06",
+        "tags": [],
+        "sources": 9,
+        "words": 2135,
+        "reading_minutes": 9,
+        "dek": "Ask a model for a famous opening line and the exact words come back, because duplication and scale can press a specific sequence into a network's weights.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A verbatim quote comes out of the weights, not a lookup</h1>
+        <p class="nb-dekline">
+          Ask a model for a famous opening line and the exact words come back, because duplication and scale can press a specific sequence into a network's weights.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-06</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When a model quotes a book, a poem, or a paragraph of the news back to
+          you word for word, something specific has happened inside it, and it
+          helps to be able to name it. This lesson takes one returned sentence
+          apart. It shows what training does to a string the model meets many
+          times, and why more copies and a bigger model make exact recall more
+          likely. It marks why the result differs from looking something up and
+          from making something up. By the end you should be able to say why a model can
+          quote text it never looked up, and to spot the step someone skips when
+          they explain the behavior as either a database or a hallucination.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/gradient-descent.html">Gradient descent</a>:
+            how training nudges the weights until the predictions improve.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/retrieval.html">Retrieval</a>: how a system
+            fetches text from an outside store at answer time.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/hallucination.html">Hallucination</a>: why
+            a model invents fluent text that matches no source.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The sentence that comes back whole</h2>
+        <p>
+          You ask a model for the first line of <em>Moby-Dick</em> and it returns
+          <code>Call me Ishmael.</code> Three words, exact, every time. It feels
+          like the model looked the sentence up. It did not. At the moment it
+          answers, there is no copy of the novel on hand for it to open, and no
+          file to read the line out of. The words come out of the same weights,
+          the millions of adjustable numbers set during
+          <a href="../the-mechanics/gradient-descent.html">training</a>, that
+          produce every other answer. And the effect is not confined to short
+          famous lines. In a complaint filed in December 2023, The New York Times
+          showed GPT-4 returning long stretches of its articles almost word for
+          word when prompted with their openings.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="para 98">1</a></sup
+          >
+          So the specimen is that returned sentence, and the
+          question is plain: how does a specific string get inside a network, and
+          come back out intact?
+        </p>
+      </section>
+
+      <section data-nb-section="storage" id="storage">
+        <h2>Fit until the loss is gone</h2>
+        <p>
+          Training fits the weights by one repeated exercise: show the model some
+          text, have it predict the next token, and nudge the weights whenever the
+          prediction is wrong.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Do this across a whole corpus and the model learns the general shape of
+          the language. After <code>Call me</code> a name is likely, and many
+          names would serve. For most text that is all that survives, the shape,
+          not the exact words. But when the model meets the same sequence often
+          enough, the nudges keep pointing the same way. The probability it
+          places on the one true continuation climbs until the model reproduces
+          the string token for token. In the training arithmetic, the error on
+          that sequence has been driven to near zero, and nothing pulls it back
+          up. The sequence is now fixed in the parameters, and feeding the model
+          its start returns the rest. That is memorization.
+        </p>
+        <p>
+          It is worth cashing the picture that wants to form here, of a saved
+          file the model opens. There is no such file. The model does not keep
+          <code>Call me Ishmael.</code> as characters and fetch them. It keeps a
+          setting of weights that makes <code>Call me</code> continue to
+          <code>Ishmael</code> and onward, the same next-token prediction it runs
+          on any other prompt. That is where the file picture breaks. A saved
+          file can be deleted, and its bytes sit somewhere definite. A memorized
+          string is smeared across weights that also do everything else, with no
+          row to point to.
+        </p>
+        <div class="nb-pull">
+          <p>
+            The model keeps a setting of weights that makes
+            <code>Call me</code> continue to <code>Ishmael</code>, the same
+            next-token prediction it runs on any prompt.
+          </p>
+        </div>
+        <p>
+          That specific sequences really are in there, and not just common
+          phrases the model would guess anyway, is what extraction studies
+          established. Querying the public GPT-2 in 2021, Carlini and colleagues
+          confirmed 604 unique sequences the model had memorized, recovered by
+          prompting alone.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 3; Table 1">2</a></sup
+          >
+          Some appeared in only a single training document, a lone email address
+          or phone number the model had seen once and could still emit. A string
+          that occurs once, pulled back out on demand, is stored, not inferred.
+        </p>
+      </section>
+
+      <section data-nb-section="duplication" id="duplication">
+        <h2>Copies raise the odds</h2>
+        <p>
+          A string seen once can stick, but the reliable lever is how many times
+          it appears. <code>Call me Ishmael.</code> is not rare in the training
+          data. It sits in the novel, in essay after essay about the novel, in
+          list upon list of great opening lines, copied across the crawled web
+          thousands of times. Each copy is another training example rewarding the
+          exact continuation, so the odds the model reproduces it climb with the
+          count.
+        </p>
+        <p>
+          The climb has no cliff. Prompting models with the true opening of a
+          sequence, Carlini and colleagues in 2023 found extractability rising
+          with the number of copies in the training data along a log-linear
+          curve: more copies, steadily more likely, with no single count past
+          which memorization switches on.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Fig. 1; Sec. 4">3</a></sup
+          >
+          Seen from the other direction, the same driver shows up as a cost. Lee
+          and colleagues found that more than 1% of the unprompted output of
+          standard language models is copied verbatim from the training set. One
+          61-word sentence sits in the widely used C4 web corpus more than 60,000
+          times. Training on de-duplicated data cut verbatim emission roughly
+          tenfold.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Abstract">4</a></sup
+          >
+          Remove the copies and the reciting mostly stops.
+        </p>
+        <p>
+          The pattern holds on exactly the specimen's kind of text. D'Souza and
+          Mimno prompted ChatGPT for 240 poems by 60 American poets. It returned
+          72 of them word for word, while smaller models returned almost none.
+          The strongest predictor of which poems came back was canonical
+          prominence, inclusion in the standard anthology.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Canon is duplication under another name: the poems everyone reprints are
+          the poems the model has met the most.
+        </p>
+      </section>
+
+      <section data-nb-section="scale" id="scale">
+        <h2>Bigger models keep more</h2>
+        <p>
+          Duplication is one lever. Model size is the other. Hold the data fixed
+          and enlarge the network, and it memorizes more of what it saw. Measuring
+          the GPT-Neo models from 125 million to 6 billion parameters, Carlini and
+          colleagues found that each tenfold increase in size raised memorization
+          by 19 percentage points on their evaluation set, close to a straight
+          line (an R² of 99.8%). The largest model memorized two to five times
+          more than the smallest.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Sec. 4.1">3</a></sup
+          >
+          The reason is capacity. A bigger network, having captured the shared
+          patterns of the language, has weights to spare, and spare capacity is
+          what lets it fit particular sequences exactly instead of compressing
+          everything into general structure. Mark the limit on the figure: the
+          slope is clean within one model family and grows more complicated across
+          families, so it is the trend that is settled, not the exact number.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <p>
+          Which raises the question the specimen keeps provoking: how much has a
+          model actually memorized? There is no single answer, because the answer
+          depends entirely on how you count. Counted as unprompted recovery of
+          strings that appear in at most one document, GPT-2's memory is a
+          rounding error, on the order of 0.00000015% of its data. Counted as
+          exact suffixes recalled from their true prefixes, the 6-billion-parameter
+          GPT-J has at least 1% of The Pile, its 825-gigabyte training set, sitting
+          recoverable in its weights.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Intro, p. 1">3</a></sup
+          >
+          Same phenomenon, four orders of magnitude apart, on the definition
+          alone. Neither is the true number. Each answers a different question,
+          and a percentage printed without its definition is not a fact.
+        </p>
+        <table class="nb-table">
+          <caption>
+            One phenomenon, three ways to count it: how much a model has
+            memorized moves four orders of magnitude on the definition
+            alone.<sup class="nb-cite"><a href="#s2">2</a></sup
+            ><sup class="nb-cite"><a href="#s3">3</a></sup
+            ><sup class="nb-cite"><a href="#s5">5</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Figure</th>
+              <th class="txt">What it counts</th>
+              <th class="txt">Model and data</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>0.00000015%</td>
+              <td class="txt">
+                Unprompted recovery of strings that appear in at most one
+                training document.
+              </td>
+              <td class="txt">GPT-2 (1.5B), ~40 GB.</td>
+            </tr>
+            <tr>
+              <td>≥ 1%</td>
+              <td class="txt">
+                Exact next 50 tokens recalled when prompted with the true
+                50-token prefix.
+              </td>
+              <td class="txt">GPT-J (6B), The Pile (825 GB).</td>
+            </tr>
+            <tr>
+              <td>72 of 240</td>
+              <td class="txt">
+                Canonical poems returned word for word when asked for by title.
+              </td>
+              <td class="txt">ChatGPT.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          How much of that comes out in practice was measured directly on a
+          deployed model. Nasr and colleagues ran a divergence attack on ChatGPT.
+          Instructing it to repeat a single word such as <code>poem</code> forever
+          broke its assistant manner and dropped it back onto its training data,
+          which it then emitted at 150 times the normal rate.<sup class="nb-cite"
+            ><a href="#s6" data-nb-locator="Abstract">6</a></sup
+          >
+          About $200 of queries pulled out more than 10,000 unique memorized
+          examples. In the strongest configuration more than 5% of the model's
+          output was a verbatim 50-token copy of training text, real email
+          addresses and phone numbers among it.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          At the time the work was published the trick had not been patched.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="boundaries" id="boundaries">
+        <h2>The neighbors it is not</h2>
+        <p>
+          Memorization has three neighbors, and the confusions between them are
+          where explanations of this behavior usually go wrong.
+        </p>
+        <p>
+          The first is retrieval. A system doing
+          <a href="../the-mechanics/retrieval.html">retrieval</a> looks text up at
+          answer time from an outside store and reads from what it finds;
+          memorization holds the text in the weights, with nothing fetched. The
+          same New York Times filing shows both at once. GPT-4 returning the
+          paper's old articles is memorization, the text in the weights.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="para 102">1</a></sup
+          >
+          But the filing also shows Bing Chat reproducing an October 2023 article,
+          one that postdates the model's April 2023 training cutoff and so could
+          not have been in its weights at all.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="paras 108-114">1</a></sup
+          >
+          That passage was fetched live. Identical-looking output, two different
+          places the text lived.
+        </p>
+        <p>
+          The second is
+          <a href="../the-mechanics/hallucination.html">hallucination</a>, where
+          the model invents plausible text that matches no source. Memorization is
+          the mirror image: the output is real and matches a specific document
+          exactly. A hallucinated opening for <em>Moby-Dick</em> would be a fluent
+          sentence Melville never wrote; the memorized one is his, to the
+          character.
+        </p>
+        <p>
+          The third neighbor is the one with no clear fence. The same next-token
+          training that memorizes a repeated sequence also generalizes across text
+          the model saw once, and there is no measured line where storing a string
+          ends and learning a pattern begins. Whether a given deployed model has
+          memorized a passage or merely learned to reconstruct it, and how much
+          any such model holds, cannot be read off from the outside. The number
+          depends on the definition and on prompts no user sees.
+        </p>
+        <p>
+          So mark the ground. Settled: models memorize some of their training
+          sequences, duplication and scale increase it, and de-duplication reduces
+          it. Open: where memorization ends and generalization begins, and how
+          much a specific model holds. The parties to the New York Times case
+          divide on a further question, whether the behavior is routine. The Times
+          presents the near-verbatim output as reachable with minimal
+          prompting.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="para 98">1</a></sup
+          >
+          OpenAI calls regurgitation a rare bug it is working to drive to zero,
+          and argues the Times used long, manipulated prompts and cherry-picked
+          its examples.<sup class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+          Weigh it on the evidence. Both sides agree duplication drives it, and
+          OpenAI says so plainly. The extraction work shows the stored text is
+          real and, under an adversarial prompt, not hard to pull out. Whether an
+          ordinary request trips it easily is the genuinely contested part.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A verbatim quote is a specific sequence that training fixed in the
+          weights, not a file the model opened and not a sentence it invented on
+          the spot. The model met that string enough times, and had the capacity
+          to keep it, so the exact sequence is recoverable by feeding it the
+          start. Duplication and scale are the two levers that
+          make it happen, and both are settled. How much any model holds is not
+          settled, and has no single number: ask the question a different way and
+          the answer moves four orders of magnitude. What stays fixed is the shape
+          of the thing. When the exact words come back, they came from inside the
+          weights.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2202.07646">Quantifying Memorization
+            Across Neural Language Models</a>: the measurements behind the
+            duplication-and-scale curves.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://not-just-memorization.github.io/extracting-training-data-from-chatgpt.html">Extracting
+            Training Data from ChatGPT</a>: the authors' plain-language account of
+            the divergence attack.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://storage.courtlistener.com/recap/gov.uscourts.nysd.612697/gov.uscourts.nysd.612697.1.0.pdf"
+              >CourtListener · The New York Times Company v. Microsoft, complaint (S.D.N.Y., Dec. 27 2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2012.07805"
+              >arXiv · Carlini et al., Extracting Training Data from Large Language Models (2021)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2202.07646"
+              >arXiv · Carlini et al., Quantifying Memorization Across Neural Language Models (2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2107.06499"
+              >arXiv · Lee et al., Deduplicating Training Data Makes Language Models Better (2021)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://news.cornell.edu/stories/2024/01/chatgpt-memorizes-and-spits-out-entire-poems"
+              >Cornell Chronicle · ChatGPT memorizes and spits out entire poems (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2311.17035"
+              >arXiv · Nasr, Carlini et al., Scalable Extraction of Training Data from (Production) Language Models (2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://not-just-memorization.github.io/extracting-training-data-from-chatgpt.html"
+              >Not Just Memorization · Extracting Training Data from ChatGPT (2023)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.theregister.com/2023/12/01/chatgpt_poetry_ai/"
+              >The Register · ChatGPT spat out training data when told to repeat a word forever (2023)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://openai.com/index/openai-and-journalism/"
+              >OpenAI · OpenAI and journalism (2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
