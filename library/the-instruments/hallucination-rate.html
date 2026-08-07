@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A faithful summary of a false passage passes the hallucination test · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "hallucination-rate",
+        "template": "lesson",
+        "title": "A faithful summary of a false passage passes the hallucination test",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-07",
+        "tags": [],
+        "sources": 9,
+        "words": 2078,
+        "reading_minutes": 9,
+        "dek": "Vectara's leaderboard, the number behind every 'which AI hallucinates least' ranking, scores each model on how faithfully it summarizes a passage it was handed.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">A faithful summary of a false passage passes the hallucination test</h1>
+        <p class="nb-dekline">
+          Vectara's leaderboard, the number behind every 'which AI hallucinates
+          least' ranking, scores each model on how faithfully it summarizes a
+          passage it was handed.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-07</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Ask which AI invents the fewest facts and the answer usually comes
+          back as a single percentage. Most of those percentages start in one
+          place: a leaderboard, published by the search company Vectara, that
+          puts a number on each model and sorts the field from most trustworthy
+          to least. Trade headlines rank the models from it. Buyers and
+          policymakers read it as a reliability score.
+        </p>
+        <p>
+          The number measures something narrower than the question people ask
+          it. It scores how faithfully a model summarizes a document it was
+          handed, not whether the model tells the truth when you ask it a
+          question with no document attached. Those two things come apart in
+          ways that decide whether the number means what it is quoted to mean.
+        </p>
+        <p>
+          By the end you will be able to trace where a hallucination rate comes
+          from, one step at a time. You will also be able to name three things it
+          cannot tell you: whether a model's claims are actually true, how the
+          model behaves outside the summarizing task, and how it compares to a
+          model scored on a different benchmark.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/hallucination.html">A model builds a fake citation the same way it builds a true one</a>:
+            why a model fabricates in the first place, the behavior this rate is meant to track.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/llm-as-a-judge.html">Answer order alone swung a language model's verdict by 80 points</a>:
+            what goes wrong when a general chatbot, rather than a purpose-built classifier, is the one grading answers.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The percentage read as a lie detector</h2>
+        <p>
+          Hallucination percentages rarely reach the public as bare numbers.
+          They arrive already read as scorecards for how often a model lies.
+          Most of those percentages start at a
+          leaderboard the search company Vectara has published since 2023,
+          which scores each model and sorts the field from most faithful to
+          least.<sup class="nb-cite"><a href="#s1">1</a></sup> When a New York
+          Times report first carried the launch numbers to a general audience,
+          it said chatbots "invent information at least 3 percent of the time,
+          and as high as 27 percent." OpenAI's model came in lowest and Google's
+          PaLM-Chat highest.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          A trade headline went further and ranked the models outright: "ChatGPT
+          is Best, Palm-Chat Needs to Sober Up."<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Read as a ranking of honesty, the number is doing something it was
+          never built for. Vectara's leaderboard measures one specific skill:
+          how faithfully a model summarizes a document it is handed. It never
+          asks the model a question and checks the answer against the world.
+          The percentage quoted as "how often it invents things" is a
+          summary-faithfulness score, and a summary-faithfulness score is not a
+          truthfulness score.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="how-the-rate-is-built" id="how-the-rate-is-built">
+        <h2>From a pile of documents to one percentage</h2>
+        <p>
+          The rate is assembled the same way every time, in a fixed order.
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>Collect the documents</h3>
+            <p>
+              Vectara keeps a private set of more than 7,700 articles, ranging
+              from about 50 words to 24,000, drawn from news, medicine, law,
+              science, and other fields. The set is kept private on purpose, so
+              no model can train on the exact texts it will be scored
+              on.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Hand each one to the model, under a strict rule</h3>
+            <p>
+              Every model gets the same instruction: "Summarize using only the
+              information in the given passage. Do not infer. Do not use your
+              internal knowledge." The task is deliberately narrow, so that a
+              correct answer lives entirely inside the text the model was
+              given.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Score each summary with a second model</h3>
+            <p>
+              A purpose-built classifier called HHEM reads the summary against
+              its source passage and outputs a number from 0 to 1 for how well
+              the passage supports the summary. HHEM is not a chatbot asked for
+              an opinion; it is a small model fine-tuned for this one
+              judgment.<sup class="nb-cite"><a href="#s4">4</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Subtract to get the rate</h3>
+            <p>
+              The factual-consistency rate is the share of summaries HHEM judged
+              supported. The hallucination rate is what is left over: 100 minus
+              that consistency rate.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </p>
+          </li>
+        </ol>
+        <p>
+          This design is careful where it counts. Because the correct summary
+          sits entirely inside the supplied passage, a scorer can check the work
+          automatically, with no human deciding what is true in the wider world.
+          That is exactly why the task is summarizing and not open questions.
+          GPT-4o's August 2024 build, for one, posts a 9.6 percent hallucination
+          rate: HHEM judged 90.4 percent of its summaries fully supported by
+          their sources.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="faithful-not-true" id="faithful-not-true">
+        <h2>Faithful to the passage, not to the world</h2>
+        <p>
+          Follow one document through the pipeline and the seam opens. Suppose a
+          passage states, wrongly, that a drug was approved in 2019 when it was
+          in fact approved in 2021. A model reads that passage and writes: "The
+          drug was approved in 2019." The summary is accurate to its source in
+          every word. HHEM checks the summary against that passage, finds the
+          claim fully supported, and scores it as no
+          hallucination.<sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s4">4</a></sup>
+          The model has just repeated a false fact and earned a clean mark for
+          it.
+        </p>
+        <p>
+          A reader who hears "hallucination rate" expects the opposite, that a
+          wrong date counts against the model. It does not. The rate rewards
+          fidelity to the source, and a source can be wrong. A summary can be
+          perfectly faithful to a passage that is entirely false.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Vectara's own caveat</span>
+          <blockquote>
+            This evaluates "summarization factual consistency ... instead of
+            overall factual accuracy," and is "not evaluating the quality of the
+            summaries, only the factual consistency of
+            them."<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">Vectara, Hallucination Leaderboard README</span>
+          </blockquote>
+        </div>
+        <p>
+          The builders are not hiding this. It is stated on the same page as the
+          number.<sup class="nb-cite"><a href="#s1">1</a></sup> The gap opens
+          later, when the percentage is lifted off that page and quoted as a
+          measure of how often a model tells the truth.
+        </p>
+      </section>
+
+      <section data-nb-section="the-grader" id="the-grader">
+        <h2>The judge that misses most of them</h2>
+        <p>
+          Even inside its own task, the number is less exact than its decimal
+          place suggests, because the classifier producing it is imperfect.
+          HHEM's makers publish its accuracy on public test sets. On the
+          RAGTruth summarization set, HHEM catches only about a third of the
+          hallucinations it is asked to find: a recall of 31.86 percent, meaning
+          roughly two of every three slip past it. Its precision there is high,
+          near 76 percent, so the ones it does flag are usually real, but most
+          of what it should catch, it misses.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Independent testing is harsher on the hard cases. FaithBench gathered
+          660 summaries where the best automated detectors disagreed, then
+          measured how well each detector did. HHEM landed at about 55.7 percent
+          balanced accuracy and a zero-shot GPT-4o at about 56.3 percent, both a
+          hair above a coin flip. As the paper puts it, "even the best
+          hallucination detection models have near 50% accuracies on
+          FaithBench."<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          A grader this uneven cannot separate models sitting a point or two
+          apart. Yet the leaderboard reports them to a tenth of a percent, and
+          its top is a tight cluster: GPT-4o at 9.6 percent, Claude Opus 4 at
+          12.0, Sonnet 4 at 10.3, Gemini 2.5 Pro at
+          7.0.<sup class="nb-cite"><a href="#s1">1</a></sup> Those leaders sit
+          closer to one another than the classifier's own error. The answer rate
+          hides a second confound. Phi-4 posts a lower 3.7 percent, but
+          summarized only 80.7 percent of the documents, against GPT-4o's 93.8
+          percent. Skipping the roughly one in five it found hardest removes the
+          cases most likely to be scored as
+          hallucinated.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          None of this makes HHEM a poor tool. A fast, consistent classifier is
+          a sensible choice for a task this narrow. It is far steadier than
+          a <a href="../the-instruments/llm-as-a-judge.html">general chatbot pressed into service as a judge</a>,
+          where the order two answers appear in can swing the verdict.
+          HHEM does its one job. The trouble starts when its output is read as
+          more than that one job's score.
+        </p>
+      </section>
+
+      <section data-nb-section="incompatible-benchmarks" id="incompatible-benchmarks">
+        <h2>Three benchmarks, three different questions</h2>
+        <p>
+          Step outside Vectara's leaderboard and the word "hallucination" stops
+          naming one quantity. Three widely cited benchmarks each define it
+          differently, so their rates cannot be stacked into a single ranking.
+          TruthfulQA asks 817 open questions written to bait common human
+          misconceptions, with no document to be faithful to; its best model was
+          truthful on 58 percent of them against 94 percent for
+          people.<sup class="nb-cite"><a href="#s6">6</a></sup> RAGTruth
+          annotates about 18,000 responses word by word across three separate
+          tasks, counting any span the retrieved text does not
+          support.<sup class="nb-cite"><a href="#s7">7</a></sup> FaithBench
+          sorts summary hallucinations into four kinds, telling a harmless
+          inference apart from a claim that contradicts the source
+          outright.<sup class="nb-cite"><a href="#s5">5</a></sup> Putting
+          Vectara's 9.6 percent next to a TruthfulQA figure compares a
+          summary-fidelity score with a misconception score, two numbers that
+          share a word and nothing else.
+        </p>
+        <p>
+          The gap bites hardest when the same models face open questions instead
+          of summaries. OpenAI's own system card scores its reasoning models on
+          PersonQA, a set of factual questions about people with no passage to
+          lean on. There, o3 fabricated on 33 percent of questions and o4-mini
+          on 48 percent, and the newer o4-mini, stronger on many tasks,
+          hallucinated more than the older o1 at 16
+          percent.<sup class="nb-cite"><a href="#s8">8</a></sup> Trade coverage
+          read the result as a surprising reliability
+          regression.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">9.6%</span><span class="nb-stat-l">GPT-4o, summarizing a supplied passage (Vectara)</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">33%</span><span class="nb-stat-l">o3, open questions about people (PersonQA)</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">48%</span><span class="nb-stat-l">o4-mini, the same open-question test</span>
+          </div>
+        </div>
+        <p>
+          A single-digit summarization score and a one-in-three fabrication rate
+          belong to the same class of model, measured on different tasks. The
+          low board number does not predict the open-use one.
+          <a href="../the-mechanics/hallucination.html">Why a model fabricates at all</a>,
+          confidently filling a blank rather than admitting it does not know, is
+          a mechanism of its own. The number
+          supposed to track that behavior was measured on a task where the
+          behavior barely shows.
+        </p>
+        <p>
+          The cost is not a line item anyone has totaled. It is a buyer choosing
+          a model for a customer-facing job on a score that only ever measured
+          summarizing. It is a policymaker citing "a 3 percent hallucination
+          rate" as if it covered open questions. It is a public told a model
+          "invents information 3 percent of the time" when the figure never
+          touched the questions people actually
+          ask.<sup class="nb-cite"><a href="#s2">2</a></sup> The number is real
+          and carefully made. The reliability it seems to promise is borrowed.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A published hallucination rate is a summary-faithfulness score. A
+          model is handed a document, told to summarize it using nothing else,
+          and a purpose-built classifier checks whether the summary stayed
+          inside the document. The rate is the share it judged unsupported.
+          Every step is reasonable for that task.
+        </p>
+        <p>
+          What the number cannot do follows from how it is made. It cannot tell
+          you whether a model's claims are true, because a faithful summary of a
+          false passage counts as clean. It cannot tell you how a model behaves
+          outside summarizing, where the same frontier models fabricate a third
+          to half the time on open questions. And it cannot be compared across
+          benchmarks that define hallucination differently, because they are not
+          measuring the same thing.
+        </p>
+        <p>
+          The classifier that produces the rate misses most of the
+          hallucinations on at least one public test, so two models a point
+          apart are not really ranked at all. Quote the number for what it is: a
+          fair measure of whether a model can summarize a document without
+          drifting off it. The moment it is read as how often a model tells the
+          truth, it is being asked a question it never answered.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://github.com/vectara/hallucination-leaderboard">Vectara, Hallucination Leaderboard</a>:
+            the live board, its full method write-up, and the per-model rates, updated as new models land.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2410.13210">FaithBench: A Diverse Hallucination Benchmark for Summarization by Modern LLMs</a>:
+            the four-way taxonomy of summary hallucinations and the detector-accuracy tables behind the near-coin-flip figure.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="README (Last updated May 11, 2026); Methodology / Prompt used; Answer Rate column; per-model rates (GPT-4o 9.6% / 90.4% / 93.8%; Phi-4 3.7% / 80.7%)"
+              href="https://github.com/vectara/hallucination-leaderboard"
+              >Vectara &middot; Hallucination Leaderboard (GitHub README)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Opening paragraphs; 'invent information at least 3 percent ... as high as 27 percent'; OpenAI lowest, PaLM-Chat highest"
+              href="https://www.nytimes.com/2023/11/06/technology/chatbots-hallucination-rates.html"
+              >The New York Times (Cade Metz) &middot; Chatbots May &lsquo;Hallucinate&rsquo; More Often Than Many Realize</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Headline / subheadline ranking models by hallucination as an overall property"
+              href="https://www.tomshardware.com/news/ai-hallucinations-ranked-chatgpt-best"
+              >Tom's Hardware &middot; AI Models Ranked By Hallucinations: ChatGPT is Best, Palm-Chat Needs to Sober Up</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Overview; benchmark table: RAGTruth-Summ balanced acc 64.42%, recall 31.86%, precision 75.58%; AggreFact-SOTA 76.55%"
+              href="https://huggingface.co/vectara/hallucination_evaluation_model"
+              >Vectara &middot; HHEM-2.1-Open model card (Hugging Face)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Four-way taxonomy; detector results on challenging cases (HHEM-2.1 ~55.68%, GPT-4o zero-shot ~56.29%); 'near 50% accuracies on FaithBench'"
+              href="https://arxiv.org/abs/2410.13210"
+              >arXiv &middot; FaithBench: A Diverse Hallucination Benchmark for Summarization by Modern LLMs (2410.13210)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; 817 questions, 38 categories; best model 58% truthful vs 94% human"
+              href="https://arxiv.org/abs/2109.07958"
+              >Lin, Hilton &amp; Evans &middot; TruthfulQA: Measuring How Models Mimic Human Falsehoods (2109.07958)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; ~18,000 responses; three tasks; four span types; annotator agreement 91.8% (response) / 78.8% (span)"
+              href="https://arxiv.org/abs/2401.00396"
+              >arXiv &middot; RAGTruth: A Hallucination Corpus for Developing Trustworthy Retrieval-Augmented Language Models (2401.00396)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Hallucination evaluation, PersonQA (Table 4): o3 0.33, o4-mini 0.48, o1 0.16 (accuracy 0.59 / 0.36 / 0.47)"
+              href="https://cdn.openai.com/pdf/2221c875-02dc-4789-800b-e7758f3722c1/o3-and-o4-mini-system-card.pdf"
+              >OpenAI &middot; o3 and o4-mini System Card</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Body: o3 33% and o4-mini 48% on PersonQA (about double o1 16% and o3-mini 14.8%)"
+              href="https://techcrunch.com/2025/04/18/openais-new-reasoning-ai-models-hallucinate-more/"
+              >TechCrunch &middot; OpenAI's new reasoning AI models hallucinate more</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
