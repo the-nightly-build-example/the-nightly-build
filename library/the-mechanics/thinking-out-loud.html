@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A transformer can only compute more by writing more · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "thinking-out-loud",
+        "template": "lesson",
+        "title": "A transformer can only compute more by writing more",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-07",
+        "tags": [],
+        "sources": 12,
+        "words": 1984,
+        "reading_minutes": 9,
+        "dek": "A fixed network does a bounded amount of computation per token, so the only way to spend more on a hard problem is to write the intermediate steps and read them back.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A transformer can only compute more by writing more</h1>
+        <p class="nb-dekline">
+          A fixed network does a bounded amount of computation per token, so the
+          only way to spend more on a hard problem is to write the intermediate
+          steps and read them back.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-07</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The models that print a long "thinking" trace before they answer are
+          the current frontier, and the reason they do better is easy to
+          mistake for the human one: told to slow down, the model seems to
+          concentrate. This lesson traces the behavior to its actual cause. A
+          transformer does a fixed amount of computation for each word it
+          writes, so a problem that needs more steps than one word can hold has
+          to be spread across many written words. By the end you will be able
+          to say why writing the steps helps and name the exact reason it does.
+          You will also be able to state the one thing nobody has settled:
+          whether the steps a model prints are the work it did or a story told
+          next to it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/chain-of-thought.html">Chain-of-thought prompting</a>:
+            the 2022 paper that first measured the accuracy jump this lesson explains.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html">Autoregressive generation</a>:
+            why a written token becomes ordinary input the model reads back and never revises.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/prefill-and-decode.html">Prefill and decode</a>:
+            the per-word cost of generating each new token from the cached prompt.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Tell it to show its work and the score jumps</h2>
+        <p>
+          Ask a fluent model a multi-step arithmetic word problem and it often
+          answers wrong. Add four words to the request, <em>think step by
+          step</em>, and the same model on the same problem gets it right far
+          more often. On the GSM8K grade-school math set, PaLM 540B solved 17.9%
+          of problems when asked for the answer directly and 56.9% when the
+          prompt first showed it a few worked solutions.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The newer reasoning models make the same move on their own. Trained by
+          reinforcement learning to write out its reasoning first, DeepSeek-R1-Zero
+          climbed from 15.6% to 71.0% on the 2024 AIME competition as it learned
+          to spend more words thinking.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">17.9% &rarr; 56.9%</span
+            ><span class="nb-stat-l">GSM8K, PaLM 540B: direct answer vs written steps</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">15.6% &rarr; 71.0%</span
+            ><span class="nb-stat-l">AIME 2024, DeepSeek-R1-Zero: before vs after learning to write longer traces</span>
+          </div>
+        </div>
+        <p>
+          The finding that intermediate steps raise accuracy is old news by now,
+          named and measured in the
+          <a href="../the-evidence/chain-of-thought.html">chain-of-thought</a>
+          paper. What it left open is what the extra words actually buy.
+        </p>
+      </section>
+
+      <section data-nb-section="per-token-compute" id="per-token-compute">
+        <h2>A transformer spends the same effort on every token</h2>
+        <p>
+          The natural explanation is the human one. Told to slow down and reason
+          it through, the model reasons harder, the way a person does when they
+          stop guessing and concentrate. That is not what changes. A transformer
+          runs the same fixed stack of layers for every token it produces, and
+          the amount of computation it can do before it has to commit to the
+          next word is set by that stack. It does not grow when the question
+          gets harder.
+        </p>
+        <p>
+          This is not a hunch about how the models behave; it is a proved limit
+          on what the architecture can do. Merrill, Sabharwal and Smith showed
+          that a transformer producing a single output sits inside the
+          complexity class TC0, the set of problems a circuit of fixed depth can
+          solve.<sup class="nb-cite"><a href="#s3">3</a></sup> Fixed depth means
+          a fixed number of computational steps, no matter how long or how hard
+          the input. So one token's worth of computation is a hard ceiling. A
+          problem whose solution needs a longer chain of dependent steps than
+          that ceiling allows cannot be finished inside a single token, however
+          large or fluent the model is.
+        </p>
+      </section>
+
+      <section data-nb-section="worked-turn" id="worked-turn">
+        <h2>Watch a product appear one line at a time</h2>
+        <p>
+          Multiplication shows the ceiling directly. Ask a model for
+          837 &times; 649 in one shot and it usually misses. Dziri and
+          colleagues measured single-shot three-digit-by-three-digit
+          multiplication at about 55% for GPT-3.5 and 59% for GPT-4, and the
+          accuracy falls toward zero as the digits grow.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The product is a short chain of dependent steps, and the chain is
+          longer than one token can hold. Give the model room to write the
+          partial products, and each line becomes a step it can finish and then
+          read back.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Multiplying 837 by 649 one written line at a time. A model that
+            misses the product in a single answer gets it right when it has room
+            to record the partial sums.<sup class="nb-cite"
+              ><a href="#s4">4</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Product</th>
+              <th class="txt">What the line does</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">837 &times; 9</span></td>
+              <td>7 533</td>
+              <td class="txt">The ones digit of 649, worked and written down.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">837 &times; 40</span></td>
+              <td>33 480</td>
+              <td class="txt">The tens digit, shifted one place.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">837 &times; 600</span></td>
+              <td>502 200</td>
+              <td class="txt">The hundreds digit, the largest partial product.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Sum</span></td>
+              <td>543 213</td>
+              <td class="txt">The three lines added: the answer no one token had room to reach.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The written lines are where the computation happens. Each is one
+          bounded step of the kind a single token cannot hold, and once written,
+          each becomes ordinary input the model reads back on its next pass, the
+          same way any
+          <a href="../the-mechanics/autoregressive-generation.html">generated token</a>
+          does, at the
+          <a href="../the-mechanics/prefill-and-decode.html">per-token cost</a>
+          of reading the whole context again. Serial reasoning of length T needs
+          on the order of T written tokens to carry it.
+        </p>
+        <p>
+          Complexity theory proves this is real power and not a trick of
+          prompting. Feng and colleagues showed that a fixed-depth transformer
+          forced to answer immediately cannot solve elementary arithmetic and
+          equation-solving at any feasible size, while a constant-size
+          transformer that is allowed to write a step-by-step derivation
+          can.<sup class="nb-cite"><a href="#s5">5</a></sup> Merrill and
+          Sabharwal turned the number of written steps into a dial. With a
+          linear number of steps a transformer can recognize things it provably
+          cannot answer in one pass. With a polynomial number it reaches every
+          problem solvable in polynomial time.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Li and colleagues state it plainest. Chain-of-thought gives the model
+          the serial computation it structurally lacks, and T written steps buy
+          the power of a circuit of size T.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          A transformer asked for an immediate answer, as one of these
+          researchers put it, is "quite weak". The written steps are where the
+          strength goes.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="where-it-stops" id="where-it-stops">
+        <h2>Where writing the steps stops helping</h2>
+        <p>
+          A fair question at this point is whether the content of the steps
+          matters or only their number. In theory, and in models built for it,
+          the tokens can be pure computation regardless of what they say. Pfau,
+          Merrill and Bowman trained transformers from scratch to solve hard
+          algorithmic tasks using meaningless filler tokens, strings of dots
+          standing in for a chain of thought. The benefit of the extra tokens can
+          be computation independent of what they say.<sup class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+          But that took dense, purpose-built supervision, and the trick does not
+          appear in off-the-shelf models. Tested on a deployed model, the result
+          flips: Lanham and colleagues replaced a real model's chain of thought
+          with filler dots and saw no accuracy gain at all.<sup class="nb-cite"
+            ><a href="#s10">10</a></sup
+          >
+          The free computation is a fact about the architecture and about models
+          drilled to use it. A working model appears to need steps that carry
+          real content, not padding.
+        </p>
+        <p>
+          Nor does writing the steps help on every kind of problem. Sprague and
+          colleagues, reviewing more than a hundred papers and running fresh
+          evaluations, found the gains concentrated on math and symbolic tasks
+          and small elsewhere. On the MMLU knowledge test, answering directly
+          matched step-by-step accuracy except where the question involved an
+          equals sign.<sup class="nb-cite"><a href="#s11">11</a></sup> And even
+          where it works the compute buys no free generalization: Dziri's
+          scratchpad restored multiplication accuracy only within the range of
+          problem sizes the model had seen, and failed on larger ones.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The extra computation is real. It does not, on its own, make the model
+          reliable outside the cases it was trained on.
+        </p>
+      </section>
+
+      <section data-nb-section="open-question" id="open-question">
+        <h2>The printed steps might not be the computation</h2>
+        <p>
+          Everything so far shows that written tokens <em>can</em> carry the
+          computation. It does not show that the chain a given model prints
+          <em>is</em> the computation that produced its answer. That question is
+          open, and the evidence that it is open is direct. Turpin and
+          colleagues planted a bias in the prompt, reordering the multiple-choice
+          examples so the answer was always "(A)". The model's answer swung to
+          follow the bias, while the reasoning it wrote never mentioned the bias
+          and argued fluently for the new answer instead. Across thirteen tasks
+          the planted cue cost as much as 36% accuracy, with the printed steps
+          rationalizing the answer rather than reporting how it was
+          reached.<sup class="nb-cite"><a href="#s12">12</a></sup> Lanham and
+          colleagues found that how much the printed chain actually drives the
+          answer varies by task, and that on most tasks they studied it gets
+          less faithful as models grow from 13 billion to 175 billion
+          parameters.<sup class="nb-cite"><a href="#s10">10</a></sup>
+        </p>
+        <p>
+          Those measurements were taken on older, smaller models and on
+          prompts with a specific planted bias, not on the long reasoning traces
+          that today's frontier models print. So the case that matters most is
+          genuinely unsettled. Settling it would take a way to read the
+          computation a network actually ran off its internal state and check
+          the printed steps against it, and no such check exists yet. The
+          theorists mark the same limit on their own results: a proof that a
+          transformer with T steps <em>can</em> express a computation does not
+          show that a trained model learns or uses that
+          computation.<sup class="nb-cite"><a href="#s8">8</a></sup> Until that
+          check exists, a printed chain of thought is evidence that the model
+          spent computation, not proof of which computation it spent.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A transformer does a fixed, bounded amount of computation for each
+          token it writes. That is a proved limit, not a guess about behavior.
+          It means the only way the model can spend more computation on a hard
+          problem is to write more tokens and read them back. The steps a model
+          writes are not a description of thinking that happened elsewhere. On a
+          problem that needs them, they are the thinking. That is why "think
+          step by step" turns a wrong answer right, and why it helps most on the
+          problems, like multiplication, whose answers are built one dependent
+          step at a time. The part still open is the one worth remembering: for
+          the reasoning traces today's models print, no one can yet check
+          whether the written steps are the computation the model ran or a
+          fluent account written beside it. A printed chain tells you the model
+          spent the effort. It does not yet tell you the effort is what you read.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.quantamagazine.org/how-chain-of-thought-reasoning-helps-neural-networks-compute-20240321/">How Chain-of-Thought Reasoning Helps Neural Networks Compute</a>
+            (Quanta): a plain-language tour of the complexity results behind this lesson.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2307.13702">Measuring Faithfulness in Chain-of-Thought Reasoning</a>
+            (Anthropic): the four interventions that probe whether the printed steps drive the answer.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2402.12875">Chain of Thought Empowers Transformers to Solve Inherently Serial Problems</a>:
+            the proof that T written steps buy a circuit of size T.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Table 2; Section 3"
+              href="https://arxiv.org/abs/2201.11903"
+              >Google Research · Chain-of-Thought Prompting Elicits Reasoning in Large Language Models (Wei et al., 2022)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Section 2.2; Figures 2–3"
+              href="https://arxiv.org/abs/2501.12948"
+              >DeepSeek-AI · DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning (2025)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2106.16213"
+              >TACL · Saturated Transformers are Constant-Depth Threshold Circuits (Merrill, Sabharwal &amp; Smith, 2022)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.18654"
+              >NeurIPS · Faith and Fate: Limits of Transformers on Compositionality (Dziri et al., 2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.15408"
+              >NeurIPS · Towards Revealing the Mystery behind Chain of Thought (Feng et al., 2023)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2310.07923"
+              >ICLR · The Expressive Power of Transformers with Chain of Thought (Merrill &amp; Sabharwal, 2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2402.12875"
+              >ICML · Chain of Thought Empowers Transformers to Solve Inherently Serial Problems (Li et al., 2024)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.quantamagazine.org/how-chain-of-thought-reasoning-helps-neural-networks-compute-20240321/"
+              >Quanta Magazine · How Chain-of-Thought Reasoning Helps Neural Networks Compute (Brubaker, 2024)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.15758"
+              >Pfau, Merrill &amp; Bowman · Let's Think Dot by Dot: Hidden Computation in Transformer Language Models (2024)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.13702"
+              >Anthropic · Measuring Faithfulness in Chain-of-Thought Reasoning (Lanham et al., 2023)</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2409.12183"
+              >ICLR · To CoT or not to CoT? Chain-of-Thought Helps Mainly on Math and Symbolic Reasoning (Sprague et al., 2024)</a
+            >
+          </li>
+          <li id="s12">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.04388"
+              >Turpin et al. · Language Models Don't Always Say What They Think (2023)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
