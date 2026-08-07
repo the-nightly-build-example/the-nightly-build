@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New York cleared the Apple Card of bias without proving it fair · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "apple-card",
+        "template": "lesson",
+        "title": "New York cleared the Apple Card of bias without proving it fair",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-07",
+        "tags": [],
+        "sources": 8,
+        "words": 2077,
+        "reading_minutes": 9,
+        "dek": "In 2019 David Heinemeier Hansson shared every bank account with his wife and was offered twenty times her Apple Card limit, and Goldman Sachs insisted its model never knew which of them was a woman.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">New York cleared the Apple Card of bias without proving it fair</h1>
+        <p class="nb-dekline">
+          In 2019 David Heinemeier Hansson shared every bank account with his wife and was offered twenty times her Apple Card limit, and Goldman Sachs insisted its model never knew which of them was a woman.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-07</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every day, models you cannot see decide whether you get a loan, an
+          apartment, or an interview. When one of those decisions looks biased,
+          how would you prove it? In 2019 the Apple Card became the most public
+          test of that question, and a state regulator spent sixteen months
+          answering it. This lesson follows what happened, what the regulator
+          found and did not find, and why an algorithm can produce a lopsided
+          outcome without ever using the trait it seems to punish. By the end you
+          will know why "no bias found" and "proven fair" are different sentences,
+          and why the person best placed to complain is the one who cannot get
+          the evidence.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../when-ai-breaks/compas-recidivism.html">The COMPAS recidivism scores</a>:
+            how two careful parties measured different definitions of fairness off
+            the same numbers and both were right.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.bitsaboutmoney.com/archive/how-credit-cards-make-money/">Patrick McKenzie, "How credit cards make money"</a>:
+            how card underwriting and card economics actually work, from the inside.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A shared account and a twenty-to-one split</h2>
+        <p>
+          On November 7, 2019, the software developer David Heinemeier Hansson
+          posted that Apple Card had offered him a credit limit twenty times his
+          wife's. They filed joint tax returns, lived in a community-property
+          state, and had been married for years. New York's Department of
+          Financial Services, the regulator that later investigated, recorded the
+          same twenty-to-one gap and the same date in its report.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          His wife, Jamie Heinemeier Hansson, published her own account four days
+          later. Her credit score was higher than his, she wrote, her United
+          States credit history longer, with no late payments, and she was
+          independently wealthy. She was given no explanation and no way to make
+          her case; a customer-service representative told her the outcome was
+          "just the algorithm." An Apple Card manager, aware of the tweets, raised
+          her limit to match her husband's, in her telling without any real
+          explanation.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <ol class="nb-timeline">
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">Nov 7, 2019</span>
+            <h3>
+              Hansson posts the screenshot<sup class="nb-cite"
+                ><a href="#s1">1</a></sup
+              >
+            </h3>
+            <p>
+              His complaint spreads within hours, calling the card's underwriting
+              a black box he had no way to appeal.
+            </p>
+          </li>
+          <li class="nb-tl-event">
+            <span class="nb-tl-date">Nov 10, 2019</span>
+            <h3>
+              Steve Wozniak reports the same<sup class="nb-cite"
+                ><a href="#s3">3</a></sup
+              >
+            </h3>
+            <p>
+              The Apple co-founder said the card gave him ten times the limit of
+              his wife, Janet Hill, though the couple shared every account and
+              asset.
+            </p>
+          </li>
+          <li class="nb-tl-event">
+            <span class="nb-tl-date">Nov 11, 2019</span>
+            <h3>
+              Goldman Sachs denies deciding on gender<sup class="nb-cite"
+                ><a href="#s4">4</a></sup
+              >
+            </h3>
+            <p>
+              The card's issuer said two family members can receive different
+              terms on individual credit factors, and that it does not make
+              decisions on gender.
+            </p>
+          </li>
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">Late 2019</span>
+            <h3>
+              New York opens an investigation<sup class="nb-cite"
+                ><a href="#s1">1</a></sup
+              >
+            </h3>
+            <p>
+              The Department of Financial Services began examining whether
+              Goldman Sachs unlawfully discriminated against women in Apple Card
+              underwriting.
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section data-nb-section="the-finding" id="the-finding">
+        <h2>Cleared on bias, faulted on secrecy</h2>
+        <p>
+          The Department of Financial Services took sixteen months. It reviewed
+          several thousand pages of records from the Bank and Apple, interviewed
+          witnesses and the applicants who complained, and had its Consumer
+          Examinations Unit run a regression analysis on the underwriting data
+          for nearly 400,000 New York applicants, from the card's launch through
+          the first complaints.<sup class="nb-cite"><a href="#s1">1</a></sup> In
+          its own summary, the investigation "did not produce evidence of unlawful
+          discrimination against applicants under fair lending law."<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          The finding had two parts, and both are in the report. Women and men
+          with equivalent credit characteristics had similar Apple Card outcomes,
+          and the model did not use gender or marital status as an input.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          For every individual who complained, the Bank pointed to lawful factors
+          behind the decision: credit score, total debt, income, how much of
+          their available credit they were using, missed payments, and other
+          credit history.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Two people who shared every account received credit limits that
+          differed twenty to one. The regulator that examined the model found no
+          violation of fair-lending law, and found the model was never told which
+          applicant was a woman.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          What the report faulted was not the model but the silence around it.
+          Federal law requires a lender to explain a denial, not the terms it
+          grants, so an approved applicant with a puzzling limit is owed no reason
+          at all.<sup class="nb-cite"><a href="#s1">1</a></sup> Apple Card's
+          appeal process made an applicant wait six months. Goldman Sachs raised
+          both complaining wives' limits within days of the tweets and dropped the
+          six-month wait. In June 2020 it introduced a program, "Path to Apple
+          Card," to coach declined applicants toward approval.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The regulator's own word for the underwriting was "black box."<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="proxies" id="proxies">
+        <h2>How a model discriminates without knowing gender</h2>
+        <p>
+          Goldman's defense and the regulator's finding rest on the same fact:
+          gender was not an input. To see why that does not close the question,
+          start with the law. The Equal Credit Opportunity Act, in force since
+          1974, makes it unlawful to discriminate in any part of a credit
+          transaction on the basis of sex or marital status, among other
+          traits.<sup class="nb-cite"><a href="#s6">6</a></sup> The law reaches
+          two different wrongs. One is disparate treatment: using a prohibited
+          trait, or deciding with it in mind. The other is disparate impact: a
+          rule that names no prohibited trait yet falls unequally on a protected
+          group. "The model does not use gender" answers the first charge. It does
+          not touch the second.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            A proxy is an input that carries a protected trait without naming it.
+            A model can be blind to gender and still act on it, if something it
+            does read, such as a spending pattern, a type of account, or a gap in
+            credit history, tends to travel with gender. Remove the label and the
+            shadow it cast stays in the data.
+          </p>
+        </div>
+        <p>
+          Goldman Sachs published the categories of data its model draws on. None
+          of them is gender. The list below is what the website shows, not the
+          model itself.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="apple-card/asset-1.png"
+            alt="Apple Card website panel headed 'A wider window for approval,' listing five kinds of data Goldman Sachs draws on: TransUnion bureau data, the disposable income left after monthly debt obligations, utility payment history for services such as telecom, gas, and electricity, a history of paying down debts, and the annual income the applicant reports."
+          />
+          <figcaption>
+            Fig. 1 · The inputs Goldman Sachs says stand in for a plain credit
+            score, from the Apple Card site as reproduced in the DFS report; a
+            snapshot of the site, not the model.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="p. 9"
+                data-nb-url="https://www.dfs.ny.gov/system/files/documents/2021/03/rpt_202103_apple_card_investigation.pdf#page=10"
+                data-nb-note="Goldman's own published list of underwriting inputs; the concrete material for the proxy point."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Each item is a plausible measure of whether someone repays debt. Each
+          can also carry the history of who has been allowed to borrow.
+          Credit-report data reflects who has held credit in their own name, which
+          for decades women could not do as freely as men; utility and payment
+          records reflect where people live and what they can afford. The critic
+          Liz O'Sullivan, writing in TechCrunch, notes that features like these
+          are known to act as stand-ins for protected classes, and that the
+          differences on two applicants' credit files "do not necessarily
+          translate to true financial responsibility or creditworthiness."<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          A model built only from such inputs can reproduce an old pattern without
+          ever seeing the trait that produced it.
+        </p>
+        <p>
+          This is why "no violation" is a narrower finding than it sounds. Whether
+          an outcome counts as biased depends on which definition of fairness you
+          hold, and, as an earlier lesson on the
+          <a href="../when-ai-breaks/compas-recidivism.html">COMPAS recidivism scores</a>
+          showed, two careful parties can measure different definitions off the
+          same numbers and both be right.
+        </p>
+      </section>
+
+      <section data-nb-section="the-proof-problem" id="the-proof-problem">
+        <h2>The proof an applicant can never reach</h2>
+        <p>
+          The regulator tested for disparate impact the way such tests are usually
+          run: it compared women and men with similar credit characteristics and
+          found their outcomes similar.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          That method has a blind spot, and it is the center of this case. If a
+          proxy for gender sits inside "credit characteristics," then holding those
+          characteristics equal holds the proxy equal too, and its effect
+          disappears from view. Comparing like with like cannot find a bias that
+          lives in the likeness.
+        </p>
+        <p>
+          O'Sullivan makes exactly this objection. She calls the comparison a
+          1970s-era test and points out that the public report never says whether
+          Goldman's inputs were examined for proxy effects at all.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The report states that its regression did not bear out a violation, but
+          it publishes no table, no specification, and no proxy analysis of the
+          nearly 400,000-applicant study.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The central number in the case is one the public is asked to take on
+          trust.
+        </p>
+        <p>
+          What would settle it? To know whether a proxy drove the gap, you would
+          need three things: the list of features the model actually uses, the
+          specification of the regression the Department ran, and a mediation
+          analysis testing those features against applicants' real gender. None of
+          the three is public. An individual applicant can reach none of it. She
+          never sees the model. She cannot assemble the demographic data of
+          400,000 strangers. And the law entitles her to a reason only when she is
+          denied, not when she is approved on terms she cannot explain.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The person with standing to complain is the one person structurally
+          unable to gather the proof.
+        </p>
+        <p>
+          The Department said as much. Its finding of no violation, it wrote, "does
+          not prove otherwise" about inequality built into credit data, and it
+          called the law governing credit scoring in need of strengthening and
+          modernization.<sup class="nb-cite"><a href="#s1">1</a></sup> "No violation
+          found" is an honest verdict. "Proven fair" is a different claim, and the
+          record does not support it.
+        </p>
+      </section>
+
+      <section data-nb-section="black-box-now" id="black-box-now">
+        <h2>Where the black box sits today</h2>
+        <p>
+          The gap the Apple Card exposed was not mainly about one card. It was
+          that the person affected by an automated credit decision cannot see the
+          model that made it, and often is owed no reason for it. That gap is
+          wider now, because more decisions run this way, and regulators have begun
+          to answer it directly.
+        </p>
+        <p>
+          In May 2022 the Consumer Financial Protection Bureau issued a circular
+          addressing lenders that use complex, "black-box" machine-learning models.
+          Such models, it held, earn no exemption from the requirement to give an
+          applicant the specific and accurate reasons for an adverse decision. A
+          creditor cannot justify noncompliance "based on the mere fact that the
+          technology it employs to evaluate applications is too complicated or
+          opaque to understand."<sup class="nb-cite"><a href="#s8">8</a></sup> Not
+          understanding your own model is not a defense.
+        </p>
+        <p>
+          That rule closes part of the gap and leaves the rest open. It forces a
+          lender to state its reasons, which Apple Card applicants never got. It
+          does not hand anyone the model, the data, or the means to test a stated
+          reason for a proxy hiding underneath it. The same opacity now sits inside
+          the systems that price insurance, screen tenants, and rank job
+          applicants. The Apple Card investigation shows how far a careful
+          outsider gets before the door closes: no violation proven, and none
+          disproven.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You can now recount the case. A shared-finances couple drew credit
+          limits twenty to one apart. The accusation went viral, and a
+          sixteen-month investigation found no fair-lending violation and no
+          gender in the model, alongside real failures to explain a limit or
+          appeal it. The reason the story does not
+          end there is the proxy: a model blind to a trait can still act on it
+          through the data that trait left behind, and testing only applicants who
+          already look alike cannot catch it. "No violation found" is what the
+          evidence supported. "Proven fair" would have needed the model, the data,
+          and the analysis, and no applicant or member of the public can get any of
+          them. When a decision about you runs inside a box you cannot open, its
+          fairness is not something you or the public can check, and the law is
+          only beginning to reach that.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.dfs.ny.gov/reports_and_publications/202103_report_apple_card_investigation">NY DFS, Report on the Apple Card Investigation</a>:
+            the full record, including the transparency findings this lesson only
+            sampled.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.consumerfinance.gov/compliance/circulars/circular-2022-03-adverse-action-notification-requirements-in-connection-with-credit-decisions-based-on-complex-algorithms/">CFPB Circular 2022-03</a>:
+            the regulator's current position that a black-box model is no excuse
+            for withholding an applicant's reasons.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.dfs.ny.gov/reports_and_publications/202103_report_apple_card_investigation"
+              >NY Department of Financial Services · Report on the Apple Card Investigation (March 2021)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://dhh.dk/2019/about-the-apple-card.html"
+              >Jamie Heinemeier Hansson · About the Apple Card (Nov 11, 2019)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://futurism.com/the-byte/steve-wozniak-apple-card-discriminated-against-wife"
+              >Futurism · Steve Wozniak Says Apple Card Discriminated Against His Wife</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://appleinsider.com/articles/19/11/11/goldman-sachs-denies-claims-of-apple-card-gender-bias"
+              >AppleInsider · Goldman Sachs denies claims of Apple Card gender bias</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.dfs.ny.gov/reports_and_publications/press_releases/pr202103231"
+              >NY Department of Financial Services · Press release on the Apple Card investigation (March 23, 2021)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.law.cornell.edu/uscode/text/15/1691"
+              >Equal Credit Opportunity Act, 15 U.S.C. § 1691 (Legal Information Institute)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://techcrunch.com/2021/08/14/how-the-law-got-it-wrong-with-apple-card/"
+              >TechCrunch · Liz O'Sullivan, How the law got it wrong with Apple Card (Aug 2021)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.consumerfinance.gov/compliance/circulars/circular-2022-03-adverse-action-notification-requirements-in-connection-with-credit-decisions-based-on-complex-algorithms/"
+              >Consumer Financial Protection Bureau · Circular 2022-03 (May 2022)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
