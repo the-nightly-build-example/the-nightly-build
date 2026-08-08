@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A health algorithm predicted cost, and scored sicker Black patients as lower-risk · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "optum-health-algorithm",
+        "template": "lesson",
+        "title": "A health algorithm predicted cost, and scored sicker Black patients as lower-risk",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-08",
+        "tags": ["bias", "proxy-label", "risk-scores", "health-algorithms", "optum"],
+        "sources": 8,
+        "words": 1725,
+        "reading_minutes": 8,
+        "dek": "A 2019 study of nearly 50,000 patients showed the tool doing exactly what it was built to do, predicting next year's medical spending rather than illness.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">A health algorithm predicted cost, and scored sicker Black patients as lower-risk</h1>
+        <p class="nb-dekline">
+          A 2019 study of nearly 50,000 patients showed the tool doing exactly what it was built to do, predicting next year's medical spending rather than illness.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-08</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Hospitals, insurers, and clinics rank patients by a computed risk
+          score to decide who gets extra care, and tools of this kind are
+          applied to about 200 million people in the United States each year. In
+          2019 four researchers took one of them apart and found it giving
+          equally sick Black patients lower scores than white patients. No one
+          had entered race. The cause was the single number the tool was trained
+          to predict. By the end of this lesson you will be able to say exactly
+          how a score with race nowhere in it produced a racial gap, and why the
+          same failure waits inside any system that predicts a convenient
+          stand-in for the thing it actually cares about.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../when-ai-breaks/nh-predict.html">nH Predict sets one patient's discharge date from six million others</a>: another UnitedHealth care algorithm, and what happens when its output becomes the decision.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../when-ai-breaks/amazon-hiring-tool.html">Amazon's resume screener taught itself to penalize the word 'women's'</a>: a scoring model that learned bias straight from the data it was trained on.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The score that chose who got extra care</h2>
+        <p>
+          Health systems use a risk score, a single number predicting how much
+          medical attention a patient will need, to pick who receives extra
+          help. One commercial scoring tool ran at a large academic hospital,
+          rating every primary-care patient in a risk-based insurance contract
+          and flagging the highest scorers for a high-risk care management
+          program that adds nurses, appointments, and follow-up. Patients above
+          the 97th percentile of the score were enrolled automatically.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          In October 2019 Ziad Obermeyer, Brian Powers, Christine Vogeli, and
+          Sendhil Mullainathan published a study in <em>Science</em> of that
+          tool. They worked from 49,618 patients at the hospital, 6,079 Black
+          and 43,539 white, observed over 100,009 patient-years from 2013 to
+          2015.<sup class="nb-cite"><a href="#s1">1</a></sup> The score decided
+          who the program reached.
+        </p>
+      </section>
+
+      <section data-nb-section="the-gap" id="the-gap">
+        <h2>Hold the score still</h2>
+        <p>
+          Take two patients the tool gave the same risk score, one Black and one
+          white. By the score they are equally sick. They are not. At the
+          97th-percentile line where patients were enrolled automatically, Black
+          patients carried 4.8 active chronic conditions on average against 3.8
+          for white patients at the same score, 26.3% more (P &lt; 0.001).<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The gap holds across the whole range of scores and widens toward the
+          top.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          In the program as it ran, 19.2% of the patients it enrolled were
+          Black.<sup class="nb-cite"><a href="#s1">1</a></sup> The authors then
+          asked what that group would look like if the score tracked illness
+          instead. Swapping in the sicker patients the score had passed over, at
+          each threshold, until the marginal patient of each race was equally
+          sick, would raise the Black share from 17.7% to 46.5%.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          That second figure is a simulation, not a change anyone made. It is
+          the share you reach on paper once the health gap at each score is
+          closed.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">4.8 vs 3.8</span
+            ><span class="nb-stat-l">active chronic conditions at the same top-risk score, Black vs white</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">19.2%</span
+            ><span class="nb-stat-l">observed Black share of automatically enrolled patients</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">46.5%</span
+            ><span class="nb-stat-l">simulated Black share once the health gap is removed, from 17.7%</span>
+          </div>
+        </div>
+      </section>
+
+      <section data-nb-section="the-label" id="the-label">
+        <h2>The label was cost</h2>
+        <p>
+          A prediction model learns whatever target it is trained on. That
+          target is the label. This tool's label was not illness. It was
+          next-year total medical cost. The tool predicted how much each patient
+          would cost the health system in the coming year, and the program read
+          that cost prediction as a measure of need.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Predicting cost is the industry default: the most accurate commercial
+          risk-scoring models predict future spending from past spending, and
+          the Society of Actuaries evaluated the ten most widely used tools by
+          how well they predicted cost.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Cost and illness are not the same thing, and they come apart by race.
+          At equal illness, less money is spent on Black patients, through
+          worse access, fewer specialist referrals, and less trust built over
+          time, so their recorded cost runs below their need. The wedge is about
+          $1,801 a year at the same number of chronic conditions.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The tool learned cost, so it learned that lower spending and scored
+          those patients as lower-risk.
+        </p>
+        <p>
+          By its own target the tool was well-calibrated. At the same risk
+          score, the two groups' realized costs nearly match.
+        </p>
+        <table class="nb-table">
+          <caption>
+            At the same risk score, realized cost is nearly equal across race
+            while illness is not, so a cost label reads as calibrated and still
+            ranks Black patients' need too low.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Measure at equal risk score</th>
+              <th>Black</th>
+              <th>White</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Realized cost, median score</td>
+              <td>$5,147</td>
+              <td>$4,995</td>
+            </tr>
+            <tr>
+              <td class="txt">Realized cost, top 5% of scores</td>
+              <td>$35,541</td>
+              <td>$34,059</td>
+            </tr>
+            <tr>
+              <td class="txt">Active chronic conditions, 97th percentile</td>
+              <td>4.8</td>
+              <td>3.8</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Cost lined up across race. Illness did not. A tool audited only on how
+          well it predicted cost would pass that audit. And the tool never used
+          race as an input; the paper states plainly that it excludes race.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The disparity arrived anyway, carried in by the correlation between
+          spending and race.
+        </p>
+      </section>
+
+      <section data-nb-section="the-vendor" id="the-vendor">
+        <h2>The vendor confirmed the bias</h2>
+        <p>
+          The study named no vendor. The authors reported no contact with the
+          tool's manufacturer until the analysis was finished, and the paper
+          identifies the product nowhere.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The public code repository they later released keeps the same
+          reticence, calling the source only "our health system partner."<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The name came from outside the study. Reporters identified the tool as
+          Optum's Impact Pro.<sup class="nb-cite"><a href="#s4">4</a></sup> On 25
+          October 2019, the day the study appeared, New York's Department of
+          Financial Services and Department of Health wrote jointly to
+          UnitedHealth Group's chief executive, David Wichmann, naming Impact Pro
+          and calling its racially disparate results "unlawful in New York."<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          The letter, signed by Superintendent Linda Lacewell and Commissioner
+          Howard Zucker, asked the company to prove the tool was not
+          discriminatory or to stop using it.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          The company did not dispute the finding.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The vendor's account</span>
+          <blockquote>
+            Impact Pro "was highly predictive of cost, which is what it was
+            designed to do."<sup class="nb-cite"><a href="#s6">6</a></sup>
+            <span class="nb-note-who">UnitedHealth Group, on the algorithm New York had questioned</span>
+          </blockquote>
+        </div>
+        <p>
+          That restates the study's own account of the mechanism, offered as a
+          defense. The disagreement is about what the tool should predict, not
+          about whether predicting cost produced the gap. The manufacturer then
+          replicated the analysis on 3,695,943 commercially insured patients of
+          its own and found the same pattern: at a given risk score, Black
+          patients had 48,772 more active chronic conditions than white
+          patients.<sup class="nb-cite"><a href="#s1">1</a></sup> Relabeling the
+          model to predict health rather than cost alone cut that excess by
+          84%.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-proxy" id="the-proxy">
+        <h2>When the label is a proxy</h2>
+        <p>
+          The failure here is not special to health care. It is a property of a
+          choice every scoring system makes. When the thing you care about is
+          hard to measure, illness or need or merit, you train the model on a
+          stand-in you can measure. That stand-in is the proxy. The model learns
+          the proxy exactly, and inherits every way the proxy differs from the
+          target you meant.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            A model learns the label you give it, not the goal you had in mind.
+            Choose a proxy for that goal and the model reproduces the gap between
+            them, including any bias sitting in the gap.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </p>
+        </div>
+        <p>
+          Cost is one such proxy, and the authors showed the choice of label
+          alone drives the result. Train the same tool on total cost and the
+          highest-risk group is 14.1% Black; train it on the number of active
+          chronic conditions and the group is 26.7% Black.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Same patients, same features, nearly twice the representation, from
+          the label and nothing else.
+        </p>
+        <p>
+          Proxies stand in for goals across deployed scoring: engagement for
+          what a reader values, arrests for crime, prior spending for health
+          need, past hiring for a good candidate. The health tools that predict
+          need this way reach on the order of 200 million people a year, which
+          is what makes the choice of label consequential.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          In 2021 the study's authors published an Algorithmic Bias Playbook
+          describing biased algorithms as "deployed throughout the health care
+          system, influencing clinical care, operational workflows, and policy,"
+          and set out a four-step audit for finding the same fault
+          elsewhere.<sup class="nb-cite"><a href="#s7">7</a></sup><sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          The pattern recurs in cases this desk has covered: a
+          <a href="../when-ai-breaks/apple-card.html">credit-limit model New York cleared without proving it fair</a>,
+          <a href="../when-ai-breaks/nh-predict.html">another UnitedHealth tool whose length-of-stay estimate set discharge dates</a>,
+          a
+          <a href="../when-ai-breaks/amazon-hiring-tool.html">resume screener that learned to penalize signals of being a woman</a>.
+          In each, the label carried what no one wrote into the features.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The tool was not broken. It predicted cost accurately, and cost is not
+          health. Because less is spent on equally sick Black patients, a score
+          built on cost ranked their need too low, with race nowhere in its
+          inputs. That is what a proxy does: the model learns the label it is
+          given and carries in every difference between that label and the goal
+          you meant. So when you meet a score that decides who gets help, the
+          first question is not whether it is accurate. It is what the score was
+          trained to predict, and how that target comes apart from the one that
+          matters.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://sendhil.org/dissecting-racial-bias-in-an-algorithm-used-to-manage-the-health-of-populations/">Obermeyer, Powers, Vogeli, and Mullainathan, the full <em>Science</em> study</a>: every denominator, figure, and the label-choice experiments in one place.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://thelivinglib.org/biased-algorithms-are-easier-to-fix-than-biased-people/">Sendhil Mullainathan, "Biased Algorithms Are Easier to Fix Than Biased People"</a>: a co-author's plain-language case that a biased model is more tractable than a biased institution.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://sendhil.org/wp-content/uploads/2020/01/Publication-67.pdf"
+              >Obermeyer, Powers, Vogeli &amp; Mullainathan, <em>Science</em> · Dissecting racial bias in an algorithm used to manage the health of populations (2019)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.soa.org/resources/research-reports/2016/2016-accuracy-claims-based-risk-scoring-models/"
+              >Society of Actuaries · Accuracy of Claims-Based Risk Scoring Models (Hileman &amp; Steele, 2016)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://gitlab.com/labsysmed/dissecting-bias"
+              >Obermeyer et al. · dissecting-bias reproduction repository</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.sciencenews.org/article/bias-common-health-care-algorithm-hurts-black-patients"
+              >Science News · Bias in a common algorithm hurts Black patients</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.dfs.ny.gov/reports-and-publications/comment-letters/dfs-doh-joint-letter-uhgi-20191025"
+              >New York DFS &amp; DoH · Joint letter to UnitedHealth Group (25 Oct 2019)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.govtech.com/health/NY-Regulators-Probe-for-Racial-Bias-in-Health-Care-Algorithm.html"
+              >Government Technology · NY Regulators Probe for Racial Bias in Health Care Algorithm</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.ftc.gov/system/files/documents/public_events/1582978/algorithmic-bias-playbook.pdf"
+              >Center for Applied AI, Chicago Booth · Algorithmic Bias Playbook (2021)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://publichealth.berkeley.edu/articles/spotlight/research/ziad-obermeyer-and-colleagues-at-the-booth-school-of-business-release-health-care-algorithmic-bias-playbook"
+              >UC Berkeley School of Public Health · Obermeyer and colleagues release the Algorithmic Bias Playbook</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
