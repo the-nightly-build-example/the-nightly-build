@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>king - man + woman = queen scored 65.6% on word2vec's own test · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "word2vec",
+        "template": "lesson",
+        "title": "king - man + woman = queen scored 65.6% on word2vec's own test",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-08",
+        "tags": ["word-embeddings", "word2vec", "nlp", "analogies"],
+        "sources": 6,
+        "words": 1636,
+        "reading_minutes": 7,
+        "dek": "Tomas Mikolov and colleagues at Google reported the figure on a 19,544-question benchmark in 2013, and later analyses found the vector offset leans on excluding the very words the analogy starts from.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">king - man + woman = queen scored 65.6% on word2vec's own test</h1>
+        <p class="nb-dekline">
+          Tomas Mikolov and colleagues at Google reported the figure on a
+          19,544-question benchmark in 2013, and later analyses found the vector
+          offset leans on excluding the very words the analogy starts from.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-08-08</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have almost certainly seen king - man + woman = queen offered as
+          proof that a model understands language. It is the founding example of
+          word embeddings, the vectors that still sit at the base of every
+          current language model, and it gets quoted in arguments about whether
+          AI grasps meaning at all. By the end of this lesson you can say
+          exactly what word2vec measured, on which test, and at what scale, and
+          you can tell the measured 65.6% apart from the story that grew on top
+          of it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/word-embeddings.html">A transformer
+            redraws a word's vector for every sentence it appears in</a>: what
+            an embedding is, and how today's models redraw it per sentence.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The sentence everyone quotes</h2>
+        <p>
+          The one line people quote from word2vec is an equation. Take the
+          vector for king, subtract the vector for man, add the vector for
+          woman, and the result lands nearest the vector for queen.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+          Tomas Mikolov and four colleagues at Google published it in 2013,
+          first in a paper called "Efficient Estimation of Word Representations
+          in Vector Space"<sup class="nb-cite"><a href="#s1">1</a></sup> and
+          then in a companion paper<sup class="nb-cite"><a href="#s2">2</a></sup>
+          at the NeurIPS conference that December.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The line got repeated as proof that the model had learned what the
+          words mean. It is a real result. It is also a number: on the analogy
+          test the authors built for the purpose, the arithmetic recovered the
+          intended fourth word 65.6% of the time.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="two-models" id="two-models">
+        <h2>Two models that predict their neighbors</h2>
+        <p>
+          word2vec is two small models, CBOW and Skip-gram. Both learn a single
+          vector for each word from raw running text, the kind of word vector
+          <a href="../the-mechanics/word-embeddings.html">this course covers on
+          its own</a>. What is worth pinning down here is how they learn it: by
+          prediction, and nothing else. CBOW takes the words around a gap and
+          predicts the word in the gap, averaging the surrounding context and
+          ignoring its order.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Skip-gram runs the same idea backward, predicting the likely
+          neighbors from the one word in the middle.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup>
+          Neither model is told what any word means. Each just nudges a word's
+          vector until words that keep the same company end up close together.
+        </p>
+        <p>
+          What stunned people in 2013 was the price. Earlier neural language
+          models pushed the text through a hidden layer that cost most of the
+          compute. word2vec throws that layer out, which is what lets it train
+          on billions of words on a single machine in under a day.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+          The companion paper trims the cost again with two shortcuts. Negative
+          sampling scores each training example against a handful of randomly
+          drawn words instead of the entire vocabulary. Subsampling randomly
+          drops the most frequent words like "the" before training.<sup
+            class="nb-cite"><a href="#s2">2</a></sup>
+          Turning that much text into usable vectors on ordinary hardware is why
+          everyone could suddenly build on the result, and that part has never
+          been in doubt.
+        </p>
+      </section>
+
+      <section data-nb-section="one-test" id="one-test">
+        <h2>One test, 19,544 questions</h2>
+        <p>
+          The famous claim rests on a test the authors wrote themselves. It
+          holds 19,544 questions, 8,869 about meaning and 10,675 about grammar,
+          sorted into 14 categories.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup>
+          Each question gives three words and asks for the fourth: Athens is to
+          Greece as Oslo is to what, or "walking" is to "walked" as "swimming"
+          is to what. The model answers with the same vector arithmetic, and the
+          score is the fraction it gets exactly right.
+        </p>
+        <p>
+          The best score in the first paper was 65.6%, split almost evenly into
+          66.1% on the meaning questions and 65.1% on the grammar ones. That run
+          used Skip-gram with 1,000-dimensional vectors, trained on a
+          6-billion-word Google News corpus with the vocabulary capped at the
+          million most frequent words.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup>
+          The companion paper's best word-analogy score was 61%, from Skip-gram
+          with 300-dimensional vectors on a roughly one-billion-word news
+          set.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The score depends
+          heavily on which training shortcut you pick.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Word-analogy accuracy by training method in the companion paper,
+            Skip-gram with 300-dimensional vectors on its roughly
+            one-billion-word set. Each run finished in 14 to 97 minutes.<sup
+              class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Accuracy</th>
+              <th class="txt">What it changes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">NEG-15</span></td>
+              <td>61%</td>
+              <td class="txt">Scores each example against 15 randomly drawn words.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">NEG-5</span></td>
+              <td>59%</td>
+              <td class="txt">The same, with 5 negative words. Faster, slightly worse.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">NCE-5</span></td>
+              <td>53%</td>
+              <td class="txt">A related noise-contrastive objective, 5 samples.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">HS-Huffman</span></td>
+              <td>47%</td>
+              <td class="txt">Hierarchical softmax over a Huffman tree of words.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          One number from this paper gets misquoted constantly. The companion
+          also reports 72%, and that figure travels as if it were the analogy
+          accuracy. It belongs to a different test: a set of phrase analogies,
+          trained on a much larger corpus of about 33 billion words, not the
+          19,544-question word set.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup>
+          The word-analogy result is 65.6% in the first paper and 61% in the
+          second. Keep the 72% with the phrases, where it was earned.
+        </p>
+      </section>
+
+      <section data-nb-section="what-the-arithmetic-does" id="what-the-arithmetic-does">
+        <h2>What the arithmetic is doing</h2>
+        <p>
+          So the trick works about two times in three. What is it doing on the
+          times it works? Two later papers took the operation apart, and both
+          are worth reading in full.
+        </p>
+        <p>
+          Omer Levy and Yoav Goldberg did the algebra in 2014.<sup
+            class="nb-cite"><a href="#s4">4</a></sup>
+          The result is quieter than the story around it.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            Once the vectors are scaled to the same length, searching for the
+            word nearest to king minus man plus woman is the same as searching
+            for a word that is similar to woman and to king but different from
+            man. It is a balance of three similarities, not a chain of
+            reasoning. And the search only works because it is set up to skip the
+            three input words: leave them in, and the nearest vector is usually
+            one of them.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          </p>
+        </div>
+        <p>
+          Levy and Goldberg then showed the same regularities in plain
+          count-based vectors, the kind built by tallying how often words occur
+          near each other with no neural network at all. Those sparse vectors
+          scored 68% with a multiplicative
+          variant, beating the neural embedding's 66.7% on
+          the same task.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The pattern lives in the co-occurrence counts. The network preserves
+          it rather than inventing it.
+        </p>
+        <p>
+          Tal Linzen pushed on the skip-the-inputs step in 2016.<sup
+            class="nb-cite"><a href="#s5">5</a></sup>
+          Run the literal arithmetic without hiding the inputs, and the nearest
+          word to king minus man plus woman is king itself 93% of the time, and
+          one of the other two inputs another 5%. That is an input word 98% of
+          the time.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Excluding those words is a hand-built rule, not something the geometry
+          does on its own. And once you do exclude them, a baseline that ignores
+          the offset entirely and simply returns the nearest neighbor of the
+          third word already captures much of the score, reaching 70% on the
+          plural questions.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Reverse the direction of an analogy and accuracy falls on average, and
+          it falls in step with that offset-free baseline rather than with the
+          offset.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          None of this makes the 65.6% fake. The vectors really do place related
+          words in consistent directions, so that countries sit near their
+          capitals in a roughly repeatable way.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup>
+          The regularity is real. The reasoning is the part we added.
+        </p>
+      </section>
+
+      <section data-nb-section="what-held-up" id="what-held-up">
+        <h2>What held up</h2>
+        <p>
+          The durable part was the embedding, not the analogy trick. A dense
+          vector learned from raw text became the standard first layer of
+          language systems, and the prediction recipe was matched and passed
+          almost at once. Within a year, GloVe, from a Stanford group, reached
+          comparable scores on the very same analogy set by factoring a global
+          word-co-occurrence table instead of predicting from local
+          windows.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          That a rival method aimed at the same 19,544 questions tells you the
+          field had adopted the Google set as its shared yardstick and had
+          already moved past word2vec's exact approach.
+        </p>
+        <p>
+          What survives from 2013 is the finding that you can learn a useful
+          vector for each word by predicting its neighbors, cheaply and at
+          scale. What did not survive a close read is the shorthand that the
+          arithmetic on those vectors thinks.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          word2vec learned a vector for each word by training two cheap models
+          to predict nearby words, and on its 19,544-question analogy set the
+          best runs answered 65.6% and 61% correctly. That is a strong, real
+          result, and it is why embeddings became foundational. But the
+          arithmetic that dazzled everyone is a balance of three similarities
+          that has to skip its own inputs to work, and an offset-free lookup
+          recovers much of what is left. The vectors capture how words pattern
+          together in text. Reading that as the model understanding meaning is
+          the one step the evidence does not support. The next time you see king
+          - man + woman = queen, you will know the number under it, and what the
+          number is not.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://blog.conceptnet.io/posts/2016/cramming-for-the-test-set-we-need-better-ways-to-evaluate-analogies/"
+              >Rob Speer, "Cramming for the test set"</a>: why the analogy
+            benchmark rewards the wrong thing, from someone who ran it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://aclanthology.org/D14-1162/">Pennington, Socher and
+            Manning, "GloVe"</a>: the co-occurrence method that chased word2vec
+            on the same test a year later.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1301.3781"
+              >arXiv · Mikolov, Chen, Corrado, Dean, "Efficient Estimation of
+              Word Representations in Vector Space" (2013)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1310.4546"
+              >arXiv · Mikolov, Sutskever, Chen, Corrado, Dean, "Distributed
+              Representations of Words and Phrases and their Compositionality"
+              (2013)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://papers.nips.cc/paper/2013/hash/9aa42b31882ec039965f3c4923ce901b-Abstract.html"
+              >NeurIPS Proceedings · Advances in Neural Information Processing
+              Systems 26 (2013), companion-paper record</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/W14-1618/"
+              >ACL Anthology · Levy and Goldberg, "Linguistic Regularities in
+              Sparse and Explicit Word Representations" (CoNLL 2014)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/W16-2503/"
+              >ACL Anthology · Linzen, "Issues in Evaluating Semantic Spaces
+              Using Word Analogies" (RepEval 2016)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/D14-1162/"
+              >ACL Anthology · Pennington, Socher, Manning, "GloVe: Global
+              Vectors for Word Representation" (EMNLP 2014)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
