@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A model ends its reply by choosing a stop token like any other word · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "why-replies-stop",
+        "template": "lesson",
+        "title": "A model ends its reply by choosing a stop token like any other word",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-08",
+        "tags": [],
+        "sources": 9,
+        "words": 1794,
+        "reading_minutes": 8,
+        "dek": "The model learns that stop token in post-training, and a separate length cap can cut a reply off mid-word before it ever arrives.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A model ends its reply by choosing a stop token like any other word</h1>
+        <p class="nb-dekline">
+          The model learns that stop token in post-training, and a separate length cap can cut a reply off mid-word before it ever arrives.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-08</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every chatbot reply ends, and you have watched them end in two very
+          different ways. Some come to rest on a finished thought. Some stop
+          dead in the middle of a word, as if a plug were pulled. Those are not
+          the same event, and telling them apart tells you what to do next: try
+          again, or ask for more. This lesson follows a reply's ending back to
+          its cause. A model stops by picking a special end-of-turn token out of
+          its vocabulary, the same way it picks every other word. That choice was
+          trained into it after the model was built, not worked out from grammar.
+          And a length limit in the program running the model can cut a reply off
+          before that token ever arrives. By the end you can look at any stopped
+          reply and say which of the two stopped it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html">The instant a model writes a token, it becomes fact</a>:
+            how a model builds a reply one token at a time.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/sampling-temperature.html">Two answers to one prompt diverge at a single draw</a>:
+            how one token gets drawn from the model's probabilities.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Two ways a reply can end</h2>
+        <p>
+          A reply that comes back through a serving system carries a note about
+          why it stopped. The Anthropic Messages API returns a
+          <code>stop_reason</code> field, and its value is
+          <code>end_turn</code> when the model reached a natural stopping point
+          and <code>max_tokens</code> when a requested length limit was
+          hit.<sup class="nb-cite"><a href="#s1">1</a></sup> Two codes, two
+          different causes. One is a decision the model made. The other is a
+          limit imposed on it from outside. The clean sentence you see and the
+          word snapped in half you sometimes see are those two causes leaving
+          their marks.
+        </p>
+      </section>
+
+      <section data-nb-section="stop-token" id="stop-token">
+        <h2>The stop is one more token the model samples</h2>
+        <p>
+          A model writes a reply
+          <a href="../the-mechanics/autoregressive-generation.html">one token at a time</a>,
+          a token being a chunk of text, usually a word or a piece of one. At
+          each position it produces a probability for every token in its
+          vocabulary, and
+          <a href="../the-mechanics/sampling-temperature.html">one token is drawn</a>
+          from those probabilities and added to the reply.
+        </p>
+        <p>
+          The vocabulary includes a token that means the turn is over. Llama 3
+          writes it <code>&lt;|eot_id|&gt;</code>, an end-of-turn marker Meta's
+          model documentation says the model emits once it "has determined that
+          it has finished interacting with the user
+          message."<sup class="nb-cite"><a href="#s2">2</a></sup> It is an
+          ordinary entry in the vocabulary. Meta and PyTorch's tokenizer gives
+          it the integer id <code>128009</code>, sitting in the same table as
+          every word-piece.<sup class="nb-cite"><a href="#s3">3</a></sup> At
+          each step the model puts some probability on <code>128009</code>
+          exactly as it puts probability on "Paris" or "the." When the sampler
+          draws that token, the decoding loop returns: the library that runs an
+          open model stops as soon as the end-of-sequence token is
+          produced.<sup class="nb-cite"><a href="#s4">4</a></sup> Emitting that
+          token is the signal that ends
+          generation.<sup class="nb-cite"><a href="#s5">5</a></sup> Stopping is
+          not a separate part bolted onto generation. It is next-token
+          prediction landing on the stop token.
+        </p>
+        <p>
+          Watch the probability of that token as an answer completes. Give the
+          model "What is the capital of France?" and start it writing "The
+          capital of France is." After "is," you would put nearly all your
+          weight on "Paris" and almost none on the turn ending right there,
+          because an answer word still has to come. After "Paris." the weight
+          flips: nothing sensible remains to add, and the end-of-turn token
+          becomes the likely next pick.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The end-of-turn token's probability as a short answer completes, an
+            illustrative example and not measured data. The percentages are
+            readable in principle by the documented method below; the shape is
+            plausible, the exact numbers are not a capture of any one
+            model.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>After the model has written</th>
+              <th>P(end-of-turn)</th>
+              <th class="txt">What is happening</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">The</span></td>
+              <td>~0.0%</td>
+              <td class="txt">the answer has not started</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">France is</span></td>
+              <td>~0.1%</td>
+              <td class="txt">an answer word still has to follow</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Paris</span></td>
+              <td>~3%</td>
+              <td class="txt">a closing period could still come</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Paris.</span></td>
+              <td>~92%</td>
+              <td class="txt">nothing sensible remains to add</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The trajectory is checkable, even if these numbers are illustration.
+          Hugging Face's generation tools can print the probability the model
+          assigned to any token at any step, so anyone can run this and read the
+          real curve of the end-of-turn token's
+          probability.<sup class="nb-cite"><a href="#s4">4</a></sup> Two levers
+          in the same toolkit show the token is ordinary and not a hard rule.
+          You can drive its probability to nothing so the model cannot stop yet,
+          and you can force it at a length limit. A rule could not be switched
+          off. A token can.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="trained-turn-end" id="trained-turn-end">
+        <h2>Post-training taught the model where a turn ends</h2>
+        <p>
+          Where did the model learn to put high probability on the end-of-turn
+          token at the close of a good answer? Not from grammar it worked out on
+          its own. A model begins as a base model, trained to continue text by
+          predicting the next token across a large pile of documents. A base
+          model is not unable to stop. It emits an end-of-document token at a
+          document boundary. Llama's base model produces
+          <code>&lt;|end_of_text|&gt;</code>, which Meta says "is generated only
+          by the base models,"<sup class="nb-cite"><a href="#s2">2</a></sup> and
+          Qwen's base model uses <code>&lt;|endoftext|&gt;</code>, a marker
+          inserted between documents in its training
+          data.<sup class="nb-cite"><a href="#s6">6</a></sup> What a base model
+          lacks is the habit of ending at the close of a helpful answer, because
+          in a stream of documents there is no turn to end.
+        </p>
+        <p>
+          Post-training put that habit in. A base model is fine-tuned for chat
+          on data formatted as a sequence of messages, each turn wrapped in
+          control tokens, and it learns to produce the end-of-turn token where a
+          turn should close.<sup class="nb-cite"><a href="#s7">7</a></sup> Qwen
+          sets its end-of-turn token <code>&lt;|im_end|&gt;</code> as the model's
+          end-of-sequence token for chat, so producing it halts generation at a
+          turn boundary.<sup class="nb-cite"><a href="#s6">6</a></sup> This is
+          settled engineering, done on purpose, and the same across vendors.
+        </p>
+        <p>
+          The wider finding behind it is that size alone does not buy this. The
+          InstructGPT work at OpenAI showed that making a base model bigger does
+          not by itself make it follow a user's intent. Fine-tuning with human
+          feedback is what aligns a model to that intent, and a much smaller
+          fine-tuned model is preferred over the far larger
+          base.<sup class="nb-cite"><a href="#s8">8</a></sup> Stopping at the end
+          of a helpful answer is one of those trained-in behaviors.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            A base model does stop. It ends a document with a document-end
+            token. Post-training does not teach a model to stop at all; it
+            teaches the model where a turn ends, so it closes at the end of an
+            answer instead of running on into the next imagined
+            document.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </p>
+        </div>
+      </section>
+
+      <section data-nb-section="serving-cap" id="serving-cap">
+        <h2>The program that runs the model can stop it too</h2>
+        <p>
+          Everything so far is the model's own doing. The second cause is not.
+          The model does not run itself. A serving program feeds it tokens and
+          collects what it produces, and that program holds a limit on how many
+          tokens it will accept back. In the Anthropic Messages API that limit
+          is <code>max_tokens</code>, "the maximum number of tokens to generate
+          before stopping."<sup class="nb-cite"><a href="#s1">1</a></sup> When
+          the count is reached, the program stops collecting and returns
+          whatever it has, whether or not the end-of-turn token ever came. The
+          reply is truncated. Anthropic reports this ending as
+          <code>max_tokens</code> rather than
+          <code>end_turn</code>.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Google's Gemini API reports the same event as a
+          <code>finishReason</code> of <code>MAX_TOKENS</code> rather than
+          <code>STOP</code>.<sup class="nb-cite"><a href="#s9">9</a></sup> The
+          model did not stop itself. The program stopped it.
+        </p>
+        <p>
+          A caller can also hand the program a stop sequence, a string that
+          forces a halt the moment the model produces
+          it.<sup class="nb-cite"><a href="#s1">1</a></sup> And these are not the
+          whole list: the same Anthropic field can also report that the model
+          refused, that it paused to use a tool, or that the context window
+          filled.<sup class="nb-cite"><a href="#s1">1</a></sup> Those endings are
+          real but uncommon. The two you meet every day are the model's own
+          end-of-turn token and the program's length cap.
+        </p>
+      </section>
+
+      <section data-nb-section="the-tell" id="the-tell">
+        <h2>The two endings leave different marks on the screen</h2>
+        <p>
+          You can usually tell which of the two ended a reply without reading any
+          API field, because they leave different marks. The model's own ending
+          lands on a boundary: a finished sentence, a closed code block, a
+          completed list. It chose the end-of-turn token because nothing sensible
+          remained to add, so the last thing on the screen is whole. A length cap
+          has no such sense. It stops at a token count, wherever that count
+          happens to fall, in the middle of "argu" with "ment" never written, or
+          after the opening brace of a function whose body never comes.
+        </p>
+        <p>
+          A reply that reads "returns the sum of the two
+          argu" was cut off by the cap, and reports
+          <code>max_tokens</code>; the fix is to raise the limit and run it
+          again, not to re-ask the model. A reply that reads "returns the sum of
+          the two arguments." finished on its own and reports
+          <code>end_turn</code>.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The first is the program's wall. The second is the model deciding it
+          was done.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A reply ends for one of two reasons, and they belong to two different
+          actors. The model ends its own turn by sampling the end-of-turn token,
+          a real entry in its vocabulary that post-training taught it to produce
+          at the close of a good answer. The program running the model ends the
+          turn from outside, by refusing to collect more than its token limit.
+          The first leaves a whole thought on the screen and reports
+          end_turn. The second can leave a word cut in half and reports
+          max_tokens. A reply that stops on a finished thought is the model's own
+          doing. A reply that stops mid-word is the program's, and no amount of
+          re-asking the model will change that. Now you know which one you are
+          looking at.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://huggingface.co/docs/transformers/en/chat_templating">Hugging Face, Chat templates</a>:
+            how a base model is formatted and fine-tuned into a chat model, control tokens and all.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2203.02155">Ouyang et al., Training language models to follow instructions</a>:
+            the study behind the claim that helpful behavior is added by fine-tuning, not by size.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Response fields: stop_reason; Request fields: max_tokens, stop_sequences"
+              href="https://platform.claude.com/docs/en/api/messages"
+              >Anthropic · Messages API reference</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Special tokens list; chat prompt structure"
+              href="https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/prompt_format.md"
+              >Meta · Llama 3.1 prompt format and special tokens</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="LLAMA3_SPECIAL_TOKENS dictionary"
+              href="https://meta-pytorch.org/torchtune/0.2/_modules/torchtune/models/llama3/_tokenizer.html"
+              >Meta / PyTorch · torchtune Llama 3 tokenizer source</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="GenerationConfig length and logits params; compute_transition_scores example"
+              href="https://huggingface.co/docs/transformers/en/main_classes/text_generation"
+              >Hugging Face · Transformers text generation reference</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.natebrake.com/blog/end-of-sequence-explained"
+              >Nate Brake · The end-of-sequence token, explained</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Control tokens / chat template concepts"
+              href="https://qwen.readthedocs.io/en/latest/getting_started/concepts.html"
+              >Qwen · Key concepts (control tokens)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Intro; Model training section"
+              href="https://huggingface.co/docs/transformers/en/chat_templating"
+              >Hugging Face · Chat templates</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2203.02155"
+              >Ouyang et al. · Training language models to follow instructions with human feedback</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="generationConfig (maxOutputTokens, stopSequences); Candidate.finishReason enum"
+              href="https://ai.google.dev/api/generate-content"
+              >Google · Gemini API generateContent reference</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
