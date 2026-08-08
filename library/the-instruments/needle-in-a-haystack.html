@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A perfect needle-in-a-haystack score means the model found one planted sentence · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "needle-in-a-haystack",
+        "template": "lesson",
+        "title": "A perfect needle-in-a-haystack score means the model found one planted sentence",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-08",
+        "tags": ["long-context", "retrieval", "benchmarks"],
+        "sources": 8,
+        "words": 1816,
+        "reading_minutes": 8,
+        "dek": "Gemini 1.5 clears the test through a million tokens, a benchmark that rewards copying an out-of-place fact and leaves long-context reasoning untested.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">A perfect needle-in-a-haystack score means the model found one planted sentence</h1>
+        <p class="nb-dekline">
+          Gemini 1.5 clears the test through a million tokens, a benchmark that rewards copying an out-of-place fact and leaves long-context reasoning untested.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-08</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every few months a lab announces a model that reads a million tokens,
+          roughly a small shelf of books, with near-perfect recall. That claim
+          almost always rests on one test: needle in a haystack. This lesson
+          takes the test apart. You will see how its score is built, one planted
+          sentence and one grid at a time, and how to read the grid that comes
+          out. Then you will see why a near-perfect score on it settles less than
+          it looks like it does: the test measures whether a model can find a
+          fact, not whether it can use everything sitting around that fact. By
+          the end you can meet any "perfect recall at N tokens" claim and say
+          what it does and does not prove.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/context-window.html">The context window</a>:
+            the length a model advertises versus the length it can actually use.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One planted sentence in a stack of essays</h2>
+        <p>
+          The needle-in-a-haystack test begins with a sentence that does not
+          belong. Greg Kamradt's 2023 version plants one line inside a long run
+          of Paul Graham's startup essays and asks the model to return it, then
+          grades each run the simplest way there is: did the reply come back with
+          the planted fact, yes or no.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The planted line is "The best thing to do in San Francisco is eat a
+          sandwich and sit in Dolores Park on a sunny day," and the model is asked
+          what the best thing to do in San Francisco
+          is.<sup class="nb-cite"><a href="#s2">2</a></sup> The essays
+          are the haystack. The sandwich sentence is the needle. The model may
+          answer using only the text it was handed.
+        </p>
+        <p>
+          Give that skill its plain name and hold it: finding the planted fact.
+          It is the whole of what one run tests. The model does not have to
+          understand the essays, weigh them, or connect anything in them. It has
+          to locate one out-of-place line and repeat it. Everything the score
+          later gets read to mean is built on top of this one narrow act, so it
+          is worth being exact about how small the act is.
+        </p>
+      </section>
+
+      <section data-nb-section="the-grid" id="the-grid">
+        <h2>A single run becomes a grid</h2>
+        <p>
+          A single question at a single spot is one data point. The test turns
+          into a score by repeating that run across two axes. The needle slides
+          down through the document, from the very top (0 percent depth) to the
+          very bottom (100 percent), while the document itself grows from about a
+          thousand tokens up to the model's advertised limit.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Every pairing of depth and length is one graded run. The results are
+          drawn as a grid, one cell per run, green where the model returned the
+          fact and red where it missed.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          A model "passes" when the grid is green from corner to corner.
+        </p>
+        <p>
+          Those green grids now stretch a long way. Google's Gemini 1.5 Pro
+          returns the single planted fact better than 99.7 percent of the time
+          through a million tokens of text, a near-perfect score for copying
+          back one sentence written to stand out from the essays around
+          it.<sup class="nb-cite"><a href="#s3">3</a></sup> The same recall holds
+          at 100 percent out to 530,000 tokens and at 99.2 percent out to ten
+          million. It holds even when the haystack is audio or video instead of
+          prose. A million tokens is roughly 750,000 words, several times the
+          length of <i>War and Peace</i>. The grid says the model can find one sentence
+          anywhere in that pile. A grid this green looks like a model that has
+          taken in the whole book. Or has it only found the one line that was
+          built not to fit?
+        </p>
+      </section>
+
+      <section data-nb-section="lexical-lookup" id="lexical-lookup">
+        <h2>A score a find-in-page could earn</h2>
+        <p>
+          Here is the second skill, the one the score gets confused for: using
+          the whole document, meaning reading across everything in the context
+          and doing something with it. Finding the planted fact is not that. It
+          is closer to a find-in-page search. The needle and the question share
+          words, "San Francisco" sits in both, so a model can reach the answer
+          by matching text rather than following meaning.
+        </p>
+        <p>
+          NoLiMa, a 2025 benchmark, tests precisely that gap. It writes needles
+          that share no literal words with the question, tied to it only by
+          meaning.<sup class="nb-cite"><a href="#s4">4</a></sup> A needle might
+          place a character next to a famous opera house while the question asks
+          who is in that city, so the model has to supply the link itself, with
+          no shared word to match on. Take away the shared
+          words and the near-perfect scores come down with them. GPT-4o, which
+          scores 99.3 percent on a short version of the task, drops to 69.7
+          percent at 32,000 tokens. Across thirteen models that advertise
+          128,000-token windows, eleven fall below half of their own
+          short-context score by 32,000 tokens.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          You read a wall of green and assume the model has absorbed the
+          document. The green certifies something narrower: the model can find a
+          fact when the question all but spells out the words to look for.
+        </p>
+      </section>
+
+      <section data-nb-section="more-than-one" id="more-than-one">
+        <h2>When the task needs more than one fact</h2>
+        <p>
+          Real work with a long document rarely turns on one fact in isolation.
+          It asks the model to gather several facts, keep their order, or notice
+          what the middle of the text says. Each of those tasks steps past plain
+          retrieval, and the scores give way. Lance Martin's multi-needle
+          extension to Kamradt's own tool plants several needles at once. Asked
+          to return ten planted ingredients from about 24,800 tokens, GPT-4 with
+          a 128,000-token window comes back with four of them.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The count keeps falling as the needles climb from one to ten and as the
+          context grows. A reasoning step
+          laid on top trails retrieval by a further margin: the model cannot
+          reason over facts it did not manage to retrieve.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          NVIDIA's RULER benchmark keeps the needle idea and makes it harder,
+          adding several needles, variables to trace through the text, and words
+          to count, run across seventeen models and thirteen
+          tasks.<sup class="nb-cite"><a href="#s6">6</a></sup> Nearly every model
+          that looks perfect on the plain needle test degrades as the input
+          lengthens. RULER fixes a model's <em>effective</em> context length as
+          the longest input at which it still beats a small reference model,
+          Llama-2-7B scoring 85.6 percent at 4,000 tokens. By that bar, of the
+          models it ranks, only four hold their performance out to 32,000
+          tokens.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Advertised context length against RULER's effective length, the
+            longest input where the model still beats a Llama-2-7B reference
+            (85.6% at 4K). Only the top four hold at 32K.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Claimed</th>
+              <th>Effective</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">GPT-4</span></td>
+              <td>128K</td>
+              <td>64K</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Command-R</span></td>
+              <td>128K</td>
+              <td>32K</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Yi-34B</span></td>
+              <td>200K</td>
+              <td>32K</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Mixtral</span></td>
+              <td>32K</td>
+              <td>32K</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">ChatGLM</span></td>
+              <td>128K</td>
+              <td>4K</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">LWM</span></td>
+              <td>1M</td>
+              <td>&lt;4K</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="nb-note">
+          <span class="nb-note-label">Effective context length</span>
+          <p>
+            The longest input a model still handles well, set at the point where
+            it stops beating a small baseline. It usually lands far below the
+            window the model advertises, which is why a claimed length and a
+            usable length are two different numbers.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          </p>
+        </div>
+        <p>
+          Where the fact sits matters as much as how many there are. The
+          <a href="../the-instruments/context-window.html">context window</a>
+          lesson showed that the advertised length runs ahead of the length a
+          model can use; the needle test hides part of the reason. In "Lost in
+          the Middle," the same needed fact placed in the middle of a long input
+          is answered less often than when it sits at the start or the
+          end.<sup class="nb-cite"><a href="#s7">7</a></sup> In the worst case it
+          is answered less often than giving the model no documents at all, below
+          its own closed-book baseline. A needle the test slides neatly through
+          every depth can paper over that
+          dip, because the needle is written to be found.
+        </p>
+      </section>
+
+      <section data-nb-section="what-it-caught" id="what-it-caught">
+        <h2>The failure the test did catch</h2>
+        <p>
+          None of this makes the needle test worthless. It is cheap, quick, and
+          it catches a real kind of failure. When Anthropic ran it on Claude 2.1
+          across a 200,000-token window, the model returned the planted San
+          Francisco fact only 27 percent of the time.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The window was not the trouble. Adding one line to the start of the
+          model's own reply, "Here is the most relevant sentence in the
+          context:", lifted the score to 98 percent, with the model and its
+          context length untouched.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="needle-in-a-haystack/asset-1.png"
+            alt="A two-panel code diff of a prompt. The left panel ends the model's turn with 'Assistant:'. The right panel appends 'Here is the most relevant sentence in the context:' after 'Assistant:', the only change between the two."
+          />
+          <figcaption>
+            Fig. 1 · The one added line that moved Claude 2.1's needle score from
+            27% to 98%, with the model and its 200K-token window
+            unchanged.<sup class="nb-cite"><a
+              href="#s8"
+              data-nb-locator="Prompt comparison figure"
+              data-nb-url="https://claude.com/blog/claude-2-1-prompting"
+              data-nb-note="The single added reply line that raised Claude 2.1's needle score from 27% to 98%."
+              >8</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          The model could always reach the fact. By default it held back from
+          answering off a single out-of-place sentence, and one line of
+          instruction removed the reluctance.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          That is the fair case for the test. A green grid is a necessary
+          condition for trusting a long window, not a sufficient one. A red grid,
+          like Claude 2.1's first run, points at a genuine failure that a small
+          fix can clear. A green grid rules that failure out and stays silent on
+          the harder work that starts the moment more than one fact is in play.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The needle-in-a-haystack test scores one narrow skill: given a long
+          text and a fact planted somewhere inside it, can the model find that
+          fact and copy it back. A green grid answers yes, at every depth and
+          length tried, and that is worth knowing. It caught Claude 2.1 answering
+          only 27 percent of the time until one line of prompting fixed it. But
+          finding a planted sentence is close to a find-in-page search, and it
+          holds only while the task stays that simple. Ask for a fact with no
+          shared words, or ten facts at once, or a fact buried in the middle, and
+          the score comes down. So when a model is sold as reading a million
+          tokens with near-perfect recall, read the claim precisely: it can pull
+          one fact out of that length. Whether it can reason across the length is
+          a separate question, and the needle test never asks it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://github.com/gkamradt/LLMTest_NeedleInAHaystack">Greg Kamradt, LLMTest_NeedleInAHaystack</a>:
+            the original tool, to run the sweep and read a grid yourself.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2404.06654">RULER (Hsieh et al., 2024)</a>:
+            the harder successor that measures how far a window really reaches.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/gkamradt/LLMTest_NeedleInAHaystack"
+              >Greg Kamradt · LLMTest_NeedleInAHaystack (Needle In A Haystack)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arize.com/blog/the-needle-in-a-haystack-test-evaluating-the-performance-of-llm-rag-systems/"
+              >Arize AI · The Needle In A Haystack Test</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2403.05530"
+              >Google DeepMind · Gemini 1.5: Unlocking multimodal understanding across millions of tokens of context</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2502.05167"
+              >Modarressi et al. · NoLiMa: Long-Context Evaluation Beyond Literal Matching</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.langchain.com/blog/multi-needle-in-a-haystack"
+              >Lance Martin (LangChain) · Multi Needle in a Haystack</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.06654"
+              >Hsieh et al. (NVIDIA) · RULER: What's the Real Context Size of Your Long-Context Language Models?</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.03172"
+              >Liu et al. · Lost in the Middle: How Language Models Use Long Contexts</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://claude.com/blog/claude-2-1-prompting"
+              >Anthropic · Long context prompting for Claude 2.1</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
