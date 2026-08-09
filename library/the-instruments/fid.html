@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FID tied two face generators that a second yardstick and human eyes told apart · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "fid",
+        "template": "lesson",
+        "title": "FID tied two face generators that a second yardstick and human eyes told apart",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-09",
+        "tags": ["fid", "image-generation", "gan-evaluation"],
+        "sources": 8,
+        "words": 1912,
+        "reading_minutes": 8,
+        "dek": "The score behind \"this generator makes better images\" is a distance between two bell-curve summaries of what an ImageNet network sees, and you can move it a long way without changing a single picture.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">FID tied two face generators that a second yardstick and human eyes told apart</h1>
+        <p class="nb-dekline">
+          The score behind "this generator makes better images" is a distance
+          between two bell-curve summaries of what an ImageNet network sees, and
+          you can move it a long way without changing a single picture.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-09</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Whenever one image generator is said to beat another, a single number
+          is usually doing the work, and most often that number is FID. It sits
+          under "state of the art" in research papers and under "sharper images"
+          in product announcements. This lesson builds FID from the image up:
+          what it reads out of a picture, what shape it fits to it, and what it
+          measures between two piles of images. Then it runs the same recipe a
+          second way to find the places the number moves while the pictures hold
+          still. Work through both passes and you can follow FID's calculation
+          yourself, from an image to a score, and read a reported FID gap
+          knowing whether the sample count, the feature network, or the
+          resizing had room to move it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/reading-images.html">A chatbot slices your photo into a few hundred squares and turns each into a word</a>:
+            how a network turns an image into a list of numbers, the step FID
+            runs before it measures anything.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/gans.html">The GAN paper credited with deepfakes generated blurry thumbnails</a>:
+            the generators FID is built to judge, and the metric their own
+            authors distrusted.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A record broken forty times faster</h2>
+        <p>
+          In 2021 a method called Projected GAN reported advancing the best
+          known Fréchet Inception Distance on twenty-two image datasets at once,
+          and reaching the previously lowest scores up to forty times faster,
+          cutting a training run from about five days to under three
+          hours.<sup class="nb-cite"><a href="#s1" data-nb-locator="Abstract">1</a></sup>
+          Fréchet Inception Distance, FID, is the standard yardstick for how
+          close a generator's output comes to real images, and across the field
+          a lower FID is read as better pictures. A method that matches the
+          record in three hours instead of five days looks like something for
+          nothing. Whether it is depends entirely on what the yardstick
+          measures, and FID is one number produced by a fixed recipe you can
+          follow from the images all the way to the score.
+        </p>
+      </section>
+
+      <section data-nb-section="construction" id="construction">
+        <h2>From two piles of images to one distance</h2>
+        <p>
+          FID never compares images to each other directly. It starts from two
+          piles: a pile of real photographs and a pile the generator produced.
+          Every image in both piles goes through the same network, Inception-v3,
+          a model trained to sort photographs into the thousand categories of
+          the ImageNet dataset.
+          (For how a network turns an image into a list of numbers, see
+          <a href="../the-mechanics/reading-images.html">how a chatbot reads a photo</a>.)
+          FID throws away the category the network would name. It reaches into
+          the last pooling layer and copies out the 2048 numbers sitting there,
+          the image's code.<sup class="nb-cite"><a href="#s2" data-nb-locator="Appendix A1">2</a></sup>
+        </p>
+        <p>
+          Now it has two clouds of points, one per pile, each point a list of
+          2048 numbers. FID summarizes each cloud as a single multivariate
+          Gaussian, a bell-shaped blob described by two things: a mean, the
+          cloud's center, which is a 2048-number average; and a covariance, how
+          the cloud is stretched and tilted around that center. The original
+          paper defends the Gaussian as the maximum-entropy choice, meaning that
+          among all the shapes a cloud with a given center and spread could take,
+          the Gaussian assumes the least beyond those two
+          facts.<sup class="nb-cite"><a href="#s2" data-nb-locator="Appendix A1">2</a></sup>
+          It is a convenient summary with a cost, and later work argues the cost
+          is real: Inception's features are not actually
+          Gaussian.<sup class="nb-cite"><a href="#s3" data-nb-locator="Abstract">3</a></sup>
+        </p>
+        <p>
+          With each pile reduced to one Gaussian, FID reports the Fréchet
+          distance between them, also called the Wasserstein-2 distance. The
+          picture to keep is earth-moving. If each Gaussian were a pile of sand,
+          the distance is the least work needed to reshape the real pile into the
+          generated one: pay once to shift its center, and again to rework its
+          spread. Written out, those are the two terms of the formula.
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            d^2\big((m,C),(m_w,C_w)\big) = \htmlClass{nb-mc1}{\lVert m - m_w \rVert_2^2} + \htmlClass{nb-mc2}{\operatorname{Tr}\!\big(C + C_w - 2(C C_w)^{1/2}\big)}
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">\lVert m - m_w \rVert_2^2</span
+              ><span>the squared gap between the two clouds' centers: the real mean <span class="nb-math-in">m</span> and the generated mean <span class="nb-math-in">m_w</span>.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">\operatorname{Tr}(C + C_w - 2(C C_w)^{1/2})</span
+              ><span>how differently the two clouds are spread and tilted, read off their covariances <span class="nb-math-in">C</span> and <span class="nb-math-in">C_w</span>.</span>
+            </li>
+          </ul>
+          <figcaption>
+            FID as its authors defined it: the distance between the real
+            Gaussian and the generated Gaussian, one term for their centers and
+            one for their spreads.<sup class="nb-cite"><a href="#s2" data-nb-locator="Appendix A1">2</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Nothing in either term looks at a single picture on its own. FID only
+          ever compares the two clouds as wholes, which is what leaves room for
+          the pictures to stay fixed while the number moves.
+        </p>
+      </section>
+
+      <section data-nb-section="split-case" id="split-case">
+        <h2>Two generators the number called even</h2>
+        <p>
+          Here is the recipe running on a real comparison. On FFHQ, a standard
+          set of human faces, Projected FastGAN scores an FID of 5.28 and
+          StyleGAN2 scores 5.30.<sup class="nb-cite"><a href="#s4" data-nb-locator="Fig. 7">4</a></sup>
+          By FID they are even, and the faster, cheaper method is nominally the
+          winner. Now run the same distance a different way. Swap Inception's
+          2048 features for the features of CLIP, a network trained on
+          image-caption pairs rather than ImageNet labels, and compute the
+          identical Fréchet distance. The tie collapses: StyleGAN2 scores 2.76,
+          Projected FastGAN 4.67, StyleGAN2 well
+          ahead.<sup class="nb-cite"><a href="#s4" data-nb-locator="Fig. 7">4</a></sup>
+          Set the faces side by side and people see what the CLIP number sees:
+          the FastGAN samples carry more visible
+          distortion.<sup class="nb-cite"><a href="#s4" data-nb-locator="Fig. 7">4</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="fid/chart-1.png"
+            alt="Grouped bar chart of two FFHQ face generators under two distances. On Inception-FID, Projected FastGAN scores 5.28 and StyleGAN2 5.30, nearly equal bars. On CLIP-FID, StyleGAN2 scores 2.76 and Projected FastGAN 4.67, a wide gap with StyleGAN2 far lower and better."
+          />
+          <figcaption>
+            Fig. 1 · The same two face generators under two distances. Inception
+            features rate them a tie; CLIP features, used as a quality
+            cross-check, rank StyleGAN2 well ahead. Lower is
+            better.<sup class="nb-cite"><a href="#s4" data-nb-locator="Fig. 7">4</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          The Projected GAN paper's headline was a record FID reached
+          cheaply.<sup class="nb-cite"><a href="#s1" data-nb-locator="Abstract">1</a></sup>
+          Kynkäänniemi and colleagues showed that part of that record sits in
+          what they call the perceptual null space: FID moved, the pictures did
+          not.<sup class="nb-cite"><a href="#s4" data-nb-locator="Figs. 6-7; Tables 1-2">4</a></sup>
+        </p>
+        <p>
+          Why does changing the network change the ranking? Inception-v3 was
+          trained to name ImageNet classes, so its 2048 numbers mostly encode
+          which ImageNet class an image resembles, and that hands you a direct
+          lever on FID. Take the generated set and adjust it so its histogram of
+          top ImageNet guesses matches the real set's, and FID falls. On FFHQ it
+          drops from 5.30 to 4.70 by matching the single top class, and to 1.78
+          by matching deeper features, a two-thirds
+          cut.<sup class="nb-cite"><a href="#s4" data-nb-locator="Tables 1-2">4</a></sup>
+          Over the same change the CLIP cross-check barely moves, about four
+          percent.<sup class="nb-cite"><a href="#s4" data-nb-locator="Tables 1-2">4</a></sup>
+          The pictures did not improve by two-thirds. The bookkeeping did.
+        </p>
+      </section>
+
+      <section data-nb-section="more-knobs" id="more-knobs">
+        <h2>Two more inputs, the same pictures</h2>
+        <p>
+          The feature lever is the sharpest, but it is not the only one. FID
+          computed on a finite pile of generated images is biased, and the bias
+          shrinks as the pile grows; plot FID against one over the sample count
+          and the points fall close to a straight
+          line.<sup class="nb-cite"><a href="#s5" data-nb-locator="Figs. 2-4">5</a></sup>
+          The size of that bias depends on the model, so one generator can beat
+          another only because its own bias happens to be smaller. Chong and
+          Forsyth show two identical DCGAN runs swapping ranks depending on how
+          many samples you draw, and state the consequence flatly: no comparison
+          at a fixed sample count is
+          reliable.<sup class="nb-cite"><a href="#s5" data-nb-locator="Figs. 2-4; Algorithm 1">5</a></sup>
+          In practice teams draw more than 50,000 images to keep the bias small
+          enough to ignore.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          The last input is plumbing. Before Inception sees an image it is shrunk
+          to 299 pixels square, and the shrinking filter can alias, with
+          different libraries aliasing differently. Measured against a correct
+          resize of the same real images, the filter choice alone moves FID from
+          0.64 points to 7.43, before any generator is
+          judged.<sup class="nb-cite"><a href="#s7" data-nb-locator="Table 1">7</a></sup>
+          Re-save the same images as JPEG and StyleGAN2 on a set of church photos
+          improves from FID 4.00 to 3.48, a better score for more damaged
+          data.<sup class="nb-cite"><a href="#s7" data-nb-locator="Fig. 8">7</a></sup>
+          Three of the four resizing libraries in common use alias by
+          default.<sup class="nb-cite"><a href="#s7" data-nb-locator="Table 2">7</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="what-holds" id="what-holds">
+        <h2>Where the number keeps its word</h2>
+        <p>
+          The three failures share one shape. Each holds the pictures fixed and
+          moves FID by changing something around them: how many samples are
+          drawn, which network's features are read, what resizing code ran. They
+          break comparability between setups, not sensitivity within one. Held
+          inside a single fixed pipeline, FID does track real damage. Heusel and
+          colleagues degraded real images six ways, with Gaussian noise, blur,
+          black rectangles, a swirl, salt-and-pepper speckle, and contamination
+          by unrelated photos, and FID rose smoothly at every level of every
+          one.<sup class="nb-cite"><a href="#s2" data-nb-locator="Appendix A1, disturbances">2</a></sup>
+          It also improved on the metric it replaced, the Inception Score, which
+          runs generated images through the same classifier but never looks at
+          the real images at
+          all.<sup class="nb-cite"><a href="#s8" data-nb-locator="§4">8</a></sup>
+          And it catches a failure the Inception Score misses: a generator that
+          produces only a few sharp images per class and ignores the real
+          variety.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>Inside one fixed pipeline it rises smoothly as real images are damaged.</li>
+              <li>It reads real-image statistics, which the Inception Score never does.</li>
+              <li>It catches a generator stuck on a few images per class.</li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>Comparisons across different sample counts can reverse.</li>
+              <li>Matching ImageNet class frequencies lowers it without better pictures.</li>
+              <li>Different resizing or compression pipelines are not comparable.</li>
+            </ul>
+          </div>
+        </div>
+        <p>
+          FID earns trust exactly where its inputs are pinned. An outside review
+          records that it was adopted in the first place because it agreed with
+          human inspection, and lists the same biases above as its known
+          weaknesses.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          FID is a distance between two bell-shaped summaries of what an ImageNet
+          network sees in two piles of images. Inside one fixed pipeline, with
+          the same sample count, the same resizing, and the same real reference
+          set, it moves the right way when pictures get worse, and it catches
+          failures its predecessor missed. Across pipelines it stops comparing.
+          Three separate inputs each shift the score while the images stay
+          exactly the same: how many samples you draw, how well the generated
+          set's ImageNet classes line up with the real set's, and which resizing
+          code ran. Projected FastGAN's tie with StyleGAN2 was one of those
+          shifts caught in the open. When the number is computed the same way on
+          both sides, it means what it says. When a lower FID is the only
+          evidence that one model beats another, ask what else moved.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1904.06991">Improved Precision and Recall Metric for Assessing Generative Models</a>:
+            splits the fidelity-versus-variety question that a single FID
+            collapses into one number.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2306.04675">Exposing flaws of generative model evaluation metrics</a>:
+            a large human study on how poorly common metrics, FID included, track
+            what people actually prefer.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2111.01007"
+              >Sauer, Chitta, Müller &amp; Geiger · Projected GANs Converge Faster (NeurIPS 2021)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Appendix A1, Fréchet Inception Distance; disturbance experiments"
+              href="https://arxiv.org/abs/1706.08500"
+              >Heusel, Ramsauer, Unterthiner, Nessler &amp; Hochreiter · GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium (NeurIPS 2017)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2401.09603"
+              >Jayasumana, Ramalingam, Veit, Glasner, Chakrabarti &amp; Kumar · Rethinking FID: Towards a Better Evaluation Metric for Image Generation (CVPR 2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Figures 6-7; Tables 1-2"
+              href="https://arxiv.org/abs/2203.06026"
+              >Kynkäänniemi, Karras, Aittala, Aila &amp; Lehtinen · The Role of ImageNet Classes in Fréchet Inception Distance (ICLR 2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Figures 2-4; Equation 7; Algorithm 1"
+              href="https://arxiv.org/abs/1911.07023"
+              >Chong &amp; Forsyth · Effectively Unbiased FID and Inception Score and where to find them (CVPR 2020)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="FID discussion"
+              href="https://arxiv.org/abs/2103.09396"
+              >Borji · Pros and Cons of GAN Evaluation Measures: New Developments (2021)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Tables 1-2; Figures 8-9"
+              href="https://arxiv.org/abs/2104.11222"
+              >Parmar, Zhang &amp; Zhu · On Aliased Resizing and Surprising Subtleties in GAN Evaluation (CVPR 2022)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§4, Assessment of image quality"
+              href="https://arxiv.org/abs/1606.03498"
+              >Salimans, Goodfellow, Zaremba, Cheung, Radford &amp; Chen · Improved Techniques for Training GANs (NeurIPS 2016)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
