@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The batch normalization paper got its own explanation wrong · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "batch-normalization",
+        "template": "lesson",
+        "title": "The batch normalization paper got its own explanation wrong",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-09",
+        "tags": ["deep-learning", "optimization", "batch-normalization"],
+        "sources": 6,
+        "words": 1840,
+        "reading_minutes": 8,
+        "dek": "Batch normalization trains deep networks in a fraction of the steps, yet a 2018 experiment found the internal-covariate-shift reason its own paper gave is not what makes it work.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">The batch normalization paper got its own explanation wrong</h1>
+        <p class="nb-dekline">
+          Batch normalization trains deep networks in a fraction of the steps, yet a 2018 experiment found the internal-covariate-shift reason its own paper gave is not what makes it work.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-09</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          If you have read this desk on
+          <a href="../the-evidence/alexnet.html">AlexNet</a> or
+          <a href="../the-evidence/resnet.html">ResNet</a>, you have already met
+          batch normalization in passing. It is one of the small standard parts
+          inside the vision networks that reset records in the 2010s, and it is
+          still dropped into new models today. It is also one of the clearest
+          cases in deep learning of a technique everyone uses and an explanation
+          everyone repeats coming apart under a test. The 2015 paper that
+          introduced batch normalization named the reason it works in its own
+          title. Three years later, a controlled experiment showed that reason
+          was not the one that held. This lesson explains what batch
+          normalization does, the reason the paper gave for why it works, and
+          what happened when a later team tested that reason directly.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../ai-foundations/distribution-shift.html">Move a tumor detector to a new hospital and it loses twenty-three points</a>:
+            the same idea for a deployed model, when the data it runs on drifts
+            from the data it trained on.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/gradient-descent.html">One gradient step drops the loss from 7.0 to 0.225</a>:
+            the optimization batch normalization is said to smooth, and how a
+            step down the loss sets each weight.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A layer that rescales every mini-batch</h2>
+        <p>
+          Batch normalization is a single step you drop between the layers of a
+          neural network. It takes the numbers coming out of one layer for the
+          current mini-batch, the small group of training examples the network
+          processes together, and reshapes them in two moves. First it subtracts
+          that batch's mean and divides by its standard deviation, so the outputs
+          have zero mean and unit variance. Then it multiplies by one learned
+          parameter and adds another, both trained like any other weight in the
+          network. Those two learned parameters give the network a way to scale
+          and shift the normalized numbers back, so it can recover whatever
+          distribution a layer actually needs, including the un-normalized
+          one.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            y_i = \htmlClass{nb-mc3}{\gamma}\,\frac{x_i - \htmlClass{nb-mc1}{\mu_{\mathcal{B}}}}{\sqrt{\htmlClass{nb-mc2}{\sigma_{\mathcal{B}}^{2}} + \epsilon}} + \htmlClass{nb-mc4}{\beta}
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">\mu_{\mathcal{B}}</span
+              ><span>the mean of this mini-batch, subtracted so the outputs center on zero.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">\sigma_{\mathcal{B}}^{2}</span
+              ><span>the variance of this mini-batch; dividing by its square root sets the spread to one.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">\gamma</span
+              ><span>a learned scale the network can turn the spread back up with.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc4">\beta</span
+              ><span>a learned shift the network can move the center off zero with.</span>
+            </li>
+          </ul>
+          <figcaption>
+            Batch normalization applied to one activation: center and scale it by
+            the mini-batch's own statistics, then rescale and shift by two learned
+            parameters. The small constant keeps the division safe when the
+            variance is near zero.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </figcaption>
+        </figure>
+
+        <p>
+          At training time the mean and variance come from the current batch. At
+          inference time the network stops using batch statistics and switches to
+          fixed population values, tracked by a running average over training, so
+          that a single input's prediction no longer depends on which other
+          examples happen to share its
+          batch.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          What did this buy? The 2015 paper tested it on ImageNet, the 2012
+          image-classification set of 1,000 categories and about 1.28 million
+          labeled training images that
+          <a href="../the-evidence/alexnet.html">AlexNet</a> had made the field's
+          benchmark.<sup class="nb-cite"><a href="#s2">2</a></sup> A
+          batch-normalized version of the Inception network reached 72.2% top-1
+          accuracy in roughly a fourteenth of the training steps the plain
+          network needed to get there: about 2.1 million steps against 31
+          million.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">14&times;</span
+            ><span class="nb-stat-l">fewer steps to 72.2% on ImageNet</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">4.82%</span
+            ><span class="nb-stat-l">ensemble top-5 test error</span>
+          </div>
+        </div>
+
+        <p>
+          An ensemble of six batch-normalized networks pushed further, to 4.82%
+          top-5 error on the ImageNet test set, which the paper noted was below
+          the 5.1% error a human rater had scored on the same
+          task.<sup class="nb-cite"><a href="#s1">1</a></sup> That human number
+          is worth pausing on, because it is not a population average. It comes
+          from one trained annotator who labeled 1,500 of the test images and
+          scored 5.1% top-5 error; a second, less-trained annotator scored about
+          12.0% on 258 images.<sup class="nb-cite"><a href="#s2">2</a></sup> The
+          full test set is 100,000 images. So beating the human meant beating one
+          careful person on a small sample of the task.
+        </p>
+      </section>
+
+      <section data-nb-section="explanation" id="explanation">
+        <h2>The moving target the paper set out to fix</h2>
+        <p>
+          Why would rescaling each layer's inputs help training at all? The paper
+          gave a reason and put it in the title. During training, every layer's
+          weights change at once. So from the vantage of some layer partway up
+          the network, the distribution of numbers arriving from the layers below
+          keeps shifting as those lower layers learn. A layer that has just tuned
+          itself to inputs centered in one range finds, a few steps later, that
+          the range has moved. Normalizing each layer's inputs back to a fixed
+          mean and variance on every step, the argument went, stops later layers
+          from chasing that moving target, so they learn
+          faster.<sup class="nb-cite"><a href="#s1">1</a></sup> This is a cousin
+          of the
+          <a href="../ai-foundations/distribution-shift.html">distribution shift</a>
+          that degrades a deployed model, except it happens inside the network,
+          during training.
+        </p>
+        <p>Ioffe and Szegedy gave the effect a name and a precise definition.</p>
+
+        <div class="nb-note">
+          <span class="nb-note-label">Internal covariate shift</span>
+          <blockquote>
+            "We define Internal Covariate Shift as the change in the distribution
+            of network activations due to the change in network parameters during
+            training."<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">Ioffe &amp; Szegedy, 2015, Section 2</span>
+          </blockquote>
+        </div>
+
+        <p>
+          A shifting input distribution sounds like a
+          problem, and holding it steady sounds like a fix.
+        </p>
+      </section>
+
+      <section data-nb-section="test" id="test">
+        <h2>Adding the shift back did not slow training</h2>
+        <p>
+          The only trouble with that reason is that it does not survive a direct
+          test. In 2018 a group at MIT built the experiment the story invites.
+          Santurkar, Tsipras, Ilyas, and Madry took a network with batch
+          normalization and, right after
+          each batch normalization layer, added fresh random noise: drawn with a
+          non-zero mean and a variance that changed every step. This deliberately
+          produces exactly the thing the theory says to avoid. The distribution
+          of each layer's inputs now lurches from step to step, more violently
+          than in a network with no batch normalization at all. If the theory
+          were right, that network should train badly. It trained about as fast
+          and as accurately as the clean batch-normalized
+          one.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Santurkar's team also measured internal covariate shift directly,
+          though in a different sense than the original paper. Ioffe and Szegedy
+          had defined it as a change in the distribution of a layer's inputs.
+          Santurkar redefined it in terms of the optimization itself: how much a
+          layer's own gradient changes between the moment before and the moment
+          after the layers beneath it are updated on the same step. By that
+          gradient measure, batch-normalized networks often carried as much
+          internal covariate shift as plain ones, sometimes more, and still
+          trained better.<sup class="nb-cite"><a href="#s3">3</a></sup> The two
+          definitions are not the same quantity, and it is worth keeping them
+          apart. But the noise experiment strikes the paper's own distributional
+          version head-on: it drives that distribution shift up on purpose, and
+          training is unmoved.
+        </p>
+        <p>
+          What batch normalization did change, Santurkar argued, was the shape of
+          the optimization landscape, the surface that
+          <a href="../the-mechanics/gradient-descent.html">gradient descent</a>
+          walks down to fit the network. With batch normalization the loss and
+          its gradients varied more smoothly, so a step in the direction the
+          gradient points lands closer to where the optimizer expects. On one
+          network they trained, VGG on CIFAR-10, the gradient predicted the
+          actual change in loss about two orders of magnitude better with batch
+          normalization than without.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="replaces" id="replaces">
+        <h2>Three teams, three different reasons</h2>
+        <p>
+          Smoothing is a cleaner story, but the same paper undercuts it as a
+          complete answer. Santurkar's group showed that plain normalizations
+          that make no attempt to control the distribution of a layer's inputs,
+          dividing instead by the L1, L2, or L-infinity size of the activations,
+          smooth the landscape as well as batch normalization and sometimes
+          more.<sup class="nb-cite"><a href="#s3">3</a></sup> Smoothing is real,
+          then, but it is not something only batch normalization does, so it
+          cannot be the whole reason. A separate group, Bjorck and
+          colleagues at Cornell, put the credit somewhere else again. What batch
+          normalization mainly buys, they argue, is the freedom to train at
+          higher learning rates without activations and gradients blowing up as
+          the network deepens. That higher rate is what drives the faster
+          convergence and the better generalization.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          A widely used deep-learning textbook, surveying the argument from
+          outside any of these camps, records that the real reason batch
+          normalization works remains an open
+          question.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          There is even a setting where batch normalization plainly hurts.
+          Because it estimates a batch's mean and variance from the examples in
+          that batch, it needs the batch to be reasonably large. Wu and He showed that
+          on ResNet-50 with a batch size of two, the error
+          climbs steeply as those estimates get noisy: their batch-size-independent
+          alternative scored 10.6 percentage points lower error at that
+          size.<sup class="nb-cite"><a href="#s6">6</a></sup> That is a limit on
+          when batch normalization can be used, and it leaves the debate about
+          why it works untouched.
+        </p>
+        <p>
+          Through all of it the technique itself keeps working exactly as the
+          2015 paper showed. The networks train faster, the accuracy numbers hold
+          up, and batch normalization remains in constant use a decade on. The
+          part that did not survive is narrower: the one-sentence reason the paper
+          gave for the speed. And that reason has outlasted the experiments
+          against it. "Internal covariate shift" is still the phrase most people
+          reach for to explain why batch normalization works, years after the
+          test that should have retired
+          it.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Batch normalization is a rescaling step placed between a network's
+          layers. It normalizes each mini-batch to zero mean and unit variance,
+          then lets the network learn to scale and shift the result back. It
+          works: it cut the training of a large vision network to a fourteenth of
+          the steps, and it is standard equipment today. The reason the paper
+          gave for that speed was that batch normalization reduces internal
+          covariate shift, the drifting of each layer's inputs as the layers
+          below it learn. That reason is the part that did not hold. A controlled
+          experiment put the drift back on purpose, and training did not slow
+          down. What batch normalization really does to make training easier is
+          still an open question, and more than one serious answer is on the
+          table.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1805.11604">How Does Batch Normalization Help Optimization?</a>:
+            the MIT experiment in full, including the noise test and the
+            loss-landscape measurements.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://d2l.ai/chapter_convolutional-modern/batch-norm.html">Dive into Deep Learning: Batch Normalization</a>:
+            a textbook walkthrough of the layer and of the open question about why
+            it works.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1502.03167"
+              >arXiv &middot; Ioffe &amp; Szegedy, Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift (2015)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1409.0575"
+              >arXiv &middot; Russakovsky et al., ImageNet Large Scale Visual Recognition Challenge (2015)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1805.11604"
+              >arXiv &middot; Santurkar, Tsipras, Ilyas &amp; Madry, How Does Batch Normalization Help Optimization? (2018)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1806.02375"
+              >arXiv &middot; Bjorck, Gomes, Selman &amp; Weinberger, Understanding Batch Normalization (2018)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://d2l.ai/chapter_convolutional-modern/batch-norm.html"
+              >Dive into Deep Learning &middot; Batch Normalization</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1803.08494"
+              >arXiv &middot; Wu &amp; He, Group Normalization (2018)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
