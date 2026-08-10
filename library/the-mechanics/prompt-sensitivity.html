@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>One character of formatting decided whether the model got it right · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "prompt-sensitivity",
+        "template": "lesson",
+        "title": "One character of formatting decided whether the model got it right",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-10",
+        "tags": ["prompting", "robustness", "in-context-learning"],
+        "sources": 8,
+        "words": 1981,
+        "reading_minutes": 9,
+        "dek": "To a model, a colon and a space are just different tokens, and on one task that gap was the difference between 4% and 83% accuracy on a 2023 open model.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">One character of formatting decided whether the model got it right</h1>
+        <p class="nb-dekline">
+          To a model, a colon and a space are just different tokens, and on one task that gap was the difference between 4% and 83% accuracy on a 2023 open model.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-10</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A model's score on a task can move by a wide margin when nothing about
+          the task or the model has changed, only the way the prompt was written
+          or the order its examples were listed. This is why a benchmark number
+          can depend on the exact template a lab happened to use, and why an edit
+          you thought was cosmetic can leave a model's answers worse than before.
+          By the end you should be able to say why a single character can do
+          this. You should also be able to hold three things apart when a score
+          drops: a model that is genuinely worse, a format that moved the input,
+          and a grader that missed a right answer phrased differently.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="in-context-learning.html">How a model learns from examples it was never trained on</a>:
+            the setting where a few examples in the prompt, and their order, steer the answer.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="instructions-are-data.html">Language models draw no line between instructions and data</a>:
+            why the whole prompt reaches the model as one stream of tokens.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="word-embeddings.html">A transformer redraws a word's vector for every sentence it appears in</a>:
+            the internal representation a change of format perturbs.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The same question, formatted two ways</h2>
+        <p>
+          Researchers at the University of Washington and the Allen Institute for
+          AI took one classification task, gave LLaMA-2-7B a single worked
+          example, and wrote the example two ways. With a colon after each label,
+          <code>passage:{}\n answer:{}</code>, the model scored 0.043: it was
+          right about four times in a hundred. They changed the colon to a space,
+          so the labels read <code>passage {}\n answer {}</code>, and left
+          everything else the same. The same model, on the same task, with the
+          same example, now scored 0.826.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Nothing about the task got easier, and nothing taught the model more.
+          The only thing that changed was the string of characters it read.
+          Getting better at a task and getting a different score on the same task
+          are two different things, and the second is what happened here. Working
+          out why a single character can do it comes down to what the model is
+          actually reading.
+        </p>
+      </section>
+
+      <section data-nb-section="different-input" id="different-input">
+        <h2>Why a reformatted prompt is a different input</h2>
+        <p>
+          The prompt reaches the model only as tokens, with
+          <a href="instructions-are-data.html">no line drawn between the
+          instruction and the content</a>, and the model produces its answer by
+          <a href="in-context-learning.html">conditioning on that sequence of
+          tokens</a>. It keeps no separate copy of what a person meant, held
+          apart from the tokens. Two formats that look equivalent to a reader are
+          two different token sequences to the model, and the tokens are all it
+          has to go on.
+        </p>
+        <p>
+          Webson and Pavlick tested that claim head-on. Across more than 390
+          prompts they found models "learn just as fast with many prompts that
+          are intentionally irrelevant or even pathologically misleading as they
+          do with instructively 'good' prompts," and this held all the way up to
+          GPT-3 at 175 billion parameters.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Scrambling an instruction into nonsense barely moved the result. Yet
+          swapping which word stood for the answer, the token the model was meant
+          to produce for yes or no, moved it a great deal: the models were "much
+          more sensitive to the choice of the LM target words as opposed to the
+          meaning of the instruction templates."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Read together, the two results point one way. The model responds to the
+          tokens, and especially to the answer tokens, not to a meaning it
+          extracted and stored.
+        </p>
+        <p>
+          Su and colleagues located where this happens inside the model. Changing
+          only the single character that separates in-context examples, a comma
+          for a newline for a semicolon, they traced the effect to attention:
+          good separators "steer attention towards key tokens in the
+          input."<sup class="nb-cite"><a href="#s3">3</a></sup> The surface
+          character changes which tokens the model looks at. Sclar and colleagues,
+          who ran the colon-to-space example, showed the same thing from the
+          representation side. A format is an identifiable transformation of the
+          prompt's <a href="word-embeddings.html">internal vectors</a>, and how
+          separable a format's vector is tracks how far its score
+          swings.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          This part is settled engineering. A reformatted prompt is a different
+          sequence of tokens, the model conditions on that sequence, and it holds
+          no meaning apart from it to fall back on.
+        </p>
+      </section>
+
+      <section data-nb-section="reformatting" id="reformatting">
+        <h2>How far reformatting can move the score</h2>
+        <p>
+          The colon-to-space case is not a fluke. Sclar and colleagues measured
+          the spread across formats that carry identical content, the same words
+          with different separators, casing, and spacing, on more than fifty
+          tasks. On LLaMA-2-13B the gap between the best and worst equivalent
+          format reached 76 accuracy points, and across the tasks and models measured it averaged about 10. The gap did
+          not close with a bigger model, more examples, or instruction
+          tuning.<sup class="nb-cite"><a href="#s1">1</a></sup> The changes that
+          produced these swings are as small as the first one.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Three near-identical format pairs for 1-shot LLaMA-2-7B; in each row the only change is the one named, and accuracy is scored by matching the model's most probable answer.<sup class="nb-cite"><a href="#s1" data-nb-locator="Table 1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th class="txt">The single change</th>
+              <th>Before</th>
+              <th>After</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">task280</span></td>
+              <td class="txt">a colon after each label became a space</td>
+              <td>0.043</td>
+              <td>0.826</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">task317</span></td>
+              <td class="txt">a space was added after each "::"</td>
+              <td>0.076</td>
+              <td>0.638</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">task322</span></td>
+              <td class="txt">the labels were lowercased, nothing else</td>
+              <td>0.614</td>
+              <td>0.714</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          These swings all come from open models of 2021 to 2023, on
+          classification tasks, scored by which answer the model ranked as most
+          likely or by an exact match on its first word. Even a commercial model reached only
+          through an interface behaves this way: on GPT-3.5-Turbo the spread
+          across 320 formats reached 56 points.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The same shows up on a familiar benchmark, graded the accessible way.
+          Kurt, Louf, and Fourrier changed only the format of a multiple-choice
+          MMLU prompt and watched Qwen1.5-7B score 22.9% on one variation and
+          51.2% on another. No model was ranked the same across the eight formats
+          they tried.<sup class="nb-cite"><a href="#s4">4</a></sup> And it holds across
+          many models at once. Mizrahi and colleagues evaluated 20 models on 39
+          tasks and found the instruction template moves both absolute scores and
+          the ranking between models. A single hand-picked benchmark prompt
+          flatters a model by about 21 accuracy points over the average across
+          paraphrases.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="reordering" id="reordering">
+        <h2>Reordering the same examples does it too</h2>
+        <p>
+          Format is one way to change the token sequence without changing the
+          meaning. The order of the in-context examples is another. Lu and
+          colleagues took four labeled examples for sentiment classification and
+          tried all 24 orders of them. Some orders scored over 85%, close to a
+          model trained on the task; others sat near 50%, no better than a coin
+          flip on a two-way choice.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Same examples, same model, only the order moved. A bigger model did not
+          fix it, and a good order for one model was close to useless for
+          another: how the orders performed on a 175-billion and
+          on a 2.7-billion parameter model correlated at only 0.05.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          Zhao and colleagues found part of the reason. A model reading a prompt
+          leans on a few habits: it favors an answer that appears often among the
+          examples, it favors whatever the prompt showed last, and it favors
+          words that were common in its training data. Reordering the examples
+          changes which one came last, so it changes the answer. In one sentiment
+          prompt, permuting the same examples moved accuracy from 54% to
+          93%.<sup class="nb-cite"><a href="#s7">7</a></sup> The examples held the
+          same information in every order; the model was reading their position.
+        </p>
+      </section>
+
+      <section data-nb-section="grader-artifact" id="grader-artifact">
+        <h2>The grader can move the score by itself</h2>
+        <p>
+          There are now two ways a score can move without the model getting
+          better or worse at the task: the format changed the input, or the order
+          changed the input. A third has nothing to do with the input at all. It
+          is about how the answer is counted. Hua and colleagues re-graded the
+          outputs of seven recent models, including GPT-4o-mini and Gemini 2.0
+          Flash, on standard benchmarks. Much of the measured sensitivity, they
+          found, "stems from heuristic evaluation methods, including
+          log-likelihood scoring and rigid answer matching, which often overlook
+          semantically correct responses expressed through alternative
+          phrasings."<sup class="nb-cite"><a href="#s8">8</a></sup> The model
+          answered correctly, in its own words, and the scorer marked it wrong.
+        </p>
+        <p>
+          When they graded the same outputs with another model acting as judge
+          instead of matching strings, the spread collapsed. On one benchmark
+          Gemma-2's accuracy across templates had ranged from 0.25 to 0.90 under
+          the string-matching scorer; under the judge it varied by 0.17. The
+          agreement in how prompts ranked the models rose from 0.30 to
+          0.92.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          This is the open part. Sclar and Su both report that the effect does
+          not shrink with scale or instruction tuning, and Su still measures
+          swings of plus or minus 23% on a current benchmark across the Llama,
+          Qwen, and Gemma families.<sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s3">3</a></sup>
+          Hua's result does not overturn that. The model still generates from the
+          literal tokens, which is the settled mechanism. What Hua adds is that a
+          large share of the reported magnitude, on multiple-choice and
+          short-answer tasks, was the grader missing correct answers rather than
+          the model failing. How big the effect is in today's frontier models is
+          genuinely unsettled, and the answer turns on how the output is scored.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Three ways a score can move</span>
+          <p>
+            A lower score can mean the model is worse at the task, or that the
+            surface form changed the input while the model's ability held steady,
+            or that the model answered correctly and a rigid scorer missed it.
+            Only the first is about ability. The 76-point and 54-to-93 figures
+            were measured in the setting where the third is easiest to mistake for
+            the first.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          </p>
+        </div>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The colon and the space were never the point to the model, because the
+          model was never reading for a colon or a space. It was conditioning on
+          the exact tokens in front of it, and two formats a person calls
+          equivalent are two different token sequences with nothing shared behind
+          them. That is why the same task, reworded or reordered, can score 4% one
+          way and 83% another. So when a score moves, the honest first question is
+          which of three things happened: the model got worse, the surface form
+          moved the input, or the scorer missed a right answer phrased its own
+          way. The mechanism is settled. How large the effect still is in the
+          newest models is not, and it turns on which of those three you are
+          actually measuring.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://huggingface.co/blog/evaluation-structured-outputs">Hugging Face, "Improving Prompt Consistency with Structured Generations"</a>:
+            an accessible walk through the same effect on MMLU, and one proposed fix that raises accuracy while cutting the variance.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2401.00595">Mizrahi et al., "State of What Art? A Call for Multi-Prompt LLM Evaluation"</a>:
+            a re-evaluation across 20 models finding a single hand-picked benchmark prompt overstates a model's score by about 21 points on average.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2310.11324"
+              >arXiv · Sclar et al., Quantifying Language Models' Sensitivity to Spurious Features in Prompt Design (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2109.01247"
+              >arXiv · Webson & Pavlick, Do Prompt-Based Models Really Understand the Meaning of their Prompts? (2022)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2510.05152"
+              >arXiv · Su et al., A Single Character can Make or Break Your LLM Evals (2025)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/blog/evaluation-structured-outputs"
+              >Hugging Face · Kurt, Louf & Fourrier, Improving Prompt Consistency with Structured Generations (2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2401.00595"
+              >arXiv · Mizrahi et al., State of What Art? A Call for Multi-Prompt LLM Evaluation (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2104.08786"
+              >arXiv · Lu et al., Fantastically Ordered Prompts and Where to Find Them (2022)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2102.09690"
+              >arXiv · Zhao et al., Calibrate Before Use: Improving Few-Shot Performance of Language Models (2021)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2509.01790"
+              >arXiv · Hua et al., Flaw or Artifact? Rethinking Prompt Sensitivity in Evaluating LLMs (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
