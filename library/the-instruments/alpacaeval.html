@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>An AlpacaEval win rate is a judge's preference, and the longer answer can win it · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "alpacaeval",
+        "template": "lesson",
+        "title": "An AlpacaEval win rate is a judge's preference, and the longer answer can win it",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-10",
+        "tags": ["evaluation", "win-rate", "llm-as-judge"],
+        "sources": 7,
+        "words": 1469,
+        "reading_minutes": 6,
+        "dek": "The judge is another language model that reads two answers to each of 805 fixed prompts and prefers the longer one often enough to move a win rate from 22.9% to 64.3% on wording alone.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">An AlpacaEval win rate is a judge's preference, and the longer answer can win it</h1>
+        <p class="nb-dekline">
+          The judge is another language model that reads two answers to each of 805 fixed prompts and prefers the longer one often enough to move a win rate from 22.9% to 64.3% on wording alone.
+        </p>
+        <div class="nb-byline">
+          <span>6 min read</span><span>2026-08-10</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every few weeks a new language model launches, and its announcement
+          reaches for a single number to show it is good. An AlpacaEval win rate
+          is one of the most quoted of those numbers, a percentage that looks
+          like a grade on a test. This lesson shows how the percentage is
+          actually made: a second language model reads two answers and picks the
+          one it likes, over a fixed list of prompts. By the end you will be able
+          to read one of these percentages for what it is: a judge's preference,
+          swayed by length. That number means little until you know the version,
+          the judge, and the reference behind it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/llm-as-a-judge.html">Answer order alone swung a language model's verdict by 80 points</a>:
+            how a language model grades another model's answers, and the biases it brings to the job.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/chatbot-arena-elo.html">Chatbot Arena's Elo is a preference vote that pays out for style</a>:
+            the human-vote leaderboard that AlpacaEval's win rate is checked against.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The number a release leads with</h2>
+        <p>
+          When a new model ships, its announcement often leads with an AlpacaEval
+          win rate. Zephyr-7B, a small open model from 2023, reported a 90.60% win
+          rate on the first version of AlpacaEval.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Read that the way most people do and it sounds like a test score, as if
+          the model got about nine answers in ten right. It is not that. An
+          AlpacaEval win rate is the fraction of a fixed set of prompts on which an
+          automatic judge preferred this model's answer to a second model's
+          answer.<sup class="nb-cite"><a href="#s2">2</a></sup> Nothing in it
+          measures whether either answer was correct.
+        </p>
+        <p>
+          The judge is another language model, and the win is its
+          <a href="../the-instruments/llm-as-a-judge.html">preference</a>. A preference can be
+          swayed by things that have nothing to do with a better answer, and the
+          largest of them is length: a wordier answer tends to win.
+        </p>
+      </section>
+
+      <section data-nb-section="how-computed" id="how-computed">
+        <h2>How the judge counts a win rate</h2>
+        <p>
+          AlpacaEval runs the same four steps for every model it
+          scores.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>Fix the prompts</h3>
+            <p>
+              The benchmark holds 805 instructions, the same set for every model,
+              from writing tasks to factual questions.<sup class="nb-cite"><a href="#s2">2</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Collect two answers</h3>
+            <p>
+              For each instruction the model under test writes an answer, and a
+              reference model writes one too. In the first version the reference is
+              text-davinci-003, an older OpenAI model.<sup class="nb-cite"><a href="#s2">2</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Ask the judge</h3>
+            <p>
+              An automatic judge, a GPT-4 model, reads the two answers to that
+              instruction and says which one it prefers.<sup class="nb-cite"><a href="#s2">2</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Take the fraction</h3>
+            <p>
+              The win rate is the number of instructions where the judge picked
+              the test model's answer, divided by 805.<sup class="nb-cite"><a href="#s2">2</a></sup>
+            </p>
+          </li>
+        </ol>
+        <p>
+          So Zephyr's 90.60% is a plain count you can back out. Multiply 0.9060 by
+          805 and you get about 730: the GPT-4 judge preferred Zephyr's answer to
+          text-davinci-003's on roughly 730 of the 805
+          instructions.<sup class="nb-cite"><a href="#s1">1</a></sup> The number is a
+          preference share, not an accuracy. It never asks whether an answer was
+          right, only which of two answers the judge liked more, and it is measured
+          against one particular reference model rather than against the
+          truth.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="length-bias" id="length-bias">
+        <h2>Why a wordier answer scores higher</h2>
+        <p>
+          The judge's preference is not only about quality, and the AlpacaEval
+          team's own follow-up work shows what else moves it. Dubois
+          and colleagues took one model, a GPT-4 turbo, and changed only the
+          instruction telling it how verbose to be, from concise to standard to
+          verbose, while the 805 prompts and the judge stayed
+          fixed.<sup class="nb-cite"><a href="#s3">3</a></sup> On AlpacaEval 2.0 that
+          model's own win rate moved from 22.9% to 64.3%.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The model was the same, the questions were the same, the judge was the
+          same. The only thing that changed was how much it wrote.
+        </p>
+        <p>
+          This happens because the judge is a language model, and language models
+          tend to rate a longer, more detailed answer as more helpful, even when
+          the extra words add nothing the shorter answer
+          lacked.<sup class="nb-cite"><a href="#s3">3</a></sup> A model that pads its
+          answers is not answering better. It is giving the judge more of what the
+          judge already rewards.
+        </p>
+      </section>
+
+      <section data-nb-section="length-control" id="length-control">
+        <h2>A shorter cheat beats the length fix</h2>
+        <p>
+          The AlpacaEval authors built a defense against this, the
+          length-controlled win rate, usually written LC. It is a statistical
+          adjustment that estimates what the judge's preference would be if the two
+          answers were the same length, so a model cannot gain by writing more
+          alone.<sup class="nb-cite"><a href="#s2">2</a></sup> It helps. On the
+          verbosity test, length control shrank the swing from 22.9%–64.3% down to
+          41.9%–51.6%, and the amount a model could move its score on wording alone
+          fell from about a quarter to a tenth.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          It also lines up better with people. The Spearman correlation is a
+          measure of how closely two rankings agree, running up to one for a
+          perfect match. Length control
+          raised it, between the AlpacaEval leaderboard and
+          <a href="../the-instruments/chatbot-arena-elo.html">Chatbot Arena</a>, a
+          board built from human head-to-head votes, from 0.94 to
+          0.98.<sup class="nb-cite"><a href="#s3">3</a></sup> An independent review of
+          the paper reports the same rise.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          (The AlpacaEval repository rounds the before-figure to
+          0.93.<sup class="nb-cite"><a href="#s2">2</a></sup>)
+        </p>
+        <p>
+          Length control narrows the bias without closing it. To show the gap,
+          Zheng and colleagues built a null model: a single canned response that
+          ignores the instruction and returns the same text every
+          time.<sup class="nb-cite"><a href="#s5">5</a></sup> On AlpacaEval 2.0 that
+          constant, off-topic answer scored a 76.9% raw win rate and an 86.5%
+          length-controlled win rate.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The debiased number came out higher than the raw one. Because the cheat's
+          answer was short, the length adjustment worked in its
+          favor.<sup class="nb-cite"><a href="#s5">5</a></sup> Length control makes
+          winning by verbosity harder, not impossible, and a short empty answer can
+          still beat most real models on the score meant to be harder to game.
+        </p>
+      </section>
+
+      <section data-nb-section="reference" id="reference">
+        <h2>The reference model sets the bar</h2>
+        <p>
+          Return to Zephyr's 90.60%. Its paper reported that
+          number,<sup class="nb-cite"><a href="#s1">1</a></sup> and the model's own
+          card still lists it.<sup class="nb-cite"><a href="#s6">6</a></sup> On the
+          current AlpacaEval 2.0 leaderboard, the same zephyr-7b-beta reads 13.20%
+          length-controlled and 10.99% raw.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Nothing about the model changed between those readings. What changed was
+          the setup around it.
+        </p>
+        <table class="nb-table">
+          <caption>
+            One model, zephyr-7b-beta, scored under the two AlpacaEval
+            settings.<sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s7">7</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th class="txt">Judge</th>
+              <th class="txt">Reference</th>
+              <th>Win rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">AlpacaEval 1.0</span></td>
+              <td class="txt">GPT-4</td>
+              <td class="txt">text-davinci-003</td>
+              <td>90.60%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">AlpacaEval 2.0</span></td>
+              <td class="txt">GPT-4 turbo</td>
+              <td class="txt">GPT-4 turbo</td>
+              <td>13.20% LC<br />10.99% raw</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The two references sit at very different levels. Version 1.0 scores
+          answers against text-davinci-003, a weak model, so most answers
+          beat it and win rates run high. Version 2.0 scores answers against GPT-4
+          turbo, a top model, so the same answers rarely win and rates run
+          low.<sup class="nb-cite"><a href="#s2">2</a></sup> The 90.60% and the
+          13.20% answer two different questions. The first asks whether Zephyr beats
+          text-davinci-003. The second asks whether it beats GPT-4 turbo, after the
+          length adjustment. Both can be true at once because the bar moved.
+        </p>
+        <p>
+          A win rate only means something next to
+          its version, its judge, and its reference, and two win rates are
+          comparable only when all three match.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          A leaderboard that holds all three fixed, as the AlpacaEval 2.0 board
+          does, is comparing like with like. A press release that quotes one model's
+          90.60% beside another model's number from a different version is not.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          An AlpacaEval win rate is a preference, not a grade. It counts how often
+          one language model, acting as judge, preferred a model's answers to a
+          reference model's answers over 805 fixed prompts. The judge leans toward
+          the longer answer, so a model can lift its number just by padding. A canned
+          off-topic answer can score in the eighties even after the length
+          adjustment. So when you meet a win rate, ask three things before you trust
+          it: which version, which judge, which reference. A number is only
+          comparable to another number that shares all three. Read with those
+          questions in hand, an AlpacaEval win rate is worth having. Read as a bare
+          percentage, it will mislead you.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2404.04475">Dubois et al., "Length-Controlled AlpacaEval"</a>:
+            the length-control method in full, with the verbosity experiment and the correlation figures.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://tatsu-lab.github.io/alpaca_eval/">The AlpacaEval leaderboard</a>:
+            the live board with the length-controlled and raw win rates for current models, side by side.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2310.16944"
+              >Tunstall et al. · Zephyr: Direct Distillation of LM Alignment</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/tatsu-lab/alpaca_eval/blob/main/README.md"
+              >tatsu-lab · AlpacaEval (repository README)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.04475"
+              >Dubois et al. · Length-Controlled AlpacaEval</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.themoonlight.io/en/review/length-controlled-alpacaeval-a-simple-way-to-debias-automatic-evaluators"
+              >Moonlight · review of Length-Controlled AlpacaEval</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2410.07137"
+              >Zheng et al. · Cheating Automatic LLM Benchmarks: Null Models Achieve High Win Rates</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/HuggingFaceH4/zephyr-7b-beta"
+              >HuggingFaceH4 · zephyr-7b-beta model card</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/tatsu-lab/alpaca_eval/blob/main/src/alpaca_eval/leaderboards/data_AlpacaEval_2/weighted_alpaca_eval_gpt4_turbo_leaderboard.csv"
+              >tatsu-lab · AlpacaEval 2.0 leaderboard data</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
