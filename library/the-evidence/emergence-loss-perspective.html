@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The emergence jump returns when you plot AI skills against loss · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "emergence-loss-perspective",
+        "template": "lesson",
+        "title": "The emergence jump returns when you plot AI skills against loss",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-10",
+        "tags": ["emergent-abilities", "pre-training-loss", "scaling"],
+        "sources": 6,
+        "words": 2046,
+        "reading_minutes": 9,
+        "dek": "A 2024 paper re-plotted the same exams against pre-training loss instead of model size, and found four hard tasks that sit at chance until loss falls past 2.2, even under the continuous metrics that were supposed to dissolve the jump.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">
+          The emergence jump returns when you plot AI skills against loss
+        </h1>
+        <p class="nb-dekline">
+          A 2024 paper re-plotted the same exams against pre-training loss
+          instead of model size, and found four hard tasks that sit at chance
+          until loss falls past 2.2, even under the continuous metrics that
+          were supposed to dissolve the jump.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-10</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Whether the next AI model will suddenly do something the last one
+          could not is not a philosophical question. It sets how much warning
+          anyone gets before a system can pass a professional exam or write
+          working code. The claim that such abilities arrive all at once, past
+          some threshold of size, is called emergence, and a much-cited 2023
+          paper argued that the suddenness was mostly an artifact of how the
+          tests were scored. A 2024 reply left the scoring alone and changed
+          something else: the quantity on the horizontal axis. Plotted against
+          how well a model predicts text rather than against how large it is,
+          the jump came back, and it held up under the same scoring fix that was
+          supposed to remove it. By the end, pre-training loss will be a number
+          you can define. You will see why the same data can look like a mirage
+          on the size axis and a real threshold on the loss axis. And you will
+          see why the two papers have not settled the argument between them.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/emergent-abilities.html"
+              >The sudden jump in AI benchmarks was mostly in the scoring</a
+            >: the 2023 rebuttal this lesson answers, worked through in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/scaling-laws-kaplan.html"
+              >OpenAI's 2020 scaling paper got the curve right and the budget
+              wrong</a
+            >: where pre-training loss comes from, and why it falls along a
+            smooth, predictable curve as a model grows.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The reply that changed the horizontal axis</h2>
+        <p>
+          In March 2024, Zhengxiao Du, Aohan Zeng, Yuxiao Dong, and Jie Tang
+          posted a paper with a flat title, "Understanding Emergent Abilities
+          from the Loss Perspective," later accepted at NeurIPS 2024.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Abstract">1</a></sup
+          >
+          It steps into an argument the field has been having for two years
+          about whether large language models gain abilities gradually or in
+          sudden steps.
+        </p>
+        <p>
+          A 2022 paper led by Jason Wei had named the sudden version. An
+          emergent ability, Wei and his coauthors wrote, is one "not present in
+          smaller models but is present in larger models," so that such
+          abilities "cannot be predicted simply by extrapolating the performance
+          of smaller models."<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Abstract">2</a></sup
+          >
+          In 2023 Rylan Schaeffer, Brando Miranda, and Sanmi Koyejo answered
+          that much of the suddenness lived in the scoring.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Abstract">3</a></sup
+          >
+          Take the same fixed model outputs and grade them with a continuous
+          rule that gives partial credit instead of an all-or-nothing one, and
+          most of the jumps flatten into smooth climbs. Their paper, "Are
+          Emergent Abilities of Large Language Models a Mirage?", won an
+          Outstanding Main Track Paper award at NeurIPS 2023.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          This desk
+          <a href="../the-evidence/emergent-abilities.html"
+            >walked through that rebuttal</a
+          >
+          in full. Its result, in one line: change the ruler, and the sudden
+          jump becomes a climb you could have seen coming.
+        </p>
+        <p>
+          Both of those papers put the same thing on the horizontal axis: model
+          size, whether counted in parameters or in the compute a training run
+          burned. Du's paper changes that axis. Plot a task's score against a
+          model's pre-training loss instead, and four demanding tasks stay at
+          chance until loss falls below about 2.2, then climb. The tipping point
+          stays where it is even under the continuous metrics Schaeffer's team
+          used to make jumps disappear.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Abstract · §3.2">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="pre-training-loss" id="pre-training-loss">
+        <h2>Pre-training loss, the number a model actually minimizes</h2>
+        <p>
+          A large language model is trained on one narrow job: read some text
+          and predict the next token, the next short chunk of a word.
+          Pre-training loss is the model's average error at that job, measured
+          on held-out text it never trained on. A lower loss means a better
+          next-token predictor, and nothing more direct than that. As this desk
+          covered in
+          <a href="../the-evidence/scaling-laws-kaplan.html"
+            >OpenAI's 2020 scaling work</a
+          >, this number falls along a smooth, predictable curve as a model
+          grows: it slides down gradually, with no steps in it.
+        </p>
+        <p>
+          Du's first finding is that loss, not size, is the variable that tracks
+          ability. Models of very different sizes that reach the same
+          pre-training loss score about the same on the same downstream task,
+          whatever their parameter count.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§2">1</a></sup
+          >
+          That is the reason to move it onto the horizontal axis. Size and
+          compute are inputs a lab chooses; loss is the thing those inputs buy,
+          and it is what the model's downstream skill turns out to follow.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">30+</span
+            ><span class="nb-stat-l">models trained from scratch</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">300M&ndash;32B</span
+            ><span class="nb-stat-l">parameter range</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">12</span
+            ><span class="nb-stat-l">downstream tasks</span>
+          </div>
+        </div>
+        <p>
+          The foundation under this is larger than most emergence studies. Du's
+          team pre-trained more than thirty of their own models from scratch,
+          from 300 million to 32 billion parameters, and checked the pattern
+          against outside model families, LLaMA and Pythia, across 12 downstream
+          datasets.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§2">1</a></sup
+          >
+          The point of owning the models is control over the axis: with their
+          own training checkpoints they can read a model's pre-training loss
+          directly and line it up against what that same model can do.
+        </p>
+      </section>
+
+      <section data-nb-section="loss-threshold" id="loss-threshold">
+        <h2>Below a loss of 2.2, four tasks wake up</h2>
+        <p>
+          Line up all twelve tasks against pre-training loss, which falls to the
+          left as models improve. Eight of them rise from the start: as loss
+          drops, the score climbs, smoothly, with no threshold to speak of. Four
+          behave differently. They sit at chance across the whole high-loss
+          range and only begin to climb once pre-training loss drops below about
+          2.2.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§2&ndash;3">1</a></sup
+          >
+          Those four are the hardest of the set: MMLU, a 57-subject
+          multiple-choice knowledge exam; C-Eval, its Chinese-language
+          counterpart; GSM8K, a bank of grade-school math word problems; and
+          GSM8K's Chinese translation.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The four tasks that stay at chance until pre-training loss falls
+            past about 2.2, while the other eight of Du's twelve rise from the
+            start.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="§2&ndash;3">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th class="txt">What it tests</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">MMLU</span></td>
+              <td class="txt">
+                Multiple-choice questions across 57 subjects, from history to
+                law to medicine.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">C-Eval</span></td>
+              <td class="txt">
+                The same kind of broad multiple-choice exam, written in Chinese.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GSM8K</span></td>
+              <td class="txt">
+                Grade-school math word problems that need several reasoning
+                steps.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GSM8K-Chinese</span></td>
+              <td class="txt">
+                The same word problems, translated into Chinese.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Keep two things apart here, because a reader new to this will want to
+          collapse them. The horizontal axis moves smoothly. Loss slides down by
+          small amounts as a model gets better at predicting text, and it never
+          jumps. The threshold is in how these four tasks answer that smooth
+          slide: chance, chance, chance, and then a rise, once loss crosses a
+          line near 2.2. On this reading, Du redefines an emergent ability to
+          match: one absent in higher-loss models and present in lower-loss
+          ones.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§4">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="axis-not-ruler" id="axis-not-ruler">
+        <h2>Changing the axis is a different move than changing the ruler</h2>
+        <p>
+          A reader who has just met the mirage argument should be suspicious
+          here. Schaeffer made a jump vanish by changing how the answers were
+          scored. What stops Du from making the jump reappear the same way, by
+          picking whatever measure brings it back? The worry is the right one.
+        </p>
+        <p>
+          Schaeffer's fix lived on the vertical axis. It held the model outputs
+          fixed and swapped the scoring rule, from all-or-nothing to one that
+          credits a near-miss, and the sudden curve became a ramp.<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="§2">3</a></sup
+          >
+          Du's move lives on the horizontal axis: keep the task and its scoring,
+          and change what the scores are plotted against. To meet the metric
+          worry head-on, though, Du also re-scored. On MMLU and C-Eval the team
+          replaced plain accuracy with two continuous metrics. The first,
+          CorrectChoiceProb, is the probability the model places on the right
+          option. The second, Brier Score, rewards confident correct answers and
+          penalizes confident wrong ones. Under both, the tipping point near loss
+          2.2 stayed where it was.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.2">1</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In the paper's words</span>
+          <blockquote>
+            emergent abilities of language models occur when the pre-training
+            loss reaches a certain tipping point, and continuous metrics cannot
+            eliminate the observed tipping point.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="§3.2">1</a></sup
+            >
+            <span class="nb-note-who">Du, Zeng, Dong &amp; Tang, §3.2</span>
+          </blockquote>
+        </div>
+        <p>
+          Schaeffer showed that a discontinuous
+          metric can manufacture a jump on the size axis. Du shows that on the
+          loss axis, for these tasks, the jump is still there when the metric is
+          continuous, so for this data the threshold cannot be pinned entirely
+          on the ruler.
+        </p>
+      </section>
+
+      <section data-nb-section="unsettled" id="unsettled">
+        <h2>Why neither paper ends the argument</h2>
+        <p>
+          Two things keep the question open, and the first sits inside Du's own
+          paper. A falling Brier Score is not the same as a task being solved,
+          because Brier also improves when a model merely spreads less
+          probability onto wrong answers. Du are careful about this. A predictor
+          that ignores the question and splits its probability evenly across four
+          options already scores 0.75 on these four-option exams, and their
+          models' Brier stays no better than that 0.75 baseline until loss
+          crosses the threshold.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.2">1</a></sup
+          >
+          So the continuous-metric result rests on reading the Brier curve
+          against a known random line, not on the curve being smooth and then
+          steep on its own.
+        </p>
+        <p>
+          The second is that Du and Schaeffer never grade the same thing.
+          Schaeffer's flattening came from tasks in the BIG-Bench collection,
+          run on Google's LaMDA models.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="§4">3</a></sup
+          >
+          Du's persistent threshold came from MMLU, C-Eval, and grade-school
+          math, run on their own models. Both use a metric called Brier Score
+          and reach opposite conclusions, because the tasks and the models
+          underneath are different. Both results can be correct at once, which
+          is exactly why one does not cancel the other. Jason Wei, who wrote the
+          original emergence paper, has answered the whole family of metric
+          arguments in a blog post. For a task like arithmetic you want the exact
+          answer and nothing else, so a partial-credit metric is measuring the
+          wrong thing to begin with.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          That is a claim about which metric matters for use, and it leaves Du's
+          threshold neither confirmed nor denied.
+        </p>
+        <p>
+          The mirage side has stayed measured too. Its authors never claimed
+          that emergence cannot happen, only that a metric can manufacture the
+          look of it. Co-author Brando Miranda has put the point plainly in an
+          interview. The size of a jump is a big function of the metric, he said.
+          No one should be surprised by a sharp jump when the scoring credits
+          only an exact-string match.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Read that way, Schaeffer and Du are closer than the headline dispute
+          suggests. One shows a metric can invent a threshold on the size axis.
+          The other shows a real threshold survives on the loss axis. Neither has
+          run the other's tasks to find out where they truly part.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The word "emergent" survives this round, but the thing it points at
+          has moved. In Wei's telling an ability appeared past a size. In
+          Schaeffer's it mostly appeared in the choice of ruler. In Du's it
+          appears past a level of pre-training loss, the smooth number that
+          measures how well a model predicts text. Against that number, four
+          hard exams really do sit at chance and then climb once loss falls past
+          about 2.2, and they keep doing it under the continuous metrics that
+          were supposed to flatten them. What the loss perspective has not done
+          is beat Schaeffer on his own ground. The two never grade the same
+          tasks, and Du's continuous-metric result has to be read against a
+          random baseline to count as a threshold at all. The honest position is
+          that emergence is real on the loss axis for the tasks Du measured, and
+          still unproven as a general law.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2403.15796"
+              >Du, Zeng, Dong &amp; Tang, "Understanding Emergent Abilities from
+              the Loss Perspective"</a
+            >: the paper in full, including the appendix where the authors work
+            through their disagreement with the mirage result.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a
+              href="https://www.jasonwei.net/blog/common-arguments-regarding-emergent-abilities"
+              >Jason Wei, "Common arguments regarding emergent abilities"</a
+            >: the original author's own answers to the standard objections,
+            including the metric argument.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2403.15796"
+              >arXiv · Du, Zeng, Dong &amp; Tang, "Understanding Emergent
+              Abilities from the Loss Perspective" (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2206.07682"
+              >arXiv · Wei et al., "Emergent Abilities of Large Language Models"
+              (2022)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2304.15004"
+              >arXiv · Schaeffer, Miranda &amp; Koyejo, "Are Emergent Abilities
+              of Large Language Models a Mirage?" (2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://blog.neurips.cc/2023/12/11/announcing-the-neurips-2023-paper-awards/"
+              >NeurIPS · "Announcing the NeurIPS 2023 Paper Awards" (2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.jasonwei.net/blog/common-arguments-regarding-emergent-abilities"
+              >jasonwei.net · Wei, "Common arguments regarding emergent
+              abilities" (blog)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://aihub.org/2024/04/25/are-emergent-abilities-of-large-language-models-a-mirage-interview-with-brando-miranda/"
+              >AIhub · Smith, "Are emergent abilities of LLMs a mirage?
+              Interview with Brando Miranda" (2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
