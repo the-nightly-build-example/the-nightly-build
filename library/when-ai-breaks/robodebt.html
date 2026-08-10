@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Robodebt built debts from averaged income, then made recipients disprove them · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "robodebt",
+        "template": "lesson",
+        "title": "Robodebt built debts from averaged income, then made recipients disprove them",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-10",
+        "tags": ["government", "automation", "welfare"],
+        "sources": 8,
+        "words": 2198,
+        "reading_minutes": 10,
+        "dek": "Removing a per-file human check let the same averaging error scale to $1.763 billion asserted against roughly 433,000 people, until a federal court and a royal commission found it unlawful.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">
+          Robodebt built debts from averaged income, then made recipients
+          disprove them
+        </h1>
+        <p class="nb-dekline">
+          Removing a per-file human check let the same averaging error scale to
+          $1.763 billion asserted against roughly 433,000 people, until a
+          federal court and a royal commission found it unlawful.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-08-10</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Governments and companies increasingly let an automated system decide
+          that you, specifically, owe money or broke a rule, and then ask you to
+          prove otherwise. Robodebt is the clearest worked example of where that
+          design fails. Between 2015 and 2019 the Australian government raised
+          welfare debts against hundreds of thousands of people by averaging
+          their yearly income into fortnights and demanding they disprove the
+          result. It was found unlawful and cost more than a billion dollars to
+          unwind. The easy story is that an algorithm ran amok. What actually
+          broke was older than the software, and versions of it still run in
+          systems that never made the news. By the end you will be
+          able to say what income averaging is, why reversing the burden of
+          proof turns a small error into a mass one, and how to spot the design
+          before it is automated at scale.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="dutch-childcare-benefits.html">The Dutch tax office turned
+            a non-Dutch passport into a fraud score</a>: the same bargain, a
+            risk model plus a reversed onus, run against families in the
+            Netherlands.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="nh-predict.html">nH Predict sets one patient's discharge
+            date from six million others</a>: how an average built from other
+            people becomes a cap on one.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A debt the recipient had to disprove</h2>
+        <p>
+          In July 2016 the Australian government's Department of Human Services
+          began sending letters asserting a welfare debt and asking the
+          recipient to log in and explain it. No one had checked the figure. It
+          came from a computer that matched two records: what a person had told
+          Centrelink they earned, fortnight by fortnight, against what their
+          employers reported to the tax office for the whole year. Where the two
+          disagreed, the system raised a debt and moved to recover it, garnishing
+          tax refunds and handing accounts to debt collectors.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Reviewing overpayments was ordinary work. Welfare depends on income,
+          and someone who earned more than they declared can owe the difference
+          back. What was new in Robodebt was the arrangement: the government
+          produced a number, called it a debt, and made the recipient prove they
+          did not owe it.
+        </p>
+      </section>
+
+      <section data-nb-section="averaging" id="averaging">
+        <h2>How dividing a year made a fortnight</h2>
+        <p>
+          Australian welfare entitlement is assessed fortnightly: what you are
+          owed in any two-week period depends on what you actually earned then.
+          The tax office reports income the other way, as a single aggregate
+          figure for the whole year, which cannot say what a person earned in any
+          particular fortnight.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Robodebt bridged that gap by division. It took the annual
+          employer-reported total and, in the Royal Commission's words,
+          &ldquo;divided up evenly, and allocated into the number of fortnights
+          included in the period being reviewed,&rdquo; then treated that flat,
+          invented figure as the person's income in every fortnight.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The arithmetic is on the record in one recipient's case. For the
+          2011&ndash;12 year, Deanna Amato's employer reported $24,811 in income
+          to the tax office. Robodebt divided that by the 366 days in the period,
+          reaching $67.79 a day, then multiplied by 14 for an &ldquo;apportioned
+          fortnightly income&rdquo; of $949.05. That flat figure replaced what
+          she had actually reported earning each fortnight. The sum assumed she
+          had earned the year's income in equal fortnightly amounts, and her own
+          reported earnings showed she had not. It produced a debt of $2,924.28,
+          and the tax office was ordered to hand over her refund to cover it. A
+          federal court later declared the demand &ldquo;was not validly
+          made&rdquo;: there was &ldquo;no probative material&rdquo; for the
+          assumption, and her own figures contradicted it.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The department's own guidance had predicted this: averaging over 12
+          months &ldquo;will not result in a correct result if the customer
+          should have received a full rate at other times of the year.&rdquo;<sup
+            class="nb-cite"><a href="#s2">2</a></sup> Averaging did not always
+          invent the whole debt. The Commonwealth later accepted that Amato owed
+          something, though &ldquo;very substantially smaller&rdquo; than the sum
+          demanded. What averaging invented was the amount.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="removed-check" id="removed-check">
+        <h2>The check that used to catch it</h2>
+        <p>
+          Income averaging did not arrive with the computer. The department had
+          used it for years, but only as a last resort and often with the
+          recipient's agreement, after asking for their actual records.<sup
+            class="nb-cite"><a href="#s2">2</a></sup> What Robodebt changed was
+          who did the checking, and whether anyone did.
+        </p>
+        <p>
+          Before, a flagged discrepancy went to a compliance officer who
+          examined the file, contacted the recipient, and could compel the
+          employer to hand over the actual pay records for the period. About
+          20 000 files a year were checked this way.<sup class="nb-cite"><a
+            href="#s1">1</a></sup> That officer caught a wrong average before it
+          became a debt. Robodebt removed the officer. Under the fully automated
+          system, if the recipient did not go online and supply the evidence,
+          the department would &ldquo;no longer use its information gathering
+          powers to obtain it directly from employers.&rdquo;<sup class="nb-cite"
+            ><a href="#s2">2</a></sup> The averaged figure stood, and disproving
+          it fell on the person least able to make an old employer dig out
+          years-old records.
+        </p>
+        <p>
+          Even staff who wanted to intervene often could not. A welfare advocate
+          told a Senate committee that when a client's debt recovery was supposed
+          to be paused, the department explained: &ldquo;The computer is
+          initiating these calls and they can't be overridden. The best we can do
+          is reduce the amount that she has to repay.&rdquo;<sup class="nb-cite"
+            ><a href="#s4">4</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            The old path and the new one, from the Royal Commission's account of
+            what changed.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Step</th>
+              <th class="txt">Before the automated system</th>
+              <th class="txt">Under Robodebt</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Income figure</span></td>
+              <td class="txt">
+                Officer sought the employer's actual pay records for the period.
+              </td>
+              <td class="txt">
+                Annual tax-office total divided evenly across the fortnights.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Averaging</span></td>
+              <td class="txt">
+                A last resort, often with the recipient's agreement.
+              </td>
+              <td class="txt">
+                The automatic default when the recipient did not respond.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Onus</span></td>
+              <td class="txt">
+                The department gathered the evidence for the debt.
+              </td>
+              <td class="txt">
+                The recipient had to disprove the figure or owe it.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Penalty</span></td>
+              <td class="txt">Raised on the facts of the case.</td>
+              <td class="txt">A 10 per cent penalty added automatically.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The error rate per file may have been no worse than before. The scale
+          was. In the manual program that ran just before full automation,
+          reviews rose roughly fivefold in a single year, and about nine in ten
+          of the debts it raised used averaging.<sup class="nb-cite"><a
+            href="#s1">1</a></sup> Removing the human check did not invent the
+          error. It mass-produced it.
+        </p>
+      </section>
+
+      <section data-nb-section="reckoning" id="reckoning">
+        <h2>What it cost and how it ended</h2>
+        <p>
+          In the class action Prygodicz v Commonwealth, the Federal Court found
+          the Commonwealth &ldquo;unlawfully asserted such debts, totalling at
+          least $1.763 billion against approximately 433 000 Australians.&rdquo;
+          It had already recovered about $751 million from roughly 381 000 of
+          them.<sup class="nb-cite"><a href="#s5">5</a></sup> The Royal Commission
+          put the refund program at
+          $746 million reimbursed to some 381 000 people, with debts totalling
+          $1.751 billion written off.<sup class="nb-cite"><a href="#s1">1</a
+            ></sup> The two accounts measure different things at different times,
+          not a disagreement.
+        </p>
+        <p>
+          The program had been sold as a saving. Budget papers projected about $2
+          billion over its first four years. Services Australia spent $606 million
+          building it, and the savings never came.<sup class="nb-cite"><a
+            href="#s4">4</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">433,000</span
+            ><span class="nb-stat-l">Australians with debts unlawfully
+            asserted</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">$1.763B</span
+            ><span class="nb-stat-l">Total unlawfully asserted</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">$746M</span
+            ><span class="nb-stat-l">Refunded to about 381,000 people</span>
+          </div>
+        </div>
+        <p>
+          The human cost is on the record. The court recorded what group members
+          reported: financial hardship, anxiety and distress,
+          including suicidal ideation and in some cases suicide.<sup
+            class="nb-cite"><a href="#s5">5</a></sup> The Royal Commission was
+          aware that people with debts raised under the scheme had died by
+          suicide, assigned no toll, and was explicit that causation is specific
+          to each case.<sup class="nb-cite"><a href="#s1">1</a></sup> Even the
+          death most associated with Robodebt, that of Rhys Cauzzo, came from a
+          debt raised through the earlier manual process, not the online system.
+          Both used averaging.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Averaging is not
+          unlawful in itself; using it as the sole basis to prove a debt is.<sup
+            class="nb-cite"><a href="#s1">1</a></sup> Amato was one case. In
+          Prygodicz the court reached the same conclusion for the whole class: a
+          debt decision resting solely on averaged tax-office data, with no other
+          evidence of actual fortnightly income, &ldquo;was not validly
+          made.&rdquo;<sup class="nb-cite"><a href="#s5">5</a></sup> The two
+          bodies differ on what officials knew. Ruling in 2021 on the record
+          before him, Murphy J declined to find that ministers and senior public
+          servants actually knew the scheme was unlawful, calling it closer to
+          &ldquo;a stuff up&rdquo; than &ldquo;a conspiracy.&rdquo;<sup
+            class="nb-cite"><a href="#s5">5</a></sup> The Royal Commission,
+          working from a wider base in 2023, found the department had legal
+          advice as early as 2014 that averaging this way was unlawful, and that
+          senior people knew of it.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Part of why the scheme survived was that an early review did not stop
+          it. When the Commonwealth Ombudsman examined the system in April 2017,
+          it did not reach lawfulness. It found the debts &ldquo;accurate, based
+          on the information which is available to DHS at the time the decision
+          is made,&rdquo; and said the fairness of the department's discretion
+          &ldquo;can only be answered by the courts.&rdquo;<sup class="nb-cite"
+            ><a href="#s2">2</a></sup> The department then relied on that report
+          as evidence that Robodebt was legal, and later worked to keep the
+          legality issue out of the Ombudsman's follow-up.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The retreat came in stages. In November 2019 the government announced
+          it would stop raising debts on averaging alone,<sup class="nb-cite"
+            ><a href="#s6">6</a></sup> and days later the
+          Federal Court's Amato consent orders held that averaged tax-office data
+          could not by itself prove her debt.<sup class="nb-cite"><a href="#s3"
+            >3</a></sup> In May 2020 it announced it would refund debts raised
+          wholly or partly on averaging, by then some 470 000 of them.<sup
+            class="nb-cite"><a href="#s6">6</a></sup> The 2021 class action added
+          a settlement of $112 million, inclusive of legal costs, on top of the
+          refund program.<sup class="nb-cite"><a href="#s5">5</a></sup> A Senate
+          committee majority, over a dissent from Government senators,
+          recommended a royal commission. The government of the day did not adopt
+          it, and the commission was established only after the 2022 change of
+          government.<sup class="nb-cite"><a href="#s4">4</a></sup> When it
+          released the Commission's report in July 2023, the government said it
+          would consider the recommendations and respond in full.<sup
+            class="nb-cite"><a href="#s7">7</a></sup> In
+          September 2025 it agreed to a further $475 million to settle an appeal,
+          Knox, still subject to Federal Court approval.<sup class="nb-cite"><a
+            href="#s8">8</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The Commission's finding</span>
+          <blockquote>
+            &ldquo;Robodebt was a crude and cruel mechanism, neither fair nor
+            legal, and it made many people feel like criminals. In essence,
+            people were traumatised on the off-chance they might owe money.&rdquo;<sup
+              class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">Royal Commission into the Robodebt Scheme,
+            Final Report</span>
+          </blockquote>
+        </div>
+      </section>
+
+      <section data-nb-section="still-running" id="still-running">
+        <h2>Where the same bargain still runs</h2>
+        <p>
+          Robodebt stopped, but the system beneath it did not. Automated income
+          data-matching between Centrelink and the tax office continued.
+          The Ombudsman's 2021 report records that the online compliance system
+          was replaced by later programs, one of which, Check and Update Past
+          Income, &ldquo;is still in operation.&rdquo;<sup class="nb-cite"><a
+            href="#s6">6</a></sup> What ended was the single move the courts
+          struck down: using an average as the sole proof of a debt.
+        </p>
+        <p>
+          The weakness that carries beyond Robodebt is the bargain, not the
+          software that ran it. A system takes a cheap signal, a data-match, a
+          model's score, an average, treats it as proof of a fact about one
+          person, then makes that person disprove it. The
+          Dutch tax office made the same bargain with a fraud-risk model and drove
+          tens of thousands of families into a
+          <a href="dutch-childcare-benefits.html">dragnet they could not see or
+          appeal</a>. Only the signal changes. What stays is the shape: proof
+          asserted cheaply, and the doubt made the citizen's to clear.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Robodebt did not invent a new kind of mistake. The averaging it relied
+          on, and the reversed onus that made averaging dangerous, both predate
+          it. What the automation changed was scale. Removing the compliance
+          officer who checked each file turned a rare, correctable error into
+          hundreds of thousands of debts. At least
+          $1.763 billion was asserted against about 433 000 people before the
+          courts and a royal commission called it unlawful. The failure was
+          structural, not technological, and it did the most damage to the people
+          least able to answer. When you next read that an algorithm wrongly
+          flagged someone,
+          ask the two questions Robodebt answers: what did the system treat as
+          proof, and who was made to disprove it?
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a
+              href="https://robodebt.royalcommission.gov.au/system/files/2023-07/robodebt_report_volume_1.pdf"
+              >Royal Commission into the Robodebt Scheme, Final Report, Volume
+              1</a>: the Overview lays out the mechanism and the findings in the
+            Commission's own words.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.austlii.edu.au/cgi-bin/viewdoc/au/cases/cth/FCA/2021/634.html"
+              >Prygodicz v Commonwealth (No 2) [2021] FCA 634</a>: the Federal
+            Court's settlement-approval reasons, with the figures the parties
+            proved.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://robodebt.royalcommission.gov.au/system/files/2023-07/robodebt_report_volume_1.pdf"
+              >Royal Commission into the Robodebt Scheme · Final Report, Volume
+              1 (2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.ombudsman.gov.au/__data/assets/pdf_file/0022/43528/Report-Centrelinks-automated-debt-raising-and-recovery-system-April-2017.pdf"
+              >Commonwealth Ombudsman · Centrelink's automated debt raising and
+              recovery system (April 2017)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.comcourts.gov.au/file/Federal/P/VID611/2019/3859485/event/30114114/document/1513665"
+              >Federal Court of Australia · Deanna Amato v The Commonwealth,
+              consent orders (VID611/2019, 27 November 2019)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.aph.gov.au/Parliamentary_Business/Committees/Senate/Community_Affairs/Centrelinkcompliance/Final_Report"
+              >Senate Community Affairs References Committee · Accountability and
+              justice: Why we need a Royal Commission into Robodebt</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.austlii.edu.au/cgi-bin/viewdoc/au/cases/cth/FCA/2021/634.html"
+              >Federal Court of Australia · Prygodicz v Commonwealth (No 2)
+              [2021] FCA 634</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.ombudsman.gov.au/__data/assets/pdf_file/0014/112442/Services-Australias-Income-Compliance-Report.pdf"
+              >Commonwealth Ombudsman · Services Australia's Income Compliance
+              Program (April 2021)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.pm.gov.au/media/final-report-royal-commission-robodebt-scheme"
+              >Prime Minister of Australia · Final report of the Royal Commission
+              into the Robodebt Scheme (media release)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://ministers.ag.gov.au/media-centre/robodebt-class-action-appeal-settlement-04-09-2025"
+              >Attorney-General's portfolio · Robodebt class action appeal
+              settlement (media release, 4 September 2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
