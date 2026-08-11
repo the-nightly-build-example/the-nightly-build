@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>More than half of TruthfulQA is questions a model already failed · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "truthfulqa",
+        "template": "lesson",
+        "title": "More than half of TruthfulQA is questions a model already failed",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-11",
+        "tags": ["benchmark-design", "truthfulness", "language-model-evaluation"],
+        "sources": 8,
+        "words": 2034,
+        "reading_minutes": 9,
+        "dek": "TruthfulQA's percentage is set by which questions survived a model's mistakes and by a grader fine-tuned on the authors' own labels, well before it can say anything about which models lie more.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">More than half of TruthfulQA is questions a model already failed</h1>
+        <p class="nb-dekline">
+          TruthfulQA's percentage is set by which questions survived a model's
+          mistakes and by a grader fine-tuned on the authors' own labels, well
+          before it can say anything about which models lie more.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-11</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Truthfulness is one of the first things a lab claims for a new model,
+          and TruthfulQA is the benchmark those claims point to, printed on
+          model cards and in launch posts as one percentage beside the word
+          "truthful." That percentage is the product of specific choices: which
+          questions survived a filter, whether a person or a fine-tuned model
+          grades the answers, and which of the benchmark's variants is being
+          reported. Knowing those choices is the difference between reading the
+          number and repeating it. The most repeated claim TruthfulQA produced,
+          that larger models are less truthful, turns out to be the clearest
+          test of what one percentage can hold.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/hallucination.html">A model builds a fake citation the same way it builds a true one</a>:
+            why a model produces confident falsehoods at all.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/hallucination-rate.html">A faithful summary of a false passage passes the hallucination test</a>:
+            a different truthfulness measure, scoring whether a summary stays true to its source.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-instruments/llm-as-a-judge.html">Answer order alone swung a language model's verdict by 80 points</a>:
+            how one language model is used to grade another, and where that grading breaks.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Two labs report TruthfulQA and mean different things</h2>
+        <p>
+          A model card reports that a system "scores well on TruthfulQA," and
+          the percentage sounds like a fact about the model. It is closer to a
+          fact about a procedure. TruthfulQA is a set of 817 questions built in
+          2021 by Stephanie Lin, Jacob Hilton, and Owain Evans to catch one
+          particular failure: an answer that repeats a falsehood many people
+          believe.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          What a report then does with those questions varies. OpenAI's GPT-4
+          technical report puts the benchmark in a bar chart titled "Accuracy on
+          adversarial questions (TruthfulQA mc1)" and prints no value at all;
+          the reader takes the score off the height of a
+          bar.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Meta's Llama 2 report instead gives a table of percentages under a
+          different definition: the share of a model's answers judged both
+          truthful and informative.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Neither report is wrong. They are not reporting the same number, and
+          the shared name hides that.
+        </p>
+      </section>
+
+      <section data-nb-section="construction" id="construction">
+        <h2>The questions were kept because a model failed them</h2>
+        <p>
+          Most benchmarks collect questions and score whatever a model does with
+          them. TruthfulQA was filtered first. The authors wrote questions a
+          person might answer wrongly out of a misconception, a false belief
+          that circulates widely. They put each one to a target model, GPT-3 at
+          175 billion parameters, with a plain question-and-answer
+          prompt.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          They kept the questions the model answered falsely by echoing the
+          misconception. That step produced 437 questions, which the paper calls
+          the filtered set. The authors then wrote 380 more in the same style
+          without testing them, for 817 questions across 38 categories, among
+          them health, law, finance, and
+          politics.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          So 437 of the 817, more than half, are in the benchmark because one
+          model got them wrong.
+        </p>
+        <p>
+          The failure being hunted has a name. An imitative falsehood is a wrong
+          answer that is likely precisely because the same wrong statement is
+          common in the text the model learned from.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A question about whether cracking your knuckles causes arthritis works
+          as a trap because the wrong answer is a belief people actually hold.
+          This is a narrower thing than it first sounds. It is not
+          <a href="../the-mechanics/hallucination.html">why a model invents facts at all</a>,
+          and not
+          <a href="../the-instruments/hallucination-rate.html">whether a summary stays faithful to its source</a>.
+          It is whether a model reproduces the specific errors people already
+          repeat.
+        </p>
+      </section>
+
+      <section data-nb-section="grading" id="grading">
+        <h2>A fine-tuned model assigns the generative grade</h2>
+        <p>
+          On the original, or generative, task the model writes its own answer,
+          and the answer is scored on two axes: is it truthful, and is it
+          informative.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Truthfulness is graded leniently. A model that replies "I have no
+          comment" to every question counts as perfectly truthful, because it
+          asserts nothing false.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          When the paper first ran the task, the best model was truthful on 58%
+          of questions, against 94% for a person answering the same
+          set.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Read alone, 58% flatters the model. Require the answer to be
+          informative as well as true and that best model's rate falls to
+          21%, while its confident, informative falsehoods account for
+          42%.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The difference is the refusals: "no comment" is scored truthful and
+          teaches the reader nothing.
+        </p>
+        <p>
+          Grading every answer by hand does not scale, so the authors automated
+          it. They fine-tuned a 6.7-billion-parameter GPT-3 model on their own
+          human truth labels and called it GPT-judge; it reproduces a human's
+          truthfulness verdict with 90 to 96% accuracy on held-out model
+          families.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Most reported generative scores since then come from a grader of this
+          kind rather than from a person, which puts TruthfulQA in the same
+          family as
+          <a href="../the-instruments/llm-as-a-judge.html">using one language model to grade another</a>.
+          Reproducing the official score is not a matter of downloading it: the
+          repository has each caller fine-tune their own judge on the provided
+          label files.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The authors are plain about what that judge is for.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The authors' own caveat</span>
+          <blockquote>
+            "The fine-tuned models should be used as a metric for TruthfulQA
+            only, and are not expected to generalize to new
+            questions."<sup class="nb-cite"><a href="#s4">4</a></sup>
+            <span class="nb-note-who">TruthfulQA repository, evaluation README</span>
+          </blockquote>
+        </div>
+        <p>
+          A judge fine-tuned on 2021 answers, then applied to models released
+          years later, is a fixed-looking percentage sitting on a foundation
+          that was never calibrated for them. The number can still be useful.
+          It is not the neutral instrument the single word "truthful" beside it
+          suggests.
+        </p>
+      </section>
+
+      <section data-nb-section="variants" id="variants">
+        <h2>The multiple choice variants score a different thing</h2>
+        <p>
+          The multiple choice variants drop the writing step, and with it the
+          grader. In MC1, single-true, the model sees four or five answers with
+          exactly one marked correct, and it scores if it places the highest
+          probability on that one.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          MC2, multi-true, allows several correct answers and scores the share
+          of probability the model puts on the true set as a
+          whole.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Both are read straight from the model's answer probabilities, no
+          language model in the loop, and both live under names that appear in
+          the code and the dataset card rather than in the paper's
+          text.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            The three numbers reported as TruthfulQA, and how each is
+            produced.<sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s5">5</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>VARIANT</th>
+              <th class="txt">What it measures</th>
+              <th class="txt">How it is graded</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Generative</span></td>
+              <td class="txt">A written answer, scored truthful and informative.</td>
+              <td class="txt">A blinded human, or GPT-judge, a model fine-tuned on human labels.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">MC1</span></td>
+              <td class="txt">Picks the single true choice among four or five.</td>
+              <td class="txt">The model's own answer probabilities. No judge.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">MC2</span></td>
+              <td class="txt">The probability placed on all true choices at once.</td>
+              <td class="txt">The model's own answer probabilities. No judge.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          These do not track together, and the community tooling treats them as
+          separate work. EleutherAI's evaluation harness, which computes most of
+          the reported numbers, exposes three distinct TruthfulQA tasks: mc1,
+          mc2, and gen.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          In March 2024 the harness corrected its MC2 code, which had assumed
+          the answer labels were already sorted when they were not, and reported
+          MC2 figures moved under the same benchmark name while no model
+          changed.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          A multiple choice format also admits a kind of score the written task
+          cannot. Alex Turner and Mark Kurzeja showed that simple rules which
+          never read the question can do well on the choices alone. An
+          "odd one out" heuristic reaches about 73% where it applies. A
+          small decision tree of such rules reaches 79.6% in principle and 66.6%
+          as they built it.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          At least a quarter of the questions can be narrowed by elimination,
+          because some wrong answers logically rule out
+          others.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          To that extent MC1 and MC2 reward reasoning about how the answer set
+          was assembled, not whether the model holds a true belief. The critique
+          lands on the multiple choice figures. It leaves the generative answers
+          a blinded human graded untouched.
+        </p>
+      </section>
+
+      <section data-nb-section="scaling" id="scaling">
+        <h2>Meta's own numbers rise with size</h2>
+        <p>
+          The paper reported that among the models it tested, the largest were
+          generally the least truthful, and that line became the benchmark's
+          most-quoted result: bigger models lie more, an inversion of the usual
+          rule that scale helps.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The reading is vivid and alarming, and it does not survive as a law
+          about size.
+        </p>
+        <p>
+          The authors checked whether the finding was real. Alongside the
+          misconception questions they ran matched control
+          questions, worded the same way but not built around a false belief,
+          and on those the larger models did better, in the ordinary
+          direction.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The 380 questions written without ever testing a model drew the same
+          imitative falsehoods as the filtered
+          ones.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          So the effect they measured is genuine: a model trained to imitate
+          text will reproduce the falsehoods common in that text, and the
+          adversarial selection concentrated that effect rather than inventing
+          it.
+        </p>
+        <p>
+          What it is not is a rule that scale erodes truthfulness. Within a
+          single pretrained family the number moves the ordinary way. On the
+          generative truthful-and-informative measure, Llama 1 climbs from
+          27.42% at 7 billion parameters to 48.71% at 65 billion, and Llama 2
+          from 33.29% to 50.18% at 70
+          billion.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="truthfulqa/chart-1.png"
+            alt="Two rising lines. Llama 1 and Llama 2 pretrained models plotted by size on a log axis from 7 billion to 70 billion parameters against their truthful-and-informative percentage on TruthfulQA's generative task. Both lines climb from the high 20s and low 30s at 7 billion to about 49 and 50 percent at the largest size."
+          />
+          <figcaption>
+            Fig. 1 · Llama pretrained models on TruthfulQA's generative
+            truthful-and-informative measure, plotted by size. Within each
+            family the rate rises as the model grows. Model size is on a log
+            scale.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Hold size fixed and change the training, and the direction reverses
+          outright. InstructGPT, a GPT-3 model tuned with human feedback,
+          produces truthful and informative answers about twice as often as the
+          same-size GPT-3 base.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          OpenAI reported the same shape for GPT-4. Its base model is only
+          slightly better on TruthfulQA than GPT-3.5. The large gain arrives
+          after reinforcement learning from human feedback, with MC1 accuracy
+          rising from under 30% for the zero-shot base to around
+          60%.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The same report adds, in a footnote, that its post-training data was
+          not checked for overlap with TruthfulQA, so some of that gain could be
+          the model having seen the questions
+          before.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Scale did not make the models lie. A pure imitator repeats what its
+          text got wrong at any size, and the change that raised the score,
+          every time it rose, was a change in training rather than in parameter
+          count.<sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A single "TruthfulQA score" does not exist. There is a generative
+          score, graded by a person or by a model fine-tuned to stand in for
+          that person. There are the MC1 and MC2 figures, read from answer
+          probabilities. A report may print any one of them under the same
+          name. All of them run on questions kept because a model failed them,
+          so the benchmark measures resistance to one particular trap, not
+          truthfulness in general. The claim it is best known for, that scale
+          makes models less truthful, is the one thing its own numbers
+          contradict. Within a family the larger model does better, and what
+          raised the score, each time, was a change in training. So the number
+          holds up for the narrow thing it measures. What failed was the
+          sentence people wrapped around it, the leap from a score on 817
+          curated questions to a law about scale and honesty.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2109.07958">TruthfulQA: Measuring How Models Mimic Human Falsehoods</a>:
+            the construction, the human evaluation, and GPT-judge in the authors' own words.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://turntrout.com/original-truthfulqa-weaknesses">Original TruthfulQA benchmark weaknesses</a>:
+            the multiple choice format tested for shortcuts from outside the benchmark team.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://github.com/EleutherAI/lm-evaluation-harness/blob/main/lm_eval/tasks/truthfulqa/README.md">EleutherAI lm-evaluation-harness: the TruthfulQA tasks</a>:
+            where most reported numbers are actually computed, as three separate tasks.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2109.07958"
+              >arXiv · Lin, Hilton &amp; Evans, "TruthfulQA: Measuring How Models Mimic Human Falsehoods" (2021)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2303.08774"
+              >OpenAI · "GPT-4 Technical Report" (2023)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.09288"
+              >Meta · Touvron et al., "Llama 2: Open Foundation and Fine-Tuned Chat Models" (2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/sylinrl/TruthfulQA"
+              >GitHub · sylinrl/TruthfulQA, the authors' code and data</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/datasets/truthfulqa/truthful_qa"
+              >Hugging Face · the truthful_qa dataset card</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://github.com/EleutherAI/lm-evaluation-harness/blob/main/lm_eval/tasks/truthfulqa/README.md"
+              >EleutherAI · lm-evaluation-harness, the TruthfulQA task README</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://turntrout.com/original-truthfulqa-weaknesses"
+              >Alex Turner &amp; Mark Kurzeja · "Original TruthfulQA benchmark weaknesses"</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.02155"
+              >OpenAI · Ouyang et al., "Training language models to follow instructions with human feedback" (2022)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
