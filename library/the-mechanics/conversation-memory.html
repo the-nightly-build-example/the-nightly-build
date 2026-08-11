@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The model sees your whole conversation for the first time on every turn · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "conversation-memory",
+        "template": "lesson",
+        "title": "The model sees your whole conversation for the first time on every turn",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-11",
+        "tags": ["stateless-requests", "context-window", "chatbot-memory"],
+        "sources": 9,
+        "words": 2141,
+        "reading_minutes": 9,
+        "dek": "To rebuild the thread each turn, the application sends the whole transcript back as fresh input, the fact underneath a blank new chat and a long chat that forgets its start.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">The model sees your whole conversation for the first time on every turn</h1>
+        <p class="nb-dekline">
+          To rebuild the thread each turn, the application sends the whole
+          transcript back as fresh input, the fact underneath a blank new chat
+          and a long chat that forgets its start.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-11</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every chatbot you use appears to remember the conversation you are
+          having with it. Ask a follow-up and it answers in context. Refer back
+          to something from ten messages ago and it follows. That appearance sets
+          what people expect: whether a new chat should know them, why a long one
+          seems to lose the plot, what a &ldquo;memory&rdquo; setting does with
+          their information. Under all of it is a single mechanism, close to the
+          opposite of what the appearance suggests. This lesson follows one
+          ordinary exchange down to that mechanism, step by step, and shows how
+          the everyday behaviors you have noticed come straight out of it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/prefill-and-decode.html">A chatbot reads
+            your whole prompt at once but writes its reply one word at a
+            time</a>: the single forward pass and the within-reply key/value
+            cache this lesson treats as a speed trick.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/knowledge-cutoff.html">A model&rsquo;s
+            weights freeze the moment its training run ends</a>: why the weights
+            never change after training, the freeze this lesson sets apart from a
+            live conversation.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-instruments/context-window.html">Every context window
+            has a second number, and it is smaller</a>: the fixed span of text
+            the whole transcript accumulates inside.
+          </dd>
+          <dt>04</dt>
+          <dd>
+            <a href="../the-mechanics/retrieval.html">A chatbot quotes your PDF
+            without learning a word of it</a>: how a model answers from a document
+            it never learned, the same move as a memory feature supplying facts
+            as input.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The exchange that feels like memory</h2>
+        <p>
+          You tell a chatbot, three messages into a conversation, that your dog
+          is named Biscuit. Several messages later you ask for a dinner idea, and
+          it suggests a recipe and adds a note about keeping the onions away from
+          Biscuit. It reached back to something you said and used it. The natural
+          reading is that the chatbot is holding the conversation in memory, the
+          way a person keeps the thread of a talk in their head.
+        </p>
+        <p>
+          That reading is wrong in a specific and useful way. The model keeps
+          nothing from one turn to the next. The name Biscuit is available later
+          for one reason: the application typed your whole conversation, that
+          earlier message included, back into the model as fresh input. On each
+          turn two things move. The application hands the model an input, and the
+          model hands back a reply. Everything the chatbot appears to know about
+          the conversation sits inside that input, assembled again from scratch,
+          and nothing is kept between one reply and the next request.
+        </p>
+        <p>
+          This is not a quirk of one product. Anthropic says it plainly in its
+          own API reference: &ldquo;The Messages API is stateless, which means
+          that you always send the full conversational history to the
+          API.&rdquo;<sup class="nb-cite"><a href="#s1">1</a></sup> Stateless is
+          the settled fact everything else rests on.
+        </p>
+      </section>
+
+      <section data-nb-section="resend" id="resend">
+        <h2>Where the earlier words come from</h2>
+        <p>
+          If the model retains nothing, then the earlier turns have to arrive on
+          the later request some other way. They do: the application resends the
+          entire running transcript as the input every turn. The literal text of
+          every prior message is placed in the input again, ahead of your new
+          one, not referenced by an identifier the model looks up.
+        </p>
+        <p>
+          Anthropic&rsquo;s own documentation shows the growth in a single
+          example. Send one user message and the request reports 12 input
+          tokens. Continue the conversation to three messages, a user turn, the
+          model&rsquo;s reply, and your next user turn, and the following request
+          reports 30 input tokens.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The count rose because the earlier turns are physically back in the
+          input, counted again, not because the model remembered them.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Anthropic&rsquo;s own example: the input-token count rises turn over
+            turn because each request carries the whole prior conversation, not
+            because the model recalls it.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Request</th>
+              <th>Input tokens</th>
+              <th class="txt">What is in the input</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">First turn</span></td>
+              <td>12</td>
+              <td class="txt">One user message.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Third turn</span></td>
+              <td>30</td>
+              <td class="txt">
+                The user turn, the reply, and the next user turn, resent in full.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The other major API owner describes the same shape. OpenAI states that
+          each text-generation request is independent and stateless, and that a
+          multi-turn conversation is something the developer builds by passing
+          the prior messages as parameters on every
+          request.<sup class="nb-cite"><a href="#s2">2</a></sup> The endpoint
+          that returns the reply generates it from the list of messages that make
+          up the conversation, supplied each call.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          This is settled engineering, stated by the parties that own the
+          interface.
+        </p>
+        <p>
+          One everyday behavior drops out at once. A brand-new chat starts blank
+          because there is no prior transcript to resend: the model is handed
+          only your first message, with nothing earlier to reach for.
+        </p>
+      </section>
+
+      <section data-nb-section="one-call" id="one-call">
+        <h2>Why one call keeps nothing from the last</h2>
+        <p>
+          Resending the whole transcript looks wasteful, but the application has
+          no choice. A single model call carries nothing
+          out of the call before it, for two settled reasons.
+        </p>
+        <p>
+          The first is the architecture. The transformer, the network design
+          every current chatbot is built on, is &ldquo;based solely on attention
+          mechanisms, dispensing with recurrence and convolutions
+          entirely.&rdquo;<sup class="nb-cite"><a href="#s4">4</a></sup> The
+          word that matters is recurrence. Older designs passed a running hidden
+          state from one step to the next, a place a memory of earlier input
+          could live. The transformer removed it. A forward pass attends over the
+          tokens it is handed and nothing else, so there is no slot in the design
+          for a memory of a separate, earlier call.
+        </p>
+        <p>
+          The second is that the one piece of within-call state that does exist
+          is deliberately thrown away. While the model writes a reply it keeps a
+          key/value cache, so it does not recompute the earlier tokens for every
+          new word it produces (this is the work of a
+          <a href="../the-mechanics/prefill-and-decode.html">single forward pass
+          and its cache</a>). That cache is per request. The serving system hands
+          it out as the reply grows and returns it to a shared pool the moment the
+          request finishes, so the memory is reused by whatever request comes
+          next.<sup class="nb-cite"><a href="#s5">5</a></sup> An independent
+          implementation reference describes the same cache, built to avoid
+          recomputation within one generation.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          It is a speed trick inside one reply, not a store that survives to the
+          next turn.
+        </p>
+        <p>
+          One more thing is worth separating out. A model&rsquo;s
+          <a href="../the-mechanics/knowledge-cutoff.html">weights freeze when
+          its training run ends</a>, and that freeze is about what the model
+          knows in general. Statelessness is a narrower thing about the live
+          conversation in front of you. Even mid-chat, with the weights fixed
+          either way, one call retains nothing of the call before it. The frozen
+          weights are why the model cannot learn your dog&rsquo;s name into
+          itself. Statelessness is why it has to be told the name again, in the
+          input, on every single turn.
+        </p>
+      </section>
+
+      <section data-nb-section="losing-start" id="losing-start">
+        <h2>How a long chat loses its start</h2>
+        <p>
+          Once the whole transcript rides along on every turn, it only grows, and
+          it grows inside a fixed space. That space is the
+          <a href="../the-instruments/context-window.html">context window</a>,
+          the amount of text a model can take in at once. On Anthropic&rsquo;s
+          models the window runs to 200,000 tokens on the baseline and up to
+          1,000,000 on newer ones, and the whole conversation plus the reply
+          being written has to fit inside it.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The window is working memory for this one conversation, and the
+          documentation is careful to mark it as a different thing from the
+          corpus the model was trained on.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          A long enough conversation, thousands of words of back-and-forth,
+          eventually pushes against even a large window, and then something has
+          to give. The window is a hard edge. On the Claude API, if the input alone
+          is over the window, the request fails outright with a 400 error reading
+          &ldquo;prompt is too long.&rdquo; If the reply instead runs into the
+          ceiling as it is generated, the model stops, with the reason
+          <code>model_context_window_exceeded</code>.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          An application cannot let the conversation grow without limit, so it has
+          to decide what to drop or compress as the edge approaches. That decision
+          belongs to the application, not the model.
+        </p>
+        <p>
+          What each product decides varies, and much of it is not published.
+          Anthropic documents three of its own behaviors. A chat interface such
+          as claude.ai can drop the oldest turns first, on a rolling basis.
+          Server-side compaction can summarize older turns so the thread
+          continues past the limit.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          And context editing can clear stale tool results out of the window as
+          the token limit nears.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          What it does not publish is the exact point each of these triggers or
+          the wording a summary uses, and other products do not always say what
+          they do at all. So &ldquo;the model forgot the start of our chat&rdquo;
+          resolves to something concrete but product-specific. The application
+          dropped or summarized the oldest turns to keep the rest inside the
+          window. Handed the trimmed transcript, the model has no way to miss what
+          is no longer in front of it.
+        </p>
+      </section>
+
+      <section data-nb-section="memory-feature" id="memory-feature">
+        <h2>What a &ldquo;memory&rdquo; feature really stores</h2>
+        <p>
+          One behavior seems to break the rule. Some products recognize you
+          across separate chats. Open a fresh conversation weeks later and the
+          product already has your name, your preferences, a project from before,
+          even though each chat on its own starts blank. If the model keeps
+          nothing, how does anything survive between conversations?
+        </p>
+        <p>
+          It survives outside the model. A memory feature is the application
+          storing facts somewhere of its own and pasting the relevant ones back
+          into the input on later turns. Anthropic&rsquo;s memory tool documents
+          the mechanism firsthand: the model stores and retrieves information
+          across conversations as files that persist between sessions,
+          &ldquo;building up knowledge over time without keeping everything in
+          the context window.&rdquo;<sup class="nb-cite"><a href="#s9">9</a></sup>
+          On a later turn the application reads those files and places their
+          contents into the input the model receives, as ordinary text, never
+          into the model itself.
+        </p>
+        <p>
+          That last distinction separates a &ldquo;memory&rdquo; feature from
+          memory in the ordinary sense. The window the facts are pasted into is
+          working memory for the current conversation, marked in the same
+          documentation as separate from the training corpus the weights
+          hold.<sup class="nb-cite"><a href="#s7">7</a></sup> A saved fact lives
+          in a file in the application&rsquo;s own storage and reaches the model
+          the same way your typing does, as text in the input, while the
+          <a href="../the-mechanics/knowledge-cutoff.html">weights stay
+          frozen</a>. The model no more learns your name from a memory feature
+          than it learns it from you saying it: in both cases the fact arrives as
+          input and is gone the moment the reply is done.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In the vendor&rsquo;s own words</span>
+          <blockquote>
+            &ldquo;ASSUME INTERRUPTION: Your context window might be reset at any
+            moment, so you risk losing any progress that is not recorded in your
+            memory directory.&rdquo;<sup class="nb-cite"
+              ><a href="#s9">9</a></sup
+            >
+            <span class="nb-note-who"
+              >Anthropic, the instruction its memory tool injects into the model
+              itself</span
+            >
+          </blockquote>
+        </div>
+        <p>
+          The instruction tells the model plainly that it has no persistent
+          memory, and that anything not saved to external storage is lost. What a
+          product saves, and when it reads it back, is the product-specific part.
+          That it arrives as input, not as anything the model learned, is the
+          settled part.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The thing that looks like memory is the application, not the model.
+          Each turn, the model is handed the whole conversation as fresh input
+          and reads it as though for the first time, because a single call keeps
+          nothing from the one before it. Hold onto that and the familiar
+          behaviors stop being mysterious. A new chat is blank because there is
+          no transcript to resend. A long chat loses its start because the
+          transcript outgrew the window and the application dropped or summarized
+          the oldest turns. A product recognizes you across sessions because it
+          saved some facts in a file and pasted them back into the input, never
+          because the model kept them. The memory that makes a chatbot feel like
+          it knows you is real, but it sits in the application around the model,
+          in a resent transcript and a saved file, and not inside the model
+          itself.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://developers.openai.com/api/docs/guides/conversation-state"
+              >OpenAI, Conversation state</a
+            >: the developer-side view of statelessness, resending the prior
+            messages yourself or handing the job to a server-side helper.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool"
+              >Anthropic, Memory tool</a
+            >: a memory feature specified in full, including the instruction the
+            model is given about its own lack of persistence.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://platform.claude.com/docs/en/build-with-claude/working-with-messages"
+              data-nb-locator="Multiple conversational turns; input_tokens 12 and 30"
+              >Anthropic · Messages API: working with messages</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://developers.openai.com/api/docs/guides/conversation-state"
+              data-nb-locator="Manually manage conversation state"
+              >OpenAI · Conversation state</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://developers.openai.com/api/reference/chat-completions/overview"
+              data-nb-locator="Overview"
+              >OpenAI · Chat Completions API reference</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.03762"
+              data-nb-locator="Abstract"
+              >Vaswani et al. · Attention Is All You Need</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2309.06180"
+              data-nb-locator="Abstract; memory-management mechanism"
+              >Kwon et al. · Efficient Memory Management for LLM Serving with
+              PagedAttention</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/docs/transformers/en/kv_cache"
+              >Hugging Face · KV cache (Transformers documentation)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://platform.claude.com/docs/en/build-with-claude/context-windows"
+              data-nb-locator="How the context window works; Context window overflow behavior"
+              >Anthropic · Context windows</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://claude.com/blog/context-management"
+              data-nb-locator="Context editing"
+              >Anthropic · Context management: context editing and the memory
+              tool</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool"
+              data-nb-locator="How it works; Prompting guidance"
+              >Anthropic · Memory tool</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
