@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      GPT-2 set records at predicting text and barely beat random at
+      summarizing · The Evidence
+    </title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "gpt-2",
+        "template": "lesson",
+        "title": "GPT-2 set records at predicting text and barely beat random at summarizing",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-11",
+        "tags": ["gpt-2", "language-models", "staged-release"],
+        "sources": 7,
+        "words": 2159,
+        "reading_minutes": 9,
+        "dek": "The report people cite for calling the model too dangerous to release never mentions danger, misuse, or release.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">
+          GPT-2 set records at predicting text and barely beat random at
+          summarizing
+        </h1>
+        <p class="nb-dekline">
+          The report people cite for calling the model too dangerous to release
+          never mentions danger, misuse, or release.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-11</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          If you have heard one thing about GPT-2, it is probably that OpenAI
+          thought it was too dangerous to release. The phrase has outlived the
+          model. It gets pulled out whenever a company holds an AI system back,
+          as the moment the field first decided some models were too risky to
+          publish. The document underneath that story is a technical report from
+          2019, and almost no one who repeats the phrase has read it. This
+          lesson reads it: what GPT-2 was, how it was built, the tests it passed
+          and the ones it failed, and where the danger story actually came from.
+          Set the measured result and the famous story next to each other, and
+          they turn out to be about two different things.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/scaling-laws-kaplan.html"
+              >OpenAI's 2020 scaling paper got the curve right and the budget
+              wrong</a
+            >: how a model's error falls predictably as it grows, the logic
+            behind building language models bigger.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/gpt-3-few-shot.html"
+              >Few-shot GPT-3 beat fine-tuning on a handful of tasks and trailed
+              it on most</a
+            >: the successor that made the same one-model-many-tasks bet at far
+            larger scale.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One model, trained only to guess the next word</h2>
+        <p>
+          In February 2019, six researchers at OpenAI published a paper with a
+          plain title and a large claim: "Language Models are Unsupervised
+          Multitask Learners."<sup class="nb-cite"><a href="#s1">1</a></sup> The
+          authors were Alec Radford, Jeffrey Wu, Rewon Child, David Luan, Dario
+          Amodei, and Ilya Sutskever. They had trained a language model, a
+          program that reads text and predicts the next word, one word at a time,
+          from the words before it. Training it needs no labels and no human answer
+          key: the text is its own answer, because the next word is always
+          sitting right there in the data. Their claim was that a single model
+          trained only to do this, on enough text, could then handle tasks it
+          was never built for. It could answer a question, summarize an article,
+          or translate a sentence, all with no further training. The paper calls
+          this the zero-shot setting: the model sees the task described in its
+          input and nothing else, no examples and no fine-tuning.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="corpus-and-models" id="corpus-and-models">
+        <h2>Forty gigabytes of text and a 1.5-billion-parameter model</h2>
+        <p>
+          To train it they needed text, and a great deal of it. Rather than
+          scrape the open web at random, they borrowed a filter already sitting
+          on Reddit: they took every outbound link posted to the site that had
+          collected at least three karma, Reddit's name for the net upvotes a
+          post receives.<sup class="nb-cite"><a href="#s1">1</a></sup> A link
+          with three net upvotes is a weak but real sign that a person found the
+          page worth passing on. That gave them about 45 million links, which
+          they downloaded and cleaned into a corpus they called WebText. It came
+          to slightly over 8 million documents and 40 gigabytes of text, with
+          every Wikipedia page removed and nothing posted after December
+          2017.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          They trained four models on it, identical in design and differing only
+          in size: 117 million, 345 million, 762 million, and 1,542 million
+          parameters, the adjustable numbers a model tunes during training.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The largest, at roughly 1.5 billion parameters, is the one that became
+          known as GPT-2. Even it, the paper reports, "still underfits WebText":
+          it had not fully absorbed the patterns in its own training data, so a
+          larger model on the same text would still have improved.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="language-modeling" id="language-modeling">
+        <h2>Strong at predicting held-out text</h2>
+        <p>
+          The most natural way to test a language model is the task it was
+          trained on. Show it text it has never seen and measure how well it
+          predicts what comes next. One common measure is perplexity, which
+          captures how surprised the model is by each word that actually
+          appears: a lower number means the model found the real text more
+          predictable, and so had modeled it better.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          On this kind of test GPT-2 did very well. Across eight standard
+          datasets, run with no fine-tuning, it set a new best score on
+          seven.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Zero-shot scores for GPT-2 (1.5B) against the previous best published
+            result, on five of the eight language-modeling datasets.<sup
+              class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Dataset</th>
+              <th class="txt">Metric</th>
+              <th>GPT-2</th>
+              <th>Prior best</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">LAMBADA</td>
+              <td class="txt">accuracy, higher is better</td>
+              <td>63.24</td>
+              <td>59.23</td>
+            </tr>
+            <tr>
+              <td class="txt">Children's Book Test, common nouns</td>
+              <td class="txt">accuracy, higher is better</td>
+              <td>93.30</td>
+              <td>85.70</td>
+            </tr>
+            <tr>
+              <td class="txt">WikiText-103</td>
+              <td class="txt">perplexity, lower is better</td>
+              <td>17.48</td>
+              <td>18.30</td>
+            </tr>
+            <tr>
+              <td class="txt">enwik8</td>
+              <td class="txt">bits per byte, lower is better</td>
+              <td>0.93</td>
+              <td>0.99</td>
+            </tr>
+            <tr>
+              <td class="txt">One Billion Word</td>
+              <td class="txt">perplexity, lower is better</td>
+              <td>42.16</td>
+              <td>21.80</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The one dataset it lost on, the One Billion Word Benchmark, is the
+          exception that shows what it was doing. That benchmark shuffles its
+          sentences into random order, which destroys the longer context, the
+          rest of the paragraph and the page, that GPT-2 leaned on to make its
+          predictions.<sup class="nb-cite"><a href="#s1">1</a></sup> On the seven
+          datasets that kept their context intact, a model trained only to guess
+          the next word had, without being told to, learned the statistics of
+          English well enough to beat every previously published result.
+        </p>
+      </section>
+
+      <section data-nb-section="downstream-tasks" id="downstream-tasks">
+        <h2>Weak at summarizing, translating, and answering questions</h2>
+        <p>
+          A model that predicts text well is not obviously good for anything a
+          person wants done. So the paper also pointed GPT-2 at ordinary tasks,
+          summarize this article, translate this sentence, answer this question,
+          still with no training for any of them, just the job set up in the
+          input. Here the results were weak, and the paper is candid about it.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">5 BLEU</span
+            ><span class="nb-stat-l">English to French translation</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">4.1%</span
+            ><span class="nb-stat-l">question answering, exact match</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">21.40</span
+            ><span class="nb-stat-l">summarization ROUGE-average</span>
+          </div>
+        </div>
+        <p>
+          To summarize, GPT-2 was given an article followed by the letters
+          TL;DR, the internet's shorthand for a short recap. Its summaries scored
+          21.40 on the ROUGE-average metric. That is just over the 20.98 you get
+          by pulling three sentences from the article at random, and well under
+          the 31.55 from taking the article's first three sentences.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          On English-to-French translation it reached 5 BLEU, a standard
+          translation score, where the strongest systems of the day, themselves
+          trained without any translation pairs, reached 33.5.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Asked open questions from the Natural Questions dataset, it answered
+          4.1 percent correctly, against the 30 to 50 percent that systems built
+          for the job managed. The smallest of the four models could not even
+          beat the trick of always guessing the single most common answer.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Two tasks came out better, and they are worth naming so the weakness
+          is not overstated. On the CoQA reading-comprehension test, where the
+          answer sits somewhere in a passage the model is handed, GPT-2 reached
+          55 F1, matching or beating three of four baseline systems that had
+          each trained on 127,000 example questions it never saw.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          On the Winograd Schema Challenge, a set of sentences written to turn on
+          a single common-sense ambiguity, it scored 70.7 percent.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The picture is uneven: strong where the task was close to plain
+          language modeling, poor where it demanded a produced answer. The
+          paper's discussion says as much in its own words, that on many
+          practical tasks GPT-2 is "still no better than random," and that even
+          on the tasks it did run, language models "only begin to outperform
+          trivial baselines when they have sufficient capacity."<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In the paper's words</span>
+          <blockquote>
+            "While suggestive as a research result, in terms of practical
+            applications, the zero-shot performance of GPT-2 is still far from
+            use-able."<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who"
+              >Language Models are Unsupervised Multitask Learners,
+              discussion</span
+            >
+          </blockquote>
+        </div>
+      </section>
+
+      <section data-nb-section="staged-release" id="staged-release">
+        <h2>What the staged release actually claimed</h2>
+        <p>
+          None of what made the paper famous is in the paper. It has no section
+          on danger, no mention of misuse, and no discussion of whether to
+          release the model at all.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          That argument happened somewhere else. On the day the paper appeared,
+          OpenAI published a blog post announcing GPT-2 and released the smallest
+          of the four models while holding the largest back.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">OpenAI's stated reason</span>
+          <blockquote>
+            "Due to our concerns about malicious applications of the technology,
+            we are not releasing the trained model."<sup class="nb-cite"
+              ><a href="#s2">2</a></sup
+            >
+            <span class="nb-note-who"
+              >OpenAI, February 2019, quoted in Wikipedia</span
+            >
+          </blockquote>
+        </div>
+        <p>
+          The rest of the models came out in stages over the following nine
+          months: the 355-million model in May, the 774-million model in August
+          alongside OpenAI's first report on the decision, and the full
+          1.5-billion model that November.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The release documents count the four networks as 124, 355, 774, and
+          1,558 million parameters, a slightly different bookkeeping convention
+          for the same four models the paper describes.
+        </p>
+        <p>
+          OpenAI never actually wrote that the model was "too dangerous to
+          release." Those were not its words.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          But the phrasing traveled fast. Both Slate and the Guardian ran "too
+          dangerous" in their headlines, and the Guardian's put it in OpenAI's
+          mouth outright: "may be too dangerous to release, say creators."<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          ><sup class="nb-cite"><a href="#s2">2</a></sup> The staged release and
+          the talk of malicious applications invited that reading, and the press
+          supplied the exact words.
+        </p>
+        <p>
+          Not everyone agreed there was much to withhold. Robert Frederking, a
+          researcher at Carnegie Mellon, said it was not clear OpenAI was using
+          "any, like, stunningly new technique."<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Anima Anandkumar, then at Caltech and Nvidia, called the stance
+          "malicious BS" and said there was no evidence GPT-2 could do the things
+          the warnings implied.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Others charged OpenAI with doing "the opposite of open," closing off
+          research the lab was named for sharing, while its policy director Jack
+          Clark described the decision as "a very tough balancing act."<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          The worry was never about the benchmark scores. Weak summaries and
+          4-percent question answering are not what anyone feared. What drew the
+          concern was the fluent text itself. GPT-2's headline sample was a
+          coherent invented news story about talking unicorns found in the
+          Andes, chosen by the authors to show the model off.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          It showed that the model could produce plausible, on-topic prose at
+          length, and the fear was that such text could be mass-produced as fake
+          news or spam. Fluency and task accuracy are different measurements, and
+          GPT-2 had far more of the first than of the second.
+        </p>
+        <p>
+          Then OpenAI watched what happened. Its August 2019 report, six months
+          in, said it had found "minimal evidence of misuse" and released the
+          774-million model partly on that basis.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Its November report, published with the full model, said its
+          monitoring "did not find evidence of GPT-2 direct misuse in
+          publicly-accessible forums." It found "no clear malicious code sharing
+          or large-scale misuse," and saw "only a small number of cases of
+          explicit public plans for misuse."<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The finding was bounded rather than a clean bill: OpenAI also saw
+          discussion of misuse, noted that several governments had experimented
+          with the model, and said nation-state actors were harder to
+          monitor.<sup class="nb-cite"><a href="#s3">3</a></sup> It added that
+          synthetic text was fairly easy to catch, since its own detector flagged
+          output from the largest model about 95 percent of the time.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <p>
+          By 2026 the episode is usually retold as a warning whose feared harms
+          never arrived, and sometimes as promotion. The developer Simon Willison
+          put the cynical reading plainly: "Saying our model is too dangerous to
+          release is a great way to build buzz."<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          GPT-2's measured achievement was real and narrow. One model, trained
+          only to predict the next word on 40 gigabytes of web text, learned
+          enough about language to set records at predicting more of it. It
+          stayed weak at summarizing, translating, and answering questions, which
+          its own authors called "far from use-able" for practical work.
+          The danger story was a separate decision about a different quality of
+          the model: its fluency, the ability to spin plausible text at length,
+          which the benchmark tests never scored. OpenAI staged the release
+          around that worry and then, by its own monitoring, found minimal
+          misuse. So when someone tells you GPT-2 was too dangerous to release,
+          the document they are pointing at is a stack of benchmark tables that
+          never says so, and the danger it named was a projection about fluent
+          text that its maker's own follow-up did not bear out.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://karpathy.github.io/2015/05/21/rnn-effectiveness/"
+              >The Unreasonable Effectiveness of Recurrent Neural Networks</a
+            >: why a model trained only to predict the next character can already
+            produce startlingly fluent text.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://jalammar.github.io/illustrated-gpt2/"
+              >The Illustrated GPT-2</a
+            >: a visual walkthrough of how GPT-2 generates text, one token at a
+            time.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf"
+              >OpenAI · Language Models are Unsupervised Multitask Learners
+              (Radford, Wu, Child, Luan, Amodei, Sutskever, February 2019)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://en.wikipedia.org/wiki/GPT-2"
+              >Wikipedia · GPT-2</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1908.09203"
+              >OpenAI · Release Strategies and the Social Impacts of Language
+              Models (Solaiman et al., November 2019)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://slate.com/technology/2019/02/openai-gpt2-text-generating-algorithm-ai-dangerous.html"
+              >Slate · When Is Technology Too Dangerous to Release to the Public?
+              (Aaron Mak, February 2019)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://techcrunch.com/2019/02/17/openai-text-generator-dangerous/"
+              >TechCrunch · Zack Whittaker on OpenAI's staged GPT-2 release
+              (February 2019)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/GPT_2_August_Report.pdf"
+              >OpenAI · Release Strategies and the Social Impacts of Language
+              Models, August 2019 report</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://the-decoder.com/from-gpt-2-to-claude-mythos-the-return-of-ai-models-deemed-too-dangerous-to-release/"
+              >The Decoder · The return of AI models deemed "too dangerous to
+              release" (Maximilian Schreiner, April 2026)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
