@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>An image generator turns a field of static into your picture by removing the noise a little at a time · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "image-generation",
+        "template": "lesson",
+        "title": "An image generator turns a field of static into your picture by removing the noise a little at a time",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-12",
+        "tags": ["diffusion", "image-generation", "denoising"],
+        "sources": 8,
+        "words": 2159,
+        "reading_minutes": 9,
+        "dek": "The network learned exactly one skill, predicting the noise added to an image, and running it in reverse over dozens of passes is all the generator ever does.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">An image generator turns a field of static into your picture by removing the noise a little at a time</h1>
+        <p class="nb-dekline">
+          The network learned exactly one skill, predicting the noise added to an image, and running it in reverse over dozens of passes is all the generator ever does.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-12</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Type a sentence into an image generator and it hands back a photograph
+          of something that never existed, in whatever style you asked for. The
+          tools are everywhere now, and most people who use them picture a
+          machine painting to order, or hunting through a vast library for the
+          closest match. Neither is what happens. By the end you will know what
+          the system was trained to do and why it starts every picture from a
+          screen of random static. You will also see how your words bend that
+          static toward the thing you named, and why the same design that
+          renders a convincing face garbles the text on a sign behind it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/reading-images.html">A chatbot slices your photo into a few hundred squares and turns each into a word</a>: how a model reads an image it is handed, the reverse of the problem here.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/gans.html">The GAN paper credited with deepfakes generated blurry thumbnails</a>: the earlier way of generating images, a generator and a critic locked in competition, for contrast with the denoising approach.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Under the picture is random static</h2>
+        <p>
+          The finished picture is the wrong place to start. Underneath it is
+          something that never appears on screen: a field of random static, the
+          visual version of an untuned television, that the system begins from.
+          A text-to-image generator does not open a blank canvas and lay down
+          strokes, and it does not rummage through a stored collection for the
+          closest match. It starts from an image that is pure noise and takes a
+          little of that noise away, over and over, until a coherent picture is
+          what remains.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          That one sentence hides every interesting part. What is the noise,
+          exactly, and what does it mean to take it away? Why would removing
+          noise from static ever leave a face rather than more static? And how
+          does a string of words settle which face? Each answer rests on the one
+          before it, so they come in order, beginning with the only thing the
+          network was ever trained to do.
+        </p>
+      </section>
+
+      <section data-nb-section="training" id="training">
+        <h2>The network is trained to predict the noise</h2>
+        <p>
+          The reverse process only makes sense once the training does, so the
+          training comes first. A diffusion model is built around a single
+          network, and that network learns exactly one task.
+        </p>
+        <p>
+          Start with a real photograph. Add a small, measured amount of random
+          noise, a fine grain scattered evenly across it, so the image is
+          slightly corrupted but still plainly itself. Add another small amount,
+          and another. Repeat this enough times and the photograph dissolves
+          into pure static, every trace of the original gone. This gradual slide
+          from a clean image to noise is the diffusion the method takes its name
+          from. In the paper that established the approach, it runs over a
+          thousand small steps, each adding a sliver more noise than the
+          last.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The network is trained on that slide, run backward. Take one of those
+          partly corrupted images, together with the record of how much noise it
+          holds, and ask the network for a single thing: the noise that was
+          added.<sup class="nb-cite"><a href="#s1">1</a></sup> Because the
+          original photograph is known, the exact noise is known too, so each
+          guess can be scored against the truth and the network nudged until its
+          guesses land close. Run this across an enormous set of images, each
+          paired with a caption, at every level of corruption from a faint haze
+          to near-total static, and the network gets good at one narrow
+          skill.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The
+          network is never shown a clean image to copy, and it is never asked to
+          compose or to draw. It only ever looks at a noisy image and estimates
+          the noise in it. That single ability is the ground everything the
+          system does later is built on.
+        </p>
+      </section>
+
+      <section data-nb-section="denoising" id="denoising">
+        <h2>Generation runs the denoiser backward from static</h2>
+        <p>
+          Generation is that trained skill, run in the only direction it has.
+          Begin with a fresh field of pure random static, noise and nothing
+          else. Ask the network to estimate the noise in it, and subtract a
+          small fraction of that estimate. What is left is an image very
+          slightly less noisy than the static it came from. Feed that back in,
+          ask again, subtract again. Each pass removes a little more noise, and
+          after enough passes a clear image sits where the static
+          was.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          There is no canvas holding a drawing in progress, and no list of
+          objects being placed. At every moment the thing in hand is just an
+          image, noisy at first and cleaner each pass, and the picture is
+          whatever remains once the noise is
+          gone.<sup class="nb-cite"><a href="#s1">1</a></sup> Coarse shapes
+          settle first and fine detail arrives late, because the early passes
+          have so much noise to cut through that only large structure
+          survives.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          How many passes? Two different numbers get quoted, and they answer
+          different questions. The original method used a thousand steps, one for
+          each level of noise it was trained
+          on.<sup class="nb-cite"><a href="#s1">1</a></sup> A thousand runs of a
+          large network per image is slow, so deployed generators use faster
+          sampling methods, worked out after the original, that reach a
+          comparable picture in far fewer steps. A common default is around
+          fifty.<sup class="nb-cite"><a href="#s2">2</a></sup> The thousand is
+          the training-time design. The fifty is what a product actually runs.
+          They are not one number measured two ways.
+        </p>
+        <p>
+          One more shortcut explains a lot about how the fast systems are built.
+          Running a large network over every pixel of a high-resolution image,
+          fifty times over, is expensive. So one influential design does the
+          denoising not on the pixels but on a compressed code of the image, a
+          smaller grid of numbers that a second network can expand back into
+          full pixels in a single pass at the end. That compressed grid is
+          called a latent space, and denoising there instead of in pixels is
+          what lets Stable Diffusion run on an ordinary graphics
+          card.<sup class="nb-cite"><a href="#s3">3</a></sup> Not every system
+          works this way. Google's Imagen and OpenAI's DALL-E 2 denoise in
+          actual pixels, generating a small image and then running further
+          diffusion steps to enlarge it in
+          stages.<sup class="nb-cite"><a href="#s4">4</a></sup><sup class="nb-cite"><a href="#s5">5</a></sup>
+          The subtract-the-noise loop is identical in all of them. Only the
+          space it runs in differs.
+        </p>
+      </section>
+
+      <section data-nb-section="steering" id="steering">
+        <h2>The prompt steers each denoising step</h2>
+        <p>
+          Nothing so far involves the words. The loop as described would wander
+          from static to some plausible image with no regard for what was asked.
+          The prompt has to enter, and it does so through a second network whose
+          only job is to turn text into numbers.
+        </p>
+        <p>
+          A separate model, a text encoder, reads the prompt and turns it into a
+          block of numbers that stand for its meaning. Which encoder a system
+          uses varies. The released version of
+          Stable Diffusion uses CLIP,<sup class="nb-cite"><a href="#s2">2</a></sup> a model trained to line up images and
+          their captions in a shared space of meaning, on four hundred million
+          image-and-text pairs pulled from the
+          web.<sup class="nb-cite"><a href="#s6">6</a></sup> Imagen uses a large
+          language model, T5, frozen and trained on text alone, and its builders
+          found that enlarging that text model improved the pictures more than
+          enlarging the image network
+          did.<sup class="nb-cite"><a href="#s4">4</a></sup> The original
+          latent-diffusion work used yet another text
+          encoder.<sup class="nb-cite"><a href="#s3">3</a></sup> The shape is
+          always the same. A separate model encodes the prompt, and the denoiser
+          reads that encoding.
+        </p>
+        <p>
+          The encoding is fed into the denoiser on every pass. Each time the
+          network estimates the noise, it does so while reading the prompt's
+          numbers, so the noise it chooses to remove is the noise standing
+          between the current image and one that matches the
+          words.<sup class="nb-cite"><a href="#s3">3</a></sup> This steering is
+          not a final filter. It rides every one of the fifty passes, tilting
+          each step toward the described picture.
+        </p>
+        <p>
+          How hard the prompt is enforced is itself a dial. Trained the right
+          way, one network can run two ways on the same step: once reading the
+          prompt and once ignoring it. The difference between those two
+          estimates points from a generic image toward one that fits the words,
+          and the system can walk further along that direction than the prompt
+          alone would carry it, pushing the picture harder toward the
+          text.<sup class="nb-cite"><a href="#s7">7</a></sup> Turn the dial up
+          and images cleave more tightly to the prompt but grow more alike.
+          Turn it down and they vary more freely but
+          drift from what was
+          asked.<sup class="nb-cite"><a href="#s7">7</a></sup> Users usually meet
+          this as a guidance slider. One caution on the numbers: the research
+          paper measures the strength on a scale where zero means no steering,
+          while a common product slider is offset by one and defaults to around
+          seven and a
+          half.<sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s8">8</a></sup>
+          The two scales describe the same control, and their numbers are not
+          interchangeable.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Three released systems remove noise in different places and read the
+            prompt through different encoders; the noise-removal loop itself is
+            the same in
+            each.<sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s4">4</a></sup><sup class="nb-cite"><a href="#s5">5</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>System</th>
+              <th class="txt">Where it removes noise</th>
+              <th class="txt">Prompt encoder</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Stable Diffusion</span></td>
+              <td class="txt">a compressed latent space, decoded to pixels at the end</td>
+              <td class="txt">CLIP, frozen</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Imagen</span></td>
+              <td class="txt">pixels, in a 64 to 256 to 1024 resolution cascade</td>
+              <td class="txt">T5, a text-only language model, frozen</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">DALL-E 2</span></td>
+              <td class="txt">pixels, then enlarged in stages</td>
+              <td class="txt">CLIP image embeddings</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section data-nb-section="open-failures" id="open-failures">
+        <h2>What the noise-predictor never learned</h2>
+        <p>
+          Return to the one skill the network has. It estimates noise. It never
+          learned letters, or the count of fingers on a hand, or the rule that a
+          red cube on a blue cube is a different scene from a blue cube on a red
+          one. Where those things come out right, they come out right because
+          predicting noise well, across enough captioned images, happens to
+          reproduce them. Where they break, they break for the same reason:
+          nothing in the system holds them directly.
+        </p>
+        <p>
+          Two failures are familiar to anyone who has pushed these tools. Text
+          inside a generated image often comes out as convincing gibberish,
+          letter shapes in the right style that spell nothing. And attributes
+          slip between objects: ask for a red ball beside a blue box and the
+          colors may trade
+          places.<sup class="nb-cite"><a href="#s5">5</a></sup> These are not
+          rare edge cases. They are steady enough that the people who build the
+          systems record them as known
+          limitations.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          This is where the honest account stops. The builders can name the
+          failures precisely, but why they happen is not settled. The team
+          behind DALL-E 2 proposed an explanation, tracing both the swapped
+          attributes and the garbled text to properties of the CLIP encoding the
+          model reads from, and they were careful to present it as a hypothesis
+          rather than a demonstrated
+          cause.<sup class="nb-cite"><a href="#s5">5</a></sup> The denoising
+          loop, the noise-prediction training, and the text conditioning are
+          settled engineering, understood well enough to rebuild from scratch.
+          The reasons for these particular failures are not. That line, between
+          the parts that are worked out and the parts that are still guesses even
+          for the builders, is the one to keep in view.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The machine was never taught to draw. It was taught one narrow skill,
+          to look at an image with a known amount of noise stirred in and
+          estimate that noise. Run the skill in reverse, starting from pure
+          static and lifting a little noise off at a time, and a picture is what
+          is left once the noise is gone. Your prompt, turned into numbers by a
+          separate language model, leans on every one of those passes and bends
+          each toward the words. The parts that still fail, the misspelled sign
+          and the sixth finger, fail because nothing in the system ever learned
+          letters or hands as such. It learned to predict noise. Everything it
+          does well and everything it does badly comes out of that single skill.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://huggingface.co/blog/stable_diffusion">Stable Diffusion with Diffusers</a> (Hugging Face): a step-by-step walk through the deployed pipeline this lesson describes, with the real defaults for steps and guidance.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2006.11239">Denoising Diffusion Probabilistic Models</a> (Ho, Jain, and Abbeel): the paper that set out the train-to-predict-noise procedure and the step-by-step reverse process.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Sec. 2–4; Eq. 14; Algorithm 2"
+              href="https://arxiv.org/abs/2006.11239"
+              >arXiv · Ho, Jain &amp; Abbeel, Denoising Diffusion Probabilistic Models (2020)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/blog/stable_diffusion"
+              >Hugging Face · Stable Diffusion with Diffusers</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Sec. 3.1–3.3; Sec. 4.3.1"
+              href="https://arxiv.org/abs/2112.10752"
+              >arXiv · Rombach et al., High-Resolution Image Synthesis with Latent Diffusion Models (2022)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Sec. 2"
+              href="https://arxiv.org/abs/2205.11487"
+              >arXiv · Saharia et al., Photorealistic Text-to-Image Diffusion Models with Deep Language Understanding (Imagen, 2022)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Sec. 7, Limitations and Risks"
+              href="https://arxiv.org/abs/2204.06125"
+              >arXiv · Ramesh et al., Hierarchical Text-Conditional Image Generation with CLIP Latents (DALL-E 2, 2022)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Sec. 2"
+              href="https://arxiv.org/abs/2103.00020"
+              >arXiv · Radford et al., Learning Transferable Visual Models From Natural Language Supervision (CLIP, 2021)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Sec. 3.2; Eq. 6; Sec. 4.1"
+              href="https://arxiv.org/abs/2207.12598"
+              >arXiv · Ho &amp; Salimans, Classifier-Free Diffusion Guidance (2022)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://getimg.ai/guides/interactive-guide-to-stable-diffusion-guidance-scale-parameter"
+              >getimg.ai · Interactive Guide to the Guidance Scale Parameter</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
