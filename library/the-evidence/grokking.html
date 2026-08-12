@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A small network memorized modular arithmetic, then generalized a million steps later · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "grokking",
+        "template": "lesson",
+        "title": "A small network memorized modular arithmetic, then generalized a million steps later",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-12",
+        "tags": ["grokking", "generalization", "weight-decay"],
+        "sources": 6,
+        "words": 1904,
+        "reading_minutes": 8,
+        "dek": "OpenAI named the effect grokking in 2022, on a 400,000-parameter network learning arithmetic tables over 97 symbols.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">A small network memorized modular arithmetic, then generalized a million steps later</h1>
+        <p class="nb-dekline">
+          OpenAI named the effect grokking in 2022, on a 400,000-parameter network learning arithmetic tables over 97 symbols.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-12</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Grokking is the name for a strange training curve, and it has become a
+          piece of shorthand in arguments about why large models get better. The
+          claim runs like this: somewhere inside a big network, more training can
+          flip a switch, and an ability that was not there before appears all at
+          once. The word comes from one 2022 experiment at OpenAI, run on a
+          network small enough to describe in a paragraph. This piece walks
+          through what that experiment actually measured, what later work found
+          was happening beneath the curve, and how much of the popular claim the
+          evidence will bear. By the end you will know what grokking is, how big
+          the result under it really is, and where the everyday use of the word
+          runs past what anyone has shown.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/memorization.html">A verbatim quote comes
+            out of the weights, not a lookup</a>: how a network presses specific
+            data into its weights, which is the memorizing half of what grokking
+            trades away.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/emergent-abilities.html">The sudden jump in
+            AI benchmarks was mostly in the scoring</a>: why an ability that
+            seems to appear at a scale threshold can be an artifact of how it is
+            measured.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-evidence/emergence-loss-perspective.html">The
+            emergence jump returns when you plot AI skills against loss</a>: the
+            same question examined against training loss rather than model size.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Memorize first, generalize a million steps later</h2>
+        <p>
+          In 2022, Alethea Power, Yuri Burda, Harri Edwards, Igor Babuschkin,
+          and Vedant Misra, all at OpenAI, trained a small transformer to fill in
+          arithmetic tables and reported a training curve that has been cited
+          ever since.<sup class="nb-cite"><a href="#s1">1</a></sup> The task was
+          deliberately plain. Take 97 symbols, treat them as the numbers 0
+          through 96, and write out a binary operation as a table with one entry
+          for every pair of inputs. Their headline case was division modulo 97:
+          divide one number by another in arithmetic that wraps around at 97.
+          They showed the network half of the 9,409 entries and kept the other
+          half hidden, to see whether it had learned the rule or only the
+          answers.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Within roughly a thousand optimization steps, the network answered the
+          training half almost perfectly. On the hidden half it sat near chance,
+          and it stayed there far longer than anyone would keep training a model
+          that looked finished. Only near a million steps did its accuracy on the
+          unseen problems climb to near-perfect.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Fitting what it was shown took about a thousandth of the training that
+          learning the rule did. The authors named that late rise grokking.
+        </p>
+      </section>
+
+      <section data-nb-section="honest-scale" id="honest-scale">
+        <h2>A 400,000-parameter network on ninety-seven symbols</h2>
+        <p>
+          How big was the thing that grokked? The transformer had two layers, a
+          width of 128, four attention heads, and about 400,000 parameters
+          outside its embeddings.<sup class="nb-cite"><a href="#s1">1</a></sup> A
+          current frontier model has hundreds of billions. The entire problem was
+          97 symbols and the table of one operation over them. It was trained
+          with AdamW, an ordinary optimizer, with weight decay turned up. Shown
+          half the table, the network needed on the order of a thousand times
+          more steps to generalize than to memorize.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          This is the scale to hold on to, because the word grokking now travels
+          attached to systems many millions of times larger.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">97</span
+            ><span class="nb-stat-l">symbols in the operation table</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">~400k</span
+            ><span class="nb-stat-l">network parameters</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">50%</span
+            ><span class="nb-stat-l">of the table shown in training</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">~1,000&times;</span
+            ><span class="nb-stat-l">steps to generalize vs. memorize</span>
+          </div>
+        </div>
+        <p>
+          Two further results from the same paper matter for what came later.
+          The effect depended sharply on how much of the table the network saw.
+          Around a quarter to a third of the table, cutting the training data by
+          a single percentage point raised the median time to generalize by 40 to
+          50 percent.<sup class="nb-cite"><a href="#s1">1</a></sup> Less to learn
+          from did not merely slow the network a little. It pushed the moment of
+          generalization sharply further out. The authors also compared several
+          ways of training and found one that helped far more than the rest.
+          Weight decay, a standard penalty that pushes a network's weights toward
+          smaller values, was the most effective. It more than halved the number
+          of examples the network needed to generalize.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="under-the-curve" id="under-the-curve">
+        <h2>What forms while the test curve stays flat</h2>
+        <p>
+          The curve looks like a switch flipping. The most important thing later
+          work established is that, underneath, nothing flips. In 2023 Neel
+          Nanda, Lawrence Chan, Tom Lieberum, Jess Smith, and Jacob Steinhardt
+          took the simplest grokking case, addition modulo 113, and worked out
+          exactly what the trained network was computing.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            The network does not store an addition table. It places each number
+            at an angle around a circle, using a few fixed rotation speeds, and
+            adds two numbers by turning through both angles at once. It reads the
+            answer off by seeing which output the combined rotation points to.
+            Remove those few frequencies and the answer collapses, which is how
+            the researchers knew this was the whole method.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </p>
+        </div>
+        <p>
+          Because they knew the algorithm, Nanda and colleagues could measure how
+          much of it existed at each moment of training, without waiting for the
+          test score to move. They built two readings from the network's internal
+          frequencies: one for how complete the generalizing circuit is, another
+          for how much the network still leans on rote memorized answers.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Tracked that way, training falls into three stretches.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The three phases Nanda and colleagues read from the network's own
+            progress measures, training addition modulo 113; epoch boundaries are
+            approximate.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Phase</th>
+              <th>Epochs</th>
+              <th class="txt">Inside the network</th>
+              <th class="txt">Test loss</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Memorization</span></td>
+              <td>0&ndash;1.4k</td>
+              <td class="txt">The training pairs are fit by rote; no general circuit yet.</td>
+              <td class="txt">High, flat.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Circuit formation</span></td>
+              <td>1.4k&ndash;9.4k</td>
+              <td class="txt">The generalizing circuit forms and strengthens.</td>
+              <td class="txt">High, flat.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Cleanup</span></td>
+              <td>9.4k&ndash;14k</td>
+              <td class="txt">The memorized components are shed.</td>
+              <td class="txt">Falls to near zero.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The circuit starts forming and strengthening thousands of epochs before
+          the test loss drops. The final fall, the part a person watching the
+          curve would call the moment of grokking, is the network discarding the
+          memorized answers it no longer needs. Nanda and colleagues describe
+          grokking as "the gradual amplification of structured mechanisms encoded
+          in the weights, followed by the later removal of memorizing
+          components."<sup class="nb-cite"><a href="#s2">2</a></sup> The jump is
+          sudden only in the one number that was being watched.
+        </p>
+        <p>
+          This is also where the account of weight decay gets sharper. Nanda and
+          colleagues find that weight decay drives that final cleanup, and in
+          their setup they call it necessary for grokking to happen at all. The
+          original paper had put it more mildly, ranking weight decay the most
+          effective of several training choices it compared, the one that more
+          than halved the data the network needed.<sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s1">1</a></sup>
+          Read together, they agree on direction even where they differ on
+          strength: weight decay is the main force moving the network off the
+          memorized solution. Other work reached a similar picture from a
+          different angle. Ziming Liu and colleagues modeled grokking as a slow
+          reorganization of how the network represents the numbers internally. For
+          a transformer, they found, the grokking setting sits close to plain
+          memorization, which is part of why the payoff takes so long to
+          arrive.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="beyond-the-toy" id="beyond-the-toy">
+        <h2>Grokking leaves the toy setting</h2>
+        <p>
+          None of this has stopped the word from traveling. Grokking now gets
+          invoked whenever a large model seems to improve in a jump, as evidence
+          that networks hold abilities that more training will unlock. Two lines
+          of work say how much of that the research supports.
+        </p>
+        <p>
+          The first pulls the mystery out of the effect. Ziming Liu, Eric
+          Michaud, and Max Tegmark traced grokking to the size of the network's
+          weights, and showed they could turn it on and off at will.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Tuning that one quantity, they induced grokking on images, language,
+          and molecules, well outside arithmetic, and switched it off on the
+          algorithmic tasks where it was first seen.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Weight decay is one of the controls on that quantity, which ties this
+          back to what both earlier papers found. On this account grokking is a
+          property of the training landscape a researcher can dial, not a
+          threshold a network crosses by getting big.
+        </p>
+        <p>
+          The second tests the scale question directly. In 2025 Ziyue Li, Chenrui
+          Fan, and Tianyi Zhou tracked a 7-billion-parameter model through
+          pretraining and reported delayed generalization at that scale.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          It is real, and it widens grokking well past toy networks. It is also
+          not the single switch of the shorthand. What they found was local and
+          staggered: different kinds of data, math or code or commonsense,
+          generalized at different times, the harder and later-memorized ones
+          lagging furthest, with no one moment when the whole model grokked.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          They had to detect it through internal measures rather than a test
+          score, because there was no single curve to watch jump. The finding
+          extends the phenomenon and cuts against the popular reading at the same
+          time: at scale, grokking looks less like a hidden switch and more like
+          many small, unsynchronized transitions.
+        </p>
+        <p>
+          The researchers who study grokking are careful about the leap. Writing
+          for Quanta on the state of the field, the science journalist reports
+          the effect has been studied in "only extremely small networks," and
+          quotes the mathematician Mikhail Belkin calling the modular-arithmetic
+          tasks where grokking lives "a drop in the ocean" next to what current
+          networks do.<sup class="nb-cite"><a href="#s6">6</a></sup> The effect is
+          genuine and reproducible, and it is still a long way from explaining why
+          frontier models improve.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Grokking is a real and repeatable effect with a small, specific home: a
+          tiny network, trained far past the point of fitting its data,
+          eventually learning the rule behind an arithmetic table. Three things
+          are worth carrying away. The delay is enormous and genuine, roughly a
+          thousand times more training to generalize than to memorize on the
+          headline task. The suddenness is mostly in the measurement. Beneath a
+          flat test curve the generalizing circuit is already forming, and weight
+          decay is what clears the memorized part away at the end. And the word
+          has outrun the result. Grokking has been switched on and off at will on
+          other kinds of data, and the one study that reports it in a
+          7-billion-parameter model finds something scattered and local rather
+          than a single hidden switch. A strange curve on a 97-symbol table is a
+          real thing to have explained. It is not yet a theory of how large models
+          learn.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://pair.withgoogle.com/explorables/grokking/">Do
+            Machine Learning Models Memorize or Generalize?</a>: a Google PAIR
+            explorable that animates the memorize-to-generalize transition.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2301.05217">Progress Measures for
+            Grokking via Mechanistic Interpretability</a>: the full
+            reverse-engineering of the modular-addition circuit, for readers who
+            want the algorithm in detail.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2201.02177"
+              >arXiv · Power, Burda, Edwards, Babuschkin &amp; Misra, "Grokking:
+              Generalization Beyond Overfitting on Small Algorithmic Datasets"
+              (2022)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2301.05217"
+              >arXiv · Nanda, Chan, Lieberum, Smith &amp; Steinhardt, "Progress
+              Measures for Grokking via Mechanistic Interpretability" (2023)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2205.10343"
+              >arXiv · Liu, Kitouni, Nolte, Michaud, Tegmark &amp; Williams,
+              "Towards Understanding Grokking: An Effective Theory of
+              Representation Learning" (2022)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2210.01117"
+              >arXiv · Liu, Michaud &amp; Tegmark, "Omnigrok: Grokking Beyond
+              Algorithmic Data" (2022)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2506.21551"
+              >arXiv · Li, Fan &amp; Zhou, "Grokking in LLM Pretraining? Monitor
+              Memorization-to-Generalization without Test" (2025)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.quantamagazine.org/how-do-machines-grok-data-20240412/"
+              >Quanta Magazine · Ananthaswamy, "How Do Machines 'Grok' Data?"
+              (2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
