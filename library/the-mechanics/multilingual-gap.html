@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPT-4 answers the same exam 23 points worse in Telugu than in English · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "multilingual-gap",
+        "template": "lesson",
+        "title": "GPT-4 answers the same exam 23 points worse in Telugu than in English",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-13",
+        "tags": ["multilingual", "tokenization", "training-data", "cost"],
+        "sources": 9,
+        "words": 1969,
+        "reading_minutes": 9,
+        "dek": "The model saw far less of almost every other language, and the tokenizer splits the same sentence into as many as 15 times more tokens in the hardest of them.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">GPT-4 answers the same exam 23 points worse in Telugu than in English</h1>
+        <p class="nb-dekline">
+          The model saw far less of almost every other language, and the
+          tokenizer splits the same sentence into as many as 15 times more
+          tokens in the hardest of them.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-13</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Ask a chatbot a hard question in English and it is sharp. Ask the same
+          question in Telugu, Amharic, or Burmese and the answers get vaguer and
+          more error-prone, and the bill for asking goes up. Hundreds of
+          millions of people meet these tools this way, in a second language or
+          a non-Latin script. Work back from that experience and it resolves
+          into two parts of the system: the text the model learned from, and the
+          tokenizer that cuts each message into the units it reads. Knowing how
+          those two parts behave, you can predict which languages come out worst,
+          and separate the two explanations you will hear for why.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../transformers-first-principles/tokenization.html">A transformer never reads the letters in strawberry</a>:
+            what a tokenizer is and how its table of pieces gets built.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="letter-counting.html">A model can recognize strawberry's letters and still miscount them</a>:
+            the same tokenizer, biting a task you would expect to be easy.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The same questions, 85% in English and 62% in Telugu</h2>
+        <p>
+          OpenAI took MMLU, a 57-subject multiple-choice exam, translated its
+          questions into dozens of languages with a commercial translation
+          service, and ran GPT-4 on each. In English the model scored 85.5%. The
+          same questions in Spanish cost it a point and a half; in Arabic, five
+          and a half; in Bengali, twelve. In Telugu the score fell to 62.0%.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          One model, one exam, the questions matched item for item, and 23 points
+          of accuracy went missing between the first language and the last.
+        </p>
+        <p>
+          The questions were
+          machine-translated, and OpenAI says as much. Some translations drop
+          information the model needs; others keep English proper nouns that make
+          an item easier. So part of the gap comes from the translation, and only
+          the rest from how the model handles the language.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          And the same chart reads as progress. GPT-4 in most of these languages
+          beats the English scores of the models just before it.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The gap is real, and it is shrinking, both at once.
+        </p>
+        <p>
+          The cost moves too. Billing runs per token, and the same request in
+          these languages is broken into far more tokens. So a user in Andhra
+          Pradesh can pay about five times what an English speaker in the United
+          States pays for equivalent use of the model.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          A worse answer and a larger bill, for the same message.
+        </p>
+        <p>
+          Two parts of the system decide how a language comes out. One is the
+          training corpus, the text the model learned from. The other is the
+          <a href="../transformers-first-principles/tokenization.html">tokenizer</a>,
+          which cuts every message into the small pieces the model actually
+          reads. Take them in that order. The corpus sets how much the model ever
+          saw of a language; the tokenizer sets how much of your context and your
+          money each sentence spends.
+        </p>
+      </section>
+
+      <section data-nb-section="training-share" id="training-share">
+        <h2>The model saw far less of almost every other language</h2>
+        <p>
+          How lopsided is the text? The clearest firsthand figure is old. When
+          OpenAI documented GPT-3 in 2020, it reported that the training data was
+          93% English by word count, with the remaining 7% spread across every
+          other language.<sup class="nb-cite"><a href="#s3">3</a></sup> No maker
+          of a current frontier model discloses the same breakdown, so this is
+          the best direct number available, and it describes a model two
+          generations back. The evaluations that follow lean on it as a proxy for
+          the closed models, because there is nothing newer to use.
+        </p>
+        <p>
+          Start one step upstream, at the raw web these corpora are filtered
+          from. Common Crawl, the large public web scrape most of them draw on,
+          records the language of every page it collects. In its mid-2026 crawl,
+          40.6% of pages are primarily English, and the next language, Russian,
+          is 6.8%.<sup class="nb-cite"><a href="#s4">4</a></sup> English leads the
+          open web by a wide margin, but 41% is a long way from 93%. That jump is
+          added by the model's builders. English-favoring quality filters keep
+          more English pages, and the English books, web text, and Wikipedia
+          mixed in on top push English above its share of the raw web.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          So the model's diet is even more English than the web it was drawn
+          from.
+        </p>
+        <p>
+          Less text in a language means a weaker model in it. The size of that
+          training share also tracks the size of the gap, in a way the tokenizer
+          alone cannot account for. In the MEGA evaluation, GPT-3.5 scored 72.1%
+          on a sentence-matching task in French and 67.0% on the same task in
+          Japanese. Its tokenizer splits the two languages at almost the same
+          rate, so that is not what moved. What differs is the data: GPT-3's
+          disclosed counts hold about 3.5 billion French tokens against 214
+          million Japanese.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="token-tax" id="token-tax">
+        <h2>The tokenizer bills every other language in more tokens</h2>
+        <p>
+          The tokenizer is a fixed table of text pieces, learned once, mostly
+          from English-heavy text. A sequence that turns up often in that text
+          earns its own piece; a rare one is spelled out from smaller fragments.
+          Because the table was fit mostly on English, English words tend to land
+          in one or two pieces, and text in a language the table barely saw is
+          broken into many.
+        </p>
+        <p>
+          You can measure this yourself. Take Article 1 of the Universal
+          Declaration of Human Rights, which has an official translation in
+          hundreds of languages, and run each through cl100k_base, the tokenizer
+          ChatGPT and GPT-4 use. In English the paragraph is 33 tokens. In
+          Spanish it is 44, in Russian 74, in Arabic 88. In Hindi it is 182, in
+          Telugu 281, and in Burmese 512, which is 15.5 times the English count
+          for the same sentence.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Read as characters per token, English packs 5.15 characters into each
+          token and Amharic 0.34, so on the scripts the table was least fitted to,
+          the tokenizer is working almost one byte at a time.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="multilingual-gap/chart-1.png"
+            alt="Bar chart of the number of tokens the cl100k_base tokenizer uses for Article 1 of the Universal Declaration of Human Rights in 13 languages, ordered from fewest to most. English is 33 tokens (1.0x), Spanish and German 44 (1.3x), French and Chinese 50 (1.5x), Russian 74 (2.2x), Korean 85 (2.6x), Arabic 88 (2.7x), Japanese 93 (2.8x), Hindi 182 (5.5x), Telugu 281 (8.5x), Amharic 305 (9.2x), and Burmese 512 (15.5x)."
+          />
+          <figcaption>
+            Fig. 1 &middot; Tokens needed for the same paragraph, Article 1 of
+            the Universal Declaration of Human Rights, under the cl100k_base
+            tokenizer used by ChatGPT and GPT-4. English is the 33-token
+            baseline; the multiplier over English is printed above each
+            bar.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Why does a script fragment so hard? Petrov and colleagues trace one
+          word. In Shan, spoken in Myanmar, the word for "you" is a single
+          written character built from a consonant and three marks, which Unicode
+          stores as four separate codepoints. The English-trained table has no
+          piece for any of them, so it emits nine tokens where English "you" is
+          one.<sup class="nb-cite"><a href="#s7">7</a></sup> The same paragraph,
+          the same meaning, several times the pieces to carry it.
+        </p>
+        <p>
+          Two things follow, and both land on the same speakers. First, the model
+          has a fixed context window measured in tokens. A Burmese user therefore
+          fits a fraction as much text into one request as an English user does,
+          and long inputs overflow sooner.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Second, the commercial APIs charge per token, so the Telugu or Amharic
+          user pays for the extra pieces. Ahia and colleagues found that
+          prompting plus generation cost up to four times more in those languages
+          than in English for the same task. They estimate the Andhra Pradesh
+          user paying about five times an American's price for equivalent
+          use.<sup class="nb-cite"><a href="#s2">2</a></sup> Petrov's group put
+          the general penalty at a cost of at least 2.5 times, latency about
+          twice as long, and an order of magnitude less usable context for the
+          worst-served languages.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          It is tempting to read this off the script, as if Telugu or Burmese
+          characters were simply expensive to write down. They are not. The
+          premium is a property of what the tokenizer was trained on, and it
+          moves when you retrain. MuRIL, a tokenizer built for Indian languages,
+          encodes Telugu at 1.21 times English, and most Indic languages within
+          about 1.06 to 1.26 times, against the fivefold and more those same
+          languages pay under the English-centric table.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Same script, different training, most of the tax gone.
+        </p>
+      </section>
+
+      <section data-nb-section="which-cause" id="which-cause">
+        <h2>Nobody can yet split the blame between the two causes</h2>
+        <p>
+          Two parts of this are settled. That most languages are underrepresented
+          in training text is not in dispute, and neither is the token tax. A
+          2025 study ran the same tokenizer across more than 200 languages. It
+          still finds non-Latin and morphologically complex languages paying
+          three to five times the English tokenization cost, so the amplifier is
+          current and not an artifact of one aging tokenizer.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          The pattern is well enough known that developer tutorials now warn
+          engineers a sentence that is four or five tokens in English can run to
+          fifteen or twenty in Hindi, Thai, or Burmese.<sup class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+        </p>
+        <p>
+          What is not settled is how much of the gap each cause owns. The MEGA
+          authors measured both against performance and declined to rank them.
+          Tokenizer fragmentation correlates with worse scores, and training-data
+          size correlates with better ones. The two also correlate with each
+          other, and a correlation across a handful of tasks is not proof that
+          either one causes the gap.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The French-and-Japanese case is why data goes first: there the data
+          differed and the tokenization did not, and the data won. But no source
+          hands over a clean percentage, and Ahia's group cautions that even the
+          token disparity is not always downstream of the data share, and may
+          depend in part on features of the script itself.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Anyone who tells you it is 70% data and 30% tokenizer is making the
+          numbers up.
+        </p>
+        <p>
+          And the gap is closing without being closed. GPT-4 bridges much of the
+          distance older models left, which is the progress reading of that first
+          exam. Yet the within-model gap remains. On the lowest-resource
+          non-Latin languages a small model fine-tuned for the language still
+          beats GPT-4, and translating the input into English first is often the
+          best move available.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Larger multilingual models and better-fitted tokenizers have narrowed
+          the gap. Neither has closed it.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The worst-served languages are the ones that are both rare in the
+          training text and badly fitted by the tokenizer. Those two usually
+          arrive together: a language with little text online tends to have a
+          script the English-built tokenizer never learned to pack. That is why
+          the damage concentrates on low-resource, non-Latin languages like
+          Telugu, Amharic, and Burmese, and why it shows up twice, once as a
+          weaker answer and once as a larger bill. When you next see the gap
+          explained, you can tell which mechanism the explanation is reaching
+          for. A story about how much text the model saw is a data story, and the
+          French-and-Japanese split is its evidence. A story about how a sentence
+          is chopped into tokens is a tokenizer story, and the 33-to-512 count is
+          its evidence. The honest version keeps both, puts the data first, and
+          admits that nobody can yet say by how much.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2305.13707">Ahia et al., "Do All Languages Cost the Same?"</a>:
+            the token tax measured as cost and utility across 22 languages on a
+            named model.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2305.15425">Petrov et al., "Language Model Tokenizers Introduce Unfairness Between Languages"</a>:
+            the per-language multipliers, and how much a retrained tokenizer
+            recovers.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Figure 5 (cross-language MMLU); Appendix F (translation method)"
+              href="https://arxiv.org/abs/2303.08774"
+              >OpenAI · GPT-4 Technical Report</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§4.1 (up to 5x tokens); §4.2 (up to 4x cost, 5x Andhra Pradesh user); §4.3 (context)"
+              href="https://arxiv.org/abs/2305.13707"
+              >Ahia et al. · Do All Languages Cost the Same?</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.3 (93% English); §2.2 and Table 2.2 (dataset mix)"
+              href="https://arxiv.org/abs/2005.14165"
+              >Brown et al. · Language Models are Few-Shot Learners (GPT-3)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Languages plot, crawl CC-MAIN-2026-30 (CLD2 detector)"
+              href="https://commoncrawl.github.io/cc-crawl-statistics/plots/languages"
+              >Common Crawl · Language statistics</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.3 (tokenizer fertility, data-size analysis, French vs Japanese); §6"
+              href="https://aclanthology.org/2023.emnlp-main.258/"
+              >Ahuja et al. · MEGA: Multilingual Evaluation of Generative AI</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="cl100k_base token counts for UDHR Article 1, 13 languages; reproduced (tiktoken 0.13.0)"
+              href="https://github.com/openai/tiktoken"
+              >OpenAI · tiktoken (cl100k_base)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§1 and §4.1 (Shan &quot;you&quot; = 9 tokens); Table 3 (MuRIL); §1 implications 1-3"
+              href="https://arxiv.org/abs/2305.15425"
+              >Petrov et al. · Language Model Tokenizers Introduce Unfairness Between Languages</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract and methods (tiktoken across 200+ languages, RTC/TPS)"
+              href="https://arxiv.org/abs/2510.12389"
+              >Teklehaymanot and Nejdl · Tokenization Disparities as Infrastructure Bias</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://ai-tldr.dev/learn/llm-fundamentals/tokens-and-tokenization/tokenization-other-languages/"
+              >ai-tldr.dev · Tokenization in other languages</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
