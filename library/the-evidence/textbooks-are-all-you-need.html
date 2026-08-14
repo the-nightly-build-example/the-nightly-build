@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>phi-1 matched code models 12x its size, but mostly on problems like its training set · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "textbooks-are-all-you-need",
+        "template": "lesson",
+        "title": "phi-1 matched code models 12x its size, but mostly on problems like its training set",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-14",
+        "tags": ["phi-1", "code-models", "benchmarks", "synthetic-data"],
+        "sources": 7,
+        "words": 1757,
+        "reading_minutes": 8,
+        "dek": "Microsoft built the 1.3-billion-parameter model from about seven billion tokens of code that GPT-4 filtered and GPT-3.5 wrote, and it reached 50.6% on the HumanEval coding test.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">phi-1 matched code models 12x its size, but mostly on problems like its training set</h1>
+        <p class="nb-dekline">
+          Microsoft built the 1.3-billion-parameter model from about seven billion tokens of code that GPT-4 filtered and GPT-3.5 wrote, and it reached 50.6% on the HumanEval coding test.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-14</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every few months a small AI model posts a benchmark score a much
+          larger one cannot beat, and the lesson drawn is that clever data has
+          made raw size optional. phi-1, a code model Microsoft released in 2023
+          under the title "Textbooks Are All You Need," is the paper most often
+          cited for that lesson. This lesson reads it closely: what phi-1 did
+          with its data, what its 50.6% on a coding test means, and what the
+          paper's own contamination check shows when you read past its
+          conclusion. By the end you will be able to say exactly what curated
+          data bought here, and what it did not.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.understandingai.org/p/large-language-models-explained-with">Large language models, explained with a minimum of math and jargon</a>:
+            how a language model works, for a reader new to them.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2306.11644">Textbooks Are All You Need</a>:
+            the phi-1 paper this lesson reads, in full.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The paper that made 1.3 billion parameters enough</h2>
+        <p>
+          In June 2023 a team at Microsoft Research published a paper whose
+          title became a slogan: "Textbooks Are All You Need."<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Its model, phi-1, writes Python. It has 1.3 billion parameters, the
+          adjustable numbers a model learns during training, which put it among
+          the smallest code models anyone was benchmarking. It was trained on
+          about seven billion tokens of text, where a token is a chunk of a
+          word, roughly one for every three or four English characters. Code
+          models of the time trained on a trillion tokens or more.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">1.3B</span
+            ><span class="nb-stat-l">parameters</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">~7B</span
+            ><span class="nb-stat-l">training tokens</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">50.6%</span
+            ><span class="nb-stat-l">HumanEval pass@1</span>
+          </div>
+        </div>
+        <p>
+          phi-1 solved 50.6% of the problems on HumanEval, a standard Python
+          coding test, on its first attempt, and 55.5% on a second test called
+          MBPP.<sup class="nb-cite"><a href="#s1">1</a></sup> On HumanEval that
+          put it level with or ahead of models ten to twelve times its size.
+          The paper's claim was that the data did it: carefully filtered,
+          "textbook quality" code and synthetic exercises, in place of raw
+          scale.
+        </p>
+      </section>
+
+      <section data-nb-section="what-the-score-counts" id="what-the-score-counts">
+        <h2>What 50.6% on HumanEval actually counts</h2>
+        <p>
+          HumanEval is a set of 164 Python problems written by hand at OpenAI in
+          2021.<sup class="nb-cite"><a href="#s2">2</a></sup> Each gives a
+          function signature and a short description of what the function should
+          do, and hides a handful of unit tests, about eight per problem, that
+          check whether a solution works.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          A model reads the description, writes the function, and passes only if
+          its code passes every test. "pass@1" is the fraction it gets right on
+          a single try.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Code models train on
+          much of public GitHub, which already holds worked solutions to any
+          famous problem set, so a benchmark scraped from the web would be one
+          the model had partly seen.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Hand-written problems were meant to sit outside the training data.
+          MBPP, the second test, is 974 short "mostly basic" Python problems
+          built the same way and aimed at an entry-level programmer.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <p>
+          Half right on the first try is hard to place without the field around
+          it. Here is the company phi-1 kept.
+        </p>
+        <table class="nb-table">
+          <caption>
+            HumanEval pass@1 against model size and training data, as the phi-1
+            paper reports them.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Table 1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Parameters</th>
+              <th>Training tokens</th>
+              <th>HumanEval</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">phi-1</span></td>
+              <td>1.3 B</td>
+              <td>7 B</td>
+              <td>50.6%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">StarCoder</span></td>
+              <td>15.5 B</td>
+              <td>~1 T</td>
+              <td>33.6%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">CodeGen-Mono</span></td>
+              <td>16.1 B</td>
+              <td>577 B</td>
+              <td>29.3%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">WizardCoder</span></td>
+              <td>16 B</td>
+              <td>~1 T</td>
+              <td>57.3%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GPT-4</span></td>
+              <td class="txt">undisclosed</td>
+              <td class="txt">undisclosed</td>
+              <td>67%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          phi-1 reaches StarCoder's neighborhood on a fraction of the parameters
+          and a fraction of the data. StarCoder is 15.5 billion parameters
+          trained on close to a trillion tokens; phi-1 is about a tenth its size
+          trained on well under a hundredth its data, and scores seventeen
+          points higher on HumanEval.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          WizardCoder, at more than ten times phi-1's size, edges it out. GPT-4
+          sits well above all of them. That seventeen-point gap over StarCoder
+          is the result the slogan rests on.
+        </p>
+      </section>
+
+      <section data-nb-section="where-the-data-came-from" id="where-the-data-came-from">
+        <h2>Where the textbook data came from</h2>
+        <p>
+          "Textbook quality" is a filter, and the filter was built by a larger
+          model. The team took roughly 100,000 code files and had GPT-4 label
+          each one for how educational it was.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Those labels trained a small classifier to score the rest of a
+          35-billion-token corpus, and the roughly six billion tokens it rated
+          highest became phi-1's filtered code.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          On top of that the team added synthetic data: Python "textbooks" and
+          about 880,000 practice exercises, each a docstring and a solution, all
+          written by GPT-3.5.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The exercises did most of the visible work. Before phi-1 was finetuned
+          on them, a second short training pass on a narrow, focused set, the
+          same pretrained model scored about 29% on HumanEval.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The exercises lifted it to 50.6%.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          More than twenty of phi-1's points came from a training set GPT-3.5
+          wrote.
+        </p>
+        <p>
+          Microsoft said as much in its later phi-4 report, which states plainly
+          that the earlier phi models "largely distill the capabilities of a
+          teacher model (specifically GPT-4)."<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Distillation is training a small model on a larger one's output.
+          phi-1's competence is partly GPT-3.5 and GPT-4's competence, copied
+          into a smaller model. The scale did not vanish. It moved. A large
+          model spent its scale once to write the textbooks, and phi-1 inherited
+          the result without ever training at that size itself.
+        </p>
+      </section>
+
+      <section data-nb-section="the-pruning-test" id="the-pruning-test">
+        <h2>The paper's own pruning test</h2>
+        <p>
+          The authors saw the obvious worry: that phi-1 scored well because its
+          generated exercises resembled the HumanEval problems it was tested on.
+          When test problems leak into training data, the score measures memory,
+          not skill. The field calls this contamination, and HumanEval's
+          hand-written problems were the standard guard against it.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          But phi-1's exercises were generated, not scraped, and some landed
+          close to the test.
+        </p>
+        <p>
+          So the team ran a check. They measured how similar each HumanEval
+          problem was to phi-1's exercises, split the 164 problems into
+          "similar" and "non-similar" at four thresholds, removed the matching
+          exercises, retrained phi-1 from scratch, and scored it again.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          At the loosest threshold, 71 of the 164 problems counted as similar
+          to something phi-1 had practiced.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The paper concludes the score survives the pruning "by a large margin"
+          and is not due to contamination.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          That conclusion describes phi-1's overall retrained score. The fairer
+          number is the one on the non-similar problems alone, the problems
+          phi-1 had not practiced. The paper compares that number against
+          StarCoder-Prompted, the same StarCoder run with a coaching prompt,
+          which scores higher than the plain version above. On the non-similar
+          split the margin is small, and at the hardest pruning it turns
+          negative.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="textbooks-are-all-you-need/chart-1.png"
+            alt="Grouped bars of HumanEval pass@1 on the non-similar problems at four thresholds. Retrained phi-1 leads StarCoder-Prompted at 0.95, 0.90 and 0.85, then trails it at 0.80."
+          />
+          <figcaption>
+            Fig. 1 · pass@1 on the non-similar HumanEval problems, after phi-1
+            is retrained with matching exercises removed, at four similarity
+            thresholds. Lower &tau; prunes more aggressively.<sup
+              class="nb-cite"
+              ><a href="#s1" data-nb-locator="Table 3">1</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          At the loosest threshold the retrained phi-1 scores 32.3% on the
+          non-similar problems against StarCoder-Prompted's 29.0%, a lead of
+          about three points rather than seventeen.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The lead holds at the two middle thresholds and then reverses: prune
+          most aggressively, and phi-1 scores 27.1% while StarCoder-Prompted
+          scores 31.2%.<sup class="nb-cite"><a href="#s1">1</a></sup> A
+          1.3-billion-parameter model tying a 15-billion one on unpracticed
+          problems is a real result. The seventeen-point version of it was
+          measured on a test where 71 of 164 problems looked like phi-1's
+          homework.
+        </p>
+      </section>
+
+      <section data-nb-section="how-it-traveled" id="how-it-traveled">
+        <h2>How the approach traveled past phi-1</h2>
+        <p>
+          phi-1 was step one. Months later the same team applied the recipe to
+          ordinary language in a 1.3-billion-parameter model called phi-1.5,
+          which they said reached "performance on natural language tasks
+          comparable to models 5x larger."<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          The paper was titled "Textbooks Are All You Need II." The slogan was
+          now a research program.
+        </p>
+        <p>
+          The later models are where independent scrutiny landed. In 2024 a team at
+          Scale AI built GSM1k, 1,250 fresh grade-school math problems in the
+          style of the widely used GSM8k set, held back so no model could have
+          trained on them.<sup class="nb-cite"><a href="#s6">6</a></sup> Models
+          that had memorized GSM8k scored lower on the new problems. The phi
+          family dropped two to six points across releases, which the authors
+          call a "systematic" tendency rather than a large one.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Separately, the researcher Pratyush Maini measured phi-1.5's
+          perplexity, a standard score for how well a model predicts ordinary
+          text, and found it well behind equal-sized models everywhere except
+          code and Q&amp;A forums, the shapes its training data took.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          None of this measures phi-1's HumanEval score, which stands or falls
+          on the paper's own pruning test. What it shows is a family whose
+          benchmark numbers soften when the test moves off the ground its data
+          was built to cover.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          phi-1 is a real result told at the wrong size. A 1.3-billion-parameter
+          model trained on about seven billion tokens did reach 50.6% on
+          HumanEval and did keep pace with code models ten to twelve times
+          larger, and curated data is why. But two things sit under the
+          headline. The training data was written and filtered by GPT-3.5 and
+          GPT-4, so a large model's scale was spent to build it. And on the
+          paper's own fairest comparison, the problems phi-1 had not practiced,
+          its lead over a model twelve times its size falls to a few points and,
+          at the hardest pruning, reverses.
+        </p>
+        <p>
+          "Textbooks Are All You Need" is a good title and a smaller claim than
+          it sounds. Better data bought phi-1 real efficiency. It did not buy the
+          magnitude the slogan promises, and the paper's own numbers are where
+          you can see the difference.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2309.05463">Textbooks Are All You Need II: phi-1.5</a>:
+            the same recipe applied to language reasoning.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2405.00332">A Careful Examination of LLM Performance on Grade School Arithmetic</a>:
+            the GSM1k held-out benchmark that tests later models for memorization.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2309.08632">Pretraining on the Test Set Is All You Need</a>:
+            a three-page satire on what a benchmark score alone can prove.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2306.11644"
+              >Microsoft Research · Gunasekar, Zhang, et al., "Textbooks Are All
+              You Need" (phi-1), 2023</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2107.03374"
+              >OpenAI · Chen et al., "Evaluating Large Language Models Trained on
+              Code" (HumanEval), 2021</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2108.07732"
+              >Google · Austin et al., "Program Synthesis with Large Language
+              Models" (MBPP), 2021</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2412.08905"
+              >Microsoft Research · "Phi-4 Technical Report," 2024</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2309.05463"
+              >Microsoft Research · Li, Bubeck, et al., "Textbooks Are All You
+              Need II: phi-1.5," 2023</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2405.00332"
+              >Scale AI · Zhang et al., "A Careful Examination of Large Language
+              Model Performance on Grade School Arithmetic" (GSM1k), 2024</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://pratyushmaini.github.io/phi-1_5/"
+              >Pratyush Maini · "phi-1.5" perplexity analysis</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
