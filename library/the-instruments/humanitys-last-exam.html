@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Humanity's Last Exam only admits questions today's models fail · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "humanitys-last-exam",
+        "template": "lesson",
+        "title": "Humanity's Last Exam only admits questions today's models fail",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-14",
+        "tags": ["benchmarks", "llm-evaluation"],
+        "sources": 8,
+        "words": 1619,
+        "reading_minutes": 7,
+        "dek": "Its scores start near zero by design and climb fast, which is how a 26% run using browsing tools got read as the frontier of human knowledge.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">Humanity's Last Exam only admits questions today's models fail</h1>
+        <p class="nb-dekline">
+          Its scores start near zero by design and climb fast, which is how a 26% run using browsing tools got read as the frontier of human knowledge.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-08-14</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You keep meeting one figure attached to Humanity's Last Exam, usually a
+          low one, and usually offered as a reading on how close AI has come to
+          human expertise. This lesson shows how that figure is built: who writes
+          the questions, why a question counts only if today's models already fail
+          it, and how a second model grades the answers. It also shows what the
+          number tracks as it climbs. By the end you will be able to read an HLE score the way its
+          makers do, and to spot the one move that turned a 26% result into a
+          headline about the frontier of human knowledge.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2009.03300">MMLU: Measuring Massive Multitask Language Understanding</a>:
+            the broad multiple-choice test models saturated, which HLE was built to replace.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://lastexam.ai">lastexam.ai</a>: the public questions and the live dataset itself.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The score starts near zero</h2>
+        <p>
+          Humanity's Last Exam is a set of 2,500 public questions in mathematics,
+          the humanities, and the natural sciences, each with a single known answer
+          that, in the authors' words, "cannot be quickly answered via internet
+          retrieval."<sup class="nb-cite"><a href="#s1">1</a></sup> It was built
+          because the tests before it had run out of room. Models now top 90% on
+          MMLU, a broad multiple-choice exam of general knowledge, so a passing
+          score there no longer separates one model from the next.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          On Humanity's Last Exam they separate again, because almost all of them
+          fail. As read on 2026-08-14, the top model on the official no-tool
+          leaderboard, gemini-3.1-pro-preview, answered 46.44% of the questions
+          correctly. The board is live and rises over time.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          At the January 2025 launch the best model reached 13.4%, and most sat in
+          the single digits.<sup class="nb-cite"><a href="#s2">2</a></sup> That gap,
+          near zero at launch and under 47% today, is the number people quote. How
+          it is produced explains both halves: why it starts so low, and why it
+          rises so fast.
+        </p>
+      </section>
+
+      <section data-nb-section="how-chosen" id="how-chosen">
+        <h2>Only questions the models already miss</h2>
+        <p>
+          The questions come from people, not a model. Nearly 1,000 subject-expert
+          contributors from more than 500 institutions across 50 countries wrote
+          them, and reviewers holding a graduate degree in the field checked each
+          one across two rounds.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">~1,000</span><span class="nb-stat-l">Expert contributors</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">~70,000</span><span class="nb-stat-l">Model attempts filtered</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">2,500</span><span class="nb-stat-l">Public questions</span>
+          </div>
+        </div>
+        <p>
+          What makes the set unusual is the filter. Before a question is admitted,
+          it is put to several frontier models. A multiple-choice question is kept
+          only if those models, on average, do worse than random guessing; a
+          short-answer question is kept only if the models cannot solve it.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The pipeline logged about 70,000 model attempts and produced roughly
+          13,000 questions that stumped the models, later narrowed to the released
+          set.<sup class="nb-cite"><a href="#s2">2</a></sup> The test is, by design,
+          the questions the strongest models of the day get wrong.
+        </p>
+        <p>
+          The near-zero launch score follows directly from that rule. Every
+          question was chosen because strong models missed it, so a low score
+          measures a model against a pool built from those failures, not against
+          knowledge in general. Raise the models and the filter has to be rebuilt,
+          which is part of why the score climbs as fast as it does.
+        </p>
+        <p>
+          The composition is roughly what you would expect of an exam. Of the 2,500
+          public questions, a fifth to a quarter are multiple-choice, the rest are
+          short-answer, and about a tenth carry an image. The paper and the official
+          site give slightly different splits: 24% versus about 20% multiple-choice,
+          and 14% versus about 10%
+          multimodal.<sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s4">4</a></sup>
+          The set has also moved. The January 2025 announcement described 3,000
+          questions.<sup class="nb-cite"><a href="#s5">5</a></sup> The release settled
+          at 2,500, with a private held-out set kept back to check for
+          overfitting.<sup class="nb-cite"><a href="#s1">1</a></sup> Questions later
+          flagged as flawed or web-searchable have been "removed and replaced."<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="grading" id="grading">
+        <h2>A model marks the answers</h2>
+        <p>
+          Grading is automatic. A separate model, o3-mini, compares each answer to
+          the stored correct one and decides whether they match, allowing
+          equivalent forms such as a decimal for a fraction.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          No person marks the runs, which is what lets thousands of answers be
+          scored the same way every time.
+        </p>
+        <p>
+          The score arrives with a second number that gets less attention:
+          calibration error. Every model is asked for both an answer and its
+          confidence, from 0 to 100%, and calibration error measures how far that
+          confidence sits from how often the model is actually right.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          A model that is 90% confident but 10% correct is badly calibrated, and
+          that pairing is the failure the benchmark was built to expose.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Launch scores, no tools, with the confidence column beside the accuracy
+            column.<sup class="nb-cite"><a href="#s2" data-nb-locator="Table 1">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th>Accuracy</th>
+              <th>Calibration error</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">GPT-4o</td>
+              <td>2.7%</td>
+              <td>89%</td>
+            </tr>
+            <tr>
+              <td class="txt">Claude 3.5 Sonnet</td>
+              <td>4.1%</td>
+              <td>84%</td>
+            </tr>
+            <tr>
+              <td class="txt">o1</td>
+              <td>8.0%</td>
+              <td>83%</td>
+            </tr>
+            <tr>
+              <td class="txt">DeepSeek-R1</td>
+              <td>8.5%</td>
+              <td>73%</td>
+            </tr>
+            <tr>
+              <td class="txt">o3-mini (high)</td>
+              <td>13.4%</td>
+              <td>80%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          At launch the numbers were stark in both columns. The models scored in
+          single digits and were confident anyway, with calibration error from 73%
+          to 89%.<sup class="nb-cite"><a href="#s2">2</a></sup> Being wrong is one
+          thing. Being wrong while sure is what the second column records. Even now
+          the leaders carry calibration error between 38% and 57%, so overconfidence
+          shrinks as scores rise without clearing.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="tools" id="tools">
+        <h2>The 26% that used tools</h2>
+        <p>
+          None of the numbers so far let the model use tools. The leaderboard runs
+          every model closed-book, at temperature 0, on the public questions, with
+          no browsing and no code.<sup class="nb-cite"><a href="#s3">3</a></sup> Allow
+          tools and the score jumps. OpenAI's GPT-5 answered 24.8% with reasoning
+          and no tools, and 42.0% when the same family was given web search and a
+          Python tool.<sup class="nb-cite"><a href="#s6">6</a></sup> The questions did
+          not change. The model's access did.
+        </p>
+        <p>
+          That gap is where the benchmark has misled people. On 12 February 2025,
+          Fortune reported that OpenAI's deep research "can complete 26% of
+          Humanity's Last Exam," and described the test as a benchmark for the
+          frontier of human knowledge.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The misreading</span>
+          <blockquote>
+            "OpenAI's deep research can complete 26% of Humanity's Last Exam—a
+            benchmark for the frontier of human knowledge."<sup class="nb-cite"><a href="#s7">7</a></sup>
+            <span class="nb-note-who">Fortune, 12 February 2025</span>
+          </blockquote>
+        </div>
+        <p>
+          Two things are wrong with reading it that way. The 26.6% run used web
+          browsing and Python tools, while the roughly 9% scores it was called a
+          "nearly threefold jump" over were no-tool leaderboard numbers.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Setting a tool-assisted score against no-tool scores compares two
+          different tests. And the questions are closed-ended academic problems with
+          known answers, not a survey of everything a world-class expert holds, so
+          "the frontier of human knowledge" claims more than the test
+          measures.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img src="humanitys-last-exam/chart-1.png" alt="A line of no-tool HLE scores rising from 13.4% in January 2025 to 46.4% in August 2026, with two tool-assisted runs, 26.6% in February 2025 and 42.0% in August 2025, plotted as separate points sitting above the line." />
+          <figcaption>
+            Fig. 1 · No-tool HLE accuracy over time (best model per date), with two
+            tool-assisted runs plotted as separate points.<sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s6">6</a></sup><sup class="nb-cite"><a href="#s7">7</a></sup><sup class="nb-cite"><a href="#s3">3</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Put on one axis, the error is visible. The no-tool scores form one rising
+          line, and the tool-assisted runs sit above it as separate points. Reading
+          a point off the upper set as though it belonged to the lower line is
+          exactly the jump Fortune described.
+        </p>
+      </section>
+
+      <section data-nb-section="limits" id="limits">
+        <h2>What a high score would not prove</h2>
+        <p>
+          So what would a high HLE score show? The authors are explicit about the
+          limit.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The authors' own limit</span>
+          <blockquote>
+            "High accuracy on HLE would demonstrate expert-level performance on
+            closed-ended, verifiable questions and cutting-edge scientific
+            knowledge, but it would not alone suggest autonomous research
+            capabilities or 'artificial general intelligence.'"<sup class="nb-cite"><a href="#s2">2</a></sup>
+            <span class="nb-note-who">Humanity's Last Exam, arXiv:2501.14249</span>
+          </blockquote>
+        </div>
+        <p>
+          A top score means a model answers hard, closed academic questions. It does
+          not mean the model can carry out open-ended research.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The misreading runs against the benchmark's own stated scope, not against
+          a critic's.
+        </p>
+        <p>
+          There is a second limit, in the answer key itself. FutureHouse, an AI
+          research lab, audited 321 text-only chemistry and biology questions and
+          found that 29%, give or take 3.7 points, had answer keys that conflict
+          with the peer-reviewed literature.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The HLE team's own re-check of a subset put the problematic share lower,
+          at about 18%.<sup class="nb-cite"><a href="#s8">8</a></sup> Take the range
+          as 18% to 29%: on that slice, close to a quarter of the questions can mark
+          a model wrong for giving the better answer. Part of what a low score
+          measures is the test's own errors.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          An HLE score is manufactured to start near zero and to rise. The questions
+          are chosen because strong models already miss them, a second model grades
+          the answers, and the leaderboard runs closed-book. So a low number
+          reflects a pool built from models' failures, and a fast climb reflects
+          better models against a fixed pool. Two readings the number cannot bear:
+          that a tool-assisted score belongs beside the no-tool board, and that any
+          score, high or low, settles whether a model has reached human expertise
+          across the board. When you next meet a percentage on Humanity's Last Exam,
+          the two questions that decode it are whether the tools were on, and what
+          share of the pool the answer key even gets right.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://doi.org/10.1038/s41586-025-09962-4">Humanity's Last Exam (Nature)</a>:
+            the peer-reviewed paper, with the full method and per-model results.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://the-decoder.com/nearly-29-percent-of-humanitys-last-exam-questions-are-wrong-or-misleading/">The Decoder on the answer-key audit</a>:
+            a plain-language write-up of the FutureHouse chemistry and biology finding.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2501.14249"
+              >arXiv · Humanity's Last Exam (abstract, Center for AI Safety and Scale AI)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/html/2501.14249v11"
+              >arXiv · Humanity's Last Exam (full text, v11)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://labs.scale.com/leaderboard/humanitys_last_exam"
+              >Scale AI / CAIS · Humanity's Last Exam leaderboard (accessed 2026-08-14)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://agi.safe.ai/"
+              >Center for AI Safety · Humanity's Last Exam official site</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2501.14249v1"
+              >arXiv · Humanity's Last Exam (January 2025 version)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.vellum.ai/blog/gpt-5-benchmarks"
+              >Vellum · GPT-5 benchmarks (relaying OpenAI's reported HLE figures)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.fortune.com/2025/02/12/openai-deepresearch-humanity-last-exam"
+              >Fortune · "OpenAI's deep research can complete 26% of Humanity's Last Exam"</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.futurehouse.org/research-announcements/hle-exam"
+              >FutureHouse · Audit of HLE chemistry and biology answers</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
