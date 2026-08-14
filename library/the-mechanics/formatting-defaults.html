@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>One line in the system prompt turns off the bullet points · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "formatting-defaults",
+        "template": "lesson",
+        "title": "One line in the system prompt turns off the bullet points",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-14",
+        "tags": ["post-training", "rlhf", "formatting"],
+        "sources": 9,
+        "words": 2183,
+        "reading_minutes": 9,
+        "dek": "The bulleted, bold-headed answer is a post-training habit, built mostly by a stage that rewarded structure and length largely regardless of whether they improved the answer.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">One line in the system prompt turns off the bullet points</h1>
+        <p class="nb-dekline">
+          The bulleted, bold-headed answer is a post-training habit, built mostly by a stage that rewarded structure and length largely regardless of whether they improved the answer.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-14</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every mainstream chatbot answers casual questions in bullet points
+          under bold headers, and that layout can make an answer look more
+          thorough or more settled than its content is. Knowing where the habit
+          comes from is knowing how much to trust the shape of an answer, and
+          knowing that the shape is a setting the model was given rather than a
+          judgment the question earned. By the end you will be able to trace the
+          bulleted answer back through the stages that built it, from the tokens
+          the model emits to the ratings it was optimized against. You will also
+          be able to say which of those stages is settled engineering and which
+          the labs have left undisclosed.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="autoregressive-generation.html">How a model builds an answer one token at a time</a>: the generation process the format rides on.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/instructgpt.html">The tuning pipeline that turns a base model into an assistant</a>: supervised fine-tuning followed by optimization against human preference.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-instruments/chatbot-arena-elo.html">How two answers are compared by human vote to rank models</a>: the arena the central numbers come from.
+          </dd>
+          <dt>04</dt>
+          <dd>
+            <a href="prompt-sensitivity.html">The related case where formatting the question changes the answer</a>: input formatting, a different phenomenon from this one.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>You did not ask for a list</h2>
+        <p>
+          A plain question put to a current chatbot, something like what
+          compound interest is or why the sky is blue, often comes back as a
+          bulleted list under a bold header, sometimes under several. The
+          question was plain. The answer arrived pre-formatted.
+        </p>
+        <p>
+          The habit is strong enough that the labs building these models write
+          instructions against it. Anthropic publishes the system prompt shipped
+          with each Claude release. Several of them spend a paragraph telling
+          the model to stop, to write prose without bullets, numbered lists, or
+          excessive bolding unless the person asks for a list or a
+          ranking.<sup class="nb-cite"><a href="#s1">1</a></sup> The developer
+          Simon Willison, reading those prompts, stated the pattern behind the
+          instruction plainly: large language models love to answer with lists
+          of things.<sup class="nb-cite"><a href="#s2">2</a></sup> An
+          instruction that tells a model to drop a habit exists because the
+          habit is already the model's default, not because the question
+          demanded it.
+        </p>
+        <p>
+          So the formatting is something the model brings to the exchange on its
+          own. Three parts of how it was built could put it there: the text it
+          was trained on, the example answers it was tuned to imitate, and the
+          ratings it was optimized against. Each leaves a different trace, and
+          the traces can be told apart.
+        </p>
+      </section>
+
+      <section data-nb-section="tokens" id="tokens">
+        <h2>A bullet is a token like any other</h2>
+        <p>
+          A model writes its answer the way it writes everything,
+          <a href="autoregressive-generation.html">one token at a time</a>, each
+          token a prediction from all the text so far. A token is a chunk of
+          text, usually a word or a fragment of one, and the asterisks that
+          render as bold and the dash that opens a bullet are tokens too.
+          Nothing about producing them differs from producing the words between
+          them.
+        </p>
+        <p>
+          The base model, before any tuning, learned those tokens from its
+          training text, and a large share of the written web is marked up in
+          markdown or something close to it: documentation, forum posts, README
+          files, question-and-answer pages. A model that has read that much
+          formatted text can produce a clean bulleted list without effort. What
+          the reading does not explain is why the model would reach for the list
+          when the prompt is a single plain question. Being able to format is
+          not the same as defaulting to it. And how far the training text tilts
+          the model toward formatting is not measured anywhere public: no lab
+          reports the share of its pretraining corpus that is bulleted or
+          headed. The direction is clear, the size unknown. That makes the base
+          model the first open link in the chain, real but unquantified.
+        </p>
+      </section>
+
+      <section data-nb-section="imitation" id="imitation">
+        <h2>Trained to imitate the demonstrations</h2>
+        <p>
+          The next stage down is the first round of tuning, where the base model
+          is taught to behave like an assistant. In
+          <a href="../the-evidence/instructgpt.html">the pipeline OpenAI
+          documented for InstructGPT</a>, this begins with supervised
+          fine-tuning: the model is shown example answers written or collected
+          by hired people and trained to imitate them. The published set is
+          about thirteen thousand demonstration prompts, produced by a group of
+          roughly forty contractors.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Whatever shape those answers took, the model learns to reproduce it,
+          the way it would pick up a habit of opening every reply with a
+          greeting if the examples all did. Supervised fine-tuning copies the
+          form of its demonstrations as readily as their content.
+        </p>
+        <p>
+          What the demonstrations actually looked like is not published. No lab
+          reports how many of its example answers were bulleted or headed. So
+          the account at this step splits in two. The mechanism is settled:
+          fine-tuning installs whatever shape it is shown. The quantity is
+          undisclosed, because the shape it was shown is not on the record.
+          That is the second open link. It is enough to install a habit if the
+          examples carried one, but not enough, on its own, to explain how
+          consistent and how strong the habit is. For that the chain reaches the
+          stage where the numbers exist.
+        </p>
+      </section>
+
+      <section data-nb-section="preference" id="preference">
+        <h2>The preference stage pays for structure and length</h2>
+        <p>
+          Below imitation is the stage that optimizes. After supervised
+          fine-tuning, the model is trained against a preference signal. A reward
+          model, fit to human rankings of competing answers, scores each new
+          output, and the model is pushed toward higher-scoring text. This is
+          the stage that installed agreeableness in the same systems, the subject
+          of <a href="sycophancy.html">sycophancy</a>, and it runs on the reward
+          pipeline InstructGPT introduced. Where imitation copies a fixed set of
+          examples, optimization chases whatever the reward rewards, and it will
+          push any tilt in that reward well past what the examples showed.
+        </p>
+        <p>
+          What the reward rewards has been measured, and part of what it pays for
+          is format. The clearest evidence from human voters comes from Chatbot
+          Arena, where people are shown two anonymous answers and pick the better
+          one, the vote behind
+          <a href="../the-instruments/chatbot-arena-elo.html">the arena
+          rating</a>. LMSYS refit that rating model with four style features held
+          apart from content: answer length, number of headers, number of bold
+          spans, and number of lists. All four independently raised an answer's
+          chance of winning, and length was far the largest. With both length
+          and markdown controlled, length's coefficient was 0.249, against 0.031
+          for lists, 0.024 for headers, and 0.019 for
+          bold.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+
+        <figure class="nb-figure">
+          <img
+            src="formatting-defaults/chart-1.png"
+            alt="Bar chart of four normalized style coefficients with both length and markdown controlled: answer length 0.249 towers over lists 0.031, headers 0.024, and bold 0.019."
+          />
+          <figcaption>
+            Fig. 1 · Style coefficients in the Chatbot Arena rating model, with
+            both length and markdown controlled. Length outweighs each markdown
+            feature by roughly eight to thirteen times.<sup class="nb-cite"
+              ><a href="#s4">4</a></sup
+            >
+          </figcaption>
+        </figure>
+
+        <p>
+          When length is left free and only markdown is controlled, the markdown
+          coefficients swell, lists rising from 0.031 to
+          0.111.<sup class="nb-cite"><a href="#s4">4</a></sup> Much of what looks
+          like a reward for bullet points is length riding along with them,
+          because a bulleted answer is usually a longer answer. The honest
+          version of the finding is structure and length together, with length
+          the heavier half. Bullets and headers are both longer-looking and, on
+          their own, separately preferred.
+        </p>
+        <p>
+          The preference is substantially independent of whether the answer is
+          correct, not wholly independent of it, and the rest of the evidence
+          fixes that boundary. Singhal and colleagues found that across several
+          helpfulness datasets, length alone accounts for most of the reward gain
+          preference tuning produces. A reward that optimizes length and nothing
+          else beat the pre-tuning baseline about as often as the full system did,
+          56 percent against 58 percent on one
+          dataset.<sup class="nb-cite"><a href="#s5">5</a></sup> But the same
+          work shows the share is not fixed. The portion of the reward gain
+          coming from anything other than length ranged from 2 percent on one
+          dataset to 53 percent on
+          another,<sup class="nb-cite"><a href="#s5">5</a></sup> so length is a
+          large and measurable driver of preference, not the whole of it. LMSYS
+          says as much about its own result, calling the analysis observational:
+          length can track real quality, so some of the preference for it is
+          earned.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          The automated graders that increasingly stand in for human raters show
+          the pull more directly. Zheng and colleagues took answers that already
+          contained a numbered list, had a model rewrite the list longer without
+          adding information, and asked a language-model judge which version was
+          better. The judge preferred the padded, longer answer in 91.3 percent
+          of cases for two of the models
+          tested.<sup class="nb-cite"><a href="#s6">6</a></sup> Reward models,
+          the component that carries preference into training, fail the same way
+          when style is set against substance. On RM-Bench, a set of answer pairs
+          where the better-formatted option is the wrong one, current reward
+          models scored 46.6 percent. That is below the 50 percent a coin flip
+          would reach: more than half the time, they picked the worse answer for
+          being better dressed.<sup class="nb-cite"><a href="#s7">7</a></sup> A separate
+          evaluator, AlpacaEval, agreed with human arena rankings more closely
+          once its bias toward longer answers was removed, its rank correlation
+          rising from 0.94 to 0.98.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">What is settled, what is open</span>
+          <p>
+            Settled: preference judgments, human and automated, reward structure
+            and length substantially apart from correctness, with numbers to
+            match,<sup class="nb-cite"><a href="#s4">4</a></sup> and markdown is a
+            default the labs actively steer.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            > Open: how much the base model's training text contributes, and how
+            formatted the fine-tuning demonstrations were. The reward end of the
+            chain is firm; the two stages above it are honest inference.
+          </p>
+        </div>
+        <p>
+          Human voters and the reward models built to imitate them line up, then,
+          on rewarding a longer and more-structured answer beyond what its content
+          earns. A model optimized against that signal moves toward the shape
+          that scores: more words, laid out in bullets under headers. The
+          bulleted answer is what optimization settles on when the grader pays for
+          looking thorough.
+        </p>
+      </section>
+
+      <section data-nb-section="ground" id="ground">
+        <h2>An instruction turns it off</h2>
+        <p>
+          Below optimization there is nothing more to find, because the next step
+          down is not another mechanism but a switch. The format the training
+          stages installed is a policy about how to present an answer, not a
+          property of the answer itself, and a policy can be set. OpenAI's Model
+          Spec states this outright. In interactive use the assistant defaults to
+          markdown formatting, and when a developer marks the setting
+          non-interactive it should produce minimal formatting instead. Any such
+          default is overridable by an instruction in the
+          request.<sup class="nb-cite"><a href="#s9">9</a></sup> The Anthropic
+          prompts from the opening are that override in practice, a standing
+          instruction to drop the default bullets and headers unless the person
+          wants them.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          This is a different phenomenon from a model's sensitivity to the
+          formatting of the question it is given, where a change in the input's
+          punctuation can move the accuracy of the answer, the subject of
+          <a href="prompt-sensitivity.html">prompt sensitivity</a>. There the
+          formatting is in the input and it changes the answer. Here the
+          formatting is in the output, a policy about presentation that the
+          training stages set as a default and an instruction resets. Nothing
+          below that policy decides the bullets. That is ground.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The bulleted, bold-headed answer is not something the question
+          required. It is a habit built in three stages. A base model learned
+          markdown from the web. A tuning step taught it to imitate human-written
+          example answers. Heaviest of the three, an optimization step rewarded
+          longer and more-structured replies whether or not the added structure
+          made them better. The first stage's size is unmeasured and the example
+          answers' contents are undisclosed, so the middle of the story is honest
+          guesswork. The reward stage is where the numbers are firm. Because the format is a policy and not a
+          requirement, one line of instruction switches it off, which is why the
+          labs that ship these models also ship the instruction. A
+          better-organized answer is often a genuinely better answer. The format
+          is rewarded even when it is not, so the bullets are a weaker signal of
+          quality than they look.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.lmsys.org/blog/2024-08-28-style-control/">LMSYS, "Does style matter? Disentangling style and substance in Chatbot Arena"</a>: the style-control analysis behind the length and markdown coefficients.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://cdn.openai.com/spec/model-spec-2024-05-08.html">OpenAI, Model Spec</a>: the document that names markdown the default and makes it overridable.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2310.03716">Singhal et al., "A Long Way to Go: Investigating Length Correlations in RLHF"</a>: how much of the reward gain from preference tuning is length.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://docs.anthropic.com/en/release-notes/system-prompts"
+              >Anthropic · Claude system prompts (release notes)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://simonwillison.net/2025/May/25/claude-4-system-prompt/"
+              >Simon Willison · Highlights from the Claude 4 system prompt</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.02155"
+              >OpenAI · Training language models to follow instructions with human feedback (InstructGPT)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.lmsys.org/blog/2024-08-28-style-control/"
+              >LMSYS · Does style matter? Disentangling style and substance in Chatbot Arena</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2310.03716"
+              >Singhal et al. · A Long Way to Go: Investigating Length Correlations in RLHF</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2306.05685"
+              >Zheng et al. · Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2410.16184"
+              >RM-Bench · Benchmarking Reward Models of Language Models with Subtlety and Style</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.04475"
+              >Dubois et al. · Length-Controlled AlpacaEval: A Simple Way to Debias Automatic Evaluators</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/spec/model-spec-2024-05-08.html"
+              >OpenAI · Model Spec</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
