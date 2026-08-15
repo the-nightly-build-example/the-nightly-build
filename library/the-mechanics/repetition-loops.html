@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A repeated phrase makes a model likelier to repeat it again · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "repetition-loops",
+        "template": "lesson",
+        "title": "A repeated phrase makes a model likelier to repeat it again",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-15",
+        "tags": ["decoding", "repetition", "sampling", "text-generation", "inference"],
+        "sources": 8,
+        "words": 2102,
+        "reading_minutes": 9,
+        "dek": "The loop shows up under greedy and beam search but not under sampling, and why a trained model favors its own recent words in the first place is still unsettled.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A repeated phrase makes a model likelier to repeat it again</h1>
+        <p class="nb-dekline">
+          The loop shows up under greedy and beam search but not under sampling, and why a trained model favors its own recent words in the first place is still unsettled.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-15</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have probably watched a chatbot lock onto a word or a sentence
+          and say it again and again, filling the screen until it hits a wall.
+          That loop is one of the oldest failures in machine text, and every
+          model you use ships with settings that exist to keep it from
+          surfacing: a top-p value, sometimes a repetition penalty. This lesson
+          starts at the loop on the screen and works down, one part at a time,
+          to the point where the researchers who study it stop agreeing. The
+          loop stops being mysterious once you can name its steps. Chasing the
+          model's likeliest word drives it into a repeat, and a random draw
+          escapes. A phrase that recurs pulls the model back toward itself. And
+          the last question, why a trained model leans on its own recent words at
+          all, still has more than one answer.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/sampling-temperature.html">Two answers to one prompt diverge at a single draw</a>:
+            how a model turns its output into a probability spread and a rule
+            picks one word from it, greedy against sampling, the step this loop
+            starts from.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html">The instant a model writes a token, it becomes fact</a>:
+            why a word, once written, becomes input the model reads back and
+            never revises, which is what lets a loop persist.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A reply that keeps saying the same line</h2>
+        <p>
+          Ask a model to keep writing and sometimes it locks onto a phrase and
+          repeats it, the same words each pass, until something outside the
+          model stops it. Anyone who has used a chatbot has seen a milder
+          version: a sentence that comes back nearly unchanged, or a list that
+          keeps restating its first item.
+        </p>
+        <p>
+          This is not the model running dry. Holtzman and colleagues showed
+          that the very same trained model, on the very same prompt, will
+          either fall into that loop or read like a person, and the only thing
+          separating the two is the rule that
+          <a href="../the-mechanics/sampling-temperature.html">picks each next word from the model's output</a>.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The loop is one of the most common failures in text generation, and
+          it appears far more under some of those rules than others.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="decoding" id="decoding">
+        <h2>Chase the likeliest word and the model loops</h2>
+        <p>
+          At each position the model produces a probability for every word in
+          its vocabulary, tens of thousands of them. What differs between one
+          run and another is the rule for collapsing that spread into a single
+          word. The plainest rule takes the highest-probability word every
+          time, called greedy decoding. A more careful version, beam search,
+          keeps a handful of candidate continuations alive at once and extends
+          whichever whole running sequence scores highest. Both are after the
+          same thing, the most likely continuation. The other family treats the
+          probabilities as odds and lets chance draw the next word, so a word
+          the model rates at one in five is picked about that often.
+        </p>
+        <p>
+          The two families do not behave alike. On GPT-2 Large continuing
+          prompts from web text, Holtzman's team measured how much of each
+          generation was repeated content under each rule. Greedy scored 73.66
+          on the paper's repetition score and beam search 28.94, while nucleus
+          sampling scored 0.36 and human text scored 0.28.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            Repeated content under each decoding rule, GPT-2 Large continuing
+            web-text prompts, read on the paper's own repetition score.<sup
+              class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Rule</th>
+              <th>Repetition score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Greedy</td>
+              <td>73.66</td>
+            </tr>
+            <tr>
+              <td class="txt">Beam search (b=16)</td>
+              <td>28.94</td>
+            </tr>
+            <tr>
+              <td class="txt">Top-k sampling (k=640)</td>
+              <td>0.28</td>
+            </tr>
+            <tr>
+              <td class="txt">Nucleus sampling (p=0.95)</td>
+              <td>0.36</td>
+            </tr>
+            <tr>
+              <td class="txt">Pure sampling</td>
+              <td>0.22</td>
+            </tr>
+            <tr>
+              <td class="txt">Human text</td>
+              <td>0.28</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The score is the paper's own, so the rows are meant to be read
+          against each other rather than as a share of anything outside the
+          table, and figures from other papers below sit on other scales. Fan
+          and colleagues, who trained a model to write short stories, found the
+          same pull in beam search on their own task: it tends to produce
+          common phrases and repetitive text.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          So the loop is a property of the rule. Give the same model the same
+          prompt, let a sampler draw instead of taking the top word, and the
+          repetition score falls from 73.66 to under half a point.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          That only pushes the question down a step. Why should always taking
+          the likeliest word loop at all?
+        </p>
+      </section>
+
+      <section data-nb-section="feedback-loop" id="feedback">
+        <h2>The loop feeds itself</h2>
+        <p>
+          The answer is a property of the model's own probabilities. Once a
+          phrase has appeared in the text, the model raises the probability
+          that the same phrase appears again. The second time is likelier than
+          the first, the third likelier than the second. Holtzman's team named
+          this a positive feedback loop and found it held for the vast majority
+          of phrases they tried, whatever the phrase's length and whether it was
+          drawn from human writing or assembled at random.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The feedback loop, stated by the authors</span>
+          <blockquote>
+            The probability of a repeated phrase increases with each
+            repetition, creating a positive feedback loop.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+            <span class="nb-note-who">Holtzman et al., Figure 4</span>
+          </blockquote>
+        </div>
+        <p>
+          Under greedy decoding this is a trap with no exit. The model takes the
+          top word, that word's reappearance raises its own odds for next time,
+          so it wins again, and the gap widens with every pass until nothing
+          else can catch it. Under sampling the same climb happens, but chance
+          still holds some probability on other words, so a draw can fall
+          outside the phrase and break the loop. That is why the two families
+          came apart on the table above.
+        </p>
+        <p>
+          The effect is not one paper's anecdote. Xu and colleagues measured it
+          again on modern language models across several corpora and found the
+          probability of repeating a sentence rises almost monotonically with
+          the number of times it has already repeated, climbing toward a
+          ceiling.<sup class="nb-cite"><a href="#s4">4</a></sup> In their
+          measurements a single earlier repetition was enough to raise the
+          next-repeat probability in more than nine cases out of ten, and
+          sentences that started with a higher probability showed the stronger
+          pull.<sup class="nb-cite"><a href="#s4">4</a></sup> Two independent
+          groups, different models, the same shape: that the loop feeds itself
+          is settled.
+        </p>
+      </section>
+
+      <section data-nb-section="open-cause" id="cause">
+        <h2>Why the model favors its own words is unsettled</h2>
+        <p>
+          One step remains. Why does a trained model raise the probability of a
+          word it just produced? Here the settled ground runs out. No one has a
+          single agreed answer, and the two leading ones do not reduce to each
+          other.
+        </p>
+        <p>
+          Welleck and colleagues put the cause in the training objective. A
+          model is trained to maximize the probability of the human text it is
+          shown, word by word, and Welleck's group argues that this objective
+          itself pushes probability onto sequences with repeats and frequent
+          words, giving the model a bias no decoding rule created.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Their evidence is that even under sampling, which should dodge the
+          greedy trap, the token-level repeat rate stays above human.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          Fu and colleagues put it somewhere else, in the structure of the
+          language the model learned. In their analysis many different words all
+          predict the same next word with high probability, a pattern they call
+          high inflow, so once generation reaches that word it is easily pulled
+          back to it and circles.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          On their account a simple Markov generator carrying the same
+          transition probabilities would repeat for the same reason, whatever
+          objective had trained it.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          These are different claims about the same effect, and the evidence
+          does not yet decide between them. The measurements from the step above
+          hold either way: the loop is real and it feeds itself. Why the model
+          leans on its own output to begin with is the point below which the
+          accounts diverge and none has closed.
+        </p>
+      </section>
+
+      <section data-nb-section="fixes" id="fixes">
+        <h2>Each fix reaches one step and no further</h2>
+        <p>
+          The remedies sort themselves by which step they touch. The decode-time
+          fixes attack whether the loop is entered.
+          <a href="../the-mechanics/sampling-temperature.html">Top-k sampling</a>
+          draws only from the k most likely words and ignores the rest. Fan's
+          story model drew from k of 10.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Nucleus sampling, or top-p, draws from the smallest set of words whose
+          probabilities add up to p, the rule that scored 0.36 against greedy's
+          73.66 on the table above.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A repetition penalty takes a more direct aim: before the model picks,
+          it divides the score of any word already used, so used words are
+          handicapped. Keskar's group, tuning the 1.63-billion-parameter CTRL
+          model, found a divisor near 1.2 kept the output varied without
+          wrecking it.<sup class="nb-cite"><a href="#s7">7</a></sup> A library
+          will also expose a blunt version that simply forbids repeating any run
+          of words the model has already emitted.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          The repetition penalty is the fix a reader is most likely to reach
+          for. It removes the visible loop. It does not touch why the model favored its own words,
+          so it works from outside, shaving scores after the model has computed
+          them. Push the divisor too high and it starts refusing words the
+          sentence actually needs, which is why Keskar reports tuning it to a
+          balance rather than turning it to the maximum.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          The training-time fixes go after the bias itself. Unlikelihood
+          training adds a term that lowers the probability of unwanted
+          continuations, repeated words and sequences, while the model trains,
+          moving its probabilities toward the human distribution.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          It works, and it is plain about its limit. On Wikitext-103 it cut the
+          duplicate four-gram rate from 0.442 under standard training to 0.013,
+          close to human text's 0.006, while the token-level repeat rate fell
+          only from 0.627 to 0.559 and stayed above human's 0.487.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          The loop nearly vanishes; the underlying lean toward repeats narrows
+          but does not close. Xu's DITTO takes a related route, manufacturing
+          repetitive examples and teaching the model to let the repeat
+          probability decay instead of climb.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          Put the two families side by side and the disagreement from the step
+          above turns practical. A decode-time rule decides whether the loop is
+          entered at all; a training method changes how far the model leans
+          toward repeats in the first place. A survey of the field places them
+          exactly this way, as separate attacks on one behavior.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          Neither is a full cure. A decode-time fix can drive the visible
+          repetition below human on the page while the model's token-level bias
+          sits untouched underneath, and the training fix narrows that bias
+          without erasing it.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The loop comes from the rule that picks each word. Take the single
+          likeliest word every time and any phrase that starts to repeat grows
+          likelier to repeat again, so the model tightens into a loop with no
+          way out. Let a sampler draw and chance can still fall outside the
+          phrase and break it. The fixes divide by the step they reach. Top-p,
+          top-k, and a repetition penalty keep the loop from being entered,
+          working from outside the model at the moment each word is picked.
+          Unlikelihood training and DITTO reach further in, pushing the model's
+          own probabilities back toward human writing, and even those narrow the
+          bias without closing it. Below all of it sits the one step still
+          argued over: why a trained model raises the odds on a word it just
+          produced. The measurements above are settled and they agree. The
+          reason underneath them is where an honest account has to say the field
+          holds two answers and has not chosen between them.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1904.09751">The Curious Case of Neural Text Degeneration</a>:
+            the paper that named the feedback loop and introduced nucleus
+            sampling, and the source of the decoding comparison here.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://huggingface.co/blog/how-to-generate">How to generate text</a>:
+            a hands-on tour of the actual decoding knobs, greedy, beam, top-k,
+            and top-p, with runnable examples.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; §3; Table 1; Fig. 4"
+              href="https://arxiv.org/abs/1904.09751"
+              >Holtzman, Buys, Du, Forbes &amp; Choi · The Curious Case of Neural Text Degeneration (ICLR 2020)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Greedy Search; Beam Search; Sampling"
+              href="https://huggingface.co/blog/how-to-generate"
+              >Patrick von Platen · How to generate text: decoding methods for language generation with Transformers (Hugging Face)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§5.4"
+              href="https://arxiv.org/abs/1805.04833"
+              >Fan, Lewis &amp; Dauphin · Hierarchical Neural Story Generation (ACL 2018)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="self-reinforcement analysis (IP/TP); DITTO"
+              href="https://arxiv.org/abs/2206.02369"
+              >Xu, Liu, Yan, Cai, Li &amp; Li · Learning to Break the Loop: Analyzing and Mitigating Repetitions for Neural Text Generation (NeurIPS 2022)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; seq-rep-4 and rep tables (Wikitext-103)"
+              href="https://arxiv.org/abs/1908.04319"
+              >Welleck, Kulikov, Roller, Dinan, Cho &amp; Weston · Neural Text Generation with Unlikelihood Training (ICLR 2020)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Def. 2.3; Thm. 1; §2.2 (high inflow)"
+              href="https://arxiv.org/abs/2012.14660"
+              >Fu, Lam, So &amp; Shi · A Theoretical Analysis of the Repetition Problem in Text Generation (AAAI 2021)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§4.1 (penalized sampling, θ≈1.2)"
+              href="https://arxiv.org/abs/1909.05858"
+              >Keskar, McCann, Varshney, Xiong &amp; Socher · CTRL: A Conditional Transformer Language Model for Controllable Generation (2019)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="penalized sampling; unlikelihood training"
+              href="https://lilianweng.github.io/posts/2021-01-02-controllable-text-generation/"
+              >Lilian Weng · Controllable Neural Text Generation (2021)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
