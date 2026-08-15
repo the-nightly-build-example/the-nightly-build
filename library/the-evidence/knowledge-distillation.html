@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The knowledge distillation paper trained a network to recognize a digit it never saw · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "knowledge-distillation",
+        "template": "lesson",
+        "title": "The knowledge distillation paper trained a network to recognize a digit it never saw",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-15",
+        "tags": ["knowledge-distillation", "soft-targets", "temperature", "model-compression", "hinton"],
+        "sources": 7,
+        "words": 1969,
+        "reading_minutes": 9,
+        "dek": "Hinton, Vinyals, and Dean's 2015 paper trained the small network on how the big one ranked every wrong answer, and that soft-target method is the part much of today's 'distillation' leaves out.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">The knowledge distillation paper trained a network to recognize a digit it never saw</h1>
+        <p class="nb-dekline">
+          Hinton, Vinyals, and Dean's 2015 paper trained the small network on how the big one ranked every wrong answer, and that soft-target method is the part much of today's 'distillation' leaves out.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-15</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have probably seen the claim that a small, cheap AI model was
+          "distilled" from a big expensive one. It was the story around DeepSeek
+          in early 2025, and it comes up whenever a smaller model arrives
+          suspiciously close to a larger one's ability. The word traces to one
+          2015 paper. The method that paper describes is exact and a little
+          strange: a small network can learn from the shape of a big one's
+          uncertainty, down to recognizing something it was never shown. Knowing
+          what that original method is, and how much of today's "distillation"
+          still does it, is the difference between taking the word at face value
+          and knowing which claims behind it to check.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/sampling-temperature.html">Two answers to one prompt diverge at a single draw</a>:
+            what softmax and temperature are, the two pieces this method borrows and reuses.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/deepseek-r1.html">DeepSeek trained a model to reason without ever showing it a worked example</a>:
+            the 2025 release whose "distillation" this lesson measures against the original.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Where the word comes from</h2>
+        <p>
+          "Knowledge distillation" is one of the most-used phrases in AI, and it
+          comes from a single paper. In 2015 Geoffrey Hinton, Oriol Vinyals, and
+          Jeff Dean posted "Distilling the Knowledge in a Neural Network," a short
+          paper grown from a workshop talk.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Its idea is specific: take a large, accurate, slow model and train a
+          small, fast one to copy not only its answers but the full set of
+          probabilities behind them.
+        </p>
+        <p>
+          A decade on, the word is everywhere, and much of what it labels is not
+          what the paper did. When DeepSeek released a family of smaller models in
+          January 2025, it called them "distilled" from its large reasoning
+          model.<sup class="nb-cite"><a href="#s2">2</a></sup> The method behind
+          that word had by then drifted a long way from the one the paper
+          introduced.
+        </p>
+      </section>
+
+      <section data-nb-section="soft-targets" id="soft-targets">
+        <h2>Soft targets</h2>
+        <p>
+          Training a small network to imitate a big one was not new in 2015. In
+          2006 Cristian Bucila, Rich Caruana, and Alexandru Niculescu-Mizil showed
+          you could compress a whole ensemble of models into one small network by
+          using the ensemble to label a large pile of data, then training the
+          network on those labels.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The small network matched the ensemble's predictions while running about
+          a thousand times smaller and faster. Hinton's paper credits this work
+          and says it does the compression a different
+          way.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The difference is what the student copies. Bucila's small network copied
+          the ensemble's chosen label. Hinton's copies the whole probability
+          distribution behind that label. A trained classifier does not really
+          output an answer. It ends in a softmax, the function that turns its raw
+          scores into a probability for every possible class
+          (<a href="../the-mechanics/sampling-temperature.html">covered in an
+          earlier lesson</a>), and normally only the largest of those
+          probabilities is read off as the answer. The paper's claim is that the
+          rest of the distribution, the small probabilities the model assigns to
+          the answers it rejected, is worth keeping.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In the paper's words</span>
+          <blockquote>
+            "The relative probabilities of incorrect answers tell us a lot about
+            how the cumbersome model tends to generalize." An image of a BMW "may
+            only have a very small chance of being mistaken for a garbage truck,
+            but that mistake is still many times more probable than mistaking it
+            for a carrot."<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">Hinton, Vinyals, and Dean, 2015</span>
+          </blockquote>
+        </div>
+        <p>
+          Those two models get names. The large one is the teacher, the small one
+          the student, and the teacher's full probability distribution, its
+          confidence spread across every class rather than its top pick alone, is
+          the soft target the student trains to reproduce. The ordinary training
+          signal, the single correct label written as a 1 with 0s everywhere else,
+          is the hard target by contrast.
+        </p>
+        <p>
+          One thing gets in the way: the informative probabilities are tiny. A
+          confident teacher might give the right class 0.99 and split the last 0.01
+          across thousands of wrong ones, so the very numbers that carry the
+          knowledge round almost to zero. The paper's fix is temperature, the same
+          dial that softens a model's output when it samples text: divide the
+          scores by a number, T, before the softmax, and a larger T spreads the
+          distribution out. The student trains on the teacher's outputs at a high
+          temperature, so the small probabilities grow large enough to learn from,
+          and then runs at the normal setting once it is
+          trained.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="mnist" id="mnist">
+        <h2>The threes it never saw</h2>
+        <p>
+          MNIST is the standard first test in this field: 70,000 small images of
+          handwritten digits, 0 through 9, with 10,000 held back to test on. It is
+          a deliberately easy problem, which is what makes it good for showing an
+          effect cleanly rather than for impressing anyone.
+        </p>
+        <p>
+          Hinton's team trained a large network on it with every trick for
+          squeezing out errors, and it missed 67 of the 10,000 test digits. A
+          small network trained the ordinary way missed 146. Then they trained
+          that same small network on the large network's soft targets instead of
+          the raw labels, and its errors fell to 74, close to the large network's
+          score and about half the small network's original
+          mistakes.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            MNIST test errors out of 10,000, for the large network, the same small
+            network trained normally, and that small network distilled from the
+            large one's soft targets.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Network</th>
+              <th>Test errors</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Large network, trained hard</td>
+              <td>67</td>
+            </tr>
+            <tr>
+              <td class="txt">Small network, ordinary training</td>
+              <td>146</td>
+            </tr>
+            <tr>
+              <td class="txt">Small network, distilled at T = 20</td>
+              <td>74</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The sharper demonstration came next. They deleted every example of one
+          digit, the 3, from the data the student trained on. The student network
+          was never shown a single labeled 3. Then they tested it on all 1,010
+          threes in the test set. It got 877 of them right, 86.8 percent, for a
+          digit it had never been taught. It had learned the 3 only from the small
+          amounts of "3" probability the teacher placed on images of the other nine
+          digits.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The threes still cost more errors than they should have, and the reason
+          was mundane. The student had never seen how often a 3 comes up, so its
+          internal threshold for guessing 3 sat too low. Raising that one number by
+          a fixed amount lifted the score to 996 of 1,010, or 98.6
+          percent.<sup class="nb-cite"><a href="#s1">1</a></sup> The headline
+          figure needed that manual nudge. The result that needed nothing was the
+          plain one: a network reading most of a digit it was never shown, out of
+          the teacher's hesitations about the digits it was.
+        </p>
+      </section>
+
+      <section data-nb-section="scale" id="scale">
+        <h2>The largest experiment never distilled anything</h2>
+        <p>
+          Two experiments took the method off the toy problem. The first was
+          speech recognition, on the system then serving Google's voice products:
+          a network trained on about 2,000 hours of audio to label 14,000 sound
+          states. Training ten copies of it and averaging their outputs, an
+          ensemble, raised the share of audio frames it labeled correctly from 58.9
+          to 61.1 percent. A single network distilled from that ten-model ensemble
+          reached 60.8 percent, recovering almost all of the ensemble's gain from
+          one network instead of ten. It also matched the ensemble's word error
+          rate of 10.7 percent, against the baseline's
+          10.9.<sup class="nb-cite"><a href="#s1">1</a></sup> That is the method
+          working end to end at real scale: ten models' worth of knowledge folded
+          into one.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Speech recognition: frame accuracy and word error rate for the
+            baseline network, the ten-model ensemble, and one network distilled
+            from that ensemble.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">System</th>
+              <th>Frame accuracy</th>
+              <th>Word error rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Baseline single network</td>
+              <td>58.9%</td>
+              <td>10.9%</td>
+            </tr>
+            <tr>
+              <td class="txt">Ten-model ensemble</td>
+              <td>61.1%</td>
+              <td>10.7%</td>
+            </tr>
+            <tr>
+              <td class="txt">Distilled single network</td>
+              <td>60.8%</td>
+              <td>10.7%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The paper's largest experiment did not go that far. On an internal Google
+          dataset of 100 million labeled images across 15,000 categories, a single
+          baseline network took around six months to train. Rather than distill,
+          the team added 61 "specialist" networks, each trained in a few days to
+          tell apart categories the baseline confused, and the combined system's
+          accuracy rose from 25.0 to 26.1
+          percent.<sup class="nb-cite"><a href="#s1">1</a></sup> The low numbers
+          reflect the 15,000-way choice. But this is an ensemble result, not a
+          distilled one. The paper states plainly that it had not yet distilled the
+          specialists' knowledge back into a single
+          network.<sup class="nb-cite"><a href="#s1">1</a></sup> The experiment
+          that best showed the method's motivation, too many categories for one
+          model to hold, is the one where the distillation step was never run.
+        </p>
+      </section>
+
+      <section data-nb-section="family" id="family">
+        <h2>Distillation became a family of methods</h2>
+        <p>
+          The word did not stay put. Within a year, Yoon Kim and Alexander Rush
+          used "knowledge distillation" for a method that trained the student on
+          the teacher's actual generated sentences, treated as ordinary correct
+          answers, with no softened probabilities anywhere in
+          it.<sup class="nb-cite"><a href="#s4">4</a></sup> By 2021 a survey of the
+          field could sort distillation into three different kinds of knowledge a
+          student might copy, with Hinton's soft targets filling only one of the
+          three.<sup class="nb-cite"><a href="#s5">5</a></sup> The definition in
+          wide circulation today, the one a newcomer meets first, is just the
+          general idea: transfer what a large teacher model knows to a smaller
+          student.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          Two current systems mark how wide the word has stretched.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Two models both described as distillation, and how much of the 2015
+            method each keeps.<sup class="nb-cite"><a href="#s7">7</a></sup><sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">System</th>
+              <th class="txt">What it keeps from the 2015 method</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">DistilBERT, 2019</td>
+              <td class="txt">
+                The method. It trains the student on the teacher's
+                temperature-softened probability distribution, Hinton's soft
+                targets, moved to a language model. The result is 40 percent
+                smaller than the original, 60 percent faster, and keeps 97 percent
+                of its language-understanding score.
+              </td>
+            </tr>
+            <tr>
+              <td class="txt">DeepSeek-R1 distillation, 2025</td>
+              <td class="txt">
+                The name. It fine-tunes small open models on 800,000 answers the
+                large model wrote out, as ordinary labeled text. No soft targets,
+                no temperature.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          DistilBERT is Hinton's method, moved to a new kind of
+          model.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          <a href="../the-evidence/deepseek-r1.html">DeepSeek's distilled
+          models</a> never touch a probability distribution. The small model reads
+          the big one's finished answers and learns to write the same kind of
+          thing.<sup class="nb-cite"><a href="#s2">2</a></sup> Both are called
+          distillation, and by the broad meaning the word now carries, both are.
+          Only one of them does what the 2015 paper described.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          In the 2015 paper that named it, knowledge distillation means one
+          specific thing. You train a small student network on a big teacher's full
+          probability distribution, not just its top answer. The student inherits
+          the teacher's sense of which wrong answers are close and which are
+          absurd, and temperature makes those faint probabilities large enough to
+          learn from. It worked well enough that a student recognized threes it had
+          never been shown. The word has since loosened into a whole family of
+          teacher-to-student methods, and much of what is now called distillation,
+          DeepSeek's included, keeps the teacher-and-student framing but drops the
+          soft targets that were the original idea. When you next read that a model
+          was distilled, the useful question is which of those two things it means.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1503.02531">Distilling the Knowledge in a Neural Network</a>:
+            the original paper, nine pages, readable in a sitting.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2006.05525">Knowledge Distillation: A Survey</a>:
+            the family of methods the term now covers, mapped out.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1503.02531"
+              >arXiv · Hinton, Vinyals &amp; Dean, "Distilling the Knowledge in a Neural Network" (2015)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2501.12948"
+              >arXiv · DeepSeek-AI, "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning" (2025)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.cs.cornell.edu/~caruana/compression.kdd06.pdf"
+              >KDD 2006 · Bucila, Caruana &amp; Niculescu-Mizil, "Model Compression"</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1606.07947"
+              >arXiv · Kim &amp; Rush, "Sequence-Level Knowledge Distillation" (2016)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2006.05525"
+              >IJCV · Gou, Yu, Maybank &amp; Tao, "Knowledge Distillation: A Survey" (2021)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.ibm.com/think/topics/knowledge-distillation"
+              >IBM · Bergmann, "What is knowledge distillation?"</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1910.01108"
+              >arXiv · Sanh, Debut, Chaumond &amp; Wolf, "DistilBERT, a distilled version of BERT" (2019)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
