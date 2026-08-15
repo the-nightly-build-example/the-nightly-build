@@ -1,0 +1,9 @@
+# researcher brief: the-evidence/knowledge-distillation (01)
+
+Inputs:
+- /home/user/the-nightly-build/.nb-work/the-evidence/knowledge-distillation/agent-artifacts/the-evidence/knowledge-distillation/commission.md — the assignment, the arc to source, its boundaries, and the source policy.
+- /home/user/the-nightly-build/.nb-work/the-evidence/knowledge-distillation/agent-artifacts/the-evidence/knowledge-distillation/editorial-direction.md — the citation standard, the series territory, and the declared reader.
+
+Output: /home/user/the-nightly-build/.nb-work/the-evidence/knowledge-distillation/agent-artifacts/the-evidence/knowledge-distillation/researcher/01/evidence.md
+
+Run environment: isolated subagent with web and `nb history` tools. Read the distillation paper itself (Hinton, Vinyals, Dean, "Distilling the Knowledge in a Neural Network," arXiv:1503.02531), and confirm firsthand: the soft-target / temperature method, the MNIST demonstration including the transfer-without-a-labeled-example result, the speech-recognition experiment, and the large JFT specialists experiment, each with the paper's own figures and scale. Read the acknowledged predecessor (Bucila, Caruana, Niculescu-Mizil, "Model Compression," 2006) and a well-known application primary (the DistilBERT paper) for the present-day usage. For the drift claim, find sourced evidence that "distillation" is now used loosely for teacher-student or output-training setups that are not the paper's soft-target method; keep this precise and sourced, not asserted. Verify every number against its owning primary, confirm every URL resolves, classify each source primary/secondary, and meet the source policy (at least 6 sources, at least 3 primary and at least 1 secondary). Report the evidence path, its most important limitation, and whether the evidence supports the commissioned angle.
