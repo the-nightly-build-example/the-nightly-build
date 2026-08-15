@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>To stop labeling Black men as gorillas, Google stopped labeling gorillas · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "google-photos-gorilla",
+        "template": "lesson",
+        "title": "To stop labeling Black men as gorillas, Google stopped labeling gorillas",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-15",
+        "tags": ["image-classification", "training-data", "skin-tone-gap", "google-photos"],
+        "sources": 8,
+        "words": 2200,
+        "reading_minutes": 10,
+        "dek": "In 2015, Google Photos filed pictures of Jacky Alciné and a friend, both Black, into an album it labeled Gorillas, and eight years later that same block was still the best answer four companies had.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">To stop labeling Black men as gorillas, Google stopped labeling gorillas</h1>
+        <p class="nb-dekline">
+          In 2015, Google Photos filed pictures of Jacky Alciné and a friend, both Black, into an album it labeled Gorillas, and eight years later that same block was still the best answer four companies had.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-08-15</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Your phone sorts your photographs for you. Type dog into the search
+          box and the pictures of your dog come back, because somewhere a
+          program looked at every image in your library and guessed what each
+          one showed. In 2015 one of those programs looked at photographs of a
+          man named Jacky Alciné and a friend and filed them under the label
+          gorilla. This lesson follows what happened next: what Alciné found,
+          what Google said, and the repair Google actually shipped, which was
+          not the one it promised. Then it explains why a system built to label
+          your pictures fails this particular way, and why the failure falls
+          hardest on the people its example photos show least. It also teaches
+          what an image classifier is, and why the block Google reached for in
+          2015 was still four large companies' answer eight years later.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../when-ai-breaks/facial-recognition-wrongful-arrest.html">A ranked list of candidates was enough to arrest the wrong man</a>:
+            the sibling failure, the same demographic accuracy gap in a vision
+            system, measured by NIST, that put the wrong man in a jail cell.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../when-ai-breaks/amazon-hiring-tool.html">A resume engine that learned to prefer men</a>:
+            another system that learned bias from its training examples, where
+            deleting the biased word did not delete the bias underneath.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The album titled Gorillas</h2>
+        <p>
+          On the evening of Sunday, June 28, 2015, a software developer in
+          Brooklyn named Jacky Alciné opened Google Photos and found the app had
+          sorted his pictures into albums on its own. It had gathered a set of
+          photographs of him and a friend, both of them Black, and given the
+          album a one-word title: Gorillas.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Alciné posted a screenshot. "Google Photos, y'all fucked up," he
+          wrote. "My friend's not a gorilla."<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          A few minutes later he added that the how was not what troubled him:
+          "Like I understand HOW this happens; the problem is moreso on the
+          WHY."<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The word the app had reached for has a long history as a racist slur
+          against Black people.<sup class="nb-cite"><a href="#s2">2</a></sup> A
+          program had applied it, automatically, to the faces of two Black men.
+        </p>
+      </section>
+
+      <section data-nb-section="the-answer" id="the-answer">
+        <h2>Google's answer that night</h2>
+        <p>
+          The reply came fast. Within about two hours, Yonatan Zunger, Google's
+          chief architect for its social products, answered Alciné
+          directly.<sup class="nb-cite"><a href="#s1">1</a></sup> "Holy fuck,"
+          Zunger wrote. "G+ CA here. No, this is not how you determine someone's
+          target market. This is 100% Not OK."<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Google followed with an official statement. "We're appalled and
+          genuinely sorry that this happened," a spokesperson said.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          "There is still clearly a lot of work to do with automatic image
+          labeling."<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Zunger said the label would come off: gorilla would no longer be
+          attached to groups of photos. He said Google was working on
+          longer-term repairs, and named one of them, "better recognition of
+          dark-skinned faces."<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Hold on to that second promise, because the record shows which repair
+          Google actually made. It removed the gorilla label from Google Photos
+          and took away the ability to search for it.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          In 2015 the company called the removal temporary.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          It was not.
+        </p>
+        <p>
+          Google's fix was not to the recognition. It was to the vocabulary.
+        </p>
+      </section>
+
+      <section data-nb-section="how-labeling-works" id="how-labeling-works">
+        <h2>How the app learned its labels</h2>
+        <p>
+          To sort a photo library, Google Photos runs each picture through an
+          image classifier: a program shown an enormous collection of example
+          photographs, every one already tagged with what it contains, until it
+          learns to attach those same tags to pictures it has never seen. Feed
+          it enough images marked beach and it will find your beaches. Feed it
+          enough marked dog and you can type dog into the search box and pull
+          back every picture of your dog. The label the app showed Alciné came
+          out of that same process, run without a person checking the result.
+        </p>
+        <p>
+          A classifier is only ever as good as the examples it was shown.
+        </p>
+        <p>
+          Think of a student who has studied a thousand photographs of dogs and
+          only three of cats. Shown a cat in an odd pose, the student reaches
+          for the nearest thing they know well, and answers with confidence. The
+          system does the same. Where a kind of subject is thin in the training
+          photos, the system's guesses about it get worse, and it has no sense
+          that they are worse. It returns its best label either way.
+        </p>
+        <p>
+          When the people underrepresented in the examples are dark-skinned, the
+          accuracy of the system on their faces falls. Google's own spokesperson
+          later put the general point plainly: "Image labeling technology is
+          still early and unfortunately it's nowhere near
+          perfect."<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-skin-tone-gap" id="the-skin-tone-gap">
+        <h2>The skin-tone gap, put to numbers</h2>
+        <p>
+          Why would a system be worse on dark-skinned faces? Look
+          at what it learns from. In 2017 a team on Google's own Brain group
+          measured two of the standard image collections that classifiers train
+          on. Both were badly skewed by geography. In Open Images, more than 32
+          percent of the located photographs came from the United States, and
+          about 60 percent from six countries in North America and Europe. China
+          accounted for roughly 1 percent, India for 2. ImageNet ran close to 45
+          percent United States.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          They then ran a classifier trained on that data. It recognized a groom
+          in wedding dress far less reliably in a photograph
+          from Hyderabad, India, than in the Western images it had seen most
+          of.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          The skew runs by skin tone too. In 2020 researchers at Princeton and
+          Stanford annotated the part of ImageNet that labels people and measured
+          who was in it. Across the categories they judged safe to use, images of
+          dark-skinned people averaged just 6.2
+          percent.<sup class="nb-cite"><a href="#s6">6</a></sup> The same audit
+          found the collection carried demeaning categories in its label
+          vocabulary, slurs inherited wholesale from an older word
+          database.<sup class="nb-cite"><a href="#s6">6</a></sup> The data these
+          systems learned from showed dark-skinned people least.
+        </p>
+        <p>
+          That is the cause. The clearest measurement of the effect came in 2018,
+          from a study by Joy Buolamwini and Timnit Gebru called
+          Gender Shades.<sup class="nb-cite"><a href="#s7">7</a></sup> It did not
+          test Google Photos, and it did not test animal labels. It tested three
+          commercial systems, from Microsoft, IBM, and Face++, on a single narrow
+          task: look at a face and say whether the person is a man or a woman.
+        </p>
+        <p>
+          The researchers assembled a benchmark of 1,270 faces, balanced by sex
+          and by skin tone, and scored each system separately on each group. On
+          lighter-skinned men, the systems were almost never wrong: an error
+          rate of 0.0 percent for Microsoft, 0.3 percent for IBM. On
+          darker-skinned women, the same systems were wrong between 20.8 and
+          34.7 percent of the time.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The group least represented in the data was the group the systems read
+          worst, and the darker-skinned women, at the intersection of the two
+          gaps, were read worst of all. It is the same demographic-error gap
+          behind <a href="../when-ai-breaks/rite-aid-facial-recognition.html">Rite
+          Aid's store-camera facial recognition</a>.
+        </p>
+        <p>
+          None of these studies measured the system that labeled Alciné's photo.
+          Gender Shades scored a different task on other companies' systems. The
+          dataset audits examined the collections these systems learn from, not
+          Google Photos, and Google has never published its 2015 training set or
+          failure analysis. Together they establish the shape and the source of
+          the failure, not its size here. That is why a photograph of two
+          Black men could come back under an animal label.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            An image classifier learns whatever its examples teach it, and no
+            more. When the examples show dark-skinned people least, at 6.2
+            percent of the people images in the standard dataset, it learns them
+            worst. A system that has learned a face poorly still hands back a
+            label, including a catastrophic one. These studies measured the
+            datasets and other companies' systems, not Google Photos. They show
+            the mechanism, not this incident's own
+            number.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          </p>
+        </div>
+        <p>
+          Google's own account points the same way without settling it. Zunger
+          named "better recognition of dark-skinned faces" as a repair the
+          company was pursuing, implying the gap without stating
+          it.<sup class="nb-cite"><a href="#s3">3</a></sup> Coverage widely
+          reported that Google's training data held too few photographs of Black
+          people, but Google never said so in those words.
+        </p>
+      </section>
+
+      <section data-nb-section="the-block-that-held" id="the-block-that-held">
+        <h2>The block that outlived the apology</h2>
+        <p>
+          Google's fix was tested in public twice over the next eight years.
+          Each test found it still in place.
+        </p>
+        <ol class="nb-timeline">
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">2015</span>
+            <h3>
+              Google removes the gorilla label<sup class="nb-cite"
+                ><a href="#s2">2</a></sup
+              >
+            </h3>
+            <p>
+              After the incident, Google Photos drops the gorilla label and the
+              ability to search for it. The company calls the removal temporary.
+            </p>
+          </li>
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">2018</span>
+            <h3>
+              Wired tests the fix<sup class="nb-cite"><a href="#s4">4</a></sup>
+            </h3>
+            <p>
+              A search over 40,000 uploaded images returns nothing for gorilla,
+              chimp, chimpanzee, or monkey, though Google's other products can
+              still identify a gorilla.
+            </p>
+          </li>
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">2023</span>
+            <h3>
+              The Times tests it again<sup class="nb-cite"
+                ><a href="#s3">3</a></sup
+              >
+            </h3>
+            <p>
+              In a 44-image search, Google Photos still cannot find gorillas,
+              baboons, chimpanzees, orangutans, or monkeys. Apple Photos and
+              Microsoft's OneDrive block the same terms. Amazon's service
+              mislabels other animals as gorillas.<sup class="nb-cite"
+                ><a href="#s8">8</a></sup
+              >
+            </p>
+          </li>
+        </ol>
+        <p>
+          The 2018 test carried the detail that matters most. When Wired's
+          reporter Tom Simonite ran a photo through Google's Cloud Vision, a
+          separate product the company sells to developers, it labeled the
+          animal a "western gorilla" with 94 percent confidence. Google
+          Assistant named one too.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The recognition existed inside Google. What stayed switched off in the
+          consumer photo app was not the ability to identify a gorilla. It was
+          the willingness to risk applying that label to a person.
+        </p>
+        <p>
+          Google has said as much. When the New York Times asked in 2023, a
+          spokesman said the company still kept its photo app from labeling
+          anything as a monkey or an ape because the benefit "does not outweigh
+          the risk of harm."<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Alciné, reached again eight years after his tweet, said the problem had
+          not been fixed. "I'm going to forever have no faith in this AI," he told
+          the reporters.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          The photo app on your phone still sorts your pictures the same way
+          Google Photos sorted Alciné's, by running each one through a classifier
+          trained on example images. In 2023 four large companies looked at that
+          same setup and reached the decision Google reached in 2015: where the
+          gap between the labels could do the most harm, the safest move was to
+          switch the labels off. The gap underneath was never closed. A system is
+          still only as accurate as the examples it was shown, and still least
+          accurate on the people those examples show least. That is what runs
+          behind every product that offers to label your pictures for you. An
+          image generator can miss the other way: Google's
+          <a href="../when-ai-breaks/gemini-image-generation.html">Gemini image
+          generator</a> overcorrected for under-representation and drew
+          historically false pictures, where this system left a gap open.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          An image classifier learns from examples, and it is only ever as good
+          as the examples it was shown. Where a group of people is thin in those
+          examples, the system reads them worst, and in Gender Shades' test the
+          darker-skinned women were read worst of all. That is the gap that put
+          two Black men under the label gorilla in 2015. Google apologized and
+          promised to fix the recognition. What it shipped instead was the
+          deletion of a word: it removed the gorilla label and the search for it,
+          while its other products went on identifying gorillas correctly. The
+          gap was never closed. The category that made the gap dangerous was
+          switched off. Eight years later, faced with the same failure, Google,
+          Apple, Microsoft, and Amazon had all made the same call. The next time
+          your photo app finds every picture of your cat but goes quiet on a
+          whole class of subject, you are seeing that call again. Its maker would
+          rather show you nothing than risk showing you the wrong thing, because
+          the gap underneath is still there.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://proceedings.mlr.press/v81/buolamwini18a.html">Gender Shades: Intersectional Accuracy Disparities in Commercial Gender Classification</a>
+            (Buolamwini and Gebru): the full study behind the skin-tone numbers,
+            with the per-system error tables.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.theregister.com/2023/05/29/google_photos_ai_still_cant_label_gorillas/427652">Google Photos AI still can't label gorillas</a>
+            (The Register): a walk through the 2023 retests across Google, Apple,
+            Microsoft, and Amazon.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.forbes.com/sites/mzhang/2015/07/01/google-photos-tags-two-african-americans-as-gorillas-through-facial-recognition-software/"
+              >Forbes · Maggie Zhang, "Google Photos Tags Two African-Americans As Gorillas Through Facial Recognition Software" (July 1, 2015)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.cbc.ca/news/trending/google-photos-black-people-gorillas-1.3135754"
+              >CBC News · Google Photos labels photos of Black people "gorillas" (July 2, 2015)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://petapixel.com/2023/05/22/googles-photos-app-is-still-unable-to-find-gorillas/"
+              >PetaPixel · "Google's Photos App Is Still Unable to Find Gorillas" (May 22, 2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.wired.com/story/when-it-comes-to-gorillas-google-photos-remains-blind/"
+              >Wired · Tom Simonite, "When It Comes to Gorillas, Google Photos Remains Blind" (January 11, 2018)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1711.08536"
+              >Shankar et al. · "No Classification without Representation: Assessing Geodiversity Issues in Open Data Sets for the Developing World" (Google Brain, NIPS 2017 workshop)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1912.07726"
+              >Yang et al. · "Towards Fairer Datasets: Filtering and Balancing the Distribution of the People Subtree in the ImageNet Hierarchy" (FAT* 2020)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://proceedings.mlr.press/v81/buolamwini18a.html"
+              >Buolamwini and Gebru · "Gender Shades: Intersectional Accuracy Disparities in Commercial Gender Classification" (PMLR, 2018)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.theregister.com/2023/05/29/google_photos_ai_still_cant_label_gorillas/427652"
+              >The Register · Google Photos AI still can't label gorillas (May 29, 2023)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
