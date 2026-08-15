@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HellaSwag's right answer is just the sentence that came next · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "hellaswag",
+        "template": "lesson",
+        "title": "HellaSwag's right answer is just the sentence that came next",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-15",
+        "tags": ["benchmarks", "commonsense", "evaluation", "saturation"],
+        "sources": 9,
+        "words": 2027,
+        "reading_minutes": 9,
+        "dek": "The 2019 test built to stump machines is now solved, and much of its answer key turns out to be wrong.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">HellaSwag's right answer is just the sentence that came next</h1>
+        <p class="nb-dekline">
+          The 2019 test built to stump machines is now solved, and much of its answer key turns out to be wrong.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-15</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          HellaSwag is the test behind a claim you have probably met: that large
+          language models now have commonsense about everyday situations. The test
+          itself is a sentence-completion quiz. A model reads a short setup and
+          picks, out of four choices, the way it really continues. For a few years
+          this was the standard measure of machine commonsense, and it still turns
+          up on model report cards. GPT-4's own technical report lists a 95.3% on
+          HellaSwag under the heading "commonsense reasoning." The catch is that the
+          number stopped meaning what it did when the test was new. This lesson
+          takes one HellaSwag item apart and shows how its four answers are built
+          and scored. Then it follows the top score from 47% in 2019 to the human
+          line in 2023, and on to the audits that found much of the test broken.
+          Read it and a fresh "95% on HellaSwag" resolves into the three separate
+          things it now hides.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/glue.html">The 'human-level' language score is an average of nine English tests</a>:
+            an earlier benchmark that saturated the same way and got read as human-level understanding.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/in-context-learning.html">How a model learns from examples it was never trained on</a>:
+            what "ten-shot" means when a score is reported.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What a right answer looks like</h2>
+        <p>
+          HellaSwag is a multiple-choice test of sentence completion. Each item
+          gives a short context and four ways to continue it. One is the real
+          continuation and the other three are decoys, and a model earns a point for
+          picking the real one.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Here is the first item in the public validation set, exactly as it ships.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The first validation item, verbatim. Given the context "A man is
+            sitting on a roof. he", a model picks one ending of four; option 3, the
+            caption that actually came next, is keyed correct.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th class="txt">Ending</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>0</td>
+              <td class="txt">is using wrap to wrap a pair of skis.</td>
+            </tr>
+            <tr>
+              <td>1</td>
+              <td class="txt">is ripping level tiles off.</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td class="txt">is holding a rubik's cube.</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td class="txt">starts pulling up roofing on a roof.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The keyed answer, option 3, is not the wittiest ending or the one that
+          reads best on its own. It is the sentence that actually came next in the
+          source, a set of captions describing a video of a man removing roof
+          shingles.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Telling it apart from three machine-written decoys is the whole task. A
+          right answer on HellaSwag is recovering the real continuation, not showing
+          a chain of reasoning about the world.
+        </p>
+        <p>
+          The released dataset is 59,950 of these items, split into 39,905 for
+          training, 10,042 for a validation set, and 10,003 for a held-out test
+          whose answer key is withheld.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The paper that introduced HellaSwag advertised a rounder "70k problems."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The released count is the one that can be checked against the shipped data.
+        </p>
+      </section>
+
+      <section data-nb-section="how-answers-built" id="how-answers-built">
+        <h2>How the four answers are built</h2>
+        <p>
+          The three decoys are not written by hand. HellaSwag manufactures them by a
+          procedure its predecessor, a 2018 dataset called SWAG, named adversarial
+          filtering. The idea is to over-generate wrong endings with a language
+          model, then keep only the decoys a second machine cannot tell apart from
+          the real ending.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          HellaSwag ran that procedure with two of the strongest language models of
+          its moment: OpenAI's GPT to write the wrong endings, and BERT-Large, a
+          system trained to classify text, as the filter.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>Start from something real</h3>
+            <p>
+              Take a genuine context and its true next sentence from one of two text
+              sources: captions describing videos in a dataset called ActivityNet,
+              and how-to steps from WikiHow.<sup class="nb-cite"><a href="#s2">2</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Over-generate wrong endings</h3>
+            <p>
+              Have the language model write many endings for that context. In SWAG,
+              the authors produced 1,023 candidate wrong endings per item before any
+              filtering.<sup class="nb-cite"><a href="#s3">3</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Keep only the hard ones</h3>
+            <p>
+              Train the filter to separate the machine endings from the real one,
+              and discard the wrong endings it catches easily. Repeat until only
+              decoys it cannot separate survive; in SWAG, nine per item.<sup class="nb-cite"><a href="#s3">3</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Check that people still pass</h3>
+            <p>
+              Show the survivors to human annotators, and keep the item only if they
+              still pick the real ending. A decoy that fools people too is thrown
+              out.<sup class="nb-cite"><a href="#s2">2</a></sup>
+            </p>
+          </li>
+        </ol>
+        <p>
+          On the finished test, people scored 95.6%, while the best model of 2019,
+          the same BERT-Large used as the filter, managed 47.3%.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          As a way to manufacture a hard test cheaply, adversarial filtering worked:
+          it turned free captions and how-to text into a benchmark no 2019 model
+          could touch, without anyone writing a single trick question by hand. The
+          authors pitched the paper as a correction. An earlier benchmark had looked
+          solved, and HellaSwag showed the models clearing it were exploiting
+          patterns in the data rather than reasoning.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-gap" id="the-gap">
+        <h2>The gap that took four years to close</h2>
+        <p>
+          At launch the gap was enormous: 47.3% for the best model against 95.6% for
+          people, close to fifty points.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          It did not last. By 2023, GPT-4 scored 95.3% on HellaSwag at ten-shot,
+          meaning it was shown ten
+          <a href="../the-mechanics/in-context-learning.html">solved examples</a>
+          before each question.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The leaderboard the benchmark's own author maintains lists that same GPT-4
+          entry against a human baseline it describes as over 95%.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img src="hellaswag/chart-1.png" alt="Line chart of HellaSwag accuracy: the best model rises from 47.3% in 2019 to 95.3% in 2023, meeting a dashed human baseline at 95.6%." />
+          <figcaption>
+            Fig. 1 · Two anchored measurements: the best 2019 model (BERT-Large,
+            47.3%) and GPT-4 at ten-shot in 2023 (95.3%), against the 95.6% human
+            baseline.<sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s4">4</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          No checked model clearly passes 95.6. GPT-4's 95.3 is the strongest
+          verified figure, and it sits three-tenths of a point under the human
+          mark.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          What the top scores show is that the machines are level with people:
+          bunched within about a point of the human line and of one another. At that
+          range, the difference between two scores is noise.
+        </p>
+        <p>
+          When scores pile up at the top of a test this way, the test stops doing its
+          job. It can no longer tell a stronger model from a weaker one, a state the
+          field calls saturation. In 2024, the operators of the most-cited open
+          leaderboard retired HellaSwag for exactly this reason, writing that models
+          "are now reaching baseline human performance on HellaSwag, MMLU, and ARC, a
+          phenomenon called saturation."<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Their verb is "reaching," not "surpassing," which is the honest word for
+          what the figures show. This is the same arc a language benchmark called
+          <a href="../the-instruments/glue.html">GLUE</a> traced a few years earlier.
+        </p>
+      </section>
+
+      <section data-nb-section="broken-items" id="broken-items">
+        <h2>The typo in the answer key</h2>
+        <p>
+          A score is only as good as the key it is graded against, and two
+          independent audits have found HellaSwag's key in poor shape. A 2025
+          validity study reports that almost 40% of the validation questions have
+          ungrammatical prompts, and among the items drawn from ActivityNet captions
+          the figure is 95.7%.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          In 21.1% of questions at least one decoy is as good as the keyed answer,
+          and the keyed answer is the correct one in 96.3% of cases, so roughly one
+          item in twenty-seven is simply mislabeled.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          The same study ran a check the reader can judge directly. It replaced each
+          context with meaningless "Lorem ipsum" placeholder text and re-scored the
+          models. More than 65% of their predictions did not change.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          A right answer is supposed to be the real continuation of the described
+          scene. If the scene is blanked out and the model still picks the same
+          ending most of the time, the endings alone are giving the answer away, and
+          the situation the item describes is doing little of the work.
+        </p>
+        <p>
+          A separate hand review by Surge AI read 300 random validation rows and
+          found 107 of them, 36%, contained an error: bad grammar, a typo, or a keyed
+          answer no better than a decoy.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          And the flaw is not confined to the wrong answers. Here is one item whose
+          keyed-correct ending is itself broken.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The answer key, misspelled</span>
+          <p>
+            Prompt: "Men are standing in a large green field playing lacrosse. People
+            is around the field watching the game. men" Keyed-correct ending: "are
+            running side to side of the ield playing lacrosse trying to
+            score."<sup class="nb-cite"><a href="#s8">8</a></sup>
+          </p>
+        </div>
+        <p>
+          The prompt reads "People is around the field," and the ending marked
+          correct reads "side to side of the ield," carrying the source's own typo
+          for "field."<sup class="nb-cite"><a href="#s8">8</a></sup>
+          A model is scored right for matching that. These are not stray bad items at
+          the margin. Nearly all of the ActivityNet portion of the test is
+          ungrammatical, and that is a large share of the questions any HellaSwag
+          score is averaged over.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="commonsense-claim" id="commonsense-claim">
+        <h2>Why 95% still reads as commonsense</h2>
+        <p>
+          GPT-4's technical report, published in 2023, lists its 95.3% on HellaSwag
+          in a table of academic benchmarks, under a one-line description that calls
+          the benchmark "commonsense reasoning around everyday events."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Explainers repeat the reading. One describes closed-source models as "now
+          performing on par with humans, with GPT-4 scoring 95.3%."<sup class="nb-cite"><a href="#s9">9</a></sup>
+          By 2023, though, the test was already saturated and, as the audits show,
+          substantially broken.
+        </p>
+        <p>
+          So a 95.3% on HellaSwag is consistent with three things at once that the
+          bare number hides. The model is picking the real continuation, which the
+          Lorem ipsum check suggests it often does without reading the situation.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          It is doing so on a test where much of the answer key is unreliable. And it
+          is scoring at a ceiling where the number no longer separates one model from
+          another.
+        </p>
+        <p>
+          The cost shows up when two close scores are read as a ranking. GPT-4 sits
+          at 95.3, another model at 94 or at 95.6, and the higher number looks like
+          the one with more commonsense. On a saturated test with an error-laden key,
+          that gap is noise, not a real difference. Two such scores do not order two
+          models by commonsense. They mostly report which one better matched a key
+          that is wrong about one item in twenty-seven and ungrammatical on nearly
+          40%.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          None of this was the benchmark's failing when it was built. In 2019,
+          HellaSwag did the job it was designed for. It separated the models of its
+          day cleanly and punctured a claim that machine commonsense was solved.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Both the 47.3 from that year and the 95.3 from 2023 came off the same
+          59,950-item test. The first score sorted the models taking it. The second,
+          at the ceiling, sorts nothing.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A HellaSwag point is awarded for one thing: picking the sentence that
+          really came next, out of three decoys a machine wrote and a machine
+          filtered. Built that way in 2019, the test was trivial for people at 95.6%
+          and beyond every model at 47.3%. By 2023 the best score was 95.3%, close
+          enough to the human mark that the test no longer separates the models
+          taking it, which is why its most-cited leaderboard retired it. And the key
+          it grades against is unreliable: nearly 40% of the questions are
+          ungrammatical, and a hand audit found a third of a sample broken outright.
+          So when a report cites a high HellaSwag score as commonsense, it is quoting
+          a solved, partly broken test as though it still ranked models. On
+          HellaSwag, two scores a point apart no longer tell you which model is
+          better.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://rowanzellers.com/hellaswag/">The HellaSwag project page</a>:
+            browse the leaderboard and try a few items against the model picks yourself.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2504.07825">What the HellaSwag? On the Validity of Common-Sense Reasoning Benchmarks</a>:
+            the full error analysis, and GoldenSwag, a cleaned 1,525-item subset the authors propose instead.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/datasets/Rowan/hellaswag"
+              >Hugging Face · Rowan/hellaswag, the released dataset</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1905.07830"
+              >Zellers et al. · HellaSwag: Can a Machine Really Finish Your Sentence?</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1808.05326"
+              >Zellers et al. · SWAG: A Large-Scale Adversarial Dataset for Grounded Commonsense Inference</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2303.08774"
+              >OpenAI · GPT-4 Technical Report</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://rowanzellers.com/hellaswag/"
+              >Rowan Zellers · HellaSwag project page and leaderboard</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/spaces/open-llm-leaderboard/blog"
+              >Hugging Face · Introducing the Open LLM Leaderboard v2</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2504.07825"
+              >Chizhov et al. · What the HellaSwag? On the Validity of Common-Sense Reasoning Benchmarks</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://surgehq.ai/blog/hellaswag-or-hellabad-36-of-this-popular-llm-benchmark-contains-errors"
+              >Surge AI · HellaSwag or HellaBad? 36% of this popular LLM benchmark contains errors</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://deepgram.com/learn/hellaswag-llm-benchmark-guide"
+              >Deepgram · A guide to the HellaSwag benchmark</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
