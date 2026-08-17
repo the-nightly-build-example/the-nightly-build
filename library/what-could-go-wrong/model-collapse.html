@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generative models fed only their own output collapse within nine generations · What Could Go Wrong</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "what-could-go-wrong",
+        "slug": "model-collapse",
+        "template": "lesson",
+        "title": "Generative models fed only their own output collapse within nine generations",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-17",
+        "tags": [],
+        "sources": 8,
+        "words": 2032,
+        "reading_minutes": 9,
+        "dek": "A follow-up paper found that accumulating real data instead of replacing it avoided the collapse in every experiment the researchers ran.",
+        "harness": "Claude Code",
+        "model": "capable"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">What Could Go Wrong</div>
+        <h1 class="nb-title">Generative models fed only their own output collapse within nine generations</h1>
+        <p class="nb-dekline">
+          A follow-up paper found that accumulating real data instead of replacing it avoided the collapse in every experiment the researchers ran.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-17</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          More of the text, code, and images on the open web now comes from AI
+          models rather than people, which means every future model has to
+          learn from a web that already contains a great deal of AI output.
+          Whether that quietly degrades the next generation of models, or
+          whether real training pipelines sidestep the problem, is not
+          settled. This lesson works through the strongest demonstration that
+          the risk is real, the strongest rebuttal that shows a way around it,
+          and the two places where the rebuttal itself runs into trouble. By
+          the end you can tell apart what has actually been shown from what
+          is still extrapolation about a web nobody has fully tested.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="data-poisoning.html">Data poisoning</a>: what happens
+            when the corruption of training data is deliberate rather than
+            accidental.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/memorization.html">Memorization</a>: how
+            specific training examples get pressed into a model's weights in
+            the first place.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Nine generations from real text to a list of color morphs</h2>
+        <p>
+          In May 2023, Ilia Shumailov and coauthors described a failure mode
+          they called model collapse. Train a generative model on text or
+          images that an earlier model generated, feed that output back in as
+          if it were real data, and repeat.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Just over a year later the same team published a refined version
+          of the study in Nature, with the same finding and the same
+          demonstration.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Trained on its own output, they write, a model's data "end up
+          polluting the training set of the next generation," and being
+          trained on polluted data, the model comes to "mis-perceive
+          reality."<sup class="nb-cite"><a href="#s2" data-nb-locator="Definition 2.1">2</a></sup>
+          The rare, unusual cases in the training distribution disappear
+          first, what they call early collapse. Run the process long enough
+          and the output narrows into something that barely resembles the
+          original data at all, late collapse.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Definition 2.1">2</a></sup
+          >
+        </p>
+        <p>
+          They tested this on OPT-125m, a small open language model,
+          fine-tuned on Wikipedia text. Fine-tuned once on the real data, the
+          model scored 34 on perplexity, a standard measure of how surprised
+          a model is by real text, where lower means the model predicts the
+          text better.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Feed that model's own output back in as training data, fine-tune a
+          new model on it, and repeat for nine generations with none of the
+          original text kept. Perplexity climbs by 20 to 28 points, roughly
+          60 to 80 percent worse than where it started.<sup
+            class="nb-cite"
+            ><a href="#s2" data-nb-locator="Fig. 1b and accompanying text">2</a></sup
+          >
+          The words drift along with the score: the boxed example in the 2023
+          precursor shows a passage sliding, generation by generation, into a
+          list of jackrabbit color varieties by generation nine.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="boxed Example-1 output table">1</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">34</span
+            ><span class="nb-stat-l">baseline perplexity, trained on real text</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">+20–28</span
+            ><span class="nb-stat-l">point rise by generation 9, no retention</span>
+          </div>
+        </div>
+        <p>
+          The same paper ran a third condition worth flagging early: instead
+          of discarding all the original data, they kept a fixed 10 percent
+          of it at every generation. Perplexity still rose, just more
+          slowly.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Fig. 1c and accompanying text">2</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="accumulation" id="accumulation">
+        <h2>Keeping the old data around stops the collapse across three tasks</h2>
+        <p>
+          Gerstgrasser and coauthors tested a different rule.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Instead of replacing the training set at every generation and
+          discarding everything older, they accumulated it. Keep all the
+          original real data, keep every earlier generation's synthetic
+          output, and add each new generation's output on top: the pool only
+          grows.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="§1 Introduction">3</a></sup
+          >
+          They ran replace against accumulate on causal language models (GPT-2
+          and three sizes of Llama-2) pretrained on short stories, on a
+          diffusion model generating molecular structures, and on variational
+          autoencoders trained on faces. Replacing degraded all three;
+          accumulating held test error roughly flat, or nearly flat for the
+          diffusion model, across five to nine rounds of retraining.<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="§2.1, Fig. 2, Fig. 4, Fig. 5">3</a></sup
+          >
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="model-collapse/asset-1.png"
+            alt="Line charts of test error over five model-fitting iterations for four language-model architectures (GPT-2 9M and three sizes of Llama-2), rising steadily under Replace and staying roughly flat under Accumulate."
+          />
+          <figcaption>
+            Fig. 1 · Four architectures, same task: test error climbs when
+            each generation replaces the last, and holds flat when the data
+            accumulates instead.<sup class="nb-cite"
+              ><a
+                href="#s3"
+                data-nb-locator="Fig. 2"
+                data-nb-url="https://arxiv.org/abs/2404.01413"
+                data-nb-note="The paper's own comparison of the replace and accumulate regimes across four language-model architectures pretrained on TinyStories."
+                >3</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          They also proved why, in a simplified case they could work out
+          exactly: a sequence of linear models, each fit on the data available
+          at that step. Replacing at every iteration makes test error grow in
+          direct proportion to the number of iterations. Accumulating keeps
+          it bounded, no matter how many iterations run. Each new
+          generation's added noise gets diluted by a weight that shrinks in
+          proportion to one over the iteration number squared, as the pool of
+          real and synthetic data keeps growing.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="§3, Theorem 1, Theorem 2, pp. 8–10">3</a></sup
+          >
+          Gerstgrasser and coauthors put the upshot plainly: "these results
+          strongly suggest that the 'curse of recursion' may not be as dire
+          as had been portrayed — provided we accumulate synthetic data
+          alongside real data, rather than replacing real data by synthetic
+          data only."<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="partial-retention" id="partial-retention">
+        <h2>A fixed slice of the old data slows the collapse without stopping it</h2>
+        <p>
+          It is tempting to read Shumailov's 10 percent condition as a small
+          version of Gerstgrasser's accumulation, proof the same fix showed up
+          twice. It is a different operation. Ten percent retention keeps a
+          fixed, constant slice of the original data at every generation, the
+          same size each time.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Fig. 1c and accompanying text">2</a></sup
+          >
+          Accumulation keeps the entire growing history: all the real data
+          plus every earlier generation's synthetic output. The fraction that
+          is real data shrinks over time even as the absolute amount of real
+          data never drops.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="§1 Introduction">3</a></sup
+          >
+          Partial, fixed retention is the condition that only slowed
+          Shumailov's collapse. Full, growing accumulation is the condition
+          Gerstgrasser's team showed avoiding it. Reading the first as a
+          miniature of the second overstates what either paper found.
+        </p>
+      </section>
+
+      <section data-nb-section="unresolved-tension" id="unresolved-tension">
+        <h2>One architecture and one theorem complicate the fix</h2>
+        <p>
+          Gerstgrasser's own paper names an exception to its result. Citing
+          earlier work by Martínez and coauthors, they note that a different
+          architecture, tested on a much smaller dataset, showed fast
+          performance loss "even with accumulating data."<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="§2.3 discussion, citing Martínez et al., 2023a">3</a></sup
+          >
+          They call understanding why "an interesting direction... for future
+          research," not a solved problem.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <p>
+          A later, separate theoretical paper complicates the picture
+          further. Five months after Gerstgrasser's paper, Dohmatob and
+          coauthors proved a related result in a comparable linear-regression
+          setting. Whenever the synthetic share of the training mix stays a
+          fixed fraction instead of shrinking toward zero as the dataset
+          grows, collapse persists, "even the smallest fraction of synthetic
+          data (e.g., as little as 1% of the total training dataset)."<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          On its face that sounds like it targets accumulation directly. It
+          does not straightforwardly refute it, because the two papers assume
+          different things about how the synthetic share behaves.
+          Gerstgrasser's own theorem has that share shrinking on its own,
+          proportional to one over the iteration number squared, under their
+          specific accumulation scheme, which is close to the condition
+          Dohmatob's proof exempts.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          ><sup class="nb-cite"><a href="#s4">4</a></sup>
+          The two papers do not cite or engage each other on this point.
+          Whether real accumulation schemes behave more like Gerstgrasser's
+          shrinking share or Dohmatob's fixed one is an open, empirical
+          question, not one either paper answers for the other.
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>
+                Accumulation held test error flat or nearly flat across
+                language models, a diffusion model, and variational
+                autoencoders, matching a proven bound in the tractable linear
+                case.<sup class="nb-cite"><a href="#s3">3</a></sup>
+              </li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>
+                A different architecture degraded quickly even while
+                accumulating, in work Gerstgrasser's own paper cites and
+                leaves unexplained.<sup class="nb-cite"
+                  ><a href="#s3">3</a></sup
+                >
+              </li>
+              <li>
+                A later theorem shows collapse persisting under a fixed
+                synthetic share, an assumption the accumulation paper's own
+                proof does not make, and the two results have not been
+                reconciled.<sup class="nb-cite"><a href="#s4">4</a></sup>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section data-nb-section="present-day" id="present-day">
+        <h2>The strongest push for provenance is still the original paper's</h2>
+        <p>
+          Who is pressing the collapse worry today, and asking for what? The
+          clearest primary answer is still the one in the original 2024
+          paper's own discussion. Preserve access to real, human-generated
+          data, and coordinate across the field on tracking where content on
+          the web actually came from.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Discussion, final two paragraphs">2</a></sup
+          >
+          Yarin Gal, one of the paper's coauthors, put the stakes more
+          bluntly at publication: "Model collapse is the AI equivalent of a
+          feedback loop gone wrong. The more models feed on their own output,
+          the further they drift from reality."<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Independent reporting on the same study carried the same framing,
+          that companies retaining access to human-generated content may hold
+          a structural advantage.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Nothing more recent and equally authoritative restates or updates
+          that position: more than two years on, the loudest primary voice on
+          what to do about model collapse is still the team that demonstrated
+          it.
+        </p>
+        <p>
+          The tension the collapse worry sits inside is that synthetic data
+          has also made models better, when someone curates it deliberately.
+          This paper's lesson on
+          <a href="../the-evidence/textbooks-are-all-you-need.html">phi-1</a>
+          covers the case in full: a small code model trained mostly on
+          filtered web text plus a meaningful share of textbooks and
+          exercises an earlier model wrote. It matched or beat
+          StarCoder-Prompted, a code model built with about twelve times its
+          parameters and more than a hundred times its training
+          tokens.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Gunasekar and coauthors never mention model collapse; their subject
+          is data quality, not the replace-versus-accumulate question
+          Shumailov and Gerstgrasser were testing.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          It is not a counter-example to either paper. It is evidence that
+          synthetic data chosen deliberately, for a narrow purpose, behaves
+          differently than synthetic data an internet-scale model absorbs
+          indiscriminately. That gap, between curated use and indiscriminate
+          use, is close to the gap between what has been demonstrated and
+          what is still extrapolation about the open web.
+        </p>
+        <p>
+          Not every researcher reads the collapse literature as settled
+          ground. Schaeffer and coauthors argue the field uses at least eight
+          distinct, sometimes conflicting, definitions of model collapse,
+          which makes it hard to say what any single study actually proved.
+          They also argue that several of the most-cited collapse scenarios
+          rest on assumptions that poorly match how models are actually
+          trained.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+        <div class="nb-position">
+          <div class="nb-position-top">
+            <span class="nb-position-who"
+              >Schaeffer, Kazdan, Arulandu and Koyejo</span
+            ><span class="nb-position-pill">Position</span>
+          </div>
+          <p class="nb-position-statement">
+            Model-collapse research is definitionally fragmented, and several
+            of its most prominent scenarios rest on assumptions that do not
+            match real deployment, which has pulled attention away from more
+            immediately plausible harms of current AI development.
+          </p>
+          <p class="nb-position-summary">
+            Their March 2025 paper counts at least eight distinct definitions
+            of "model collapse" in circulation and argues that several
+            prominent collapse scenarios are readily avoidable in
+            practice.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          </p>
+        </div>
+        <p>
+          Even that reading does not dispute the core demonstration:
+          replacing real data with a prior generation's synthetic output
+          collapses models in every setting both papers tested. The
+          disagreement is entirely about how far that finding travels beyond
+          those settings.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Training a model only on a prior model's output collapses it within
+          a handful of generations, and the tails of the training
+          distribution go first. That part is settled, shown the same way in
+          two papers just over a year apart. Whether that finding says much
+          about the
+          training pipelines companies actually run is not settled.
+          Accumulating real data alongside the synthetic, rather than
+          replacing it, avoided collapse in everything Gerstgrasser's team
+          tested. It did not avoid collapse in a different architecture their
+          own paper cites, and a later theorem shows collapse can persist
+          under an assumption their proof does not make. The next time a
+          number about model collapse crosses your feed, ask which of three regimes it is
+          actually describing: replacement, a fixed partial retention, or
+          full accumulation. Only one of them has been shown, so far, to
+          avoid the problem.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2404.01413"
+              >Gerstgrasser et al., the accumulation paper</a
+            >: the full empirical and theoretical case, including the
+            exception it names.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2410.04840"
+              >Dohmatob et al., "Strong Model Collapse"</a
+            >: the later theorem that complicates it.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.17493"
+              >arXiv · Shumailov et al., "The Curse of Recursion: Training on
+              Generated Data Makes Models Forget" (2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nature.com/articles/s41586-024-07566-y"
+              >Nature · Shumailov et al., "AI models collapse when trained on
+              recursively generated data" (2024)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.01413"
+              >arXiv · Gerstgrasser et al., "Is Model Collapse Inevitable?
+              Breaking the Curse of Recursion by Accumulating Real and
+              Synthetic Data" (2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2410.04840"
+              >arXiv · Dohmatob et al., "Strong Model Collapse" (2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.cs.ox.ac.uk/news/2356-full.html"
+              >University of Oxford Department of Computer Science · News
+              release on the Nature model-collapse study</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://techxplore.com/news/2024-07-ai-collapse-llms.html"
+              >TechXplore · News coverage of the Nature model-collapse
+              study</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2306.11644"
+              >arXiv · Gunasekar et al., "Textbooks Are All You Need"
+              (2023)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2503.03150"
+              >arXiv · Schaeffer, Kazdan, Arulandu and Koyejo, position paper
+              on model-collapse definitions and evidence (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
