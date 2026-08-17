@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPT-4o clears 61% of τ-bench tasks once and under 25% of them eight times in a row · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "tau-bench",
+        "template": "lesson",
+        "title": "GPT-4o clears 61% of τ-bench tasks once and under 25% of them eight times in a row",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-17",
+        "tags": ["tau-bench", "agent-evaluation", "benchmarks", "reliability", "pass-k"],
+        "sources": 8,
+        "words": 2063,
+        "reading_minutes": 9,
+        "dek": "τ-bench scores an AI agent by whether a simulated customer's conversation ends in the correct database state, while eight straight successes collapse that score.",
+        "harness": "Claude Code",
+        "model": "capable"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">GPT-4o clears 61% of τ-bench tasks once and under 25% of them eight times in a row</h1>
+        <p class="nb-dekline">
+          τ-bench scores an AI agent by whether a simulated customer's
+          conversation ends in the correct database state, while eight
+          straight successes collapse that score.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-17</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Companies now routinely put a specific percentage on how much of a
+          customer's request their AI "agent" can handle, and the benchmark
+          behind that kind of number is often τ-bench: a test built from mock
+          customer-service conversations rather than trivia questions. A reader who has only
+          ever seen the headline number cannot tell whether it means the
+          agent gets the job done or gets it done once in a while. This
+          lesson walks through exactly what a τ-bench score checks. It then
+          shows why the same benchmark reports two different numbers for the
+          same model, and why the more forgiving of the two keeps turning up
+          in public. By the end you will be able to ask of any agent score
+          what a launch post rarely volunteers. What counts as success? Who
+          is playing the customer? Is the figure a single run, or a rate of
+          repeat success?
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/swe-bench.html">Change which SWE-bench tasks are counted and GPT-4o's score doubles</a>: the other kind of agent benchmark, graded by a repository's own tests instead of a customer's satisfaction.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/llm-as-a-judge.html">Answer order alone swung a language model's verdict by 80 points</a>: what happens when a model, not a rule, is the one deciding who passed.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The database state that decides whether the agent passed</h2>
+        <p>
+          τ-bench, spelled with the Greek letter and read aloud as
+          "tau-bench," is a 2024 benchmark from the Sierra researchers Yao,
+          Shinn, Razavi, and Narasimhan.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          τ-bench does not ask a model to answer a question. It puts the
+          model in the seat of a customer-service agent.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The agent gets a set of tools, functions it can call against a mock
+          database such as looking up a reservation or canceling one, and a
+          written policy for the domain.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          It then holds a multi-turn conversation with a simulated
+          customer.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          That customer is not a person. It is a second language model,
+          prompted to role-play someone with a specific, private goal the
+          agent has to draw out through conversation.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The grading itself is not another model's opinion. After the
+          conversation ends, τ-bench checks two things: whether the database
+          landed in the state a human annotator decided was correct, and
+          whether the agent's messages to the customer conveyed the specific
+          information the task required.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Both have to hold. An agent that fixes the database but never tells
+          the customer, or one that says the right thing while leaving the
+          database wrong, fails the task.
+        </p>
+        <p>
+          The paper's own worked example, a task labeled JK9O19, shows what
+          that looks like end to end. A customer wants a reservation
+          canceled. The agent calls a tool, reads the account, and finds a
+          policy that would normally block a refund for that flight. Rather
+          than granting the request outright or refusing flatly, the agent
+          proposes what the policy does allow: canceling the existing
+          reservation and rebooking a comparable one.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The customer accepts, and the agent's closing tool call writes the
+          new reservation to the database.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          That final row, and the summary the agent gave the customer along
+          the way, are what the reward function actually reads. Nothing about
+          how the agent got there, how many turns it took or how it phrased
+          its offer, enters the grade.
+        </p>
+      </section>
+
+      <section data-nb-section="pass-1-and-pass-k" id="pass-1-and-pass-k">
+        <h2>One try is not the same as eight in a row</h2>
+        <p>
+          Because a task can be attempted more than once, τ-bench does not
+          settle for a single number. Its authors run every task several
+          times and report two statistics. Pass^1 is the plain one: the
+          share of tasks the agent completes on a given try, averaged across
+          repeated trials.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Pass^k is stricter. It is the share of tasks the agent completes on
+          every one of k independent attempts at that same task, not
+          "succeeded at least once in k tries" but succeeded k times
+          running.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Sierra's own framing of why it bothered to build the harsher
+          measure states the point
+          directly.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          τ-bench "doesn't just test whether an agent can complete a task
+          once; it measures whether it can do so consistently multiple
+          times."<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Run both statistics on the same model and the gap is wide. GPT-4o,
+          the strongest model in the original paper, completed 61.2% of
+          retail tasks on a single try.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Made to succeed eight times running on the same retail task, the
+          paper's own headline claim is starker.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Its abstract states plainly: "even state-of-the-art function
+          calling agents (like gpt-4o) succeed on &lt;50% of the tasks, and
+          are quite inconsistent (pass^8 &lt;25% in
+          retail)."<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">61.2%</span><span class="nb-stat-l">PASS^1, RETAIL, ONE TRY</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">&lt;25%</span><span class="nb-stat-l">PASS^8, RETAIL, EIGHT IN A ROW</span>
+          </div>
+        </div>
+        <p>
+          GPT-4o also does much worse outside retail: 35.2% pass^1 in the
+          airline domain, per the paper's main results table.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Its own policy-ablation table, though, lists 33.2% for what should
+          be the identical baseline condition.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The paper never explains the two-point gap. It is worth naming
+          anyway, since a bare number this close to another can travel with a
+          false sense of precision.
+          By March 2025, Sierra's own blog said the best models were "now
+          crossing 80% pass^1 in the easier domain (retail)," while adding in
+          the same breath that performance "degrades as k
+          increases."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Pass^1 climbed. The shape of the collapse did not go away.
+        </p>
+        <p>
+          The reason the gap matters is what pass^1 leaves out. A business
+          that puts a customer-service agent into production does not run it
+          once. It runs the same kind of task over and over, all day. What it
+          needs to know is not whether the agent can solve a task, but how
+          often the same task comes out right when it runs again. Pass^1
+          answers the first question. Pass^k answers the second, and on
+          τ-bench's own figures for GPT-4o in retail, the two answers are not
+          close.
+        </p>
+      </section>
+
+      <section data-nb-section="the-number-in-public" id="the-number-in-public">
+        <h2>The chart that leaves out the reliability rate, and the report that doesn't</h2>
+        <p>
+          A one-try average is not the only thing a bare τ-bench percentage
+          can hide. Which setup produced it is another. When Anthropic
+          announced Claude 3.7 Sonnet in February 2025, it published a chart
+          titled "Agentic tool use — TAU-bench," reporting three models'
+          single-run scores side by
+          side.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Claude 3.7 Sonnet scored 81.2% retail and 58.4% airline, and Claude
+          3.5 Sonnet scored 71.5% and
+          48.8%.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The chart's third bar, OpenAI's o1, showed 73.5% and 54.2%, a
+          figure Anthropic attributes to OpenAI's own reporting rather than
+          one it verified itself.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          No pass^k figure sits anywhere near that chart. The numbers are a
+          legitimate pass^1-style score, not a mislabeled reliability rate,
+          but they are exactly the kind of bare single-run percentage the
+          paper's own pass^k finding warns against reading as a settled
+          measure of how the agent will hold up in use.
+        </p>
+        <p>
+          The chart also is not a clean rerun of the paper's own baseline
+          agent. Anthropic's own footnote states the scores came "with a
+          prompt addendum to the Airline Agent Policy instructing Claude to
+          better utilize a 'planning' tool," and with the step limit raised
+          from the paper's default of 30 to 100.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Give an agent more room to plan and retry inside a friendlier
+          prompt, and the number moves. That is a second thing a bare
+          percentage does not carry with it: the software wrapped around the
+          model, not the model alone, produced the score.
+        </p>
+        <p>
+          Not every public τ-bench number skips this context. One vendor's
+          May 2026 post on its own agent reported pass^1 through pass^4 side
+          by side, and said plainly what each
+          meant.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          "pass^1 measures raw task accuracy. pass^4 measures consistency: the
+          agent must complete the same task correctly across four independent
+          runs."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          A bare, uncaveated percentage is often the only thing quoted in
+          public, though not always. The exception matters, because it shows
+          that including the missing context was never technically required,
+          only usually skipped. A reader still has to check which kind of
+          number they are looking at, in the reviewer's own words: "Read
+          every score as a claim, not a
+          fact."<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-simulated-customer" id="the-simulated-customer">
+        <h2>The simulated customer has its own error rate</h2>
+        <p>
+          The reliability gap is not the only caution built into this
+          instrument. τ-bench's reward is a rule, not a model's opinion, but
+          the customer half of the conversation the rule grades is played by
+          one.
+          <a href="../the-instruments/llm-as-a-judge.html">A separate lesson in this series</a>
+          covers what happens when a language model is the one deciding who
+          passed. τ-bench does not do that: a fixed check of the database
+          renders the verdict. What a model does supply here
+          is the conversation itself, and if that conversation behaves
+          unrealistically, the agent can fail a task for reasons that have
+          nothing to do with its underlying skill.
+        </p>
+        <p>
+          Sierra's own follow-up benchmark, τ²-bench, put a number on how
+          faithful the original simulated customer actually is. Two human
+          annotators reviewed conversations the retail and airline user
+          simulator produced.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          They recorded a 40% and 47% error rate, respectively: moments where
+          the simulated customer did not behave the way a real one
+          would.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Of those errors, 12% and 13% were severe enough to block the task
+          from being completed correctly no matter what the agent
+          did.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          A task an agent "fails" under those conditions may be failing an
+          unrealistic customer rather than failing the skill the benchmark
+          means to test.
+        </p>
+        <p>
+          Sierra's own repository now says as much about the original tasks
+          themselves. Its README carries the warning in bold: "The tasks in
+          this repo are not updated... Please use τ³-bench for the latest
+          fixed tasks and new
+          domains."<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The successor repository explains what changed: "a new banking
+          domain, a voice evaluation modality, as well as fixes to the
+          airline and retail domain
+          tasks."<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The benchmark's own authors, in other words, no longer stand behind
+          the exact retail and airline tasks that produced GPT-4o's 61.2% and
+          the collapse beneath it, even as the same tasks keep getting quoted.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A τ-bench score checks one thing precisely: whether an agent's tool
+          calls left a mock database in the state a human decided was
+          correct, and whether it told the simulated customer what it needed
+          to hear. Read alone, a number like GPT-4o's 61.2% pass^1 in retail
+          says how often that happened on a single try. It says nothing about
+          whether the same task would come out right a second, third, or
+          eighth time, and by the paper's own account it usually did not:
+          pass^8 falls under 25% in the same domain. The bare number keeps
+          moving in public for reasons beyond that gap, too. Anthropic's own
+          81.2% ran under a nonstandard prompt and a step limit more than
+          triple the paper's default. Separately, the simulated customer
+          whose conversation the reward grades was found unrealistic in 40 to
+          47 percent of the exchanges an independent audit reviewed. None of
+          that makes τ-bench a bad measurement. It makes a single percentage
+          from it an incomplete one. The next time an agent's τ-bench score
+          appears in a launch post, three questions settle what it actually
+          says: what counts as the task's correct end state, and whether the
+          figure is a single run or a repeat-success rate. A third question
+          matters just as much: what scaffolding produced it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2506.07982">Barres et al., "τ²-Bench: Evaluating Conversational Agents in a Dual-Control Environment"</a>: the full simulated-user audit, plus the dual-control extension that lets the customer take actions of its own.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://sierra.ai/blog/tau-bench-shaping-development-evaluation-agents">Sierra, "τ-bench: Shaping the development & evaluation of AI agents"</a>: the benchmark's own creator on why it built pass^k in the first place.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; §3 (mechanics, reward, pass^k definition); Table 1; §5.1/Table 2 (main pass^1 results); Table 3 (policy ablation); §6; Figure 1(b) JK9O19 example"
+              href="https://arxiv.org/abs/2406.12045"
+              >Yao, Shinn, Razavi & Narasimhan (Sierra) · τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Sections on purpose and the pass^k metric"
+              href="https://sierra.ai/blog/tau-bench-shaping-development-evaluation-agents"
+              >Sierra · τ-bench: Shaping the development & evaluation of AI agents (2025)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="'Agentic coding and tool use' section; 'Agentic tool use — TAU-bench' chart; methodology footnote on prompt and step-limit changes"
+              href="https://www.anthropic.com/news/claude-3-7-sonnet"
+              >Anthropic · Claude 3.7 Sonnet (2025)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="τ-bench results section, pass^1 through pass^4"
+              href="https://www.automationanywhere.com/company/blog/product-insights/ai-agent-benchmark"
+              >Automation Anywhere · AI agent benchmark blog post (2026)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Leaderboard-figures section and closing editorial note"
+              href="https://benchmarkingagents.com/tau-bench-retail-airline/"
+              >Benchmarking Agents · τ-bench: Retail & Airline results explained</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§1 Introduction; Table 1; §4.3 and Table 2 (user-simulator error audit)"
+              href="https://arxiv.org/abs/2506.07982"
+              >Barres, Dong, Ray, Si & Narasimhan (Sierra) · τ²-Bench: Evaluating Conversational Agents in a Dual-Control Environment (2025)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="README top-of-page warning banner and leaderboard tables"
+              href="https://github.com/sierra-research/tau-bench"
+              >Sierra Research · tau-bench repository (README)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="README 'News' banner"
+              href="https://github.com/sierra-research/tau2-bench"
+              >Sierra Research · tau2-bench repository (README)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
