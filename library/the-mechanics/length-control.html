@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A model can't count the words it's writing · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "length-control",
+        "template": "lesson",
+        "title": "A model can't count the words it's writing",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-17",
+        "tags": ["generation", "instruction-following"],
+        "sources": 9,
+        "words": 2185,
+        "reading_minutes": 10,
+        "dek": "GPT-4 Turbo blew past its own word-count limit on 49.3% of prompts in one benchmark, because generation keeps no running count of length and can't take a word back.",
+        "harness": "Claude Code",
+        "model": "capable"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A model can't count the words it's writing</h1>
+        <p class="nb-dekline">
+          GPT-4 Turbo blew past its own word-count limit on 49.3% of prompts
+          in one benchmark, because generation keeps no running count of
+          length and can't take a word back.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-08-17</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          "Write exactly 100 words," "give me three sentences," "keep the
+          tweet under 280 characters": the plainest instructions anyone
+          gives a chatbot fail more often than they should. A model that can
+          hold a technical argument together for a page can still hand back
+          140 words when you asked for 100, sounding just as confident
+          either way. This lesson traces that miss to its source: not a bug,
+          but a handful of ordinary design choices, made for other reasons,
+          that between them leave nothing in the writing process able to
+          count. By the end you'll know exactly which part of a model's
+          architecture that job would have to live in, and why it doesn't.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="autoregressive-generation.html"
+              >The instant a model writes a token, it becomes fact</a
+            >: how token-by-token generation works, and why nothing already
+            written can be revised.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="letter-counting.html"
+              >A model can recognize strawberry's letters and still miscount
+              them</a
+            >: why the units a model counts in don't line up with the units a
+            person counts in.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Ask for ten words, get a hundred</h2>
+        <p>
+          In an informal test run in 2023, one practitioner sent a model 150
+          separate requests for a specific word count on a specific topic,
+          five target lengths across three topics, ten runs each. Short
+          requests came back badly overshot: a ten-word request produced
+          roughly a hundred words. Long requests came back undershot, output
+          settling around 600 to 700 words even when the prompt asked for
+          1,000 or 2,000.<sup class="nb-cite"><a href="#s1">1</a></sup> The
+          model wasn't confused about the topic. Every response was fluent
+          and on-topic. It just never landed on the number.
+        </p>
+        <p>
+          That's strange, because hitting a number sounds like the easiest
+          instruction there is. A person asked for 100 words counts as they
+          go, or writes past it and cuts back until the count is right. A
+          model that can define a term, translate a paragraph, or draft
+          working code can't do what a word processor has done automatically
+          since the 1980s. The reason isn't that counting is hard
+          arithmetic. It's that nothing in how the model writes ever
+          performs the count.
+        </p>
+      </section>
+
+      <section data-nb-section="no-tally" id="no-tally">
+        <h2>Nothing is tallying while the model writes</h2>
+        <p>
+          A model does not draft an answer and then check it against a
+          limit. It writes forward, one token at a time. At each step the
+          entire model does one job: given everything written so far, produce
+          a distribution over what could come next, and append whichever
+          piece is chosen.<sup class="nb-cite"><a href="#s2">2</a></sup> The
+          model's own training objective states this directly. The
+          probability of the whole output is the product of each next
+          piece's probability, given only the pieces before it.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Nothing in that equation tracks how long the output has gotten, or
+          how much room is left.
+        </p>
+        <p>
+          <a href="autoregressive-generation.html"
+            >The published lesson on how generation runs</a
+          >
+          shows the other half of the same fact. The moment a token is
+          chosen and appended, it becomes ordinary input for the next step,
+          exactly like every word that came before it. There is no separate
+          scratch space holding a draft that could still be edited. That's
+          why a model can't do what a person does under a word limit: get to
+          the end, notice it ran long, and trim. By the time "long" would be
+          noticeable, the words that made it long are already part of what
+          every later word was conditioned on. Cutting them now would mean
+          generating a different answer from scratch, not editing this one.
+        </p>
+      </section>
+
+      <section data-nb-section="wrong-unit" id="wrong-unit">
+        <h2>Even a counter would count the wrong thing</h2>
+        <p>
+          Suppose the architecture did carry a running tally. It would still
+          be counting the wrong unit. The vocabulary a model generates from
+          isn't built out of words. It comes from byte-pair encoding, a
+          method that merges frequently occurring character sequences into
+          reusable pieces regardless of where a word boundary falls. The
+          method was chosen because a fixed word-level vocabulary can't
+          cover every name, compound, and rare word form a language actually
+          produces.<sup class="nb-cite"><a href="#s4">4</a></sup> The GPT-2
+          paper gives a small, telling example of what that produces: "dog,"
+          "dog.," "dog!," and "dog?" each occupy separate vocabulary slots.
+          The merging procedure treats trailing punctuation as part of the
+          pattern, not as noise to strip before counting.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <p>
+          <a href="letter-counting.html">A companion lesson</a> works through
+          what this means for a single word. The model never sees
+          "strawberry" as eight letters; it sees a short sequence of integer
+          IDs. Counting those IDs is a different operation from counting the
+          letters, or the words, a person would count by eye. A word-count
+          instruction asks for the reader's unit. A model
+          tracking its own output, even with a hypothetical tally, would be
+          counting in the writer's unit instead. That unit sometimes takes
+          several tokens to cover a single word, and sometimes folds a word
+          and its punctuation into one token. A tally kept in tokens doesn't
+          convert cleanly into a word count without doing the counting
+          again, in the unit that was actually asked for.
+        </p>
+      </section>
+
+      <section data-nb-section="trained-long" id="trained-long">
+        <h2>Trained to run long before it ever sees a limit</h2>
+        <p>
+          Even without a counting problem, a model would still lean toward
+          one particular kind of miss: too long. A 2024 study of the
+          reinforcement-learning stage of RLHF training found that a learned
+          reward model scores longer answers higher largely independent of
+          whether the extra length says anything useful.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          The researchers isolated the effect directly. They swapped the
+          normal, content-aware reward model for one that scored nothing but
+          output length. Reinforcement learning against that content-blind
+          reward matched or nearly matched a policy trained against the real
+          reward model, on two of three benchmarks tested: 56% against 58%
+          win rate on one question-answering set, 64% against 63% on a
+          dialogue set.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          A policy optimized this way hadn't gotten better at answering. It
+          had gotten longer, and length alone bought most of the apparent
+          improvement.
+        </p>
+        <p>
+          <a href="formatting-defaults.html">A separate lesson</a> traces
+          this same reward-shaping pattern to the habit of writing in bullet
+          points and headers whether or not the answer calls for them. It's
+          the same mechanism, one level up: post-training rewards structure
+          and length as shallow signals of quality, regardless of the
+          instruction that produced them.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          One caveat matters before going further: this finding was measured
+          with no length instruction anywhere in the prompt. It describes
+          how a model writes by default, not how it behaves once told to
+          hit a number.
+        </p>
+      </section>
+
+      <section data-nb-section="the-miss" id="the-miss">
+        <h2>How big the miss gets, and what still isn't measured</h2>
+        <p>
+          Researchers test this directly with what one 2023 benchmark calls
+          a "verifiable instruction": a rule simple enough for a program to
+          check automatically, rather than judged by a human or another
+          model. Length rules are one category that benchmark tests,
+          alongside things like which language a response uses or whether a
+          keyword appears.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          A 2024 benchmark built specifically to isolate length gives the
+          clearest number for how bad the miss gets. Researchers took
+          AlpacaEval's ordinary instruction-following prompts and prepended
+          a hard word ceiling to each one, sized to be tight but achievable.
+          They then checked automatically whether the response stayed under
+          it: no judge, no partial credit, just a word count against a
+          limit.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          On 802 such prompts, GPT-4 Turbo went over its own ceiling 49.3% of
+          the time.<sup class="nb-cite"><a href="#s7">7</a></sup> A second,
+          larger 2025 benchmark tested 26 models under an even stricter
+          "hit the number exactly" rule and found 23 of them scoring below
+          60 out of 100 on a length-accuracy metric built for the test.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">49.3%</span
+            ><span class="nb-stat-l"
+              >GPT-4 Turbo's miss rate against its own word limit</span
+            >
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">23 of 26</span
+            ><span class="nb-stat-l"
+              >models scoring below 60/100 on a separate, stricter length
+              test</span
+            >
+          </div>
+        </div>
+        <p>
+          The same 2024 benchmark tested nine other models on the identical
+          task, and the spread is itself informative:
+        </p>
+        <table class="nb-table">
+          <caption>
+            Word-limit violation rate by model, same prompts and rule.<sup
+              class="nb-cite"
+              ><a href="#s7">7</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Violation rate</th>
+              <th class="txt">Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Llama3-8B-Instruct</span></td>
+              <td>7.0%</td>
+              <td class="txt">the tightest of the instruction-tuned models tested</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Mistral Large</span></td>
+              <td>17.6%</td>
+              <td class="txt">well ahead of every GPT-4 variant in the study</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Claude 3 Opus</span></td>
+              <td>37.0%</td>
+              <td class="txt">misses more than one prompt in three</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GPT-4 Turbo</span></td>
+              <td>49.3%</td>
+              <td class="txt">the study's headline result</td>
+            </tr>
+            <tr>
+              <td>
+                <span class="nb-table-token">Llama2-70B-Base (zero-shot)</span>
+              </td>
+              <td>62.6%</td>
+              <td class="txt">no instruction tuning applied at all</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Instruction tuning clearly helps: the untuned base model at the
+          bottom of the table misses nearly nine times as often as the best
+          tuned model at the top. It doesn't come close to solving the
+          problem. Every model in the full study, tuned or not, missed at
+          least some of the time. The gap between the best and worst
+          performers is itself an open question: why some models track
+          length so much better than others, when none of them has an
+          architectural counter to lean on. No source in this record fully
+          answers it.
+        </p>
+        <p>
+          None of the studies above measures the whole chain end to end. The
+          reward-model study measured default writing with no length
+          instruction present. The benchmarks that measure explicit misses
+          don't test whether the same models were also biased toward writing
+          long by default. No experiment in this record starts with a
+          length instruction, checks how the same model writes without one,
+          and attributes part of the miss to that inherited habit. Reading
+          the two kinds of finding together still points at a plausible
+          compounding. A model already biased toward writing long starts an
+          explicit word-limit answer further from the target. The
+          architecture then gives it no way to catch that drift as it
+          writes, because nothing is tallying and nothing already written
+          can be taken back. That reading is an inference from what the
+          studies separately show, not a result any one of them reports.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label"
+            >What's settled, and what's still open</span
+          >
+          <p>
+            The mechanism is not in dispute. Generation runs token by token,
+            each step conditioned only on what's already written, with no
+            reserved state for a running length count.<sup class="nb-cite"
+              ><a href="#s2">2</a></sup
+            >
+            And the unit it would be counting in, if anything were counting,
+            is tokens, not words.<sup class="nb-cite"
+              ><a href="#s4">4</a></sup
+            >
+            What's open is how much a model can compensate for that
+            architecture internally. A 2025 study found that information
+            correlated with eventual output length is present, and partly
+            separable from content, inside a model's hidden activations.
+            Scaling specific hidden units up or down lengthened or shortened
+            a summarization model's output without making the summaries
+            worse.<sup class="nb-cite"><a href="#s9">9</a></sup> A separate
+            2025 study found the opposite from the outside. Asked to report
+            the word count of text it had just generated, one tested model
+            reported a number matching its own instructions rather than the
+            words actually on the page. Its authors read that as evidence
+            the model was assuming compliance rather than checking it.<sup
+              class="nb-cite"
+              ><a href="#s8">8</a></sup
+            >
+            Some proxy for length appears to exist inside a model. Whether
+            it's reliable enough to use, or even the thing being measured
+            when a model claims to have hit a number, isn't settled by
+            either result.
+          </p>
+        </div>
+        <p>
+          The same weakness surfaces anywhere a model has to hit an exact
+          count while it writes, not only a word limit. A character limit
+          instead of a word limit is the identical problem in a smaller
+          unit. A list capped at exactly five items, a table with a fixed
+          number of rows, a summary that must land in precisely two
+          sentences: each asks for a tally kept in the right unit and
+          checked before the text is called final. Generation offers none of
+          that, in any of these forms.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A word-count miss isn't a model being careless. It's what three
+          separate design choices, none of them made with counting in mind,
+          add up to when they run together. Generation writes forward one
+          token at a time with no reserved slot for a running length count.
+          The units it would count in, even with a tally, are tokens rather
+          than words. And post-training separately rewards longer answers
+          as a shallow signal of quality, so most models start biased toward
+          writing long before a limit ever enters the prompt. None of that
+          is a defect anyone forgot to fix. It's what falls out of an
+          architecture built to predict the next token, applied to a task
+          that needs a count. The next time a model swears it wrote exactly
+          100 words and hands back 140, the honest description isn't that it
+          miscounted. It never counted at all.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2406.17744"
+              >Yuan et al., the length-instruction study behind the 49.3%
+              figure</a
+            >: the full benchmark construction and every model's violation
+            rate.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2505.16234"
+              >Zhang et al., the LIFEBench paper</a
+            >: the length-awareness experiment and the full 26-model
+            comparison.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.saxifrage.xyz/post/chatgpt-wordcount"
+              >saxifrage.xyz · Michael Taylor's ChatGPT word-count test</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.03762"
+              >arXiv · Vaswani et al., "Attention Is All You Need"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf"
+              >OpenAI · Radford et al., "Language Models are Unsupervised
+              Multitask Learners"</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1508.07909"
+              >arXiv · Sennrich, Haddow, Birch, "Neural Machine Translation
+              of Rare Words with Subword Units"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2310.03716"
+              >arXiv · Singhal et al., "A Long Way to Go"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2311.07911"
+              >arXiv · Zhou et al., the IFEval benchmark paper</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.17744"
+              >arXiv · Yuan et al., the LIFT length-instruction study</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2505.16234"
+              >arXiv · Zhang et al., the LIFEBench paper</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2507.20398"
+              >arXiv · Moon et al., the hidden-state length-probing study</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
