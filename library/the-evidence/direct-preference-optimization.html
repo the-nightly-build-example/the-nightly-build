@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DPO turns preference tuning into a single classification loss · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "direct-preference-optimization",
+        "template": "lesson",
+        "title": "DPO turns preference tuning into a single classification loss",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-21",
+        "tags": [],
+        "sources": 6,
+        "words": 1739,
+        "reading_minutes": 8,
+        "dek": "Its simplicity won open models over from the RLHF pipeline, though the evidence that it matches PPO was small-scale and later work still puts PPO ahead on the hardest tasks.",
+        "harness": "Claude Code",
+        "model": "capable"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">DPO turns preference tuning into a single classification loss</h1>
+        <p class="nb-dekline">
+          Its simplicity won open models over from the RLHF pipeline, though the
+          evidence that it matches PPO was small-scale and later work still puts
+          PPO ahead on the hardest tasks.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-21</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Almost every open chat model you can download was tuned with DPO or a
+          close variant, and the reason usually given is a single line: it is as
+          good as the older RLHF method and far simpler. This lesson is about
+          what that line hides. You will see what DPO actually does, how much
+          evidence the original paper offered for the comparison, and where
+          later work still finds PPO ahead. The aim is that "trained with DPO"
+          stops being a slogan you take on faith and becomes a claim you can
+          size up.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="instructgpt.html">A 1.3B model beat GPT-3 on the one metric OpenAI trained it to win</a>:
+            the RLHF pipeline DPO simplifies, in three stages.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="deep-rl-from-human-preferences.html">Two more papers turned a robot's backflip trick into InstructGPT's training recipe</a>:
+            where learning a reward from human comparisons began.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What "trained with DPO" actually names</h2>
+        <p>
+          Anyone reading about how chat models are built has met the phrase
+          "trained with DPO," usually next to a claim that it works about as well
+          as <a href="instructgpt.html">RLHF</a>, the
+          reinforcement-learning method this course covered earlier, and is far
+          simpler to run. The 2023 paper that introduced it, by Rafael Rafailov
+          and five coauthors at Stanford, makes that claim directly: its method
+          matches or improves on reinforcement-learning tuning "while being
+          substantially simpler to implement and train."<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The slogan leaves out the part worth understanding. Simpler how, and
+          simpler than what? And if a method this much lighter really matched
+          the one it replaced, what was the heavier method doing that turned out
+          to be unnecessary?
+        </p>
+      </section>
+
+      <section data-nb-section="one-loss" id="one-loss">
+        <h2>One loss instead of a reward model and a loop</h2>
+        <p>
+          Start with what DPO removes. The RLHF recipe from OpenAI's 2022
+          InstructGPT work runs in three stages. First it fine-tunes a model on
+          example answers. Then it trains a second model to score answers the
+          way human raters did. Finally it runs a reinforcement-learning loop
+          that pushes the first model toward high-scoring answers, with a tether
+          holding it near where it started.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The scoring
+          model and the loop are the expensive stages. Each needs its own
+          training and tuning, and the loop keeps sampling fresh answers from
+          the model as it learns.
+        </p>
+        <p>
+          All of it rests on one cheap ingredient: people comparing two answers
+          and saying which is better. Learning a reward from such comparisons,
+          rather than from a rule someone wrote by hand, is an idea this course
+          traced to a 2017 paper that trained simulated robots from human
+          choices.<sup class="nb-cite"><a href="#s3">3</a></sup> RLHF gathers
+          those comparisons, distills them into the scoring model, and only then
+          optimizes against it.
+        </p>
+        <p>
+          DPO's finding is that the scoring model and the loop can be skipped
+          without giving up what they computed.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            For any way of scoring answers, there is one best-possible
+            answer-model, and its shape is fixed by that scoring rule. Read that
+            backwards and the answer-model already carries the score inside it,
+            so the separate scorer is redundant. DPO uses this to train the
+            model directly on the ranked pairs: for each pair, raise the model's
+            probability of the preferred answer and lower the rejected one, both
+            measured against the untuned model it began as. No scoring model, no
+            reinforcement-learning loop, no sampling during training.<sup
+              class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </p>
+        </div>
+        <p>
+          What is left is a single classification loss, the same kind of
+          objective used to sort spam from not-spam. One loss in place of a
+          scoring model and a reinforcement-learning loop can read as too small
+          a thing to work, and that reaction is worth keeping. The two stages it
+          drops were not doing nothing. Whether skipping them costs anything is a
+          question the paper has to settle with evidence.
+        </p>
+      </section>
+
+      <section data-nb-section="three-tasks" id="three-tasks">
+        <h2>The three tasks behind the parity claim</h2>
+        <p>
+          The paper tests DPO against PPO, the reinforcement-learning algorithm
+          RLHF actually uses, on three tasks. All three run on small models by current
+          standards: GPT-2-large, at 774 million parameters, for a sentiment
+          task; a 6-billion-parameter model for summarization; and Pythia-2.8B
+          for dialogue.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            The three tasks in the DPO paper, their model sizes, and what each
+            result actually compared.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Model</th>
+              <th class="txt">What the result compared</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Sentiment</span></td>
+              <td>GPT-2-large</td>
+              <td class="txt">
+                DPO vs PPO, with the reward computed by a sentiment classifier
+                rather than by people. DPO reached higher sentiment control at
+                the same distance from the start model.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Summarization</span></td>
+              <td>6B</td>
+              <td class="txt">
+                DPO vs PPO, GPT-4 judging summaries against human-written ones.
+                DPO won about 61% of the time to PPO's best 57%; human raters
+                preferred DPO 58%.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Dialogue</span></td>
+              <td>Pythia-2.8B</td>
+              <td class="txt">
+                DPO vs Best-of-128 sampling. No working PPO baseline existed, so
+                Best-of-128 stood in for it. DPO topped the dataset's own chosen
+                answers.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          On summarization, a judge model was shown two summaries and asked
+          which it preferred against the human-written reference. DPO won that
+          comparison about 61 percent of the time at low sampling temperature,
+          against PPO's 57 percent at its own best setting, and human raters
+          shown the same pairs preferred DPO's summaries 58 percent of the
+          time.<sup class="nb-cite"><a href="#s1">1</a></sup> DPO also held its
+          lead as the sampling temperature rose, where PPO's win rate fell away.
+        </p>
+        <p>
+          Two things about that evidence are easy to miss. The sentiment result,
+          the one place DPO clearly beat PPO, used a reward computed by a
+          sentiment classifier rather than by people, so it measures control of
+          a known target, not agreement with human taste. And on dialogue, the
+          paper's hardest task, there is no real PPO number at all. The authors
+          report they could not find a setting at which their PPO model beat the
+          untuned base model, so they substituted Best-of-128 sampling as a
+          rough stand-in.<sup class="nb-cite"><a href="#s1">1</a></sup> On the
+          task closest to how these models are actually used, the head-to-head
+          with PPO is a substitution, not a measurement.
+        </p>
+        <p>
+          A win rate a few points apart, on models this size, judged mostly by
+          another model, is a real result and a narrow one. It supports "about
+          as good as PPO, and far simpler." It does not, on its own, support
+          "DPO replaced RLHF."
+        </p>
+      </section>
+
+      <section data-nb-section="adoption" id="adoption">
+        <h2>Open models made it the default anyway</h2>
+        <p>
+          Whatever the paper proved, DPO won the thing that decides which method
+          people use. It became the default recipe for tuning open models. The
+          clearest single case is Zephyr, a 2023 model from Hugging Face built
+          by running DPO on a 7-billion-parameter base, using preference data
+          scored by GPT-4, with no human annotation and no sampling during
+          tuning. Zephyr-7B scored 7.34 on MT-Bench, a chat benchmark, beating
+          the 6.86 of Llama-2-Chat-70B, a model ten times its size tuned with
+          the full RLHF pipeline.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          DPO and its variants have since become a standard post-training step
+          across open models, prized for exactly the simplicity the paper
+          claimed.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          Adoption is a real verdict, but on a specific question: which method a
+          team with limited compute reaches for first. It is not evidence that
+          DPO and PPO produce equally good models.
+        </p>
+      </section>
+
+      <section data-nb-section="ppo-lead" id="ppo-lead">
+        <h2>PPO still leads where answers leave the data</h2>
+        <p>
+          The strongest challenge to the parity claim came in 2024, when a team
+          led by Shusheng Xu ran DPO and PPO head to head on harder tasks and
+          asked why they differ.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The argument starts with the tether. PPO checks the model against the
+          reference as it samples its own answers during training, so it is
+          pulled back whenever it drifts. DPO has no such on-policy check: its
+          loss can be driven low by a model that piles probability onto answers
+          never seen in the preference data, as long as it ranks the seen pairs
+          correctly. When the preference data sits off the model's own
+          distribution, that gap shows up as worse behavior.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <p>
+          On CodeContests, a
+          competitive-programming benchmark, PPO tuning of a 34-billion-parameter
+          code model solved 22.4 percent of held-out problems, above the 16.4
+          percent of AlphaCode, a system built for the task. DPO tuned the same
+          base model to near zero.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          When human raters compared the two methods on a helpfulness set, they
+          preferred PPO's answers to DPO's 45 times to 29.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          On tasks where an answer either runs or does not, PPO's leash to the
+          reference model earns its cost.
+        </p>
+        <p>
+          This is not a clean reversal. On summarization, where the answers
+          stayed close to the training data, DPO led PPO outright.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The gap opens on the hard tasks, where answers can drift off the
+          model's own distribution, and it is there that PPO keeps its edge.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          DPO's core claim holds. You really can replace the scoring model and
+          the reinforcement-learning loop with one classification loss on ranked
+          pairs, and it is much easier to run. That is why open models adopted
+          it, and Zephyr beating a model ten times its size shows the payoff was
+          real. The weaker claim is the slogan's other half. "As good as PPO"
+          rests, in the original paper, on three small models, win rates judged
+          mostly by another model, and a hardest task where no working PPO
+          baseline existed to compare against. Later work fills that gap in
+          PPO's favor: on problems where answers can drift away from the training
+          data, PPO still wins, sometimes by a wide margin. DPO made preference
+          tuning cheap and simple, and that is most of why open models run on
+          it. It did not show that the cheap version always matches the
+          expensive one, and on the hardest tasks it does not.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2305.18290">Direct Preference Optimization: Your Language Model is Secretly a Reward Model</a>:
+            the paper itself, with the derivation this lesson kept in plain words.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2404.10719">Is DPO Superior to PPO for LLM Alignment?</a>:
+            the 2024 study that measured where PPO still wins and why.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.18290"
+              >arXiv · Rafailov et al., "Direct Preference Optimization: Your Language Model is Secretly a Reward Model" (2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.02155"
+              >arXiv · Ouyang et al., "Training language models to follow instructions with human feedback" (2022)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.03741"
+              >arXiv · Christiano et al., "Deep reinforcement learning from human preferences" (2017)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2310.16944"
+              >arXiv · Tunstall et al., "Zephyr: Direct Distillation of LM Alignment" (2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://cameronrwolfe.substack.com/p/direct-preference-optimization"
+              >Cameron R. Wolfe · "Direct Preference Optimization"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.10719"
+              >arXiv · Xu et al., "Is DPO Superior to PPO for LLM Alignment? A Comprehensive Study" (2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
