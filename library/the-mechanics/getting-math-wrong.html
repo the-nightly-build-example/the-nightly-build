@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatGPT multiplies two five-digit numbers and misses by 913,200 · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "getting-math-wrong",
+        "template": "lesson",
+        "title": "ChatGPT multiplies two five-digit numbers and misses by 913,200",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-21",
+        "tags": [],
+        "sources": 12,
+        "words": 2023,
+        "reading_minutes": 9,
+        "dek": "With no calculator and no scratch paper, the model reaches its answer the only way it can, by predicting the next digit, which comes out right for the small sums it has seen everywhere and confidently wrong for a large one it has barely seen at all.",
+        "harness": "Claude Code",
+        "model": "capable"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">ChatGPT multiplies two five-digit numbers and misses by 913,200</h1>
+        <p class="nb-dekline">
+          With no calculator and no scratch paper, the model reaches its answer
+          the only way it can, by predicting the next digit, which comes out
+          right for the small sums it has seen everywhere and confidently wrong
+          for a large one it has barely seen at all.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-21</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Paste a long multiplication into a chatbot with nothing else switched
+          on, and the number that comes back is often wrong, laid out as neatly
+          and as confidently as a right one. Newer reasoning models, and the
+          calculator wired into products like ChatGPT, now get many of these
+          sums right, but they do it through steps this lesson will name, not
+          because some part of the model finally learned arithmetic. This lesson
+          takes one documented wrong answer and works back to what produced it.
+          It follows how the model reads a number and why it has nowhere to
+          carry a digit. It ends where the explanation runs out, even for the
+          researchers who study these systems. Knowing that chain lets you say why the raw
+          model misses, why writing the steps out or handing the sum to a
+          calculator fixes it, and when a confident explanation of AI math has
+          quietly skipped a step.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/letter-counting.html">A model can recognize strawberry's letters and still miscount them</a>:
+            the neighboring failure, where the characters inside a token are the
+            ones that go missing.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/thinking-out-loud.html">A transformer can only compute more by writing more</a>:
+            why making a model write out its steps buys accuracy it does not
+            have in a single pass.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The wrong answer that passes for a right one</h2>
+        <p>
+          Someone asked ChatGPT to multiply 57,897 by 12,832. It answered
+          742,021,104. The true product is 742,934,304.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            57,897 &times; 12,832, with no calculator or scratch space: what
+            ChatGPT returned, the correct product, and the gap between
+            them.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Quantity</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">ChatGPT's answer</td>
+              <td>742,021,104</td>
+            </tr>
+            <tr>
+              <td class="txt">True product</td>
+              <td>742,934,304</td>
+            </tr>
+            <tr>
+              <td class="txt">Difference</td>
+              <td>913,200</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The answer has nine digits, the right count. It opens with the right
+          three, 742 million. It is off by 913,200, which sounds like a lot
+          until you set it against three-quarters of a billion: the miss is
+          about 0.12%. Nothing marked it as suspect. A part of a program that
+          had actually multiplied would either get the answer or fail in some
+          obvious way, not land a tidy figure a hair off the truth.
+        </p>
+        <p>
+          The reason is that no part of the model multiplied anything. A
+          language model predicts text: given the characters so far, it produces
+          the next piece, then the next. It has no separate unit that does
+          arithmetic. It generated those nine digits the way it generates words,
+          by extending a pattern. When a small sum is common enough to sit all
+          over the training data, that pattern reproduces the exact answer. When
+          the problem is a rare product this size, the model still produces
+          something the right shape, and shape is all it has to go on. On
+          zero-shot multi-digit multiplication, off-the-shelf GPT-4 solves the
+          problem by matching against arithmetic it has seen rather than running
+          the procedure, which is why the output looks like an answer without
+          being one.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Predicting text explains how a wrong answer can look so right. It does
+          not yet explain why the wrongness tracks size so cleanly, small sums
+          right and large ones lost. For that, watch what the accuracy does as
+          the numbers grow.
+        </p>
+      </section>
+
+      <section data-nb-section="size" id="size">
+        <h2>Common sums come out right, rare ones fall apart</h2>
+        <p>
+          Measured across problem sizes, the fall-off is steep. GPT-4, answering
+          without help, is right most of the time on three-digit multiplication
+          and essentially never right by five digits.
+        </p>
+        <table class="nb-table">
+          <caption>
+            GPT-4 zero-shot multiplication accuracy by operand size; the anchor
+            problem above is a five-digit case.<sup class="nb-cite"
+              ><a href="#s2">2</a><a href="#s3">3</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Problem size</th>
+              <th>Accuracy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">3-digit &times; 3-digit</td>
+              <td>59%</td>
+            </tr>
+            <tr>
+              <td class="txt">4-digit &times; 4-digit</td>
+              <td>~4%</td>
+            </tr>
+            <tr>
+              <td class="txt">5-digit &times; 5-digit</td>
+              <td>~0%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The team that measured this reads the curve the same way: a
+          transformer reduces a multi-step task to matching against fragments of
+          computation it saw in training, instead of executing the full
+          procedure.<sup class="nb-cite"><a href="#s2">2</a></sup> A
+          three-digit product has enough near-neighbors in the training data
+          that the match often lands. A five-digit product almost never does,
+          which is why the example above, a five-digit case, sits in that
+          bottom row.<sup class="nb-cite"><a href="#s3">3</a></sup> To see why the match
+          gets harder rather than more precise as the numbers grow, back up to
+          what the model is handed when it reads 57,897. It is not five digits.
+        </p>
+      </section>
+
+      <section data-nb-section="tokens" id="tokens">
+        <h2>The number never arrives as digits</h2>
+        <p>
+          Before the model sees anything, a tokenizer cuts the text into tokens,
+          the units the model actually reads. For numbers, OpenAI's current
+          tokenizers cap a numeric token at three digits. The splitting rule is
+          written into the source as <code>\p{N}{1,3}</code>, and it is the same
+          in <code>cl100k_base</code>, used by GPT-3.5 and GPT-4, and in
+          <code>o200k_base</code>, used by GPT-4o.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          So a long number is broken into runs of up to three digits, and the
+          breaks fall wherever the rule puts them, not on the ones, tens, and
+          hundreds a person lines up to multiply. The cut is not even stable
+          between neighbors: 380 is a single token, while 381 comes through as
+          two, 38 and 1.<sup class="nb-cite"><a href="#s1">1</a></sup> A
+          controlled study confirms the scheme: GPT-3.5 and GPT-4 assign
+          separate tokens to one-, two-, and three-digit numbers.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          This is a different failure from the one in
+          <a href="../the-mechanics/letter-counting.html">letter-counting</a>.
+          There, the trouble is that the characters are hidden inside a token
+          the model cannot see into. Here the tokens are made of digits, in
+          plain view, but their boundaries land in the wrong places, so the
+          positional structure a multiplication depends on is scrambled before
+          the first partial product is ever formed.
+        </p>
+        <p>
+          Chunked digits are a fact about OpenAI-style tokenizers, not every
+          model. LLaMa and PaLM
+          tokenize numbers one digit at a time, so their numbers arrive with
+          place value intact.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Those models still miss large multiplications, but for the reason in
+          the next step, not this one. Even a model handed one clean digit per
+          token would fail, because there is nowhere for the carrying to happen.
+        </p>
+      </section>
+
+      <section data-nb-section="carry" id="carry">
+        <h2>Nowhere to keep the carry</h2>
+        <p>
+          The model writes its answer left to right, and it computes each token
+          in a single forward pass with no place to set down a partial result.
+          Multiplying by hand means building a stack of partial products and a
+          running carry, held on paper as you go. The raw model has no paper. A
+          reverse-engineering of why a normally trained transformer fails at
+          multiplication found the cause. The model settles into a solution
+          that lacks the long-range dependencies the task needs. It never caches
+          and retrieves the pairwise partial products, so the carry has nowhere
+          to live.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          The fix is external, and it takes one of two forms. The first is to
+          let the model write the intermediate steps into its own output, a
+          scratchpad it then reads back. A model that keeps its steps this way
+          climbs from under 1% on four-digit multiplication to essentially
+          100%.<sup class="nb-cite"><a href="#s7">7</a><a href="#s8">8</a></sup>
+          That is the whole subject of
+          <a href="../the-mechanics/thinking-out-loud.html">thinking out loud</a>.
+          The second is to hand the sum to a calculator: a model can be trained
+          to call an external tool and fold the returned number back into its
+          text,<sup class="nb-cite"><a href="#s9">9</a></sup> which is what
+          <a href="../the-mechanics/tool-use.html">tool use</a> covers. Even a
+          smaller change helps at the margin. Rewriting a number with commas so
+          the model reads it right to left already improves GPT-3.5 and
+          GPT-4.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          This is where modern products get large arithmetic right. A reasoning
+          model spends a long built-in chain of steps; a chat product routes the
+          sum to a code interpreter. Both wrap an external fix around the same
+          next-token core, and neither adds an arithmetic unit. The December 2025
+          report that measured the jump from under 1% to full accuracy was
+          careful to claim no more than that: purpose-built training closed the
+          gap in one controlled setting, with no suggestion that reasoning
+          models had solved multiplication on their own.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The failure at issue is the raw model with all of that turned
+          off. That the accuracy comes back the moment the steps are written
+          down tells us the missing thing is working memory, not any knowledge
+          of how to multiply. Which leaves the question the fixes route around:
+          when the raw model does land a sum, what is it doing?
+        </p>
+      </section>
+
+      <section data-nb-section="how-it-adds" id="how-it-adds">
+        <h2>The sums it gets right are the least understood</h2>
+        <p>
+          Two things about that are established. There is no exact
+          digit-by-digit carrying circuit inside these models, and accuracy
+          falls as the numbers grow.<sup class="nb-cite"
+            ><a href="#s2">2</a><a href="#s6">6</a></sup
+          >
+          What is genuinely unresolved is how a model represents and combines
+          numbers when it succeeds, and two careful studies of the same
+          territory describe it differently. One finds a bag of heuristics:
+          sparse sets of neurons that each fire for a specific pattern, such as
+          an operand falling in a certain range, whose unordered combination
+          accounts for most of the model's arithmetic, with no general algorithm
+          underneath.<sup class="nb-cite"><a href="#s10">10</a></sup> The other
+          finds more structure: numbers laid out along a helix, added by a
+          rotation that turns one operand's helix onto the sum's.<sup
+            class="nb-cite"
+            ><a href="#s11">11</a></sup
+          >
+          They agree it is nothing like the human carrying method, and they
+          disagree on what it is instead.
+        </p>
+        <p>
+          Both also study a narrow slice: two-digit operands, 0 through 99, on
+          mid-size open models like GPT-J and Llama-3.1-8B,<sup class="nb-cite"
+            ><a href="#s11">11</a></sup
+          >
+          nowhere near a frontier model working a five-digit product. The one
+          case that has been mapped in full is a toy. A small transformer
+          trained on nothing but modular addition has been reverse-engineered
+          down to its circuit, which converts addition into rotation on a circle
+          using Fourier components.<sup class="nb-cite"
+            ><a href="#s12">12</a></sup
+          >
+          That cleanliness comes from the toy's single task. It is not a chatbot
+          multiplying, and this is exactly where an explanation can overreach:
+          anyone who offers that circuit as how ChatGPT multiplies has stepped
+          from what is known onto what is merely hoped. Below this point, the
+          people who build these models cannot yet draw the answer.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The wrong product was never computed. The raw model predicts the
+          digits of an answer the way it predicts the next word, which is why a
+          common small sum comes out exact and a rare five-digit one comes out
+          plausible and wrong. Three things stack up to make the miss. The
+          number is chopped into digit-chunks that lose place value before the
+          model reads it. The left-to-right forward pass has nowhere to hold a
+          carry. And when the model does land a sum, how it combined the numbers
+          is still only half drawn. Every reliable fix lives outside that forward
+          pass, in writing the steps down or calling a calculator. So a tidy,
+          right-length answer is not evidence the model calculated it, and when
+          an account of AI math jumps straight to a clean circuit inside the
+          model, you now know which steps it stepped over to get there.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://allenai.org/blog/faith-and-fate-limits-of-transformers-on-compositionality-d90726d635ef">Faith and Fate: Limits of Transformers on Compositionality</a>:
+            the study that measured the accuracy fall-off, in its authors' own
+            words.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2502.00873">Language Models Use Trigonometry to Do Addition</a>:
+            one side of the open question, reverse-engineering addition as a
+            geometric rotation.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://techcrunch.com/2024/10/02/why-is-chatgpt-so-bad-at-math"
+              >TechCrunch · Why is ChatGPT so bad at math?</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.18654"
+              >Dziri et al. · Faith and Fate: Limits of Transformers on Compositionality</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://allenai.org/blog/faith-and-fate-limits-of-transformers-on-compositionality-d90726d635ef"
+              >Ai2 · Faith and Fate: Limits of Transformers on Compositionality</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/openai/tiktoken/blob/main/tiktoken_ext/openai_public.py"
+              >OpenAI · tiktoken: openai_public.py</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2402.14903"
+              >Singh & Strouse · Tokenization counts: the impact of tokenization on arithmetic</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2510.00184"
+              >Bai et al. · Why Can't Transformers Learn Multiplication? Reverse-Engineering Reveals Long-Range Dependency Pitfalls</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://techxplore.com/news/2025-12-ai-stumble-basic-multiplication-special.html"
+              >TechXplore · Why AI models stumble on basic multiplication</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2112.00114"
+              >Nye et al. · Show Your Work: Scratchpads for Intermediate Computation with Language Models</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2302.04761"
+              >Schick et al. · Toolformer: Language Models Can Teach Themselves to Use Tools</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2410.21272"
+              >Nikankin et al. · Arithmetic Without Algorithms: Language Models Solve Math With a Bag of Heuristics</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2502.00873"
+              >Kantamneni & Tegmark · Language Models Use Trigonometry to Do Addition</a
+            >
+          </li>
+          <li id="s12">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2301.05217"
+              >Nanda et al. · Progress Measures for Grokking via Mechanistic Interpretability</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
