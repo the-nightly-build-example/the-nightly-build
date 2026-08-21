@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>When many can act alone, the most optimistic one decides · What Could Go Wrong</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "what-could-go-wrong",
+        "slug": "unilateralists-curse",
+        "template": "lesson",
+        "title": "When many can act alone, the most optimistic one decides",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-21",
+        "tags": ["governance", "open-weights", "decision-theory", "coordination"],
+        "sources": 9,
+        "words": 2134,
+        "reading_minutes": 9,
+        "dek": "Bostrom, Douglas, and Sandberg proved the result in 2016 for actors who share one goal and act on private estimates of its value, the conditions a commercial model release does not meet.",
+        "harness": "Claude Code",
+        "model": "capable"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">What Could Go Wrong</div>
+        <h1 class="nb-title">When many can act alone, the most optimistic one decides</h1>
+        <p class="nb-dekline">
+          Bostrom, Douglas, and Sandberg proved the result in 2016 for actors
+          who share one goal and act on private estimates of its value, the
+          conditions a commercial model release does not meet.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-21</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every few months another lab decides whether to release the weights
+          of a powerful model for anyone to download. The people arguing about
+          that choice keep reaching for the same worry: it only takes one lab
+          to release, and once weights are public they cannot be recalled. In
+          2016 three Oxford philosophers turned that worry into a formal
+          result and gave it a name, the unilateralist's curse. This lesson
+          builds the result from a single well-meaning actor's decision, shows
+          why adding more actors makes a bad outcome likelier, then tests how
+          far it actually reaches into real model releases, where the proof and
+          the analogy to any single release turn out to be very different
+          things. Serious people who agree the result is true still disagree
+          about what to do with it, and the last section is about why.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../what-could-go-wrong/racing-dynamics.html"
+              >The model that drives safety to zero needs a lead nobody has
+              held</a
+            >: the neighbouring case where actors are rivals, not the
+            independent well-wishers this result assumes.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../what-could-go-wrong/vulnerable-world-hypothesis.html"
+              >Bostrom says only luck has kept us from a world-ending
+              technology</a
+            >: the same author on why some releases cannot be taken back.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One optimist is enough to tip the group</h2>
+        <p>
+          Nick Bostrom, Thomas Douglas, and Anders Sandberg describe a
+          situation they say "arises in many contexts." Several actors can
+          each, on their own, carry out some initiative that would affect
+          everyone. Each actor is well-meaning: she goes ahead only if she
+          judges the initiative good for the common good, not for herself. Her
+          judgment is her own, drawn from private information, and it can be
+          wrong in either direction.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="pp. 350–351">1</a></sup
+          >
+        </p>
+        <p>
+          Because any one of them can act alone, the initiative goes ahead the
+          moment a single actor judges it worth doing. The decision falls to
+          whoever is most hopeful about it, not to what the actors believe on
+          average. As the authors put it, "it is the highest estimate that will
+          determine whether an initiative is undertaken, not the average
+          estimate."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="p. 355">1</a></sup
+          >
+          These actors are not rivals, which is what sets the case apart from a
+          <a href="../what-could-go-wrong/racing-dynamics.html"
+            >race between labs</a
+          >. Nobody is trying to beat anyone. The trouble comes only from the
+          statistics of many independent guesses.
+        </p>
+        <p>
+          Now suppose the initiative is actually a bad idea, its true value to
+          the common good negative. The group still acts as long as one actor's
+          error is large enough to push her private estimate above zero. And
+          the more actors there are, the likelier it becomes that at least one
+          of them overshoots that far. With five actors whose errors are
+          symmetric around the truth, the initiative is still carried out about
+          half the time even when its true value sits near minus one. That is
+          well into the range where every actor, on average, can see it is a
+          mistake.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Fig. 1, p. 354">1</a></sup
+          >
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="unilateralists-curse/asset-1.png"
+            alt="An S-shaped curve. The probability that the initiative is undertaken rises from near zero at a true value of minus three to nearly one hundred percent by plus one, crossing fifty percent at about minus one, for five actors."
+          />
+          <figcaption>
+            Fig. 1 · With five well-meaning actors, the chance the initiative
+            goes ahead stays high far into negative territory, crossing 50% at a
+            true value near −1.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Fig. 1, p. 354"
+                data-nb-url="https://nickbostrom.com/papers/unilateralist.pdf"
+                data-nb-note="The core result in one curve: strong bias toward acting even when the true value is negative."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          The counting is what bites. Hold the true value at minus one and the
+          chance that someone acts wrongly passes one-half once there are four
+          actors, then climbs toward certainty as more join.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="p. 353 and note 9, p. 368">1</a></sup
+          >
+          This is the unilateralist's curse: a group of well-meaning actors,
+          each deciding alone, goes ahead too often, and no one in it has done
+          anything unreasonable by her own lights. The authors' proposed fix is
+          a "principle of conformity." Each actor lowers her own chance of
+          acting alone to the level that would cancel the group's bias. She can
+          share what she knows. She can revise her estimate down on the
+          reasoning that being the most eager actor is itself a sign she has
+          overshot. Or she can defer to a vote or an institution rather than her
+          own first call.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="p. 357">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="assumptions" id="assumptions">
+        <h2>Four assumptions hold the proof together</h2>
+        <p>
+          What Bostrom, Douglas, and Sandberg have is a piece of decision
+          theory, and it is correct inside its own setup. That setup rests on
+          four assumptions. The actors decide independently. They all want the
+          same thing, the common good, and nothing for themselves. Their errors
+          are private and symmetric, as apt to be too cautious as too
+          reckless. And they are naive, each acting on her first estimate
+          rather than reasoning about what the others will do.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="pp. 354–356">1</a></sup
+          >
+          Each of the four is also a place where the jump from the theorem to a
+          real model release can come apart.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The four assumptions behind the result, and how an open-weight model
+            release tends to sit against each.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="pp. 354–356, notes 10–11, p. 368">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Assumption</th>
+              <th class="txt">In the model</th>
+              <th class="txt">In a real release</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Independence</span></td>
+              <td class="txt">Each actor's estimate is formed on its own.</td>
+              <td class="txt">
+                Labs read the same evaluations and papers, so their
+                misjudgments line up instead of cancelling out.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">One shared goal</span></td>
+              <td class="txt">Every actor acts only for the common good.</td>
+              <td class="txt">
+                A company also weighs revenue and strategic position, which the
+                model treats as a different problem.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Symmetric error</span></td>
+              <td class="txt">
+                A mistake is as likely too hopeful as too cautious.
+              </td>
+              <td class="txt">
+                Errors may lean one way, and the authors note that skew changes
+                the result.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Naive actors</span></td>
+              <td class="txt">Each acts on a first estimate, alone.</td>
+              <td class="txt">
+                Real actors talk, coordinate, and can reason about being the
+                most eager one in the room.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The last row is the one the authors press hardest themselves. They
+          show the curse is a curse for naive actors in particular. A
+          sufficiently careful actor can "manage the curse even without
+          communication" by conditioning on the very fact that she is the one
+          about to act, since being the most eager is itself a reason to trust
+          her own estimate less.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="pp. 358–359">1</a></sup
+          >
+          So the result is strong for actors who take their first estimate at
+          face value and weak for ideal reasoners who correct for the setup.
+          Real labs sit somewhere between the two. That gap is exactly where
+          the argument stops being a proof about AI and becomes an analogy to
+          it.
+        </p>
+      </section>
+
+      <section data-nb-section="releases" id="releases">
+        <h2>A more hopeful actor undid GPT-2's caution</h2>
+        <p>
+          The clearest real disclosure with this shape is GPT-2. In February
+          2019 OpenAI withheld the full 1.5-billion-parameter model and put out
+          smaller versions first, warning that the full one could be misused.
+          The caution rested on the model being hard to reproduce. That premise
+          did not hold. In August 2019 two master's students, Aaron Gokaslan
+          and Vanya Cohen, trained a 1.5-billion-parameter model of their own
+          and released the weights. OpenAI released its full model that
+          November.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="release-strategy sections">2</a></sup
+          ><sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <ol class="nb-timeline">
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">Feb 2019</span>
+            <h3>
+              OpenAI withholds the full GPT-2<sup class="nb-cite"
+                ><a href="#s2">2</a></sup
+              >
+            </h3>
+            <p>
+              The 1.5-billion-parameter model is held back on misuse grounds;
+              smaller sizes ship first as a staged release.
+            </p>
+          </li>
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">Aug 2019</span>
+            <h3>
+              Two students replicate and release it<sup class="nb-cite"
+                ><a href="#s3">3</a></sup
+              >
+            </h3>
+            <p>
+              Gokaslan and Cohen rebuild a model of the same size and post the
+              weights, months before OpenAI's own plans.<sup class="nb-cite"
+                ><a href="#s4">4</a></sup
+              >
+            </p>
+          </li>
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">Nov 2019</span>
+            <h3>
+              OpenAI releases the full model<sup class="nb-cite"
+                ><a href="#s2">2</a></sup
+              >
+            </h3>
+            <p>
+              The public 1.5-billion-parameter model was set by the most
+              release-inclined actor, not the most cautious one.
+            </p>
+          </li>
+        </ol>
+        <p>
+          That is the curse's shape in a real case: the group outcome, a public
+          model of the size OpenAI held back, was fixed by whoever was keenest
+          to release. It is a shape, not a proof. The students' motives and the
+          way their judgment tracked OpenAI's are not the independent,
+          purely public-spirited estimates the theorem assumes.
+        </p>
+        <p>
+          The larger present-day version is open-weight release of frontier
+          models. Meta put Llama 2 up for download in July 2023, when rivals
+          kept comparable systems behind paid interfaces, though its licence
+          carries restrictions and its training data stayed undisclosed.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          A year later it released Llama 3.1, including a 405-billion-parameter
+          model, while OpenAI, Anthropic, and Google kept weights of that scale
+          closed. Mark Zuckerberg's stated case is that open weights are safer
+          because more people can inspect them. He adds that withholding does
+          not keep a capable model from a determined adversary, since "stealing
+          models that fit on a thumb drive is relatively easy."<sup
+            class="nb-cite"
+            ><a href="#s6" data-nb-locator="safety section">6</a></sup
+          >
+        </p>
+        <p>
+          The governance work that argues against open release reasons in this
+          same structure without using the name. Seger and about two dozen
+          co-authors at the Centre for the Governance of AI conclude that some
+          highly capable models "should not be open-sourced, at least not
+          initially," and propose deliberation and government authorization to
+          "dissipate control away from unilateral decision-makers," which are
+          the paper's own remedies pointed at releases.<sup class="nb-cite"
+            ><a href="#s7" data-nb-locator="abstract; §4.3">7</a></sup
+          >
+          Shevlane and Dafoe turn the publish-or-withhold question on
+          "counterfactual possession," whether an adversary would obtain the
+          capability anyway.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          Neither invokes the curse by name. The named application to AI is
+          scarce, and the sharpest one comes from a critic of the remedy.
+        </p>
+      </section>
+
+      <section data-nb-section="objection" id="objection">
+        <h2>Existing institutions may already handle it</h2>
+        <p>
+          Stuart Armstrong, a colleague of the authors, granted that the result
+          "has the advantage of being true" and then argued its practical reach
+          is narrow, because society already corrects for it. International
+          agreements, regulation, and markets force actors to share information
+          and overrule lone optimists across most domains, and those systems
+          are built to work without every actor being individually rational.<sup
+            class="nb-cite"
+            ><a href="#s9" data-nb-locator="pp. 33–34">9</a></sup
+          >
+        </p>
+        <p>
+          He also pressed the harder point that acting alone is often good.
+          Entrepreneurship and scientific progress depend on people pursuing
+          projects the majority thinks worthless, so the curse "may thus be a
+          valid individual warning for individual entrepreneurs" while it
+          "fails as an overall judgement of the entrepreneurship."<sup
+            class="nb-cite"
+            ><a href="#s9" data-nb-locator="p. 34">9</a></sup
+          >
+          The authors concede as much. They note that "what is now widely
+          recognized as important progress was instigated by the unilateral
+          actions of mavericks," and that where a group is already too timid,
+          more conformity makes it worse.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§4, pp. 365–366">1</a></sup
+          >
+          Pressed too far, deferring to the aggregate becomes a veto for the
+          most cautious member.
+        </p>
+        <p>
+          There is a second edge. When others will reproduce or release the
+          capability regardless, one actor's restraint buys little, which is
+          the counterfactual-possession point put plainly, and GPT-2 is the
+          worked case: the caution did not hold once someone else could act.
+          Armstrong locates where the curse still bites hardest, in tail risks
+          that are new and under-regulated, and names future rather than
+          current artificial intelligence as that kind of case. Even there, he
+          adds, the lesson is caution and not prohibition: an actor "shouldn't
+          rely on their own naive initial judgement," which is a long way from
+          telling her not to act.<sup class="nb-cite"
+            ><a href="#s9" data-nb-locator="p. 36">9</a></sup
+          >
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The unilateralist's curse is a proven result, and a narrow one. Give
+          several well-meaning actors the same private-estimate decision and let
+          any one act alone, and the group will go ahead too often, because the
+          most hopeful estimate decides and adding actors only raises the chance
+          one of them overshoots. That much is theorem. Calling any particular
+          model release an instance of the curse is the analogy, and it strains
+          at the seams the proof depends on. Real labs act on mixed motives.
+          Their misjudgments are correlated rather than independent. And they
+          can talk to each other. The piece that carries over most cleanly is
+          the counting. More independent actors holding the same release option
+          does make it likelier that one of them ships. What the result cannot
+          settle is whether lifting the curse is wise, since the same authors
+          admit that acting alone is sometimes how progress arrives, and a
+          withheld capability others can rebuild was never really withheld. How
+          worried to be is left where the evidence leaves it, with you.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://nickbostrom.com/papers/unilateralist.pdf"
+              >Bostrom, Douglas & Sandberg's full paper</a
+            >: the model, the figures, and the three routes to conformity, open
+            access under CC-BY.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a
+              href="https://social-epistemology.com/2016/04/13/response-to-the-unilateralists-curse-stuart-armstrong/"
+              >Armstrong's published reply</a
+            >: four pages granting the result and disputing how far it reaches.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://nickbostrom.com/papers/unilateralist.pdf"
+              >Social Epistemology · Bostrom, N., Douglas, T. & Sandberg, A.,
+              "The Unilateralist's Curse and the Case for a Principle of
+              Conformity" (2016)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1908.09203"
+              >OpenAI · Solaiman, I., Brundage, M., Clark, J. et al., "Release
+              Strategies and the Social Impacts of Language Models" (2019)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://medium.com/@vanya_cohen/opengpt-2-we-replicated-gpt-2-because-you-can-too-45e34e6d36dc"
+              >Vanya Cohen · "OpenGPT-2: We Replicated GPT-2 Because You Can
+              Too" (2019)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://techxplore.com/news/2019-08-fake-news-staged-replication.html"
+              >TechXplore · "Fake news model in staged release but two
+              researchers fire up replication" (2019)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.technologyreview.com/2023/07/18/1076479/metas-latest-ai-model-is-free-for-all/"
+              >MIT Technology Review · Heikkilä, M., "Meta's latest AI model is
+              free for all" (2023)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://about.fb.com/news/2024/07/open-source-ai-is-the-path-forward/"
+              >Meta · Zuckerberg, M., "Open Source AI Is the Path Forward"
+              (2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2311.09227"
+              >Centre for the Governance of AI · Seger, E., Dreksler, N.,
+              Moulange, R. et al., "Open-Sourcing Highly Capable Foundation
+              Models" (2023)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2001.00463"
+              >Shevlane, T. & Dafoe, A. · "The Offense-Defense Balance of
+              Scientific Knowledge: Does Publishing AI Research Reduce Misuse?"
+              (2020)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://social-epistemology.com/2016/04/13/response-to-the-unilateralists-curse-stuart-armstrong/"
+              >Social Epistemology Review and Reply Collective · Armstrong, S.,
+              "Response to 'The Unilateralist's Curse'" (2016)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
