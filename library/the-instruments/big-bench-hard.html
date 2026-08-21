@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenAI withheld GPT-4's BBH score, and a rival published one anyway · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "big-bench-hard",
+        "template": "lesson",
+        "title": "OpenAI withheld GPT-4's BBH score, and a rival published one anyway",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-21",
+        "tags": [],
+        "sources": 8,
+        "words": 1648,
+        "reading_minutes": 7,
+        "dek": "The 83.1% for GPT-4 in Anthropic's Claude 3 card came from Google's report, and the tasks behind it had already reached GPT-4's training data.",
+        "harness": "Claude Code",
+        "model": "capable"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">OpenAI withheld GPT-4's BBH score, and a rival published one anyway</h1>
+        <p class="nb-dekline">
+          The 83.1% for GPT-4 in Anthropic's Claude 3 card came from Google's
+          report, and the tasks behind it had already reached GPT-4's training
+          data.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-08-21</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When a model card says a system scored 86.8% on BIG-Bench Hard, that
+          one line stands in for a chain of decisions you never see. BIG-Bench
+          Hard, usually shortened to BBH, is a set of 23 reasoning tasks that
+          labs still quote when they rank models, and its scores sit in the
+          published cards for Claude, Gemini, and GPT. This lesson takes one
+          real BBH row apart: where the tasks came from, what human score they
+          were measured against, what chain-of-thought prompting does to the
+          figure, and how the same benchmark came to carry a number its own
+          maker had thrown out.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/chain-of-thought.html">Eight worked
+            examples more than tripled a large model's math score</a>: what
+            chain-of-thought prompting is and where it helps.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/prompt-sensitivity.html">One character of
+            formatting decided whether the model got it right</a>: why changing
+            a prompt moves a score at all.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The number on the model card</h2>
+        <p>
+          Anthropic's Claude 3 model card reports a single row for BIG-Bench
+          Hard: Claude 3 Opus at 86.8%, GPT-4 at 83.1%, GPT-3.5 at 66.6%, all
+          under a setting labeled "3-shot CoT."<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The row shows that Opus outscored GPT-4 on something called BIG-Bench
+          Hard. What the row does not show is where an 86.8% on this test comes
+          from, or what the test was built to measure. The answer runs back
+          through three earlier decisions: a benchmark assembled from hundreds of
+          contributed tasks, a hard subset kept because the best models of 2022
+          kept failing it, and a prompting method that moves the score by more
+          than ten points.
+        </p>
+      </section>
+
+      <section data-nb-section="big-bench" id="big-bench">
+        <h2>204 tasks from 450 authors</h2>
+        <p>
+          BBH is carved out of a larger benchmark called BIG-bench. In 2022 a
+          collaboration of 450 authors across 132 institutions assembled 204
+          tasks, chosen to be the kind of problem the language models of the day
+          were expected to fail.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The tasks came from many fields and many hands, from logical deduction
+          to word puzzles to questions about everyday physical situations.
+        </p>
+        <p>
+          To know whether a model was doing well, BIG-bench needed a human score
+          to compare against. A team of expert raters worked through the tasks to
+          set that baseline.<sup class="nb-cite"><a href="#s2">2</a></sup> The
+          paper records two numbers for each task: the mean score across raters,
+          and the max score, meaning the single best rater's result.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The raters were allowed to use any resource they wanted, internet
+          search included, and worked in sittings of thirty minutes to two hours
+          over several weeks.<sup class="nb-cite"><a href="#s2">2</a></sup> The
+          paper adds that these scores are not meant to be the best a human could
+          do.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="selection" id="selection">
+        <h2>Filtering 209 tasks down to 23</h2>
+        <p>
+          BBH is what is left after a filter. Its authors started from 209
+          BIG-Bench tasks and cut them down in stages.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>209 tasks</h3>
+            <p>
+              Every BIG-Bench task the authors began with.<sup class="nb-cite"
+                ><a href="#s3">3</a></sup
+              >
+            </p>
+          </li>
+          <li>
+            <h3>78 tasks</h3>
+            <p>
+              Those with clean multiple-choice or exact-match answers and enough
+              examples to score, each under 103 examples so three could be shown
+              as worked cases and a hundred kept for the test.<sup
+                class="nb-cite"
+                ><a href="#s3">3</a></sup
+              >
+            </p>
+          </li>
+          <li>
+            <h3>36 tasks</h3>
+            <p>
+              Those where no prior language model had beaten the average
+              human-rater.<sup class="nb-cite"><a href="#s3">3</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>23 tasks</h3>
+            <p>
+              What remained after dropping 13 narrow, domain-specific tasks that
+              were hard for reasons of specialist knowledge rather than
+              reasoning.<sup class="nb-cite"><a href="#s3">3</a></sup>
+            </p>
+          </li>
+        </ol>
+        <p>
+          The rule at the third step is what defines BBH: the tasks kept are the
+          ones where models were still losing to the average human-rater. The
+          average human-rater is the mean across BIG-bench's team of expert
+          raters, and the paper never says
+          how many people were on the team or how many rated each task.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Averaged over the 23 BBH tasks, that mean is 67.7%. The best single
+          rater on each task, averaged the same way, reached 94.4%.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          So the bar a model clears to "beat the average human" is the mean of a
+          small group of experts who were allowed to look things up, and it sits
+          almost 27 points under what the best of them managed. A model at 70%
+          has passed the average of that group and is still far short of its
+          strongest rater.
+        </p>
+      </section>
+
+      <section data-nb-section="chain-of-thought" id="chain-of-thought">
+        <h2>Chain-of-thought moves the score</h2>
+        <p>
+          The BBH paper measured each task two ways. In the first, which it calls
+          answer-only, the model sees three worked examples and then gives its
+          answer directly.<sup class="nb-cite"><a href="#s3">3</a></sup> In the
+          second, the worked examples also spell out the reasoning steps that
+          lead to each answer, so the model writes out its own steps before
+          committing to one. That second method is
+          <a href="../the-evidence/chain-of-thought.html">chain-of-thought
+          prompting</a>, taught in an earlier lesson. The only thing that changes
+          between the two runs is the wording of the prompt, and
+          <a href="../the-mechanics/prompt-sensitivity.html">why a change in
+          wording moves a score</a> is its own subject. Most published BBH
+          numbers, the ones on model cards included, are reported under this
+          3-shot chain-of-thought protocol.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          Averaged over the 23 tasks, chain-of-thought added 13 to 17 points.
+          PaLM 540B went from 52.3% to 65.2%, and Codex from
+          56.6% to 73.9%.<sup class="nb-cite"><a href="#s3">3</a></sup> That
+          lift is large enough to change where a model lands against the human
+          bar.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="big-bench-hard/chart-1.png"
+            alt="Grouped bar chart of BBH accuracy averaged over 23 tasks. Codex rises from 56.6% answer-only to 73.9% with chain-of-thought; PaLM 540B from 52.3% to 65.2%. A dotted line marks the 67.7% average human-rater and a dashed line the 94.4% max human-rater. Codex with chain-of-thought clears the 67.7% line; PaLM stays just below it; both are far under 94.4%."
+          />
+          <figcaption>
+            Fig. 1 · Answer-only versus chain-of-thought on BBH, averaged over
+            the 23 tasks, against the average and max human-rater scores.<sup
+              class="nb-cite"
+              ><a href="#s3">3</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          With chain-of-thought, Codex's 73.9% clears the average human-rater's
+          67.7%. PaLM's 65.2% does not, even though PaLM beats that same bar on
+          10 of the 23 tasks when they are scored one at a time.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          So whether "chain-of-thought beats the human baseline on BBH" holds
+          depends on which model and which tasks you mean. On the 23-task average
+          it is true for Codex and false for PaLM, and no model tested came near
+          the 94.4% best-human mark.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          This is also why the "3-shot CoT" label on the Claude 3 card matters:
+          the 86.8% for Opus was measured with the prompting method that adds the
+          most, so it is not comparable to an answer-only score.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="contamination" id="contamination">
+        <h2>OpenAI found the test inside GPT-4's training data</h2>
+        <p>
+          A benchmark score assumes the model is answering questions it has not
+          already seen. When OpenAI evaluated GPT-4 in 2023, it checked that
+          assumption for each benchmark: had the test questions turned up in the
+          data the model was trained on? For BIG-bench, they had.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">What OpenAI reported</span>
+          <blockquote>
+            "During our contamination check we discovered that portions of
+            BIG-bench were inadvertently mixed into the training set, and we
+            excluded it from our reported results."<sup class="nb-cite"
+              ><a href="#s5">5</a></sup
+            >
+            <span class="nb-note-who">GPT-4 Technical Report, OpenAI, 2023</span>
+          </blockquote>
+        </div>
+        <p>
+          So OpenAI's own report publishes no BBH score for GPT-4.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Now look again at the Claude 3 card. Its row lists GPT-4 at 83.1%, and
+          a footnote says where that number came from: not OpenAI, but Google's
+          Gemini technical report.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Same model, same benchmark. The party that trained GPT-4 held its score
+          back, because the test had leaked into training. A rival published a
+          number anyway. That number then traveled into a competitor's card and
+          sat beside Opus as if the two had been measured the same way.
+        </p>
+        <p>
+          Leakage is easy here because the tasks are public files. BIG-bench
+          ships a fixed "canary" string in every task file precisely so that
+          anyone can detect whether the tasks have been scraped into a training
+          set.<sup class="nb-cite"><a href="#s6">6</a></sup> That guard exists
+          because the risk is general: test items leaking into training data
+          raise a score without any matching gain in ability, a problem now
+          documented across many benchmarks.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          The other thing that happened to BBH is quieter. As models improved
+          they reached near-perfect scores on many of the 23 tasks, so the test
+          stopped telling the top models apart.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          In 2025 a team rebuilt it as BIG-Bench Extra Hard, swapping each task
+          for a harder one that probes the same kind of reasoning. On that
+          replacement the best general-purpose model scored 9.8% and the best
+          reasoning-specialized model 44.8%, a measure of how much room BBH had
+          lost.<sup class="nb-cite"><a href="#s8">8</a></sup> A reader comparing
+          Opus at 86.8% with GPT-4 at 83.1% in that single card row is comparing
+          numbers made under different conditions, one of them on a test its own
+          maker had set aside as compromised. The row reads like a head-to-head,
+          and for that one figure it is not.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A BBH score is a model's average accuracy over 23 tasks. The bar it is
+          measured against is itself the mean of a small expert team who were
+          allowed to search the web, and it sits well below the best single
+          rater's 94.4%. Chain-of-thought prompting, the setting behind most
+          published BBH numbers including Opus's 86.8%, adds enough to carry some
+          models over that average and not others. And the same card row that let
+          Opus and GPT-4 look like a fair contest was quoting a GPT-4 figure
+          OpenAI itself withheld, because the test had turned up in GPT-4's
+          training data. Read the 86.8% and the 83.1% again and they answer
+          different questions: measured with different prompting, against a bar of
+          searchable experts, and in one case on tasks the model had already been
+          trained on.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2210.09261">Challenging BIG-Bench
+            Tasks and Whether Chain-of-Thought Can Solve Them</a>: the selection
+            rule and the answer-only versus chain-of-thought tables in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2502.19187">BIG-Bench Extra Hard</a>:
+            the harder replacement built once BBH saturated.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Table 1, BIG-Bench-Hard row; footnotes 5 and 7"
+              href="https://www-cdn.anthropic.com/de8ba9b01c9ab7cbabf5c33b80b7bbc618857627/Model_Card_Claude_3.pdf"
+              >Anthropic · Claude 3 Model Card</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; §2.3.2 human evaluation; Appendix E"
+              href="https://arxiv.org/abs/2206.04615"
+              >arXiv · Srivastava et al., Beyond the Imitation Game (BIG-bench)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; §2 task selection; Table 2"
+              href="https://arxiv.org/abs/2210.09261"
+              >arXiv · Suzgun et al., Challenging BIG-Bench Tasks and Whether
+              Chain-of-Thought Can Solve Them</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://benchmarkingagents.com/bigbench-hard/"
+              >Benchmarking Agents · BIG-Bench Hard, protocol and saturation</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Benchmark evaluation of the pre-trained base model"
+              href="https://arxiv.org/abs/2303.08774"
+              >arXiv · OpenAI, GPT-4 Technical Report</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="README, canary-string instructions"
+              href="https://github.com/google/BIG-bench"
+              >GitHub · google/BIG-bench</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.deeplearning.ai/the-batch/the-problem-with-benchmark-contamination-in-ai"
+              >DeepLearning.AI · The Batch, The Problem With Benchmark
+              Contamination in AI</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2502.19187"
+              >arXiv · Kazemi et al., BIG-Bench Extra Hard</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
