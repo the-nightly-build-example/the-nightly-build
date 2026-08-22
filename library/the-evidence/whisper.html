@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Whisper transcribes audio it never trained on, and silence no one spoke · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "whisper",
+        "template": "lesson",
+        "title": "Whisper transcribes audio it never trained on, and silence no one spoke",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-22",
+        "tags": ["speech-recognition", "whisper", "robustness", "hallucination", "weak-supervision"],
+        "sources": 6,
+        "words": 1819,
+        "reading_minutes": 8,
+        "dek": "680,000 hours of loosely labeled web audio bought robustness on speech that clean-benchmark models fumble, and the decoder that delivered it now writes fluent text into medical transcripts.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Whisper transcribes audio it never trained on, and silence no one spoke</h1>
+        <p class="nb-dekline">
+          680,000 hours of loosely labeled web audio bought robustness on speech that clean-benchmark models fumble, and the decoder that delivered it now writes fluent text into medical transcripts.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-22</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Whisper is the speech-to-text model most products quietly run when
+          they turn talking into text: captions, voice notes, and the scribes
+          that write up a doctor's visit. In October 2024 the Associated Press
+          reported that it invents sentences no one spoke, including inside
+          medical transcription. That failure sits on top of the exact quality
+          the model became famous for. This lesson reads the paper that made the
+          claim. By the end you can say what Whisper's builders actually
+          measured, why they measured a gap rather than a single accuracy
+          number, and why the design that closes the gap is the same one that
+          fills silence with fluent, made-up words.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/gpt-2.html">GPT-2 set records at predicting text and barely beat random at summarizing</a>: where this course teaches zero-shot evaluation, the practice of testing a model on tasks and data it never trained on.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/the-bitter-lesson.html">The Bitter Lesson</a>: the argument that general methods fed more data and computation tend to beat hand-built ones, which is the bet Whisper's training makes.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Whisper's best benchmark score was never the point</h2>
+        <p>
+          Radford, Kim, Xu, Brockman, McLeavey, and Sutskever released Whisper
+          at OpenAI in September 2022, in a paper titled <em>Robust Speech
+          Recognition via Large-Scale Weak Supervision</em>.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Its most-cited number is not impressive, and the authors say so. On
+          LibriSpeech test-clean, a standard bank of clearly read audiobook
+          speech, Whisper's best model reaches a word error rate of 2.5, the
+          share of words it gets wrong. The paper calls that
+          <q>relatively unremarkable</q>, roughly what a modern specialized
+          model scores and about where the field stood in mid-2019.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          A supervised competitor ties it there. What the paper actually
+          defends is robustness: that the gap between how the model does on
+          clean, familiar audio and how it does on messy, unfamiliar audio is
+          unusually small, close to the spread a human
+          shows.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="wer" id="wer">
+        <h2>Counting substitutions, insertions, and deletions</h2>
+        <p>
+          Word error rate lines a machine's transcript up against a correct one
+          and counts three kinds of mistake: a substitution, one word heard as
+          another; an insertion, a word the transcript adds; and a deletion, a
+          word it drops. Add the three counts and divide by the number of words
+          in the correct transcript.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          In a worked example from the standard speech-recognition textbook, a
+          recognizer missed a 13-word reference by six substitutions, three
+          insertions, and one deletion. Its word error rate is
+          (6 + 3 + 1) / 13, or 76.9 percent.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Because insertions count, the rate can pass 100 percent: a transcript
+          can invent more wrong words than the reference had. Whisper's 2.5 on
+          LibriSpeech means fewer than three words wrong per hundred on that
+          clean audio. One caution travels with every such comparison in the
+          paper. The numbers are scored after a text normalizer strips
+          differences of formatting and punctuation. The rate reflects the
+          words a model got right, not whether it wrote out a number or
+          capitalized a name.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          A single accuracy number like 2.5 says how the model did on one kind
+          of audio. It says nothing about how far the number moves when the
+          audio changes. That movement is what the paper measures, and scale is
+          what buys it.
+        </p>
+      </section>
+
+      <section data-nb-section="scale" id="scale">
+        <h2>680,000 hours of whatever text came attached</h2>
+        <p>
+          Whisper was trained on 680,000 hours of audio scraped from the
+          internet, each clip paired with whatever text happened to accompany it
+          online.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          This is weak supervision: instead of transcripts a linguist checked
+          word by word, the labels are cheap, uneven text of unknown quality,
+          taken as-is and in bulk. The one deliberate filter went the other way
+          from cleaning. The authors built heuristics to detect and remove
+          transcripts that looked machine-generated, so the model would learn
+          from human writing rather than
+          <q>transcript-ese</q> produced by earlier recognizers.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Of the total, 117,000 hours cover 96 languages other than English and
+          125,000 hours are audio in one language paired with English
+          translation; about 65 percent of the training computation went to
+          English transcription.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The scale is easier to feel against what came before. A gold-standard
+          academic corpus runs about a thousand hours.
+          LibriSpeech, the benchmark Whisper's 2.5 is measured on, is roughly
+          1,000 hours of read audiobook English.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Whisper trained on several hundred times more audio than that, and
+          paid for the volume in label quality. The bet is that hundreds of
+          thousands of noisy hours teach a kind of generalization that a
+          thousand pristine hours cannot.
+        </p>
+      </section>
+
+      <section data-nb-section="gap" id="gap">
+        <h2>The gap that opens off the benchmark</h2>
+        <p>
+          The bet is tested
+          <a href="../the-evidence/gpt-2.html">zero-shot</a>: Whisper is scored
+          on datasets it never trained on, so it cannot have memorized their
+          quirks. That makes the comparison unusual. A conventional supervised
+          model is normally tested on held-out audio drawn from the same
+          collection it trained on, which flatters it, because test and training
+          audio share the same recording conditions, accents, and style. Score
+          both on someone else's data and the supervised model's home-field
+          advantage disappears.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          That is what the paper's central table shows. Whisper's largest model
+          and a strong supervised model, wav2vec 2.0, tie on LibriSpeech clean.
+          Averaged across thirteen other datasets Whisper never trained on, the
+          supervised model's error climbs far more steeply than Whisper's.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The two models tie on the clean benchmark and diverge across the
+            thirteen other datasets. Whisper's average error there is 55.2
+            percent lower.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Test audio</th>
+              <th>wav2vec 2.0 Large</th>
+              <th>Whisper Large V2</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">LibriSpeech test-clean</td>
+              <td>2.7</td>
+              <td>2.7</td>
+            </tr>
+            <tr>
+              <td class="txt">Average, 13 other datasets</td>
+              <td>29.3</td>
+              <td>12.8</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          This is what robustness means here. It is not a lower score on the
+          familiar benchmark, where the two models are identical. It is a much
+          smaller jump when the audio turns unfamiliar. Plotted against a human
+          listener, Whisper's points sit near the line an ideally robust
+          transcriber would follow, and reach into the range a person occupies.
+          The supervised models fall away from that line as soon as the audio
+          leaves their home distribution.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Scale of weak supervision bought that. It did not buy the lowest error
+          on any one test.
+        </p>
+      </section>
+
+      <section data-nb-section="hallucination" id="hallucination">
+        <h2>Always a next word, even through silence</h2>
+        <p>
+          The design that holds up across strange audio has a cost written into
+          it. Whisper is a decoder that reads audio and predicts the next word,
+          one token after another, and it is always predicting a next token.
+          OpenAI's model card states the failure and its cause plainly:
+          predictions <q>may include texts that are not actually spoken in the
+          audio input</q>, because the model combines predicting the next word
+          with transcribing the audio it hears.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The paper lists the same behavior among its known limitations:
+          <q>complete hallucination where the model will output a transcript
+          entirely unrelated to the actual audio.</q><sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Feed it silence or noise and it does not fall silent. It emits the
+          words that would plausibly come next.
+        </p>
+        <p>
+          How often depends entirely on the audio, and no single figure is the
+          hallucination rate. In the one controlled measurement, a peer-reviewed
+          study ran about 13,140 short utterance segments from recordings of
+          speakers, many of them with aphasia, through the default Whisper
+          service in 2023. Roughly 1.4 percent of the transcriptions contained
+          an entire hallucinated phrase or sentence that was in no part of the
+          audio.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          That number is specific to short clips, and it is not Whisper's rate
+          in general. The same study found hallucination rose
+          with the length of the non-vocal stretches in a clip. It fell hardest
+          on speakers with aphasia, who pause longer. Of the hallucinations that
+          did occur, 38 percent carried explicit harm, such as invented violence
+          or a made-up claim of authority.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          On messier, longer, real-world audio, practitioners report far more.
+          The Associated Press collected uncontrolled counts from people running
+          the model on their own recordings: a researcher who found
+          hallucinations in eight of ten public-meeting transcripts, an engineer
+          who found them in about half of more than 100 hours, a developer who
+          found them in nearly all of 26,000.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          These are tallies by individuals on their own audio, not measured
+          rates on a defined sample, and they cannot be read as one. What they
+          fix is the setting. Nabla, a medical-scribe product built on Whisper,
+          reports use by more than 30,000 clinicians across 40 health systems on
+          an estimated 7 million visits. It erases the original audio for
+          data-safety reasons, so no recording survives to check the transcript
+          against.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          The paper and the deployment do not actually contradict each other.
+          They measure different things. Robustness in the paper is average
+          error across many distributions, a claim about how a large batch of
+          transcripts holds up on average. Verbatim medical and legal
+          transcription needs the opposite guarantee: no invented sentence in
+          any single record, the one place average error says nothing. OpenAI's
+          own model card asked for this restraint at release, cautioning against
+          Whisper <q>in high-risk domains like decision-making
+          contexts</q>.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The product was marketed as near human accuracy and put to exactly
+          that use.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Whisper's headline result was never that it transcribes most
+          accurately. On the clean benchmark a specialized model ties it. The
+          result is robustness: trained on 680,000 hours of loosely labeled web
+          audio and tested on data it never saw, its error barely rises where a
+          supervised model's nearly triples. That is real, and it is what scale
+          of weak supervision bought. But average error across many transcripts
+          was the only promise the paper made, and it is not the promise a
+          medical or legal record needs. The decoder that keeps predicting a
+          plausible next word is what carries the model across unfamiliar audio,
+          and it is the same decoder that, given silence, writes a plausible
+          sentence no one said. When you next hear that a transcription tool is
+          near human accuracy, the question the paper teaches you to ask is:
+          accurate on average, or accurate on this record.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://github.com/openai/whisper">OpenAI's Whisper repository</a>: the released code and model weights, to run the model on your own audio and watch where it invents.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://web.stanford.edu/~jurafsky/slp3/">Speech and Language Processing</a>: Jurafsky and Martin's full textbook, for the mechanics of speech recognition and error scoring beyond word error rate.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2212.04356"
+              >arXiv · Radford et al., Robust Speech Recognition via Large-Scale Weak Supervision (OpenAI, 2022)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://web.stanford.edu/~jurafsky/slp3/16.pdf"
+              >Jurafsky &amp; Martin · Speech and Language Processing (3rd ed. draft), ch. 16, Word Error Rate</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.openslr.org/12"
+              >OpenSLR · LibriSpeech ASR corpus</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/openai/whisper/blob/main/model-card.md"
+              >OpenAI · Whisper model card</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://facctconference.org/static/papers24/facct24-111.pdf"
+              >ACM FAccT 2024 · Koenecke et al., Careless Whisper: Speech-to-Text Hallucination Harms</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://apnews.com/article/ai-artificial-intelligence-health-business-90020cdf5fa16c79ca2e5b6c4c9bbb14"
+              >Associated Press · Burke and Schellmann, on Whisper hallucinations in hospitals (Oct. 26, 2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
