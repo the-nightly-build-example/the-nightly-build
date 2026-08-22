@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbots overuse 'delve,' and the popular explanation for it failed its one direct test. · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "overused-words",
+        "template": "lesson",
+        "title": "Chatbots overuse 'delve,' and the popular explanation for it failed its one direct test.",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-22",
+        "tags": ["post-training", "rlhf", "ai-detection"],
+        "sources": 8,
+        "words": 1817,
+        "reading_minutes": 8,
+        "dek": "‘Delves,’ ‘underscores,’ and a small set of cousins broke sharply upward in published writing the year ChatGPT shipped, and the training step that concentrated them is settled well before the reason it chose those words.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">Chatbots overuse &lsquo;delve,&rsquo; and the popular explanation for it failed its one direct test.</h1>
+        <p class="nb-dekline">
+          &lsquo;Delves,&rsquo; &lsquo;underscores,&rsquo; and a small set of cousins broke sharply
+          upward in published writing the year ChatGPT shipped, and the training step
+          that concentrated them is settled well before the reason it chose those words.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-22</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have probably been told you can spot AI writing by the words it
+          reaches for. A chatbot says &lsquo;delve&rsquo; and &lsquo;underscore&rsquo; and
+          &lsquo;showcasing&rsquo; where a person would not, and a class of detection
+          tools, along with a lot of casual suspicion, rests on that tell. The
+          words are real and they are countable. This lesson works backward from the
+          counted spike to what in the system produces it. It moves one part at a
+          time: the draw that picks each word, the training stage that concentrates
+          the odds, and the point where the engineering runs out and honest people are
+          guessing. By the end you will know which half of the &ldquo;it said delve, so
+          it was AI&rdquo; claim is settled and which half is still open. You will also
+          know what the word can and cannot prove about any single piece of writing.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/formatting-defaults.html">One line in the system prompt turns off the bullet points</a>:
+            traces a chatbot&rsquo;s bullets and bold headers to the same post-training stage this lesson turns to for words.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/sampling-temperature.html">Two answers to one prompt diverge at a single draw</a>:
+            how the next-token probability distribution and the sampler&rsquo;s draw actually work.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>From a hunch to a counted spike</h2>
+        <p>
+          Dmitry Kobak and colleagues took 14
+          million English abstracts published in PubMed between 2010 and 2024 and,
+          for each word, drew the line its frequency had been following before large
+          language models arrived. Then they compared that projection to what 2024
+          actually looked like.<sup class="nb-cite"><a href="#s1">1</a></sup> Most
+          words stayed near their line. A small set jumped far above it, and the jump
+          was abrupt, dated to the months after ChatGPT appeared in late 2022. The
+          words that rose the most by ratio were low-frequency style words: forms of
+          &lsquo;delve,&rsquo; &lsquo;underscore,&rsquo; and &lsquo;showcase.&rsquo; From how much
+          excess word usage they measured, the authors put a floor under the change.
+          At least one in ten 2024 abstracts showed signs of being processed with a
+          model, and as high as three in ten in some corners of the
+          literature.<sup class="nb-cite"><a href="#s1">1</a></sup> Treat that as a
+          moving lower bound rather than a headcount. A later version of the same
+          analysis revised it upward as more of 2024 came in.
+        </p>
+        <p>
+          The pattern is not an artifact of one database. Weixin Liang and colleagues
+          ran a similar count on machine-learning conference peer reviews and found
+          the same shape in a different genre. Particular adjectives that were rare in
+          reviews from before ChatGPT turned common in the 2024
+          ones.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Three adjectives in ICLR 2024 machine-learning peer reviews, and how many
+            times more often each appeared in a review sentence than in the years
+            before ChatGPT.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Adjective</th>
+              <th>2024 vs 2023</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">&ldquo;commendable&rdquo;</td>
+              <td>9.8&times;</td>
+            </tr>
+            <tr>
+              <td class="txt">&ldquo;meticulous&rdquo;</td>
+              <td>34.7&times;</td>
+            </tr>
+            <tr>
+              <td class="txt">&ldquo;intricate&rdquo;</td>
+              <td>11.2&times;</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          These are counts and nothing more, a blunt tally of how often a word shows
+          up. Two independent corpora moving the same way in the same year are hard to
+          wave off.
+        </p>
+      </section>
+
+      <section data-nb-section="the-draw" id="the-draw">
+        <h2>Every word is a draw from a distribution</h2>
+        <p>
+          How do the words reach the page in the first place? A language model
+          <a href="../the-mechanics/autoregressive-generation.html">writes one token
+          at a time</a>, and each token it has already written becomes part of what it
+          reads to choose the next one. At every step the model turns the text so far
+          into
+          <a href="../the-mechanics/sampling-temperature.html">a probability
+          distribution over what could come next, and a sampler draws one token from
+          it</a>. An overused word is simply a word the model assigns high probability
+          to across many different contexts, so it keeps getting drawn.
+        </p>
+        <p>
+          That much is settled engineering, and it only relocates the question. The
+          words are overused because the model rates them likely. Why does it rate
+          these words likely? The obvious guess is that they were common in the text
+          it learned from. Tom Juzek and Zina Ward checked that guess directly. They
+          generated abstracts with ChatGPT and counted how often the suspect words
+          appeared per million. They set that against how often the same words appear
+          in datasets that stand in for the model&rsquo;s training text. The model used
+          them far more than the training-text rate would
+          predict.<sup class="nb-cite"><a href="#s3">3</a></sup> So the concentration
+          is not inherited whole from the raw web. Something after the model&rsquo;s
+          first, predict-the-next-word training sharpened it.
+        </p>
+      </section>
+
+      <section data-nb-section="post-training" id="post-training">
+        <h2>Post-training narrows what the model will say</h2>
+        <p>
+          That later stage has a name. A raw model, trained only to predict text, is
+          then put through post-training, the step that turns a text-predictor into an
+          assistant. Its main recipe
+          <a href="../the-evidence/instructgpt.html">rewards the model for answers
+          that human raters preferred</a>, pushing it toward the phrasings that scored
+          well and away from the ones that did not. The Nightly Build has already
+          traced the
+          <a href="../the-mechanics/formatting-defaults.html">bullet points and bold
+          headers</a> of a typical chatbot answer to this same stage, which paid for
+          structure. The words are the same mechanism one level down, in the wording
+          rather than the layout.
+        </p>
+        <p>
+          Rewarding preferred phrasings has a measured side effect. It narrows the
+          range of what the model will say. Robert Kirk and colleagues compared a base
+          model, a version fine-tuned on human demonstrations, and a version trained
+          further on human preference feedback, and measured the diversity of what
+          each produced. The preference-trained version generalized better to new
+          inputs but produced significantly less varied text, both within a single
+          prompt and across many
+          prompts.<sup class="nb-cite"><a href="#s4">4</a></sup> Less varied output
+          means the high-probability words get drawn even more often, in even more
+          places. This is the settled core of the whole chain. Post-training
+          concentrates the distribution the sampler draws from, and that concentration
+          is what turns a mild preference into a tic.
+        </p>
+      </section>
+
+      <section data-nb-section="specific-words" id="specific-words">
+        <h2>The specific words are where the engineering runs out</h2>
+        <p>
+          Everything to here is settled: the draw, the concentration, the stage that
+          causes it. The next question is the one people actually argue about, and it
+          is open. Why &lsquo;delve,&rsquo; and not one of the many other low-frequency words
+          the narrowing could have fixed on?
+        </p>
+        <p>
+          The most repeated answer started as a guess in a newspaper column. Alex Hern
+          noted that the human raters whose preferences train these models are often
+          hired in countries with high English proficiency and lower wages, Nigeria
+          among them. In Nigerian formal English &lsquo;delve&rsquo; is an ordinary word, he
+          argued, so it may have ridden those raters&rsquo; preferences into the
+          model.<sup class="nb-cite"><a href="#s5">5</a></sup> The idea spread fast.
+          One widely read writeup called it &ldquo;pretty solid&rdquo; and repeated that
+          PubMed&rsquo;s use of the word had climbed many times
+          over.<sup class="nb-cite"><a href="#s6">6</a></sup> But the one team that
+          tested it directly found against it. Juzek and Ward checked the words that supposedly carry the
+          dialect against the International Corpus of English, the standard reference
+          for exactly this kind of comparison, and reported that their analysis did
+          not support the hypothesis.<sup class="nb-cite"><a href="#s3">3</a></sup> A
+          separate test of theirs, measuring how far another model was thrown by
+          AI-written abstracts, was consistent with post-training playing some role.
+          But it could not separate rater dialect from any other difference between
+          models, and &lsquo;delve&rsquo; behaved unlike the other words they
+          studied.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          So the honest position is narrow. That the words come from post-training is
+          supported. Which words, and why those, has one popular explanation whose
+          only direct test came out negative and no confirmed replacement. It may yet
+          turn out that rater preferences pick the words. For now no one has shown it.
+        </p>
+      </section>
+
+      <section data-nb-section="detection" id="detection">
+        <h2>A signal that cannot name one document</h2>
+        <p>
+          If the words are a real,
+          counted signal, why are the tools that flag &ldquo;AI writing&rdquo; by them so
+          unreliable?
+        </p>
+        <p>
+          Two reasons, both following from what the signal is. First, it is a fact
+          about a population, not a page. Kobak&rsquo;s spike says the body of 2024
+          abstracts shifted, and most of those abstracts were still written by people,
+          some with a model&rsquo;s help. A high rate of these words across a corpus
+          cannot show that any one abstract in it was machine-written. The same
+          fragility shows up when detectors try. Liang and colleagues ran several
+          detectors on essays by non-native English writers and found more than half
+          flagged as AI, while essays by United States eighth-graders scored as human
+          almost every time.<sup class="nb-cite"><a href="#s7">7</a></sup> The
+          detectors were tracking surface fluency, not authorship, and plainer or more
+          ornate word choice was enough to flip the verdict.
+        </p>
+        <p>
+          Second, the signal is a distribution left by training and tuning, not a
+          watermark stamped into the text. It can be rewritten away. Vinu Sadasivan
+          and colleagues showed that paraphrasing model output repeatedly drives
+          detector accuracy down while keeping the writing about as good, and proved a
+          limit underneath the whole enterprise. As machine and human writing grow
+          more alike, the accuracy of the best possible detector falls toward a coin
+          toss.<sup class="nb-cite"><a href="#s8">8</a></sup> Human writing is drifting
+          toward the machine&rsquo;s words already, because people read model output all
+          day and some of it settles in.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The spike is settled fact. After late 2022 a specific set of style words
+          broke from their long-run frequency in careful counts of published writing.
+          The reason a model reaches for the same words across unrelated prompts is
+          settled too. Post-training pulls its output toward the phrasings that scored
+          well and narrows the range it will produce. Why the narrowing landed on
+          delve rather than some other word is the part no one has shown. The most
+          repeated explanation, that the raters who shaped the reward favored their own
+          dialect, failed the one direct test anyone ran on it. So the words are a real
+          signal about a population of documents, and no signal at all about which
+          single document in that population a machine wrote.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2406.07016">Kobak et al., excess vocabulary in PubMed abstracts</a>:
+            the full method, and how the prevalence estimate differs by discipline, country, and journal.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2412.11385">Juzek &amp; Ward on the overused words</a>:
+            their seven candidate sources for the words and the tests that ruled some out.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.07016"
+              >arXiv · Kobak et al., excess vocabulary in 14 million PubMed abstracts (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2403.07183"
+              >arXiv · Liang et al., monitoring AI-modified text in peer reviews (2024)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2412.11385"
+              >arXiv · Juzek &amp; Ward, on the words ChatGPT overuses and where they come from (2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2310.06452"
+              >arXiv · Kirk et al., effects of RLHF on generalisation and output diversity (2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.theguardian.com/technology/2024/apr/16/techscape-ai-gadgest-humane-ai-pin-chatgpt"
+              >The Guardian · Alex Hern, TechScape (16 April 2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://simonwillison.net/2024/Apr/18/delve/"
+              >Simon Willison · on the &lsquo;delve&rsquo; hypothesis (18 April 2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2304.02819"
+              >arXiv · Liang et al., GPT detectors are biased against non-native English writers (2023)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2303.11156"
+              >arXiv · Sadasivan et al., can AI-generated text be reliably detected? (2023)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
