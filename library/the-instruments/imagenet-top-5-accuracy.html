@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ImageNet lets a model guess five times, then grades it against one flawed label · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "imagenet-top-5-accuracy",
+        "template": "lesson",
+        "title": "ImageNet lets a model guess five times, then grades it against one flawed label",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-22",
+        "tags": [],
+        "sources": 9,
+        "words": 2074,
+        "reading_minutes": 9,
+        "dek": "The score behind AI's 'superhuman' vision dropped below the 5.1% human line by 2015, and later relabelings found nearly a third of the validation images fit more than the single label they were given.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">ImageNet lets a model guess five times, then grades it against one flawed label</h1>
+        <p class="nb-dekline">
+          The score behind AI's 'superhuman' vision dropped below the 5.1% human line by 2015, and later relabelings found nearly a third of the validation images fit more than the single label they were given.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-22</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have read that machines now recognize images better than people
+          do. That claim rests almost entirely on one number: top-5 error on
+          ImageNet, the score that ranked the models from 2010 through 2015 and
+          crossed a human figure in the middle of that run. This lesson builds
+          the number from the image up, so that a stated ImageNet result stops
+          being a slogan and becomes something you can read. By the end you will
+          know exactly what a top-5 score counts as a hit. You will also know the
+          two questions it was never able to answer: whether the single label it
+          grades against is correct, and whose vision the model actually beat.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/glue.html">The 'human-level' language score is an average of nine English tests</a>:
+            the matching story in language, where the human line a benchmark crossed was a hurried crowd estimate on tasks that leak their own answers.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../ai-foundations/generalization.html">Rebuild ImageNet's test set and the top model loses eleven points</a>:
+            how much of any accuracy number belongs to the exact test set it was measured on.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-evidence/alexnet.html">AlexNet won ImageNet 2012 on two gaming GPUs</a>:
+            the 2012 result behind the first large jump in the curve this lesson reads.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One label per image, five tries to match it</h2>
+        <p>
+          The number lives on a specific contest. The ImageNet Large Scale
+          Visual Recognition Challenge sorted photographs into 1,000 object
+          categories. It gave a competitor about 1.28 million labeled images to
+          train on and 50,000 more, the validation set, to be scored on.<sup
+          class="nb-cite"><a href="#s1">1</a></sup> The rule that made scoring
+          possible is the one to hold onto: every image carries exactly one
+          ground-truth label, however much else is in the frame.<sup
+          class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Two numbers come off that setup. Top-1 error asks the model for its
+          single most confident category and counts the image wrong unless that
+          one guess is the label. Top-5 error is gentler: the model returns five
+          ranked categories, and the image counts correct if any one of the five
+          is the label.<sup class="nb-cite"><a href="#s1">1</a></sup> Accuracy is
+          just the flip side, one minus the error rate, so 3.57% top-5 error and
+          96.43% top-5 accuracy are the same result stated two ways.
+        </p>
+        <p>
+          The gap between the two rules is where a plausible near-miss lives.
+          Say an image's label is Siberian husky. A model that ranks Eskimo dog
+          first and Siberian husky second has failed top-1 and passed top-5 on
+          the same photograph. Top-5 was built to forgive that kind of near-miss.
+          The score does not ask whether the model saw the image, only whether
+          the right word survived into a list of five.
+        </p>
+      </section>
+
+      <section data-nb-section="why-five-guesses" id="why-five-guesses">
+        <h2>The strawberry that also holds an apple</h2>
+        <p>
+          The five-guess rule was not a hedge. It answered a real defect in the
+          data, and the people who ran the challenge named the defect plainly.
+          Because only one category is labeled per image, an image that contains
+          more than one object creates an ambiguity the model cannot resolve.
+          Their example was a photograph labeled strawberry that also holds an
+          apple: an honest classifier does not know which of the two the answer
+          key wants.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In their words</span>
+          <blockquote>
+            An image might be labeled as a "strawberry" but contain both a
+            strawberry and an apple. Then an algorithm would not know which one
+            of the two objects to name. For the image classification task we
+            allowed an algorithm to identify multiple (up to 5) objects in an
+            image and not be penalized as long as one of the objects indeed
+            corresponded to the ground truth label.<sup class="nb-cite"><a
+            href="#s1">1</a></sup>
+            <span class="nb-note-who">Russakovsky et al., on why five labels are allowed</span>
+          </blockquote>
+        </div>
+        <p>
+          That is a reasonable fix, and it worked for its purpose. But top-5
+          forgives the exact images where one label is not the whole picture. The strawberry
+          case does not go away when the model names both fruits; it is hidden,
+          folded into a correct answer. The metric was quietly counting on the
+          images with multiple objects being rare. They are not.
+        </p>
+      </section>
+
+      <section data-nb-section="the-fall" id="the-fall">
+        <h2>The fall from 28 percent to below 4</h2>
+        <p>
+          In 2012 the winning entry, AlexNet, posted 15.3% top-5 error against
+          26.2% for the second-best system, a margin of nearly eleven points
+          that pushed the whole field toward deep neural networks.<sup
+          class="nb-cite"><a href="#s2">2</a></sup> That jump was real: the models
+          got much better at this task, fast. Three years later the winning entry, a
+          152-layer residual network, reached 3.57% top-5 error.<sup
+          class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Somewhere in that descent the curve passed a human figure. Earlier in
+          2015 a team at Microsoft reported 4.94% top-5 error and called it, to
+          their knowledge, the first result to surpass the human-level
+          performance of 5.1% that the challenge organizers had measured.<sup
+          class="nb-cite"><a href="#s4">4</a></sup> That sentence became the
+          milestone the public heard. The same paper qualified it in the same
+          breath, and the qualification is the honest reading of the number:
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The authors' own caveat</span>
+          <blockquote>
+            While our algorithm produces a superior result on this particular
+            dataset, this does not indicate that machine vision outperforms
+            human vision on object recognition in general ... machines still
+            have obvious errors in cases that are trivial for humans.<sup
+            class="nb-cite"><a href="#s4">4</a></sup>
+            <span class="nb-note-who">He et al., in the paper that first passed 5.1%</span>
+          </blockquote>
+        </div>
+        <p>
+          Two things sat just below the models by 2015: the 5.1% human figure,
+          and the point at which the answer key's own mistakes begin.
+        </p>
+      </section>
+
+      <section data-nb-section="the-answer-key" id="the-answer-key">
+        <h2>The answer key checked against itself</h2>
+        <p>
+          Two groups went back and re-examined the 50,000 validation images, and
+          they measured two different problems with two different numbers. The
+          two are often blurred into one number, and they do not mean the same
+          thing.
+        </p>
+        <p>
+          The first is ambiguity. When Beyer and colleagues re-annotated the
+          validation set in 2020, they found that roughly 29% of the images
+          either held multiple objects or matched several synonymous ImageNet
+          categories at once. A single label genuinely under-described
+          them.<sup class="nb-cite"><a href="#s5">5</a></sup> The
+          strawberry problem, in other words, was not an edge case; it touched
+          close to a third of the set. Their reassessed, multi-label key changed
+          the standings. Gains that recent models claimed over older ones shrank,
+          and the original ImageNet labels were, in their words, "no longer the
+          best predictors" of the freshly collected labels. Even the strongest
+          models still miss about 11% of images by the original labels and about
+          9% by the reassessed ones. Much of that remainder is the key being
+          wrong or incomplete, not the model failing to see.<sup
+          class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          The second problem is outright error, and it is a smaller number.
+          Northcutt, Athalye, and Mueller flagged suspect labels automatically
+          and had people check them by hand, and confirmed 2,916 plainly wrong
+          labels in the validation set, about 6%.<sup class="nb-cite"><a
+          href="#s6">6</a></sup> That is different again from the challenge
+          organizers' own estimate years earlier, that around 0.3% of a
+          1,500-image sample was mislabeled.<sup class="nb-cite"><a
+          href="#s1">1</a></sup> Three figures, three definitions. The 0.3% is a
+          small early spot-check of flat errors. The 6% is a careful full count
+          of the same kind of error. The 29% is not error at all: it is the share
+          of images one label cannot fully describe.
+        </p>
+        <figure class="nb-figure">
+          <img src="imagenet-top-5-accuracy/chart-1.png" alt="Line chart of the best ImageNet top-5 error each year, falling from 28.2 percent in 2010 to 3.57 percent in 2015, crossing a marked 5.1 percent human line and a roughly 6 percent label-error band between 2014 and 2015." />
+          <figcaption>
+            Fig. 1 · The best top-5 error each year, 2010–2015, against the 5.1%
+            human figure and the roughly 6% band where the validation key's own
+            errors sit. By 2015 the winning models are below both.<sup
+            class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a
+            href="#s3">3</a></sup><sup class="nb-cite"><a href="#s6">6</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          It is tempting to conclude that a corrected key would tear up the
+          leaderboard. It does not, and the same paper is careful to say so.
+          After removing or correcting the errors, the relative ranking of
+          models is unaffected.<sup class="nb-cite"><a href="#s6">6</a></sup> The
+          damage is confined to the top, where the results turn unstable. A
+          larger, higher-capacity model tends to have learned the answer key's
+          systematic mistakes better than a small one. So on the slice of images
+          that were mislabeled, the small model can win. On ImageNet with
+          corrected labels, ResNet-18 overtakes the larger ResNet-50 once the
+          share of originally mislabeled test images rises by just 6%.<sup
+          class="nb-cite"><a href="#s6">6</a></sup> The key does not reorder the
+          whole field. It makes the closest comparisons, exactly the ones a
+          state-of-the-art claim rests on, too fragile to trust.
+        </p>
+      </section>
+
+      <section data-nb-section="whose-vision" id="whose-vision">
+        <h2>Whose vision the 5.1 percent belonged to</h2>
+        <p>
+          The human figure the models passed has its own thin foundation, best
+          told in the challenge's own record rather than as a general fact about
+          people. The 5.1% was the better of two trained expert annotators'
+          scores. That annotator, Andrej Karpathy, built the labeling tool
+          himself, trained on 500 validation images, then labeled 1,500 test
+          images at about one a minute.<sup class="nb-cite"><a href="#s1">1</a></sup><sup
+          class="nb-cite"><a href="#s7">7</a></sup> He was candid about the grind:
+          he "only enjoyed the first ~200, and the rest I only did
+          #forscience."<sup class="nb-cite"><a href="#s7">7</a></sup> His 5.1%
+          edged out the 2014 winning model's 6.8% on that sample, and even his
+          misses were mostly hard cases: about 37% were fine-grained, one dog
+          breed taken for a neighbor.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The second annotator, who trained on far fewer images, reached only
+          about 12%.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          So the line that machines crossed was one motivated person over many
+          hours, not a population. Karpathy said as much afterward: "human
+          accuracy is not a point. It lives on a tradeoff curve," and more
+          annotators or more care would move it.<sup class="nb-cite"><a
+          href="#s7">7</a></sup> None of this makes the 5.1% dishonest. It makes
+          it a specific, small measurement that the word "superhuman" then
+          treated as a fixed human ceiling.
+        </p>
+        <p>
+          The cost showed up in how the milestone traveled. In February 2015
+          Forbes ran the headline "Microsoft's Deep Learning Project Outperforms
+          Humans In Image Recognition." The body kept the researchers' warning
+          that this was not general proof, but the headline is the part most
+          readers carried away.<sup class="nb-cite"><a href="#s8">8</a></sup> A
+          leaderboard sprint followed within months, with Baidu reporting 4.58%
+          against Google's 4.82% and Microsoft's 4.94%, all racing under the same
+          5.1% banner.<sup class="nb-cite"><a href="#s9">9</a></sup> That race
+          also produced the clearest warning about over-trusting a fraction of a
+          percentage point: Baidu's headline result was later set aside after the
+          organizers found the team had broken the challenge's rules on how many
+          times a system could be tested.<sup class="nb-cite"><a
+          href="#s9">9</a></sup> A quarter-point lead was worth bending the rules
+          for, on a scale where the answer key itself was wrong far more often
+          than that.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A top-5 number tells you how often a model's five guesses caught the
+          one label an image happened to be given. It does not tell you the
+          label was right, and it does not tell you the model beats people at
+          seeing. By 2015 the winning scores had dropped below the 5.1% human
+          figure, which one trained annotator produced over many hours, and into
+          the range where the validation key's own errors live. The progress underneath
+          was genuine: a model in 2015 really was far better than one in 2012.
+          But once the score fell past the human line, it could no longer tell a
+          model that saw better apart from one that had simply learned the
+          answer key's mistakes. Read a stated ImageNet number as what it is, a
+          count of five-guess hits against a single, imperfect label, and it will
+          stop telling you things it was never able to prove.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://karpathy.github.io/2014/09/02/what-i-learned-from-competing-against-a-convnet-on-imagenet/">What I learned from competing against a ConvNet on ImageNet</a>:
+            the annotator behind the 5.1% figure, on what the human baseline actually cost to produce.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://labelerrors.com">labelerrors.com</a>:
+            browse the flagged ImageNet label errors image by image, the companion site to the Northcutt relabeling.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1409.0575"
+              >Russakovsky et al. · ImageNet Large Scale Visual Recognition Challenge (IJCV 2015)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://proceedings.neurips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html"
+              >Krizhevsky, Sutskever, Hinton · ImageNet Classification with Deep Convolutional Neural Networks (NIPS 2012)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1512.03385"
+              >He, Zhang, Ren, Sun · Deep Residual Learning for Image Recognition (2015)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1502.01852"
+              >He, Zhang, Ren, Sun · Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification (2015)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2006.07159"
+              >Beyer et al. · Are we done with ImageNet? (2020)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2103.14749"
+              >Northcutt, Athalye, Mueller · Pervasive Label Errors in Test Sets Destabilize Machine Learning Benchmarks (NeurIPS 2021)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://karpathy.github.io/2014/09/02/what-i-learned-from-competing-against-a-convnet-on-imagenet/"
+              >Andrej Karpathy · What I learned from competing against a ConvNet on ImageNet</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.forbes.com/sites/michaelthomsen/2015/02/19/microsofts-deep-learning-project-outperforms-humans-in-image-recognition/"
+              >Michael Thomsen, Forbes · Microsoft's Deep Learning Project Outperforms Humans In Image Recognition</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.technologyreview.com/2015/05/13/168197/baidus-artificial-intelligence-supercomputer-beats-google-at-image-recognition/"
+              >Tom Simonite, MIT Technology Review · Baidu's Artificial-Intelligence Supercomputer Beats Google at Image Recognition</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
