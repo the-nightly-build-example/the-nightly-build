@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adam's convergence proof was wrong · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "adam-optimizer",
+        "template": "lesson",
+        "title": "Adam's convergence proof was wrong, and the field kept using Adam",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-23",
+        "tags": ["optimization", "adam", "deep-learning", "convergence"],
+        "sources": 8,
+        "words": 1877,
+        "reading_minutes": 8,
+        "dek": "The 2018 counterexample that broke the proof drives Adam to the worst point of a one-dimensional convex problem, at hyperparameters no practitioner ever chooses.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Adam's convergence proof was wrong, and the field kept using Adam</h1>
+        <p class="nb-dekline">
+          The 2018 counterexample that broke the proof drives Adam to the worst
+          point of a one-dimensional convex problem, at hyperparameters no
+          practitioner ever chooses.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-23</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Adam is the optimizer almost every deep-learning model is trained
+          with, the routine that decides how far to nudge each weight after each
+          batch of data. The 2015 paper that introduced it made two promises: it
+          trained faster than the alternatives, and it came with a mathematical
+          proof that it would converge. Three years later that proof was shown to
+          be false, in a paper that won a best-paper award for showing it. The
+          field kept using Adam anyway. By the end you will know what Adam
+          actually computes, what its convergence guarantee claimed, exactly how
+          the guarantee was broken, and why breaking it changed almost nothing.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/gradient-descent.html">One gradient step
+            drops the loss from 7.0 to 0.225</a>: how a single weight update is
+            computed from the gradient of the loss, the operation Adam rescales.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Every weight gets its own step size</h2>
+        <p>
+          Plain
+          <a href="../the-mechanics/gradient-descent.html">gradient descent</a>
+          subtracts a fixed multiple of the gradient from every weight: one step
+          size, applied to all of them at once. Adam gives each weight its own
+          step size, and tunes that step size from the weight's own history of
+          gradients. Diederik Kingma and Jimmy Ba's 2015 paper builds it from two
+          running averages.<sup class="nb-cite"><a href="#s1">1</a></sup> The
+          first is an average of the gradient itself,
+          <span class="nb-math-in">m_t = \beta_1\, m_{t-1} + (1-\beta_1)\, g_t</span>,
+          which smooths the noisy per-batch gradient <span class="nb-math-in">g_t</span>
+          into a steadier direction. The second is an average of the squared
+          gradient, <span class="nb-math-in">v_t = \beta_2\, v_{t-1} + (1-\beta_2)\, g_t^2</span>,
+          a per-weight record of how large that weight's gradients have recently
+          been. Both start at zero, so both are biased toward zero for the first
+          steps; the paper corrects that bias by dividing each by how much of the
+          average has accumulated, giving
+          <span class="nb-math-in">\hat{m}_t</span> and
+          <span class="nb-math-in">\hat{v}_t</span>.
+        </p>
+        <p>
+          The update divides the smoothed gradient by the square root of the
+          smoothed squared gradient, weight by weight.
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \theta_t = \theta_{t-1} - \htmlClass{nb-mc3}{\alpha}\, \frac{ \htmlClass{nb-mc1}{\hat{m}_t} }{ \sqrt{ \htmlClass{nb-mc2}{\hat{v}_t} } + \epsilon }
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">\hat{m}_t</span
+              ><span>the running average of the gradient: which way to move this weight.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">\hat{v}_t</span
+              ><span>the running average of its squared gradient: how large its recent gradients were.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">\alpha</span
+              ><span>the base step size, the same starting scale for every weight.</span>
+            </li>
+          </ul>
+          <figcaption>
+            The Adam update. Dividing by
+            <span class="nb-math-in">\sqrt{\hat{v}_t}</span> gives a weight with
+            large recent gradients a smaller effective step, and one with small
+            gradients a larger one.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          A weight whose gradients have been large gets a small step, because its
+          <span class="nb-math-in">\sqrt{\hat{v}_t}</span> is large; a weight
+          whose gradients have been small gets a large step. That per-weight
+          rescaling is what Adam adds. The recommended settings that ship with it
+          are
+          <span class="nb-math-in">\alpha = 0.001</span>,
+          <span class="nb-math-in">\beta_1 = 0.9</span>,
+          <span class="nb-math-in">\beta_2 = 0.999</span>, and
+          <span class="nb-math-in">\epsilon = 10^{-8}</span>.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The paper backed the method two ways. It reported that Adam trained
+          faster than the competing optimizers on its experiments, and it proved
+          Theorem 4.1, a bound on the regret. Regret is the running total of how
+          much worse the algorithm's choices were than the single best fixed
+          choice made in hindsight. The theorem bounds it by a quantity that
+          grows like <span class="nb-math-in">\sqrt{T}</span> over
+          <span class="nb-math-in">T</span> steps. The average regret then falls
+          toward zero as training runs. A proof of that kind is what lets a
+          method claim it converges rather than merely works. Adam's paper has
+          since been cited past 170,000 times on one index, a scale almost no
+          scientific paper of any field reaches.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-scale" id="the-scale">
+        <h2>The models it called large</h2>
+        <p>
+          The experiments behind the empirical claim were small. Section 6 of the
+          paper opens with the sentence &ldquo;Using large models and datasets,
+          we demonstrate Adam can efficiently solve practical deep learning
+          problems,&rdquo; and the word dates the paper: these were the models
+          that counted as large in 2015.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          There are four of them, and the largest network in the paper is a
+          multilayer perceptron with two hidden layers of a thousand units each.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Every experiment in the 2015 Adam paper, with the model and data
+            behind it. The largest is the two-layer network in the second
+            row.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>experiment</th>
+              <th class="txt">model</th>
+              <th class="txt">data</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">logistic regression</span></td>
+              <td class="txt">multiclass logistic regression</td>
+              <td class="txt">MNIST digits, and IMDB reviews as 10,000-word bag-of-words vectors</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">MLP</span></td>
+              <td class="txt">two hidden layers of 1000 ReLU units</td>
+              <td class="txt">MNIST digits</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">CNN</span></td>
+              <td class="txt">three convolutional stages, 5&times;5 filters</td>
+              <td class="txt">CIFAR-10, 60,000 labeled 32&times;32 images</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">VAE</span></td>
+              <td class="txt">one 500-unit hidden layer, 50-d latent</td>
+              <td class="txt">MNIST digits</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Every task ran on MNIST or CIFAR-10, datasets of tens of thousands of
+          small images, in minibatches of 128.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          There is no language model here, and nothing within several orders of
+          magnitude of the models Adam trains today. The method now used to fit
+          networks with hundreds of billions of parameters was demonstrated on a
+          handful of problems a laptop can run. Its lasting reputation rests on
+          how well it held up as people scaled far past anything it was tested
+          on.
+        </p>
+      </section>
+
+      <section data-nb-section="the-counterexample" id="the-counterexample">
+        <h2>The counterexample that broke the proof</h2>
+        <p>
+          In 2018 Sashank Reddi, Satyen Kale, and Sanjiv Kumar built a problem on
+          which Adam converges to the wrong answer, and traced the failure to a
+          specific mistake in Theorem 4.1's proof.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The problem is as plain as an optimization problem gets. There is one
+          number to choose, <span class="nb-math-in">x</span>, held between
+          <span class="nb-math-in">-1</span> and <span class="nb-math-in">1</span>.
+          Every third round the loss is
+          <span class="nb-math-in">C x</span> for some constant
+          <span class="nb-math-in">C &gt; 2</span>, and on the other two rounds it
+          is <span class="nb-math-in">-x</span>. Over any three rounds the
+          gradients are <span class="nb-math-in">+C</span> once and
+          <span class="nb-math-in">-1</span> twice. They sum to
+          <span class="nb-math-in">C - 2 &gt; 0</span>, so the honest direction
+          pushes <span class="nb-math-in">x</span> down toward
+          <span class="nb-math-in">-1</span>, the optimum.
+        </p>
+        <p>
+          Adam does the opposite. Run it here with
+          <span class="nb-math-in">\beta_1 = 0</span> and
+          <span class="nb-math-in">\beta_2 = 1/(1 + C^2)</span>. The iterate
+          walks up to <span class="nb-math-in">x = +1</span>, the single worst
+          point in the domain, and its average regret never falls to
+          zero.<sup class="nb-cite"><a href="#s3">3</a></sup> The reason is the
+          per-weight rescaling. The one large gradient
+          <span class="nb-math-in">+C</span> is divided by a large
+          <span class="nb-math-in">\sqrt{\hat{v}}</span>, and the two small
+          gradients <span class="nb-math-in">-1</span> by a small one. The
+          arithmetic leaves the rare up-step larger than the two down-steps that
+          should cancel it. The correct total says go down. Adam goes up.
+        </p>
+        <p>
+          The flaw in the original proof sits in one quantity. Write
+          <span class="nb-math-in">\Gamma_t</span> for the change in the inverse
+          step size from one round to the next,
+          <span class="nb-math-in">\Gamma_t = \sqrt{V_t}/\alpha_t - \sqrt{V_{t-1}}/\alpha_{t-1}</span>.
+          For gradient descent and for AdaGrad this quantity is never negative,
+          because their step sizes only shrink, and the 2015 proof assumed the
+          same held for Adam. It does not. Adam's
+          <span class="nb-math-in">\hat{v}</span> can fall when a large gradient
+          ages out of the running average, which lets the inverse step size rise
+          and <span class="nb-math-in">\Gamma_t</span> go negative. In the
+          authors' words, &ldquo;the proof in the original paper of ADAM
+          erroneously assumes that
+          <span class="nb-math-in">\Gamma_t</span> is positive semi-definite and
+          is hence, incorrect.&rdquo;<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Their fix, called AMSGrad, changes one line. It normalizes by the
+          largest <span class="nb-math-in">\hat{v}</span> seen so far,
+          <span class="nb-math-in">\hat{v}_t = \max(\hat{v}_{t-1}, v_t)</span>.
+          That forces the step size to only shrink and restores a valid
+          <span class="nb-math-in">\sqrt{T}</span> regret bound.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="why-nothing-changed" id="why-nothing-changed">
+        <h2>Why breaking it changed almost nothing</h2>
+        <p>
+          A disproven convergence proof and a published fix should have moved the
+          field to the fix. It did not. AMSGrad is available in PyTorch as an
+          argument on the Adam optimizer, and its default is off: the constructor
+          ships the exact 2015 settings and treats the correction as an opt-in
+          flag most users never set.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Robin Schmidt, Frank Schneider, and Philipp Hennig then ran the largest
+          standardized optimizer comparison to date: fifteen methods across eight
+          tasks in more than fifty thousand runs. No single optimizer won
+          everywhere. Plain Adam remained a strong default that the newer
+          methods, AMSGrad among them, failed to consistently beat.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The correct theoretical fix rarely changed the outcome on a real
+          workload, so the field had little reason to switch.
+        </p>
+        <p>
+          The deeper reason it was safe to shrug is that the 2015 proof being
+          wrong is not the same as Adam failing to converge. The counterexample
+          runs at <span class="nb-math-in">\beta_2 = 1/(1 + C^2)</span>, which
+          for <span class="nb-math-in">C = 3</span> is
+          <span class="nb-math-in">0.1</span>, against the
+          <span class="nb-math-in">0.999</span> everyone actually uses. Later
+          work closed the gap that opened. Yushun Zhang and colleagues proved in
+          2022 that Adam does converge to a neighborhood of critical points once
+          <span class="nb-math-in">\beta_2</span> is large enough, with a phase
+          transition from divergence to convergence as
+          <span class="nb-math-in">\beta_2</span> rises. They also noted the flaw
+          in Reddi's setup: it chooses the problem after the hyperparameters are
+          fixed, whereas practice fixes the problem first and then tunes.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Alexandre D&eacute;fossez and colleagues gave Adam a separate
+          convergence bound for smooth non-convex objectives with bounded
+          gradients, though they observe that at the literal default parameters
+          the clean bound does not close.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The honest reading holds two facts at once: the specific theorem the
+          2015 paper led with was wrong, and Adam still converges under the
+          large-<span class="nb-math-in">\beta_2</span> settings practice runs.
+        </p>
+        <p>
+          The variant that did displace plain Adam changed something else
+          entirely. AdamW, from Ilya Loshchilov and Frank Hutter, applies weight
+          decay separately from the adaptive gradient step. For an adaptive method
+          that is not equivalent to the usual penalty. The single change improved
+          Adam's generalization enough to become the standard optimizer for
+          training transformers.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The correction that mattered in practice was about regularization, not
+          about the convergence proof that a best-paper award had already broken.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Adam gives every weight its own step size, tuned from running averages
+          of the gradient and its square, and the 2015 paper sold it with both a
+          speed result on four small experiments and a convergence proof. Of
+          those two promises, the proof was the one that broke. It assumed a quantity stays
+          positive that Adam lets go negative, and a 2018 best-paper award built
+          a one-number convex problem where Adam climbs to the worst point in the
+          domain. Yet the field kept plain Adam. The fix rarely helped on real
+          workloads. Later proofs gave Adam genuine guarantees under the settings
+          people actually use. And its standing never rested on that proof to
+          begin with. The one part of the paper that failed was the part fewest
+          of its citations depend on.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1904.09237">On the Convergence of
+            Adam and Beyond</a>: Reddi, Kale, and Kumar's counterexample and the
+            AMSGrad fix, in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://proceedings.mlr.press/v139/schmidt21a.html">Descending
+            through a Crowded Valley</a>: the fifteen-optimizer benchmark that
+            found no method reliably beats a well-tuned Adam.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1412.6980"
+              >arXiv · Kingma &amp; Ba, &ldquo;Adam: A Method for Stochastic Optimization&rdquo; (ICLR 2015)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://api.semanticscholar.org/graph/v1/paper/arXiv:1412.6980?fields=title,year,citationCount,influentialCitationCount,venue"
+              >Semantic Scholar · citation record for arXiv:1412.6980 (retrieved 2026-08-23)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1904.09237"
+              >arXiv · Reddi, Kale &amp; Kumar, &ldquo;On the Convergence of Adam and Beyond&rdquo; (ICLR 2018)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://docs.pytorch.org/docs/stable/generated/torch.optim.Adam.html"
+              >PyTorch · torch.optim.Adam documentation</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://proceedings.mlr.press/v139/schmidt21a.html"
+              >PMLR · Schmidt, Schneider &amp; Hennig, &ldquo;Descending through a Crowded Valley&rdquo; (ICML 2021)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2208.09632"
+              >arXiv · Zhang et al., &ldquo;Adam Can Converge Without Any Modification on Update Rules&rdquo; (2022)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2003.02395"
+              >arXiv · D&eacute;fossez, Bottou, Bach &amp; Usunier, &ldquo;A Simple Convergence Proof of Adam and Adagrad&rdquo; (TMLR)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1711.05101"
+              >arXiv · Loshchilov &amp; Hutter, &ldquo;Decoupled Weight Decay Regularization&rdquo; (ICLR 2019)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
