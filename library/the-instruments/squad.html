@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Machines cleared SQuAD's human exact-match score without learning to read · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "squad",
+        "template": "lesson",
+        "title": "Machines cleared SQuAD's human exact-match score without learning to read",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-23",
+        "tags": ["benchmarks", "reading-comprehension", "evaluation", "squad"],
+        "sources": 9,
+        "words": 2142,
+        "reading_minutes": 9,
+        "dek": "Microsoft and Alibaba passed the exact-match line on Stanford's reading benchmark in January 2018 while still trailing humans on F1, months after a single added sentence had halved the scores of the field's best reading systems.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">Machines cleared SQuAD's human exact-match score without learning to read</h1>
+        <p class="nb-dekline">
+          Microsoft and Alibaba passed the exact-match line on Stanford's reading benchmark in January 2018 while still trailing humans on F1, months after a single added sentence had halved the scores of the field's best reading systems.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-23</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When an AI system is said to "match human performance" on a test,
+          there is always a specific number underneath the claim, and it rarely
+          means what the phrase suggests. SQuAD, the Stanford Question Answering
+          Dataset, is a clean place to see why. It produced one of the first
+          such headlines. In January 2018, systems from Microsoft and Alibaba
+          passed its human line, and the news said machines had learned to
+          out-read people. By the end of this lesson you will know how
+          SQuAD's two scores, exact match and F1, are computed from a copied
+          span of text, and how its "human performance" figure was actually
+          measured. You will also see why that 2018 result was a tie on one
+          metric that a single added sentence could break.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/glue.html">GLUE</a>: the multi-task
+            benchmark suite built after SQuAD, and how it saturated within a
+            year.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/imagenet-top-5-accuracy.html">ImageNet
+            top-5 accuracy</a>: an earlier benchmark whose "superhuman" headline
+            outran what the number measured.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The claim that machines out-read people</h2>
+        <p>
+          By late January 2018, the leaderboard for SQuAD, the Stanford Question
+          Answering Dataset, showed several reading systems sitting above the
+          row labeled Human Performance.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          An ensemble from Microsoft scored 82.650 and one from Alibaba 82.440,
+          against a human 82.304.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The coverage did not hedge: Microsoft and Alibaba, one headline ran,
+          had beaten humans in a Stanford reading-comprehension test for the
+          first time.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The systems really did clear that number. What the headlines made of
+          it was another matter. SQuAD reports two scores, and the January
+          systems had passed the human line on only one of them. And the human
+          line was itself a measured number, produced in a way worth knowing
+          before the comparison means anything.
+        </p>
+      </section>
+
+      <section data-nb-section="span-answers" id="span-answers">
+        <h2>Every answer is a span from the passage</h2>
+        <p>
+          SQuAD 1.0, released in 2016 by Pranav Rajpurkar and colleagues at
+          Stanford, is a set of 107,785 questions written by crowdworkers about
+          536 Wikipedia articles, drawn from 23,215 paragraphs.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Its defining constraint is where the answers live. Every answer is a
+          span: a run of consecutive words copied directly from the passage,
+          which a crowdworker highlighted.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Ask "Which team won?" and the answer is not the word "won" rephrased
+          but the exact stretch of text, say the Denver Broncos, sitting in the
+          paragraph.
+        </p>
+        <p>
+          A system's job, then, is not to write an answer but to point at one:
+          given a passage and a question, select the start and end of the span
+          that answers it. That single design choice, answers as copied spans,
+          is what makes the two SQuAD scores easy to compute and, later, easy to
+          game.
+        </p>
+      </section>
+
+      <section data-nb-section="two-scores" id="two-scores">
+        <h2>Two scores for one copied span</h2>
+        <p>
+          Because both the model's answer and the reference answer are short
+          strings, SQuAD scores them by comparing strings, and it does this two
+          ways.<sup class="nb-cite"><a href="#s3">3</a></sup> Before either
+          comparison, each string is normalized: lowercased, stripped of
+          punctuation, and stripped of the words a, an, and the, so that "the
+          Broncos" and "Broncos" count as the same answer.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          The first score is exact match, written EM: the percentage of
+          questions where the model's normalized answer is identical, character
+          for character, to one of the crowd's reference answers.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          It is all or nothing. "Denver Broncos" against a reference of "the
+          Denver Broncos" earns a full point, because normalization removed the
+          the; "Denver Broncos defense" earns zero, because one extra word makes
+          the strings differ.
+        </p>
+        <p>
+          Exact match is strict, and most right-but-not-identical answers fail
+          it, so SQuAD reports a second, more forgiving score: F1, which
+          measures overlap in words rather than demanding an identical
+          string.<sup class="nb-cite"><a href="#s3">3</a></sup> Treat each
+          answer as a bag of words. Precision is the share of the model's words
+          that appear in the reference. Recall is the share of the reference's
+          words the model recovered. F1 is the harmonic mean of the two, a
+          single number that is high only when both precision and recall are
+          high.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Take the model answer "Denver Broncos defense" against the reference
+          "the Denver Broncos." After cleanup the reference is two words, denver
+          and broncos; the guess is three, denver broncos defense. Two words are
+          shared. The model's precision is two of its three words; its recall is
+          two of the two reference words. Their harmonic mean is 0.80. The same
+          answer that scored zero on exact match scores 0.80 on F1.
+        </p>
+        <table class="nb-table">
+          <caption>
+            One model answer scored against one reference on SQuAD's two
+            metrics. The same guess earns 0 on exact match and 0.80 on F1.<sup
+              class="nb-cite"
+              ><a href="#s4">4</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Step</th>
+              <th>Value</th>
+              <th class="txt">What it means</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Reference (gold)</td>
+              <td class="txt">denver broncos</td>
+              <td class="txt">the crowdworker's span, lowercased with "the" removed</td>
+            </tr>
+            <tr>
+              <td class="txt">Model answer</td>
+              <td class="txt">denver broncos defense</td>
+              <td class="txt">the system's guess, cleaned the same way</td>
+            </tr>
+            <tr>
+              <td class="txt">Exact match</td>
+              <td>0</td>
+              <td class="txt">the two strings differ, so EM gives no credit</td>
+            </tr>
+            <tr>
+              <td class="txt">Shared words</td>
+              <td>2</td>
+              <td class="txt">denver and broncos appear in both</td>
+            </tr>
+            <tr>
+              <td class="txt">Precision</td>
+              <td>2 / 3</td>
+              <td class="txt">two of the guess's three words are in the reference</td>
+            </tr>
+            <tr>
+              <td class="txt">Recall</td>
+              <td>2 / 2</td>
+              <td class="txt">the guess recovered both reference words</td>
+            </tr>
+            <tr>
+              <td class="txt">F1</td>
+              <td>0.80</td>
+              <td class="txt">the harmonic mean of precision and recall</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          For a question with several reference answers, SQuAD takes the best
+          score against any one of them, then averages over all questions.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          A model's reported EM and F1 are those two averages across the test
+          set. In the original 2016 paper a plain logistic-regression baseline
+          reached 40.4 EM and 51.0 F1; the humans, measured the same way,
+          reached 77.0 and 86.8.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="which-score" id="which-score">
+        <h2>Which score the systems actually crossed</h2>
+        <p>
+          The human line deserves the same scrutiny as the model scores, because
+          it was produced by the same procedure, not by watching people read.
+          For each question in the evaluation set, the SQuAD team collected at
+          least two extra crowdworker answers beyond the original, giving each
+          question several.<sup class="nb-cite"><a href="#s3">3</a></sup> They
+          then took a single one of those answers, the second worker's, treated
+          it as if it were a model's prediction, and scored it against the
+          remaining answers.<sup class="nb-cite"><a href="#s3">3</a></sup> The
+          human number is therefore one crowdworker's single answer, graded the
+          same way a system is graded. It is not a panel, not a vote, and not an
+          expert. On the 2016 test set that procedure gave 77.0 EM and 86.8
+          F1.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The public leaderboard ran on a lightly revised release, SQuAD 1.1,
+          where the same one-answer procedure put the human line at 82.304 EM
+          and 91.221 F1.<sup class="nb-cite"><a href="#s1">1</a></sup> This is
+          the line the January 2018 systems crossed. Alibaba reached the top of
+          the leaderboard on January 11 and Microsoft a day later.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Their exact-match scores, 82.650 for Microsoft and 82.440 for Alibaba,
+          sat just above the human 82.304.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Their F1 scores did not. Microsoft's F1 was 88.493 and Alibaba's
+          88.607, and the best F1 anywhere on the board, 89.281, still trailed
+          the human 91.221 by nearly two points.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            The top of the SQuAD 1.1 leaderboard on 24 January 2018. Every
+            system above the human exact-match line (82.304) sits below the
+            human F1 line (91.221).<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">System</th>
+              <th>EM</th>
+              <th>F1</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Human Performance</td>
+              <td>82.304</td>
+              <td>91.221</td>
+            </tr>
+            <tr>
+              <td class="txt">Microsoft r-net+ (ensemble)</td>
+              <td>82.650</td>
+              <td>88.493</td>
+            </tr>
+            <tr>
+              <td class="txt">Alibaba SLQA+ (ensemble)</td>
+              <td>82.440</td>
+              <td>88.607</td>
+            </tr>
+            <tr>
+              <td class="txt">Hybrid AoA Reader (ensemble)</td>
+              <td>82.482</td>
+              <td>89.281</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          So the crossing was on exact match only. Stanford's own announcement
+          said as much, calling the Alibaba result the first to exceed
+          human-level performance on the exact-match metric and noting that on
+          F1 humans still led by about two and a half points.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Alibaba's own paper claimed only the top leaderboard position for
+          single and ensemble models, not a win over humans.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          The qualification existed. Most of the coverage dropped it, and "beat
+          humans at exact match" became "beat humans at reading."
+        </p>
+        <p>
+          Even the exact-match line was soft. The SQuAD 2.0 authors later wrote
+          that the original human figure "evaluated a single human's
+          performance" and so likely underestimated what people can do.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          A machine edging past a low, one-person bar by a few tenths of a point
+          is a thinner result than a headline about beating humans suggests.
+        </p>
+      </section>
+
+      <section data-nb-section="added-sentence" id="added-sentence">
+        <h2>One extra sentence collapsed the scores</h2>
+        <p>
+          There was already direct evidence that the top systems were not
+          reading in the sense the headlines implied. In 2017 Robin Jia and
+          Percy Liang tested whether SQuAD models understood their passages by
+          appending a single distracting sentence to each one.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          The added sentence was built to look relevant to the question while
+          leaving the real answer unchanged, and a human reader was not fooled
+          by it.<sup class="nb-cite"><a href="#s8">8</a></sup> Across sixteen
+          published systems, average F1 fell from 75.4 to 36.4 once that one
+          sentence was present.<sup class="nb-cite"><a href="#s8">8</a></sup> In
+          96.6 percent of the cases where a model failed, it had moved its
+          answer into the inserted sentence.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+        <p>
+          That is the tell. A system that comprehended the paragraph would
+          ignore an irrelevant add-on. A system matching surface patterns near
+          the question's words would be pulled toward any new text that shared
+          those words, and the models did the second thing. They had learned to
+          find the span that looked like an answer, which on a clean SQuAD
+          passage is usually the right span, and which stops working the moment
+          a decoy is present. It is the reading equivalent of scoring well by
+          pointing at the likeliest-looking phrase without following the
+          sentence it sits in.
+        </p>
+        <p>
+          The effect was not limitless, and Jia and Liang said so. Human F1 also
+          dropped on the attack, by about 13 points in its harshest form, though
+          only about 3 points on a milder version that did not tune the sentence
+          against a specific model.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The gap between human and machine robustness was large, not infinite.
+        </p>
+        <p>
+          The deeper problem was structural. On SQuAD 1.0 every question had an
+          answer somewhere in the passage, so a model that always emitted its
+          best-guess span was never punished for failing to say "no answer
+          here." In 2018 the same team released SQuAD 2.0, adding 53,775
+          unanswerable questions written to look answerable, each with a
+          plausible wrong span sitting in the paragraph.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Now a model had to know when to abstain, and picking the closest span
+          scored zero.<sup class="nb-cite"><a href="#s7">7</a></sup> The gap
+          reopened at once: the best system scored 66.3 F1 against a human 89.5,
+          a 23.2-point difference, where the same kind of model had trailed
+          humans by about five points on 1.0.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          None of this means the SQuAD number was empty. Within the year,
+          <a href="../the-evidence/bert.html">BERT</a> reached 93.2 F1 on SQuAD
+          1.1, clearing the 91.2 human F1 line for real, and it lifted scores on
+          the harder 2.0 as well.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          The benchmark did track genuine progress in reading systems. What
+          failed in January 2018 was narrower and datable. A few-tenths lead on
+          exact match, measured over a one-person baseline on questions that
+          always had an answer, was read as the arrival of machine reading
+          comprehension.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A SQuAD score measures one narrow thing: how well a model's copied
+          span overlaps the span a crowdworker copied, counted two ways, as an
+          exact string match and as word overlap. The "superhuman" moment of
+          January 2018 was a lead of a few tenths of a point on exact match,
+          with humans still ahead on F1, measured against a line that was a
+          single person's single answer. The same systems lost roughly half
+          their score when one sentence was added to the passage, because they
+          were matching the shape of an answer rather than reading for it. The
+          number was not fake, and machines did clear the human F1 line honestly
+          within the year. What misled was the short step from a score to a
+          story: reading an exact-match tie as the ability to read.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://hackingsemantics.xyz/2019/leaderboards/">Anna
+            Rogers, "How the Transformers broke NLP leaderboards"</a>: what
+            leaderboard racing does to research.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://rajpurkar.github.io/SQuAD-explorer/">The SQuAD
+            leaderboard and evaluation script</a>: the current standings and the
+            official code that computes EM and F1.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://ymcui.com/snapshot/SQuAD_Leaderboard_24th_January_2018.pdf"
+              >ymcui.com · SQuAD 1.1 leaderboard snapshot, 24 January 2018</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.geekwire.com/2018/microsoft-alibaba-ai-programs-beat-humans-stanford-reading-test-1st-time/"
+              >GeekWire · Microsoft and Alibaba AI programs beat humans in
+              Stanford reading comprehension test for 1st time</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/D16-1264/"
+              >ACL Anthology · Rajpurkar et al., SQuAD: 100,000+ Questions for
+              Machine Comprehension of Text (2016)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/rajpurkar/SQuAD-explorer/blob/master/evaluate-v2.0.py"
+              >GitHub · rajpurkar/SQuAD-explorer, official SQuAD evaluation
+              script</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://techstartups.com/2018/01/15/artificial-intelligence-ai-systems-built-alibaba-microsoft-beat-humans-stanford-university-reading-test/"
+              >TechStartups · AI systems built by Alibaba and Microsoft beat
+              humans in Stanford University reading test</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1811.11934"
+              >arXiv · Wang et al., Multi-Granularity Hierarchical Attention
+              Fusion Networks for Reading Comprehension (SLQA, 2018)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/P18-2124/"
+              >ACL Anthology · Rajpurkar, Jia, Liang, Know What You Don't Know:
+              Unanswerable Questions for SQuAD (2018)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/D17-1215/"
+              >ACL Anthology · Jia & Liang, Adversarial Examples for Evaluating
+              Reading Comprehension Systems (2017)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1810.04805"
+              >arXiv · Devlin et al., BERT: Pre-training of Deep Bidirectional
+              Transformers for Language Understanding (2018)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
