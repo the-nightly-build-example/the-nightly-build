@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kleinberg and Raghavan proved algorithmic monoculture can hurt social welfare · What Could Go Wrong</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "what-could-go-wrong",
+        "slug": "algorithmic-monoculture",
+        "template": "lesson",
+        "title": "Kleinberg and Raghavan proved algorithmic monoculture can hurt social welfare",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-24",
+        "tags": ["algorithmic-monoculture", "hiring-algorithms", "correlated-errors"],
+        "sources": 9,
+        "words": 2188,
+        "reading_minutes": 10,
+        "dek": "The 2021 theorem's worked case gives about a 4% welfare loss under three candidates and Gaussian noise. In the same paper's Plackett-Luce case the effect vanishes.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-7"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">What Could Go Wrong</div>
+        <h1 class="nb-title">Kleinberg and Raghavan proved algorithmic monoculture can hurt social welfare</h1>
+        <p class="nb-dekline">
+          The 2021 theorem's worked case gives about a 4% welfare loss under three candidates and Gaussian noise. In the same paper's Plackett-Luce case the effect vanishes.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-08-24</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Job applicants in the United States now meet algorithmic
+          screens as a matter of course. If those screens agree in
+          their errors, being turned down by one can mechanically
+          mean being turned down by many. Jon Kleinberg and Manish
+          Raghavan proved in 2021 that a market of firms all using
+          one more-accurate shared scorer can leave society
+          worse off in expectation than a market of independent, less
+          accurate evaluators. The theorem has stated conditions, and
+          the measurements built to check it against deployed systems
+          have found something more partial. Both are worth holding
+          in mind before deciding what weight the word "monoculture"
+          should carry in a debate.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../what-could-go-wrong/racing-dynamics.html">The model that drives safety to zero needs a lead nobody has held</a>: a formal model of competing AI developers, checked against three years of releases.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../what-could-go-wrong/gradual-disempowerment.html">No AI has to go rogue for humans to lose control</a>: how delegated decisions can concentrate outcomes even when no single system misbehaves.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What Kleinberg and Raghavan proved</h2>
+        <p>
+          Jon Kleinberg of Cornell and Manish Raghavan, then at
+          Cornell and now at MIT, published "Algorithmic monoculture
+          and social welfare" in the <em>Proceedings of the National
+          Academy of Sciences</em> in early 2021.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Two firms compete to hire from a pool of candidates whose
+          intrinsic values they cannot observe directly. Each firm
+          ranks candidates through a noisy mechanism, then hires in
+          random order: the first firm takes the top of its own
+          ranking, the second takes the top of what remains in its
+          own.
+        </p>
+        <p>
+          Under polyculture, each firm draws an independent ranking
+          at accuracy <span class="nb-math-in">\theta_H</span>. Under
+          monoculture, both firms use the same ranking from a more
+          accurate algorithm at
+          <span class="nb-math-in">\theta_A > \theta_H</span>. Social
+          welfare is the sum of the intrinsic values of the two hires.
+          Theorem 1 assumes two conditions on the candidate
+          distribution and noise family. Under them, for any
+          <span class="nb-math-in">\theta_H</span> there exists a
+          <span class="nb-math-in">\theta_A > \theta_H</span> at
+          which using the algorithm is strictly dominant for both
+          firms, yet welfare would have been higher had both used the
+          humans.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In their own words</span>
+          <blockquote>
+            "The introduction of a more accurate algorithm can drive
+            the firms into a unique equilibrium that is worse for
+            society than the one that was present before the algorithm
+            existed."<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">Kleinberg and Raghavan, PNAS 2021, Section 1</span>
+          </blockquote>
+        </div>
+      </section>
+
+      <section data-nb-section="mechanism" id="mechanism">
+        <h2>The mechanism inside the proof</h2>
+        <p>
+          The engine of the theorem is what Kleinberg and Raghavan
+          call preference for independence.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Consider the firm that hires second. If the first firm used
+          an independent ranker, the two rankers disagreed about the
+          order, so the second firm's top-remaining candidate is
+          close to its own ranker's top pick. If both firms use the
+          same ranker, the second is left with the shared
+          second-ranked candidate, systematically less valuable than
+          an independent top-remaining draw would have been.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            Two independent noisy judges disagreeing about who is
+            second-best is worth more, at the margin, than one shared
+            judge agreeing with itself.
+          </p>
+        </div>
+        <p>
+          The paper gives a worked instance. Three candidates are
+          drawn uniformly on <span class="nb-math-in">[0,1]</span>
+          with Gaussian noise. At equilibrium both firms use the
+          algorithm, and expected social welfare is "approximately 4%
+          less than it would be had both firms used human evaluators
+          instead."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The 4% is a stylized instance, not a general bound.
+        </p>
+        <p>
+          The noise family matters. Theorem 3 shows the argument's
+          two conditions hold under the Mallows model for any
+          candidate distribution. Theorem 2 shows they hold under
+          random-utility models with Gaussian or Laplacian noise for
+          three candidates. Section 3.1 then shows the effect vanishes
+          under the Plackett-Luce model, another standard
+          random-utility model: the optimal strategy is always to use
+          the best available ranking regardless of what competitors
+          do. A Laplacian case with fifteen candidates violates
+          Definition 2. Generalization beyond three candidates for
+          random-utility models is flagged as
+          open.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="deployed-measurements" id="deployed-measurements">
+        <h2>What deployed measurements actually catch</h2>
+        <p>
+          A separate program measures, in real deployed systems,
+          whether models agree on failure more than independence
+          would predict. Rishi Bommasani, Kathleen Creel, Ananya
+          Kumar, Dan Jurafsky, and Percy Liang defined the
+          quantity.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Take the observed rate at which all models fail on the
+          same subject, and divide it by the rate expected under
+          independent per-model failures at the measured marginals.
+          A ratio above one means more joint failures than
+          independence predicts. On the German Credit, ACS PUMS, and
+          LSAC fairness datasets, training the models on the same
+          data reliably drove that ratio above one.
+        </p>
+        <p>
+          Connor Toups, Bommasani, Creel, Sarah Bana, Jurafsky, and
+          Liang applied the metric to nine commercial APIs from
+          Face++, Microsoft, Google, IBM, Amazon, and Baidu across
+          eleven audit datasets in the 2020–2022 HAPI corpus. The
+          observed rate of all-model failure exceeded the independence
+          baseline on every one of the eleven datasets.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Individual per-model failure rates and the rate at which
+            all three commercial APIs fail on the same input, for two
+            audit datasets in the HAPI corpus.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Dataset (three commercial APIs)</th>
+              <th>Model 1</th>
+              <th>Model 2</th>
+              <th>Model 3</th>
+              <th>All three fail</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt"><span class="nb-table-token">FER+</span> facial emotion</td>
+              <td>0.156</td>
+              <td>0.316</td>
+              <td>0.066</td>
+              <td>0.066</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">DIGIT</span> spoken commands</td>
+              <td>0.019</td>
+              <td>0.025</td>
+              <td>0.043</td>
+              <td>0.129</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          On DIGIT the joint failure rate is nearly triple the worst
+          individual model's rate; under independent failures the
+          expected joint rate would have been on the order of two in
+          a hundred thousand. Year-over-year improvements barely
+          reach the subjects the ecosystem systemically fails.
+          Amazon's sentiment API cut its error on the WAIMAI dataset
+          by 2.5% between 2020 and 2021, and "precisely 0 out of the
+          model's 303 improvements are on instances on which all
+          other models had failed."<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Across the eleven datasets, about 10% of a system's gains
+          landed on inputs every other model also failed on.
+        </p>
+        <p>
+          Elliot Kim, Avi Garg, Kenny Peng, and Nikhil Garg measured error
+          correlation across 349 LLMs on the HuggingFace Open LLM
+          Leaderboard and seventy-one on HELM.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Their mean pairwise agreement rate on wrong answers was
+          0.423 on HuggingFace and 0.6 on HELM, against random-choice
+          baselines of 0.127 and 0.33. In a resume-screening
+          simulation where each of twenty firms picked a different
+          LLM to score sixty candidates for thirty job openings,
+          "around 20 percent of applicants continue to be
+          systemically excluded."<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="pymetrics" id="pymetrics">
+        <h2>The pymetrics data shows partial monoculture</h2>
+        <p>
+          The strongest deployment evidence is Bommasani, Bana,
+          Creel, Jurafsky, and Liang's 2026 FAccT paper.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          It analyzes real hiring outcomes mediated by the pymetrics
+          assessment vendor from December 2018 through December 2022.
+          The authors call it the first study to observe real
+          algorithmic hiring outcomes for the same applicant across
+          many employers.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">4.2M</span><span class="nb-stat-l">applications</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">3.4M</span><span class="nb-stat-l">applicants</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">1,746</span><span class="nb-stat-l">positions</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">156</span><span class="nb-stat-l">employers</span>
+          </div>
+        </div>
+        <p>
+          Pymetrics asks applicants to play twelve or sixteen
+          assessment games scoring cognitive traits such as
+          processing speed, risk propensity, and planning ability,
+          then returns a "recommended" or "not recommended" label
+          per job. On average 41.8% of applications receive "not
+          recommended."<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Of applicants who applied to at least four positions, 10%
+          were recommended for rejection from every one; among those
+          who applied to at least ten, 4% were. A chi-square
+          goodness-of-fit test against a Poisson-Binomial independence
+          baseline rejects independence at χ² = 18,481,
+          p &lt; 0.001. Run on Kline et al.'s 2022
+          correspondence audit of about 83,000 fictitious resumes
+          sent to 108 Fortune 500 firms, the same test fits the
+          baseline (χ² = 20.05, p = 0.69).<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          The Equal Employment Opportunity Commission's four-fifths rule
+          surfaces adverse impact only position by position. Aggregated across all 156 employers, the impact
+          ratios for Asian, Black, Hispanic, and White applicants
+          each exceed 0.8, the threshold at which prior
+          pymetrics-authored analyses had reported no discrimination.
+          Disaggregated to the 1,746 positions, 10.62% demonstrate
+          adverse impact against Black applicants after
+          Benjamini-Hochberg correction, and 30.70% of Black
+          applicants applied to at least one such
+          position.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Computer and Mathematical positions carry the highest
+          Black-adverse-impact rate by occupational group, at 16.7%.
+        </p>
+        <p>
+          Only 42 pymetrics models are shared across positions at
+          different companies, and only 142 unique employer pairs
+          share at least one model. Strict algorithmic monoculture,
+          in which the same scorer is applied at every employer, is
+          rare in the data. The measured excess correlation is
+          produced by <em>partial</em> sharing: a common vendor,
+          common feature construction, and a common training pipeline
+          delivered through different fitted models. The authors
+          report that most applicants are not scored by the same model
+          twice, and that the harm operates through this more general
+          form.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          Two illustrations often named in coverage do not extend
+          this evidence. Amazon's internal résumé-screening system,
+          built starting in 2014 and scrapped in 2017, was a
+          single-firm training-data-bias case. The tool never scored
+          a candidate at any other firm.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The 2024 CrowdStrike outage was a shared kernel-driver
+          update that crashed about 8.5 million Windows devices, with
+          no machine-learning model involved.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Both are correlated-failure analogies. Neither documents
+          correlated hiring outcomes at scale.
+        </p>
+      </section>
+
+      <section data-nb-section="extensions" id="extensions">
+        <h2>Two follow-ups from inside the same program</h2>
+        <p>
+          Kenny Peng and Nikhil Garg of Cornell Tech extended
+          Kleinberg-Raghavan into a matching-markets model with many
+          firms rather than two (NeurIPS 2024).<sup class="nb-cite"><a href="#s8">8</a></sup>
+          As the number of firms grows, firm welfare converges to
+          first-best under polyculture and stays suboptimal under
+          monoculture. Applicant welfare runs the other direction:
+          for every applicant, the probability of matching to the
+          top-choice firm is at least as high under monoculture as
+          polyculture. In simulations on the 2018 Texas ACSIncome
+          data, polyculture beats every monoculture on accuracy for
+          47 of 50 model subsets. Monoculture produces better average
+          applicant outcomes on 50 of 50.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In their own words</span>
+          <blockquote>
+            "We show that on average, applicants are better off under
+            monoculture than polyculture, in the sense that on
+            average, applicants are matched to firms that they more
+            prefer. … However, it does not pose a greater risk of
+            systemic exclusion overall."<sup class="nb-cite"><a href="#s8">8</a></sup>
+            <span class="nb-note-who">Peng and Garg, NeurIPS 2024, Theorem 2 summary</span>
+          </blockquote>
+        </div>
+        <p>
+          The reversal is not total: the same theorem identifies a
+          set of applicants whose outcome variance rises, more likely
+          to match the top choice and less likely to match at all.
+          But the naive reading that "being rejected once under
+          monoculture is being rejected everywhere" does not survive
+          the model.
+        </p>
+        <p>
+          Nathanael Jo, Nikhil Garg, and Manish Raghavan argued in a
+          2026 preprint that measured "excess" cross-model correlation
+          depends on the null model the analyst chose.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          Under a rich enough null, all pairwise cross-model
+          correlation can be re-explained by shared latent parameters.
+          The authors reanalyze the HELM benchmark and the HuggingFace
+          leaderboard with an item-response-theory null that accounts
+          for question difficulty. Residual correlations reported by
+          Kim et al. (2025) and Goel et al. (2025) partly vanish, in
+          the paper's phrasing "even flipping from strongly positive
+          to slightly negative."<sup class="nb-cite"><a href="#s9">9</a></sup>
+          Raghavan co-authored the original PNAS paper and this
+          critique, so the correction comes from inside the program.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Kleinberg and Raghavan's result is real. Its stated
+          conditions matter: a three-candidate worked example with a
+          4% welfare loss, one standard noise model in which the
+          effect vanishes, and generalization beyond three candidates
+          left open. The deployed-measurement program has found joint
+          failure rates that exceed an independence baseline on every
+          audited dataset. The largest hiring dataset, 4.2 million
+          pymetrics applications across 156 employers, shows systemic
+          rejection well above baseline and per-position adverse
+          impact against Black and Asian applicants. Same-model scoring at
+          every employer is rare. The measured correlation runs
+          through shared vendor and shared feature construction.
+        </p>
+        <p>
+          Two follow-ups from inside the program add caveats worth
+          keeping. Peng and Garg's matching-markets extension finds
+          better average applicant outcomes under monoculture, even
+          as firm welfare gets worse. Jo, Garg, and Raghavan's
+          null-model critique shows measured excess correlation
+          across LLMs can shrink or flip sign under a null that
+          accounts for question difficulty. When someone says AI
+          hiring is a monoculture, worth asking: which theorem,
+          which measurement, and which null.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.pnas.org/doi/10.1073/pnas.2018340118">Kleinberg and Raghavan, "Algorithmic monoculture and social welfare" (PNAS, 2021)</a>: the theorem and its stated conditions in full, at roughly ten pages.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2211.13972">Bommasani, Creel, Kumar, Jurafsky, and Liang, "Picking on the Same Person" (NeurIPS, 2022)</a>: the definition of outcome homogenization and the first fairness-dataset experiments.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://proceedings.neurips.cc/paper_files/paper/2024/hash/95249d42f559a0cfaf282fdf26fe2e69-Abstract-Conference.html">Peng and Garg, "Monoculture in Matching Markets" (NeurIPS, 2024)</a>: the many-firm extension that separates firm welfare from applicant welfare.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.pnas.org/doi/10.1073/pnas.2018340118"
+              >PNAS · Kleinberg and Raghavan, "Algorithmic monoculture and social welfare" (2021)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2211.13972"
+              >arXiv · Bommasani, Creel, Kumar, Jurafsky, and Liang, "Picking on the Same Person" (NeurIPS 2022)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.05862"
+              >arXiv · Toups, Bommasani, Creel, Bana, Jurafsky, and Liang, "Ecosystem-level Analysis of Deployed Machine Learning Reveals Homogeneous Outcomes" (NeurIPS 2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2506.07962"
+              >arXiv · Kim, Garg, Peng, and Garg, "Correlated Errors in Large Language Models" (ICML 2025)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2605.27371"
+              >arXiv · Bommasani, Bana, Creel, Jurafsky, and Liang, "Algorithmic Monocultures in Hiring" (FAccT 2026)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.technologyreview.com/2018/10/10/139858/amazon-ditched-ai-recruitment-software-because-it-was-biased-against-women/"
+              >MIT Technology Review · Winick, "Amazon ditched AI recruitment software because it was biased against women" (2018)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://en.wikipedia.org/wiki/2024_CrowdStrike-related_IT_outages"
+              >Wikipedia · "2024 CrowdStrike-related IT outages" (retrieved 2026-08-24)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://proceedings.neurips.cc/paper_files/paper/2024/hash/95249d42f559a0cfaf282fdf26fe2e69-Abstract-Conference.html"
+              >NeurIPS Proceedings · Peng and Garg, "Monoculture in Matching Markets" (2024)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2602.24086"
+              >arXiv · Jo, Garg, and Raghavan, "The Subjectivity of Monoculture" (2026)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
