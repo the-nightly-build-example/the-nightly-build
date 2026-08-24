@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The wait before a chatbot's first word barely tracks the prompt's length · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "first-token-latency",
+        "template": "lesson",
+        "title": "The wait before a chatbot's first word barely tracks the prompt's length",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-24",
+        "tags": ["prefill", "ttft", "latency", "inference", "attention", "kv-cache"],
+        "sources": 12,
+        "words": 2080,
+        "reading_minutes": 9,
+        "dek": "Anyscale measured a Llama 2 70b prompt token at about a hundredth of what an output token costs in end-to-end latency, well below the tens-of-thousands regime where quadratic attention drives the pause.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">The wait before a chatbot's first word barely tracks the prompt's length</h1>
+        <p class="nb-dekline">
+          Anyscale measured a Llama 2 70b prompt token at about a hundredth of what an output token costs in end-to-end latency, well below the tens-of-thousands regime where quadratic attention drives the pause.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-24</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every chatbot session has a beat between the moment a user hits send and the moment the first word arrives. That beat is one of the few things about a chatbot a user has a direct experience of. It is the interval during which the model reads the prompt for the first time. Its size on any given call is not one number but a sum. Compute, queue, cached prefix, network. A reader who can name the four can look at any published TTFT figure and know what it is a sum of.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/prefill-and-decode.html">A chatbot reads your whole prompt at once but writes its reply one word at a time</a>: the two-phase split this lesson works inside.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">An attention head is a weighted average that computes its own weights</a>: the operation whose per-layer cost this lesson places in context.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html">The instant a model writes a token, it becomes fact</a>: why decode has to run one token at a time in the first place.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The wait between send and stream has four parts</h2>
+        <p>
+          Type a question into a chatbot, hit send, and count. On a typical Claude session over a home connection a few hundred milliseconds usually pass before the first word appears. Then the words arrive one at a time, quickly enough that they read almost as a stream. That first stretch has an industry name. Together AI calls it <em>time to first token</em>, or TTFT: the wait between sending a request and the first word of the reply appearing.<sup class="nb-cite"><a href="#s1">1</a></sup> Anthropic's own documentation defines it the same way, as the time to the first token of the response measured from when the prompt was sent.<sup class="nb-cite"><a href="#s2">2</a></sup> The wire format underneath it is an SSE stream whose first payload event carries that first token as a <code>text_delta</code>.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The pause is not the model "thinking harder." It is the model running one parallel forward pass over the prompt, producing the first output token, and leaving behind the cache of keys and values the streaming loop then rereads at every step. The mechanism is worked out in the earlier lesson on <a href="../the-mechanics/prefill-and-decode.html">prefill and decode</a>. The pause itself has parts. Some of it is the pure compute the prompt demands. Some of it is time spent waiting behind other users' work on the same GPU. Some of it is skipped when the serving system has already computed the prompt's cache from an earlier call. Some of it is just the round trip between the user and the datacenter. Those pieces have very different sizes.
+        </p>
+      </section>
+
+      <section data-nb-section="prompt-length" id="prompt-length">
+        <h2>One prompt token barely moves the pause</h2>
+        <p>
+          The story most people carry is that a chatbot pauses because attention scales with the square of the input length: double the prompt, quadruple the attention work. That scaling is real, but attention is one term in the model's per-token cost, and at everyday prompt lengths it is not the term that dominates. Vaswani et al.'s Table 1 gives the per-layer cost of self-attention as <span class="nb-math-in">O(n^{2} \cdot d)</span>, where <em>n</em> is the sequence length and <em>d</em> is the model's representation dimension. That table compares layer types: it sets self-attention against a recurrent layer at <span class="nb-math-in">O(n \cdot d^{2})</span>, and it has no row for the feed-forward block.<sup class="nb-cite"><a href="#s4">4</a></sup> The linear-in-<em>n</em> cost of the rest of the model comes from a separate accounting. Kaplan et al.'s per-token FLOP table shows that the feed-forward layers and the query, key, and value projections each cost on the order of <span class="nb-math-in">d^{2}</span> per token, with no context length in them. Over an <em>n</em>-token prompt that is <span class="nb-math-in">O(n \cdot d^{2})</span>. Only the attention-score term carries <em>n</em>, growing as <span class="nb-math-in">O(n^{2} \cdot d)</span>.<sup class="nb-cite"><a href="#s5">5</a></sup> Kaplan also fixes the point where the quadratic term overtakes the linear one: the context-dependent cost stays a small fraction of the total as long as <span class="nb-math-in">d > n/12</span>. For a model whose representation dimension runs to a few thousand, that puts the crossover in the tens of thousands of tokens. Below it the feed-forward and projection term dominates the arithmetic. The <em>n</em>-squared term is present and growing, but it is being outweighed.
+        </p>
+        <p>
+          The Anyscale team measured what that looks like end-to-end. Kadous et al. ran a regression on Llama 2 70b served through Anyscale Endpoints. Each additional input token added about 0.3 to 0.7 milliseconds to end-to-end latency. Each additional output token added 30 to 60 milliseconds.<sup class="nb-cite"><a href="#s6">6</a></sup> That is roughly a hundred-to-one ratio. "The practical implication of this is that reducing input tokens has very little effect on latency compared to reducing output tokens," they write. A scatterplot in the same post, at five concurrent requests, shows no discernible relationship between input tokens and TTFT across the 250-to-800-token range. The signal from input length is swamped by the run's other sources of latency.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">0.3–0.7 ms</span><span class="nb-stat-l">Per extra prompt token, Llama 2 70b</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">30–60 ms</span><span class="nb-stat-l">Per extra output token, same run</span>
+          </div>
+        </div>
+        <p>
+          The mechanism the intuition rests on is real. It just applies at a length most everyday chats never reach. Below that length something else is doing most of the waiting.
+        </p>
+      </section>
+
+      <section data-nb-section="long-context" id="long-context">
+        <h2>Past a few tens of thousands, the pause bends upward</h2>
+        <p>
+          Push the prompt into the tens of thousands of tokens and the naive quadratic story starts to describe reality. Jim Allen Wallace, writing for Redis, cites an NVIDIA developer benchmark of Llama 3.1 70B on GH200 NVL32 hardware. A 32,768-token prompt produces a TTFT of about 472 milliseconds. A 122,880-token prompt, roughly 3.8 times longer, produces one of about 2.2 seconds. That is 4.7 times longer.<sup class="nb-cite"><a href="#s7">7</a></sup> "TTFT grew faster than the prompt itself," Wallace observes, "and that gap widens as contexts get longer." The measurement is NVIDIA's. The Redis post is the relay this article relies on.
+        </p>
+        <p>
+          That is the regime in which the <span class="nb-math-in">n^{2}</span> attention term outweighs the <span class="nb-math-in">n \cdot d^{2}</span> feed-forward term. It shows up on long-context work: a chat loaded with a book, an agent carrying a page of retrieved context, a coding session opened over a large repository. It does not show up on the short turns that make up most conversations. A reader who has watched a chatbot get slower on a long document has watched the crossover happen in real time.
+        </p>
+      </section>
+
+      <section data-nb-section="colocation" id="colocation">
+        <h2>One user's pause reaches other users' streams</h2>
+        <p>
+          A single request in isolation is one picture. A production GPU is serving many requests at once, and the two phases share the hardware. DistServe measured what happens on a colocated system directly. Adding a single new prefill job to a batch of ongoing decodes stretches the time per output token for every user in the batch, and "the slowdown intensifies with a longer prefill."<sup class="nb-cite"><a href="#s8">8</a></sup> Sarathi's authors measured why. On their LLaMA-13B run on an A6000, at batch size 1 a single 512-token prompt is enough to saturate the GPU's compute on its own, so the ongoing decodes wait on it. Decode is the far more expensive phase per token at that size: "the decode cost per token can be as high as ~200 times the prefill cost per token."<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <p>
+          Serving systems have two levers here, and both matter to the pause a user feels. The first is <em>chunked prefill</em>, the trick behind Sarathi and Sarathi-Serve, which splits a long prompt into equal-sized pieces and piggybacks decode work onto each piece. It softens the stutter for streaming users at a price DistServe names in the same paragraph: chunked prefill "trades TTFT for TPOT."<sup class="nb-cite"><a href="#s8">8</a></sup> The user who just hit send waits slightly longer so that the users already watching their reply see less stutter. The second is <em>speculative decoding</em>. Leviathan et al. showed that a small "approximation" model can propose several candidate tokens at once. The large "target" model then verifies them all in one forward pass. The reported speedup on T5-XXL was "an out-of-the-box latency improvement of 2X-3X."<sup class="nb-cite"><a href="#s10">10</a></sup> That improvement lands entirely on the decode loop. Speculative decoding leaves the initial prefill exactly as it was. A serving stack that ships it makes the words after the pause come faster without making the pause itself any shorter.
+        </p>
+      </section>
+
+      <section data-nb-section="prefix-cache" id="prefix-cache">
+        <h2>A prompt the model has seen before skips the pause</h2>
+        <p>
+          The most dramatic reason the pause is not a function of raw input length is that the pause is paid only for the tokens whose keys and values the serving system has not already cached. PagedAttention, the memory system underneath vLLM, stores the KV cache in fixed-size blocks that different requests can share by reference. Kwon et al. report that in one of their experiments, "the KV cache of the prompt part, which accounts for 12% of the total KV cache memory in our experiment, can be shared to minimize memory usage."<sup class="nb-cite"><a href="#s11">11</a></sup> For a chatbot that reuses a long system prompt across turns, or for two users hitting the same shared prompt at once, prefill on that prefix runs once and never again for its lifetime in the cache. On the second turn of a chat, the pause the reader feels can collapse to whatever the incremental new tokens, plus the queue, plus the network add up to.
+        </p>
+        <p>
+          The network share of the pause is small in the datacenter and easy to miss, and the party that measures TTFT is the one that brings it out. Artificial Analysis warns in its benchmarking methodology that its TTFT numbers are measured from a specific Google Cloud VM in <code>us-central1-a</code> because "TTFT is sensitive to server location" and "includes network latency."<sup class="nb-cite"><a href="#s12">12</a></sup> A vendor's stated 200-millisecond TTFT is not the on-GPU prefill compute time an academic paper measures. It is the compute, plus the queue, plus the routing, plus the client's round trip. Cut the round trip in half by moving the user closer to the datacenter and the same GPU serves a visibly faster chatbot.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The pause before a chatbot's first word does not track the prompt's length the way most users assume it does. Anyscale measured, on Llama 2 70b, that adding a prompt token cost about 0.3 to 0.7 milliseconds while adding an output token cost 30 to 60. Attention's <em>n</em>-squared term does drive TTFT upward once a prompt is in the tens of thousands, and DistServe's own figures show a single new prefill inflating time-per-token for every user already streaming behind it. But a system that has cached the prefix from an earlier turn skips most of the prefill compute for that prefix, and a vendor's headline TTFT includes the network between the user and the GPU. Any TTFT figure a reader sees carries four separate costs at once. Some is new compute the prompt demands. Some is the GPU's existing load. Some is skipped for the prefix the system had already cached. Some is the round trip to the datacenter.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2401.09670">DistServe: Disaggregating Prefill and Decoding for Goodput-optimized Large Language Model Serving</a>: Zhong et al.'s figures on prefill-decoding interference and the chunked-prefill tradeoff, in the paper's own numbers.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.anyscale.com/blog/reproducible-performance-metrics-for-llm-inference">Reproducible Performance Metrics for LLM Inference</a>: Anyscale's Llama 2 70b regression and the LLMPerf tool underneath the one-percent claim in this lesson.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2309.06180">Efficient Memory Management for Large Language Model Serving with PagedAttention</a>: the vLLM paper that introduced the block-based KV cache prefix sharing rests on.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Sections defining the two phases"
+              href="https://docs.together.ai/learn/ttft-and-tps"
+              >Together AI · Time to First Token and Tokens Per Second</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="How to measure latency"
+              href="https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-latency"
+              >Anthropic · Reduce Latency</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Event types; Basic streaming request"
+              href="https://platform.claude.com/docs/en/build-with-claude/streaming"
+              >Anthropic · Streaming Messages</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Section 4, Table 1, p. 6"
+              href="https://arxiv.org/abs/1706.03762"
+              >Vaswani et al. · Attention Is All You Need</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Section 2.1, Table 1"
+              href="https://arxiv.org/abs/2001.08361"
+              >Kaplan et al. · Scaling Laws for Neural Language Models (2020)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="How does prompt length affect performance?"
+              href="https://www.anyscale.com/blog/reproducible-performance-metrics-for-llm-inference"
+              >Anyscale · Reproducible Performance Metrics for LLM Inference (Kadous et al., 2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Why longer prompts mean longer waits"
+              data-nb-note="Wallace relays NVIDIA developer-blog Llama 3.1 70B / GH200 NVL32 benchmark figures; NVIDIA owns the underlying measurement."
+              href="https://redis.io/blog/prefill-vs-decode/"
+              >Redis · Prefill vs Decode: Understanding LLM Inference Performance (Wallace, 2026)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Section 2.3 and Figure 2"
+              href="https://arxiv.org/abs/2401.09670"
+              >Zhong et al. · DistServe: Disaggregating Prefill and Decoding for Goodput-optimized Large Language Model Serving (OSDI 2024)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Section 1 and Section 3.1"
+              href="https://arxiv.org/abs/2308.16369"
+              >Agrawal et al. · Sarathi: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract and Section 3"
+              href="https://proceedings.mlr.press/v202/leviathan23a.html"
+              >Leviathan, Kalman, Matias · Fast Inference from Transformers via Speculative Decoding (ICML 2023)</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Section 4; Section 2"
+              href="https://arxiv.org/abs/2309.06180"
+              >Kwon et al. · Efficient Memory Management for Large Language Model Serving with PagedAttention (SOSP 2023)</a
+            >
+          </li>
+          <li id="s12">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Key Definitions; Server Location"
+              href="https://artificialanalysis.ai/methodology/performance-benchmarking"
+              >Artificial Analysis · Performance Benchmarking Methodology</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
