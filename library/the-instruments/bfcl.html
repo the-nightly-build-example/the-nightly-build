@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The function-calling score labs cite grades one call, and usually never runs it · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "bfcl",
+        "template": "lesson",
+        "title": "The function-calling score labs cite grades one call, and usually never runs it",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-25",
+        "tags": ["bfcl", "function-calling", "agent-evaluation", "benchmarks", "tool-use"],
+        "sources": 8,
+        "words": 1917,
+        "reading_minutes": 8,
+        "dek": "Berkeley's Function-Calling Leaderboard scores each model's answer against a known-correct call, so the 66.4% at the top of its board mostly reflects single calls, blind to whether the same model can chain those calls across a whole task.",
+        "harness": "Claude Code",
+        "model": "Claude Opus"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">The function-calling score labs cite grades one call, and usually never runs it</h1>
+        <p class="nb-dekline">
+          Berkeley's Function-Calling Leaderboard scores each model's answer against a known-correct call, so the 66.4% at the top of its board mostly reflects single calls, blind to whether the same model can chain those calls across a whole task.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-25</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every few weeks a lab announces that its newest model is better at
+          using tools, and points to a function-calling score to prove it.
+          Berkeley's Function-Calling Leaderboard is where most of those scores
+          come from, and its numbers get quoted the way exam results do. This
+          lesson opens up how one of those numbers is made: what a single test
+          case is, and the three ways a proposed call gets graded. Most of the
+          score comes from a grader reading a call rather than running it. By the
+          end you will be able to say exactly what a high function-calling score
+          shows about a model and what it leaves untested.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/tool-use.html">A model that calls a tool never runs it</a>:
+            how a model "calls" a tool by writing a request some other program
+            actually runs.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/tau-bench.html">GPT-4o clears 61% of &tau;-bench tasks once and under 25% of them eight times in a row</a>:
+            why an agent that succeeds once often fails when the same task is
+            run again.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A single percentage stands in for using tools well</h2>
+        <p>
+          When a lab says its model is good at using tools, the number behind
+          the claim is usually a function-calling score, and the most-cited one
+          comes from the Berkeley Function-Calling Leaderboard, built by the
+          Gorilla team at UC Berkeley. On the board that ships with the team's
+          2025 paper, the top model, a version of GPT-4o, scores 66.4%
+          overall.<sup class="nb-cite"><a href="#s1">1</a></sup> The live board
+          has since moved to a fourth version, and its own note defines that
+          headline figure as an unweighted average across every sub-category it
+          tests.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          What a reader wants that number to mean is that the model can be
+          handed a set of tools and trusted to use them. It looks up an order,
+          cancels it, issues the refund, and stops when the job is finished.
+          That is a fair thing to want to know. It is not what the
+          score measures. A BFCL number grades one thing at a time, a single
+          proposed call, checked against a known-correct answer.
+        </p>
+        <p>
+          A model does not run the tools it is given. It writes a request, in
+          structured text, that some other program runs on its behalf, a
+          mechanic that is
+          <a href="../the-mechanics/tool-use.html">its own lesson</a>. BFCL
+          grades that written request. The question it answers is whether the
+          model wrote the right call, not whether calling it accomplished
+          anything.
+        </p>
+      </section>
+
+      <section data-nb-section="grading" id="grading">
+        <h2>How one call gets graded: parse, run, or decline</h2>
+        <p>
+          BFCL grades a proposed call in one of three ways, and which one
+          applies depends on the category of the test case.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The single-turn cases come in five shapes: one call, a choice among
+          several offered tools, several calls in parallel, both at once, and a
+          test of whether the model declines when nothing
+          fits.<sup class="nb-cite"><a href="#s3">3</a></sup><sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          The most common grading method is Abstract Syntax Tree matching, or
+          AST matching. An abstract syntax tree is just the parsed structure of
+          a call, its function name and its arguments pulled apart into labeled
+          pieces. The grader reads the model's proposed call into that
+          structure and checks the pieces against the reference without running
+          anything. The rule the paper states is exact about one point that is
+          easy to miss: a call is correct "if the function name matches exactly
+          and if all parameter values fall within their respective possible
+          answers."<sup class="nb-cite"><a href="#s1">1</a></sup> The name has to
+          be right to the character. Each argument, though, is checked against a
+          set of acceptable values rather than a single one.
+        </p>
+        <p>
+          Say the reference answer for "what is the weather in Paris, in
+          Celsius" is <code>get_weather(city="Paris", units="metric")</code>. A
+          model that writes <code>units="celsius"</code> can still be graded
+          correct, as long as the test lists both <code>"metric"</code> and
+          <code>"celsius"</code> among the acceptable values for that argument.
+          Whether the call passes turns on whether each value lands inside the
+          set the test authors wrote, so that set is doing as much of the work
+          as the model is.
+        </p>
+        <p>
+          A smaller set of categories is graded by executable evaluation: the
+          grader actually runs the proposed call and inspects what comes back.
+          "Execution involves running the specified function and examining its
+          output."<sup class="nb-cite"><a href="#s3">3</a></sup> The output is
+          compared exactly for most results, within a 20% band for numbers that
+          change in real time, and by shape and keys alone for nested
+          results.<sup class="nb-cite"><a href="#s3">3</a></sup> A third category
+          tests the opposite skill. The model is handed functions that do not
+          fit the question and is scored on whether it correctly declines to
+          call any of them.<sup class="nb-cite"><a href="#s3">3</a></sup> A model
+          that always reaches for a tool scores zero here, however good its
+          calls are everywhere else.
+        </p>
+
+        <table class="nb-table">
+          <caption>
+            The three ways BFCL grades a single proposed call.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th class="txt">Runs the call?</th>
+              <th class="txt">What it checks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">AST matching</span></td>
+              <td class="txt">No. The call is parsed, not executed.</td>
+              <td class="txt">The function name matches exactly, and every argument value falls inside its set of allowed values.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Executable evaluation</span></td>
+              <td class="txt">Yes. The call is run and its output examined.</td>
+              <td class="txt">The result matches the reference exactly, within a 20% band for real-time numbers, or by shape and keys for nested output.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Relevance detection</span></td>
+              <td class="txt">No.</td>
+              <td class="txt">The model declines to call any function when none of the offered tools fits the request.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          The split between the first row and the second matters more than it
+          looks. In the first version of the board, of roughly 2,000 test cases,
+          only about 300 were run, and the rest were
+          parsed.<sup class="nb-cite"><a href="#s3">3</a></sup> The live set the
+          team added next, 2,251 real user queries, is graded by AST matching
+          alone.<sup class="nb-cite"><a href="#s5">5</a></sup> So the largest
+          slice of a function-calling score is a grader reading a proposed call,
+          not watching it work.
+        </p>
+      </section>
+
+      <section data-nb-section="faithful" id="faithful">
+        <h2>The grade is faithful to the call it checks</h2>
+        <p>
+          None of this makes AST matching loose. The team checked it against the
+          harder method: on the single-turn set, the scores from parsing calls
+          track the scores from actually running them closely enough that the
+          paper reports the two as strongly
+          correlated.<sup class="nb-cite"><a href="#s1">1</a></sup> Reading a
+          call and running it reach nearly the same verdict on whether that one
+          call was right. The limit of a function-calling score is not accuracy.
+          It is reach. A faithful grade of one call is still a grade of one
+          call, and an agent is never asked to make exactly one.
+        </p>
+      </section>
+
+      <section data-nb-section="chaining" id="chaining">
+        <h2>From one graded call to a whole task</h2>
+        <p>
+          An agent chains calls. It reads what each one returns, adjusts, and
+          decides when the job is done. The paper's own top score, 66.4%, is
+          already dragged down from the near-perfect single-call numbers. The
+          categories that ask for exactly this behavior are where the best
+          models collapse toward zero on holding facts in memory across a
+          task.<sup class="nb-cite"><a href="#s1">1</a></sup> The board's results
+          show the same shape: the top models ace the one-shot
+          questions and stumble once they must remember context, manage a long
+          conversation, or decide not to
+          act.<sup class="nb-cite"><a href="#s1">1</a></sup> The team itself is
+          candid about the split.
+        </p>
+
+        <div class="nb-note">
+          <span class="nb-note-label">The authors' own limit</span>
+          <blockquote>
+            "while state-of-the-art LLMs excel at single-turn calls, memory,
+            dynamic decision-making, and long-horizon reasoning remain open
+            challenges."<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">The Gorilla team, BFCL paper, ICML 2025</span>
+          </blockquote>
+        </div>
+
+        <p>
+          The sister lesson on
+          <a href="../the-instruments/tau-bench.html">&tau;-bench</a> put a
+          number on that gap using the same native function calling BFCL grades.
+          The same GPT-4o agent solves about 61% of &tau;-bench's retail tasks
+          on a single try. Asked to complete the same task eight times running,
+          it succeeds under a quarter of the
+          time.<sup class="nb-cite"><a href="#s6">6</a></sup> The single-call
+          skill is genuine. It does not add up to a reliable agent on its own.
+        </p>
+
+        <div class="nb-pull">
+          <p>
+            The same GPT-4o agent that clears 61% of &tau;-bench's retail tasks
+            once clears under a quarter of them eight times in a row.
+          </p>
+        </div>
+
+        <p>
+          BFCL is not ignoring this. Its later versions exist to reach past the
+          single call. Version three, released in September 2024, scores a whole
+          multi-turn conversation, and the fourth adds agentic tasks such as
+          memory and search.<sup class="nb-cite"><a href="#s7">7</a></sup> So far
+          those categories expose the gap rather than close it. The multi-turn
+          set is young and small, a thousand entries against the four
+          thousand-plus single-turn and live
+          cases,<sup class="nb-cite"><a href="#s7">7</a></sup> and its scoring
+          metric was overhauled six weeks after it
+          launched.<sup class="nb-cite"><a href="#s8">8</a></sup> The score that
+          reads as agent reliability is still mostly the score of one call.
+        </p>
+      </section>
+
+      <section data-nb-section="corrections" id="corrections">
+        <h2>When the leaderboard rewrote its own answers</h2>
+        <p>
+          There is one more reason to hold the narrow number loosely: the board
+          has repeatedly rewritten the answers it grades
+          against.<sup class="nb-cite"><a href="#s8">8</a></sup> The team's own
+          changelog records fix after fix to mislabeled and buggy test cases.
+          The largest single entry, dated 16 October 2024, corrected 547 of the
+          roughly 1,053 cases in the live "multiple" category, along with a
+          hundred-odd others in the same fix. That is more than half of one of
+          the board's largest categories.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          Every score published against that category before the fix was graded
+          against answers the team later called bugs. And the changelog records
+          what was corrected, not how the corrections moved the board. A lab
+          that chose one model over another on the strength of a live "multiple"
+          score in early 2024 has no published way to check that call. It cannot
+          know whether the fixed data would have ranked the two the same. The
+          number was cited with
+          confidence while its answer key was still being rewritten.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A function-calling score answers one narrow question well: handed a
+          set of tools and a request, does the model write the right call?
+          Berkeley's board answers it by parsing most calls and running a few,
+          and the paper's own top model gets it right about two times in three.
+          What the score does not touch is the rest of what makes an agent an
+          agent: chaining calls, recovering when one returns the wrong thing,
+          holding earlier steps in memory, and knowing when not to act. When
+          those were measured, the same models that ace single calls fell off
+          sharply, and the board's own repeated corrections to its answer key
+          are a reminder that even the narrow number moves. Read a high
+          function-calling score as what it is, a strong single call, and ask
+          separately whether the model can string many of them together.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://proceedings.mlr.press/v267/patil25a.html">Patil et al., "The Berkeley Function Calling Leaderboard" (ICML 2025)</a>:
+            the Gorilla team's full account of the board's design, scoring, and
+            results.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://gorilla.cs.berkeley.edu/leaderboard.html">The live Berkeley Function-Calling Leaderboard</a>:
+            the current ranked board, now on its fourth version and updated as
+            models and data change.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; §1 (five-part structure, 5,551 pairs); §4.1-4.3 (AST rule, execution modes, Figure 3 AST-execution correlation); §5.1 and Table 1 (66.4% top model, near-zero agentic memory)"
+              href="https://proceedings.mlr.press/v267/patil25a.html"
+              >Patil, Mao, Yan, Ji, Suresh, Stoica &amp; Gonzalez (UC Berkeley) · The Berkeley Function Calling Leaderboard (ICML 2025)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Version/last-updated header line; the note defining Overall Accuracy as the unweighted average of all sub-categories"
+              href="https://gorilla.cs.berkeley.edu/leaderboard.html"
+              >Gorilla / UC Berkeley · Berkeley Function-Calling Leaderboard (live board, BFCL V4)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Dataset-composition table (2,000 pairs, ~300 executable); &quot;AST Evaluation&quot; and &quot;Executable Evaluation&quot; sections; &quot;Function Relevance Detection&quot;"
+              href="https://gorilla.cs.berkeley.edu/blogs/8_berkeley_function_calling_leaderboard.html"
+              >Yan, Mao, Ji, Stoica, Gonzalez, Zhang &amp; Patil (Gorilla) · Berkeley Function Calling Leaderboard v1 (2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Category-structure section (five single-turn types: Simple, Multiple, Parallel, Parallel Multiple, Relevance Detection)"
+              href="https://www.emergentmind.com/topics/berkeley-function-calling-leaderboard-v4-bfclv4"
+              >Emergent Mind · Berkeley Function-Calling Leaderboard V4 (BFCLv4) topic overview</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Opening rationale (contamination, bias, real-world generalization); category-count table (2,251 total; Multiple 1,053)"
+              href="https://gorilla.cs.berkeley.edu/blogs/12_bfcl_v2_live.html"
+              >Mao, Ji, Yan, Zhang &amp; Patil (Gorilla) · BFCL V2 · Live (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract and §5.1 (&quot;Agent consistency via pass^k&quot;: >60% average pass^1, pass^8 <25% on retail); Table 2 (per-model pass^1)"
+              href="https://arxiv.org/abs/2406.12045"
+              >Yao, Shinn, Razavi &amp; Narasimhan (Sierra) · &tau;-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains (2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Multi-turn category definitions (1,000 entries); state-based and response-based scoring section; the outdated-composition note pointing to the V4 blog"
+              href="https://gorilla.cs.berkeley.edu/blogs/13_bfcl_v3_multi_turn.html"
+              >Mao, Yan, Ji, Huang, Suresh, Huang, Yu, Gonzalez &amp; Patil (Gorilla) · BFCL V3 · Multi-Turn (2024)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Entry dated 2024-10-16 [#661]: &quot;Bug fix in the dataset and possible answers&quot;, 547 live_multiple and 104 live_simple among others; surrounding 2024 correction entries"
+              href="https://github.com/ShishirPatil/gorilla/blob/main/berkeley-function-call-leaderboard/CHANGELOG.md"
+              >ShishirPatil/gorilla · berkeley-function-call-leaderboard CHANGELOG.md</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
