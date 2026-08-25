@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prompt engineering lifted CLIP's zero-shot ImageNet score by nearly five points · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "clip",
+        "template": "lesson",
+        "title": "Prompt engineering lifted CLIP's zero-shot ImageNet score by nearly five points",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-25",
+        "tags": [],
+        "sources": 6,
+        "words": 1770,
+        "reading_minutes": 8,
+        "dek": "Radford, Kim and their OpenAI coauthors trained the 2021 model on 400 million captions they never released, and its label-free ImageNet result stayed strong on unfamiliar photos while collapsing on counting and satellite tiles.",
+        "harness": "claude-code",
+        "model": "Claude Opus"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Prompt engineering lifted CLIP's zero-shot ImageNet score by nearly five points</h1>
+        <p class="nb-dekline">
+          Radford, Kim and their OpenAI coauthors trained the 2021 model on 400 million captions they never released, and its label-free ImageNet result stayed strong on unfamiliar photos while collapsing on counting and satellite tiles.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-25</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have probably seen "CLIP" or "zero-shot" used as shorthand for a
+          model that learned to see from words alone, matching a trained
+          classifier with no labels and no fuss. Both the model and the number
+          are real. In 2021 an OpenAI model scored 76.2% on the ImageNet image
+          test without using any of its labels, and it now sits inside image
+          search and the systems built on it. This lesson takes that headline
+          apart. It shows what the 76.2% actually measured and what it quietly
+          relied on, so you can tell the model apart from the setup around it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/word-embeddings.html">A transformer redraws a word's vector for every sentence it appears in</a>:
+            how words become vectors, the same shared-space idea CLIP uses to
+            line up images and captions.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/reading-images.html">A chatbot slices your photo into a few hundred squares and turns each into a word</a>:
+            how a model turns a picture into numbers it can compare.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>CLIP labeled ImageNet without ImageNet's labels</h2>
+        <p>
+          Early in 2021, a team at OpenAI led by Alec Radford and Jong Wook Kim
+          released a vision model called CLIP and reported a result that has
+          been repeated ever since. On ImageNet, the standard test that sorts
+          photographs into 1,000 categories, CLIP's best model correctly labeled
+          76.2% of the validation images without training on a single one of
+          ImageNet's 1.28 million labeled examples.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          The paper called this zero-shot transfer, and the term is worth
+          pinning down before anything else. Zero-shot means the model sorts
+          images into categories it was never trained to recognize: you hand it
+          the category names in plain language, and it picks the one that fits.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          By that measure CLIP matched the accuracy of a standard supervised
+          ResNet-50, a widely used image classifier trained the ordinary way on
+          labeled photos, on categories CLIP itself had never been shown.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          It learned instead from 400 million image and caption pairs pulled off
+          the internet.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">76.2%</span
+            ><span class="nb-stat-l">zero-shot ImageNet top-1</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">0</span
+            ><span class="nb-stat-l">ImageNet labels used</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">400M</span
+            ><span class="nb-stat-l">web image-caption pairs</span>
+          </div>
+        </div>
+      </section>
+
+      <section data-nb-section="training" id="training">
+        <h2>Learning from 400 million captions</h2>
+        <p>
+          CLIP is trained by a method called contrastive learning, and the idea
+          is simpler than the name. Take a batch of image and caption pairs, say
+          four images and the four captions that came with them. There are
+          sixteen ways to match one of those images to one of those captions,
+          and only four of the sixteen are correct. CLIP is trained to score
+          those four true pairings highest and the twelve wrong pairings
+          lowest.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          It does this by turning each image and each caption into a list of
+          numbers, called a vector. That is the same kind of representation
+          <a href="../the-mechanics/word-embeddings.html">word2vec built for words</a>,
+          and turning a picture into that form is its own subject, covered in
+          <a href="../the-mechanics/reading-images.html">reading images</a>. The
+          model learns to place a true image and its caption close together in
+          that space and to push mismatched ones apart.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          That is how zero-shot classification works in practice. To label a new
+          image, you write each candidate category as a short caption, such as
+          <code>a photo of a dog</code> or <code>a photo of a cat</code>, then
+          ask which caption's vector sits closest to the image's.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The category names, written as captions, are all a user supplies.
+        </p>
+        <p>
+          None of this was a new idea, and the paper says so. It presents CLIP
+          as a simplified version of earlier work on learning images from paired
+          text, and names a 2020 method called ConVIRT as its direct
+          predecessor.<sup class="nb-cite"><a href="#s1">1</a></sup> What CLIP
+          added was scale. Its training set, which the authors call WebImageText,
+          held 400 million image and caption pairs gathered from the internet,
+          built by searching for about 500,000 terms and keeping up to 20,000
+          pairs for each.<sup class="nb-cite"><a href="#s1">1</a></sup> Training
+          the largest models took real hardware: one ResNet version ran for 18
+          days across 592 high-end GPUs, and the largest vision-transformer
+          version ran 12 days on 256 of them.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          OpenAI released the code and the trained weights, so anyone can
+          download CLIP and run it.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The 400-million-pair dataset was never released.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Anyone could run CLIP, but no one outside OpenAI could rebuild the pile
+          of web data it actually learned from.
+        </p>
+      </section>
+
+      <section data-nb-section="prompts" id="prompts">
+        <h2>Writing the labels as sentences added points</h2>
+        <p>
+          Return to how a user runs CLIP: by writing each category as a caption.
+          The exact wording of that caption turns out to matter, and the paper
+          measured how much.<sup class="nb-cite"><a href="#s1">1</a></sup> On a
+          ResNet-50 version of CLIP, handing the model the bare category name did
+          worst. Wrapping the name in the template
+          <code>a photo of a {label}.</code> raised ImageNet accuracy by 1.3
+          points.<sup class="nb-cite"><a href="#s1">1</a></sup> Averaging the
+          model's answers across 80 differently worded prompts, a trick the paper
+          calls ensembling, added another 3.5 points.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Together, the paper reports, prompt engineering and ensembling improved
+          ImageNet accuracy by almost five points, and it reports its headline
+          scores with that engineering already applied.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            Accuracy gained over a bare category-name prompt on ImageNet,
+            measured on a ResNet-50 version of CLIP.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Prompt method</th>
+              <th>ImageNet gain</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">The template <code>a photo of a {label}.</code></td>
+              <td>+1.3 pts</td>
+            </tr>
+            <tr>
+              <td class="txt">An ensemble of 80 worded prompts</td>
+              <td>+3.5 pts</td>
+            </tr>
+            <tr>
+              <td class="txt">Template and ensemble together</td>
+              <td>~5 pts</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The 76.2% headline is the best
+          model, a vision transformer called ViT-L/14. The 1.3 and 3.5 point
+          gains were measured on the smaller ResNet-50 version, so the exact
+          sizes do not carry from one model to the other.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          What carries over is the point: several points of a score reported as
+          zero-shot trace to a person choosing how to phrase the question, the
+          kind of hand-work the word is usually taken to rule out.
+        </p>
+        <p>
+          That template did not stay inside the paper. The
+          <code>a photo of a {label}.</code> pattern is built into the standard
+          tooling around CLIP today. Hugging Face's zero-shot image
+          classification pipeline writes its candidate categories in exactly that
+          form, as <code>a photo of a cat</code> and
+          <code>a photo of a dog</code>.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="robust-and-uneven" id="robust-and-uneven">
+        <h2>It handles shifted photos and fails at counting</h2>
+        <p>
+          Set against that, CLIP earned a strength the shorthand tends to drop.
+          Ordinary classifiers trained on ImageNet lose accuracy sharply when the
+          test images drift away from clean ImageNet photos, toward sketches,
+          blurry video frames, or pictures filtered to fool a model. CLIP
+          degraded far less. The paper reports that its zero-shot models close up
+          to 75% of the gap between ordinary ImageNet accuracy and accuracy under
+          these shifts.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          That robustness came from the model, not from the prompt wording, and a
+          later study pinned down its cause. In 2022, Fang and colleagues ran
+          controlled experiments against five candidate explanations for the
+          robustness. Their answer was the diversity of the training data.
+          In their words, "the more diverse training distribution is the main
+          cause for the robustness gains, with the other factors contributing
+          little to no robustness."<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Abstract">4</a></sup
+          >
+          The web-scale pile of images, not the language captions or the
+          contrastive method, was doing the work.
+        </p>
+        <p>
+          The paper also heads off a second objection. If CLIP's 400 million web
+          images overlapped with the test sets, high scores could be memorized
+          rather than transferred. The authors checked, measuring how much their
+          data overlapped each evaluation set. The median overlap was 2.2%, and
+          removing the duplicated images shifted overall accuracy by rarely more
+          than 0.1%, with the largest gain they could find being 0.6% on one bird
+          dataset.<sup class="nb-cite"><a href="#s1">1</a></sup> By the paper's
+          own measurement, contamination does not explain the scores.
+        </p>
+        <p>
+          The robustness has a sharp edge, and the paper draws it plainly.
+          Zero-shot CLIP is strong on natural photographs and weak on tasks that
+          are specialized, abstract, or fine-grained. It is poor at counting
+          objects in a scene, at classifying satellite images, at reading German
+          traffic signs, and at spotting tumors in lymph-node scans.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The paper's own caveat</span>
+          <blockquote>
+            non-expert humans can robustly perform several of these tasks, such
+            as counting, satellite image classification, and traffic sign
+            recognition, suggesting significant room for improvement.<sup
+              class="nb-cite"
+              ><a href="#s1" data-nb-locator="Sec. 3.1.5">1</a></sup
+            >
+            <span class="nb-note-who"
+              >Radford et al., Learning Transferable Visual Models From Natural
+              Language Supervision</span
+            >
+          </blockquote>
+        </div>
+      </section>
+
+      <section data-nb-section="reproduction" id="reproduction">
+        <h2>The recipe reproduced on open data</h2>
+        <p>
+          CLIP did not stay one OpenAI model. Because the method was public and
+          only the data was missing, other groups rebuilt it on datasets they
+          could release. In 2023 an OpenCLIP model trained on the public LAION-2B
+          set of image-text pairs reached 80.1% zero-shot on ImageNet, past
+          OpenAI's original figure.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          A companion study mapped how these models improve as they grow and
+          found that the training data itself changes that pattern: OpenAI's
+          models and the LAION-trained ones follow different curves as they
+          scale.<sup class="nb-cite"><a href="#s6">6</a></sup> The same web-scale
+          data that carried the robustness also shapes how the models scale.
+          Both findings point back to the dataset, more than the objective, as
+          what made CLIP work. In everyday use CLIP now works as an image-text
+          embedding and a zero-shot classifier inside search and larger systems,
+          with the <code>a photo of a {label}.</code> habit still attached.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          "Zero-shot" named something real. CLIP could label images from category
+          names alone, and it was genuinely sturdier than ordinary classifiers
+          when the photos changed. But the famous parity with ResNet-50 was not
+          free of human hands or private advantages. It rested on 400 million web
+          image-caption pairs OpenAI never released, and several of its ImageNet
+          points came from carefully written prompts and an 80-way ensemble. It
+          also broke on tasks a person finds easy, like counting objects or
+          reading a road sign. Read as a claim about naming photo categories in
+          words, the 76.2% holds. Read as proof that CLIP learned to see with no
+          help, it does not.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2103.00020">The CLIP paper in full</a>:
+            the original, with every ablation and appendix behind these numbers.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://github.com/mlfoundations/open_clip">OpenCLIP</a>: the
+            open reproduction you can download and run on public data.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2103.00020"
+              >arXiv · Radford, Kim et al., Learning Transferable Visual Models
+              From Natural Language Supervision (2021)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/openai/CLIP"
+              >GitHub · OpenAI, CLIP: released code and pre-trained weights</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/docs/transformers/en/model_doc/clip"
+              >Hugging Face · CLIP model documentation</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2205.01397"
+              >arXiv · Fang et al., Data Determines Distributional Robustness in
+              Contrastive Language Image Pre-training (2022)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://laion.ai/blog/giant-openclip/"
+              >LAION · Reaching 80% zero-shot accuracy with OpenCLIP: ViT-G/14
+              trained on LAION-2B (2023)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2212.07143"
+              >arXiv · Cherti et al., Reproducible scaling laws for
+              contrastive language-image learning (2022)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
