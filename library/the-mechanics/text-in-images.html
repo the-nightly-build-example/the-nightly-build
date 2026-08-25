@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A generated image gets its letters wrong before the picture is ever drawn · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "text-in-images",
+        "template": "lesson",
+        "title": "A generated image gets its letters wrong before the picture is ever drawn",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-25",
+        "tags": [],
+        "sources": 8,
+        "words": 2143,
+        "reading_minutes": 9,
+        "dek": "The word reaches the drawing step as a whole-word token with its spelling already blurred, and the fix is an encoder that reads the prompt one character at a time.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A generated image gets its letters wrong before the picture is ever drawn</h1>
+        <p class="nb-dekline">
+          The word reaches the drawing step as a whole-word token with its spelling already blurred, and the fix is an encoder that reads the prompt one character at a time.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-25</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You type a few words, ask for a storefront or a book cover or a
+          slogan on a shirt, and the picture comes back with text that is
+          almost a word. Image generators sit in phones, design tools, and
+          search results now, and this is the one failure everyone notices and
+          few can explain past "it is bad at text." This lesson takes a single
+          garbled word and traces it back through the system, one part at a
+          time, to the exact place the spelling is decided. By the end you can
+          say why the letters come out wrong, tell the two different ways they
+          go wrong apart, and spot the missing step in any account that stops
+          at "the model cannot spell."
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/image-generation.html">An image generator turns a field of static into your picture by removing the noise a little at a time</a>: the denoising loop this lesson calls the drawing step, taught in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/letter-counting.html">A model can recognize strawberry's letters and still miscount them</a>: why a model works from token numbers instead of letters, the same root cause behind the garbled text here.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/word-embeddings.html">A transformer redraws a word's vector for every sentence it appears in</a>: how a text encoder turns a word into a vector in the first place.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The word on the sign is almost right</h2>
+        <p>
+          You ask an image generator for a storefront with a sign, and it gives
+          you one. The sign has letters on it. They lean the right way, they sit
+          in a plausible font, and they spell nothing. One reads CAFEE, another
+          BQKERY, a third is a few confident strokes that resolve into no word
+          at all. Every generator does this, and the people who build them say
+          so plainly: Stable Diffusion's own model card lists, among its known
+          limits, that the model cannot render legible text.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          The easy explanation is that the model is simply not good at spelling,
+          the way it is not good at hands. That explanation is not wrong so much
+          as it stops one step too early. It treats the garbled word as a
+          drawing problem, something a steadier hand would fix. The letters come
+          out wrong for a reason that has little to do with drawing, and you can
+          find it by walking backward from the sign to the moment the word
+          entered the system.
+        </p>
+      </section>
+
+      <section data-nb-section="drawing-step" id="drawing-step">
+        <h2>The part that draws never sees a letter</h2>
+        <p>
+          Start with the part that makes the pixels. In a diffusion model, an
+          image begins as a field of random static, and the model removes that
+          noise a little at a time until a picture is left, the loop an
+          <a href="../the-mechanics/image-generation.html">earlier lesson</a>
+          walked through in full. Nothing in that loop knows the alphabet. To
+          this part of the system, the strokes of a letter are texture, the same
+          kind of thing as the grain of wood or the edge of a cloud. It has seen
+          many images with writing in them and learned what letter-shaped
+          texture tends to look like. That is why the output reads as writing at
+          a glance and falls apart up close.
+        </p>
+        <p>
+          This part does not even receive your word as letters. The prompt
+          reaches it through a separate step. In latent diffusion, the text is
+          first turned into a code by a text encoder. That code steers the
+          denoising through a mechanism called cross-attention: each patch of
+          the forming image reads the encoded prompt to decide what it should
+          become.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The drawing step is following instructions it did not write. If the
+          instruction for the sign does not carry the word's spelling, the part
+          holding the brush has nothing to spell it from. The letters are not
+          decided here. So go back one step, to the thing that wrote the code.
+        </p>
+      </section>
+
+      <section data-nb-section="the-encoder" id="the-encoder">
+        <h2>The encoder turns your word into a chunk</h2>
+        <p>
+          The code comes from a text encoder, a network built to turn a run of
+          text into a sequence of vectors that stand for its meaning. Turning a
+          word into a vector is a move this course has
+          <a href="../the-mechanics/word-embeddings.html">met before</a>. The
+          catch is the very first thing the encoder does to your prompt, before
+          any meaning is worked out: it breaks the text into tokens. A token is
+          a chunk of characters treated as one unit and looked up as a single
+          number in a fixed table. A common word like <code>bakery</code> is
+          often a single token. A longer one like <code>elephants</code> splits
+          into two, <code>elephant</code> and <code>s</code>. Either way, what
+          moves forward is the number for the chunk, and the individual letters
+          inside a chunk are no longer represented on their own.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          This is the same reason a model can recognize the word strawberry and
+          still
+          <a href="../the-mechanics/letter-counting.html">miscount its r's</a>.
+        </p>
+        <p>
+          So by the time the prompt reaches the part that draws, the word has
+          become a token or two standing for the whole chunk, and any spelling
+          has to be recovered from that. The builders of DALL·E 3 say this about
+          their own model, in as many words.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The makers' own diagnosis</span>
+          <blockquote>
+            We suspect this may have to do with the T5 text encoder we used:
+            when the model encounters text in a prompt, it actually sees tokens
+            that represent whole words and must map those to letters in an
+            image.<sup class="nb-cite"><a href="#s4">4</a></sup>
+            <span class="nb-note-who">OpenAI, DALL·E 3 technical report</span>
+          </blockquote>
+        </div>
+        <p>
+          Stable Diffusion reaches the drawing step through a different encoder,
+          the text side of a model called CLIP. The shape of the problem is the
+          same: it reads a lower-cased vocabulary of 49,152 subword chunks, not
+          one of them a single letter.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          It is tempting to say the letters are simply gone at this point. That
+          goes too far. A large enough model can rebuild spelling from those
+          chunks by brute statistics. Asked to spell common English words, a
+          540-billion-parameter language model gets them right more than 99% of
+          the time. A frozen mid-size encoder of the kind these generators
+          actually use manages about 66%.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The letters are not erased. They are compressed into a form the
+          encoder can recover only at a size most image generators will never
+          pay for. That is the bottom of the chain. Below the point where the
+          word became a chunk, nothing changes the answer, because the part that
+          draws can only redraw what the chunk carried up to it. That the
+          failure begins here, at the encoder, is settled: it is the account the
+          people who build these systems give of their own results.
+        </p>
+      </section>
+
+      <section data-nb-section="encoder-fixes" id="encoder-fixes">
+        <h2>Fixing the letters means fixing the encoder</h2>
+        <p>
+          If the letters go wrong at the encoder, that is also where they get
+          fixed, and two different changes have been tried. The first is size.
+          Google's Imagen used a frozen text encoder called T5-XXL, with 4.6
+          billion parameters, far larger than CLIP's. Its builders reported a
+          result that points straight at the encoder. Making it bigger improved
+          how faithfully the image matched the prompt more than making the
+          image-drawing model bigger did. Imagen's rendered text also came out
+          clearer than DALL·E 2's.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          A second released model, DeepFloyd IF, is built on the same large
+          frozen T5 encoder,<sup class="nb-cite"><a href="#s7">7</a></sup>
+          which the widely used diffusers software library describes the same
+          way from the outside.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          But T5 still reads subword chunks. So this is the brute-scale lever
+          from a moment ago, pushed further: a larger character-blind encoder
+          that recovers a little more of the spelling. Size helped first.
+        </p>
+        <p>
+          The second change is type, and it helps more for less. A team at
+          Google ran the clean version of the experiment. Hold the image model,
+          the training data, and the training budget fixed. Then swap only the
+          encoder, from character-blind T5 to a character-aware one called ByT5
+          that reads the text as raw bytes, which is to say as its actual
+          characters. Rendered spelling rose by more than 25 points on common
+          words and more than 30 on rare ones.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">25+ pts</span
+            ><span class="nb-stat-l">spelling gain, common words</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">30+ pts</span
+            ><span class="nb-stat-l">spelling gain, rare words</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">43%</span
+            ><span class="nb-stat-l">smaller encoder, still wins</span>
+          </div>
+        </div>
+        <p>
+          Two details show that the character-reading, not the size, is doing
+          the work. The winning encoder kept its lead even against a
+          character-blind rival trained more than six times as long, and a
+          version of it 43% smaller than T5-XXL still won.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The gain comes from reading letters, not from a bigger model.
+        </p>
+        <p>
+          The fix is not free. An encoder that reads only characters got worse at
+          prompts with no text in them, so the practical recipe is to bolt a
+          small character-aware encoder onto the ordinary one, a 4.8% increase in
+          size, rather than replace it.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Character-awareness buys spelling. It is not a general upgrade to
+          everything the encoder does.
+        </p>
+      </section>
+
+      <section data-nb-section="reading-the-sign" id="reading-the-sign">
+        <h2>So look again at the sign</h2>
+        <p>
+          Now the garbled sign comes apart into two failures that used to look
+          like one. The first is which letters. A character-blind encoder is
+          guessing the spelling from a word's meaning, and its mistakes give that
+          away. It swaps in a homophone, adds a stray letter, and in one test it
+          "corrected" irregular verbs so that fought came out as fighted in about
+          one try in nine.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Those are the errors of something that knows what a word means and not
+          how it is spelled, and a character-aware encoder mostly does not make
+          them. Whether the model knows the letters is the encoder's business,
+          and on that the story is settled.
+        </p>
+        <p>
+          The second failure is shaping and placing the letters once they are
+          known. Even with a character-aware encoder, generated text still drops
+          a letter, merges two, repeats one, or bends a stroke into a shape that
+          is no letter at all. These slips turn up in every model tested, the
+          character-aware ones included, and the researchers put them outside the
+          encoder, in the image model that lays down pixels.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          This is the open part of the chain. No one has a tidy account of why
+          the drawing step mangles a glyph it was told correctly, and no
+          published figure says how long a word the best current systems can
+          spell before they start to fail.
+        </p>
+        <p>
+          So the next time a generated storefront says BQKERY, you can read the
+          failure off the sign. A word bent into almost-letters is the drawing
+          step struggling to shape what it was handed. A confident, wrong,
+          real-looking word is the older failure, the encoder that read the
+          prompt in whole-word chunks and never had the spelling to pass on. Most
+          of what improved these systems in the last few years fixed the second
+          kind. The first kind belongs to the drawing step, and it is still open.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The garbled word is not a drawing mistake. It is set one step earlier,
+          at the text encoder, which reads your prompt in whole-word chunks and
+          hands the drawing step something that stands for the word without
+          spelling it out. The drawing step, which knows only texture, cannot
+          recover letters it was never given, which is why a steadier hand was
+          never going to be the cure. Reading the prompt one character at a time
+          is, and where builders have done it, short words on signs started
+          coming out right. What is still unsolved is the drawing step's own job
+          of shaping and placing letters it now knows, so the longest and
+          strangest strings still fall apart. When someone tells you a generator
+          is just bad at text, you now hold the question that separates a real
+          explanation from a shrug. Is the model failing to know the letters, or
+          failing to draw them?
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2403.09622">Glyph-ByT5: A Customized Text Encoder for Accurate Visual Text Rendering</a>: a character-aware encoder built specifically for legible text in images, pushing the fix in this lesson further.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2503.19897">A Comprehensive Study on Scaling Down Text Encoders</a>: a 2025 study finding that of everything an image model does, text rendering is the first capability to break when the encoder is shrunk.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/CompVis/stable-diffusion-v1-4"
+              >CompVis · Stable Diffusion v1-4 model card</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2112.10752"
+              >Rombach et al. · High-Resolution Image Synthesis with Latent Diffusion Models</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2212.10562"
+              >Liu et al., Google Research · Character-Aware Models Improve Visual Text Rendering</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/papers/dall-e-3.pdf"
+              >OpenAI · Improving Image Generation with Better Captions (DALL·E 3)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2103.00020"
+              >Radford et al. · Learning Transferable Visual Models From Natural Language Supervision (CLIP)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2205.11487"
+              >Saharia et al. · Photorealistic Text-to-Image Diffusion Models with Deep Language Understanding (Imagen)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://stability.ai/news-updates/deepfloyd-if-text-to-image-model"
+              >Stability AI · DeepFloyd IF</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/docs/diffusers/api/pipelines/deepfloyd_if"
+              >Hugging Face · DeepFloyd IF (diffusers documentation)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
