@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A please or a threat shifts a model's answer without reliably improving it · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "politeness-and-pressure",
+        "template": "lesson",
+        "title": "A please or a threat shifts a model's answer without reliably improving it",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-26",
+        "tags": ["prompting", "politeness", "rlhf", "evaluation"],
+        "sources": 9,
+        "words": 1745,
+        "reading_minutes": 8,
+        "dek": "The wording is ordinary text the model was trained to weigh, and on a hard current benchmark it swings a single question by up to 60 points in either direction while the average gain stays at zero.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A please or a threat shifts a model's answer without reliably improving it</h1>
+        <p class="nb-dekline">
+          The wording is ordinary text the model was trained to weigh, and on a hard current benchmark it swings a single question by up to 60 points in either direction while the average gain stays at zero.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-26</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          People add a please to a chatbot, tell it the answer matters to
+          their job, offer it a tip, or warn that someone will be hurt if it
+          gets this wrong. They trade advice about which wording gets a better
+          answer. The advice is checkable and rarely checked. This lesson
+          follows one of those habits from the extra words you type down to
+          what the model does with them. One part is settled: the model reacts
+          to how you ask. The other part is not, even among the people who
+          build these systems, and it is the claim the folklore rests on, that
+          a particular phrasing reliably improves the answer on the models
+          people use now.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/prompt-sensitivity.html">One character of formatting decided whether the model got it right</a>: how small changes in wording move a model's score.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/instructions-are-data.html">Language models draw no line between instructions and data</a>: why everything you send arrives as one stream of tokens.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The please, the tip, and the threat</h2>
+        <p>
+          In December 2023 a claim that offering ChatGPT a tip produced a
+          better answer went viral, climbing to a $200 tip and drawing a public
+          nod from Sam Altman.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The same folklore takes other forms: add a please, tell the model
+          the answer is very important to your career, or warn it that a wrong
+          answer will get someone hurt. Behind all of them sits one tidy story.
+          The model tries harder when you are polite, or when the stakes are
+          raised.
+        </p>
+        <p>
+          The naive picture underneath that story is worth taking seriously,
+          because it is how people treat each other: somewhere inside the model
+          is something that reads your manners and decides how much effort to
+          spend. Follow the words down and that picture does not survive. There
+          is no effort dial. What there is instead is a prediction, and the
+          question is what your extra words do to it.
+        </p>
+      </section>
+
+      <section data-nb-section="how-words-reach" id="how-words-reach">
+        <h2>How the words reach the model</h2>
+        <p>
+          A model computes each answer from every token in the prompt at once,
+          and it does not sort them into commands on one side and courtesies on
+          the other. Your instruction and your please arrive in the same stream
+          of text, and the model draws no line between them.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          A tip you offer, a deadline you invent, a threat you make: each is
+          more text in that stream, and each answer is a fresh prediction built
+          from all of it. So the extra words can move the output. That much is
+          settled. A different input can produce a different next token, and
+          nothing inside the model weighs your manners and grants a reserve of
+          effort. The words enter as text and reshape a probability distribution
+          over what the model says next.
+        </p>
+        <p>
+          That the model bends toward a polite or high-stakes framing at all is
+          also settled, and it comes from training. A model trained only to
+          predict text has no special reason to treat please as a signal about
+          quality. After that base model is built, it is fine-tuned on human
+          preference rankings: labelers rank its outputs, and the model is
+          tuned to produce what they approved of.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Approval tracks the social surface of a request as well as its
+          content, so how you ask becomes part of what the model weighs. The
+          fuller version of that stage is its own lesson, on how <a href="../the-mechanics/sycophancy.html">a reward model taught the assistant that agreeing with you scores well</a>.
+        </p>
+        <p>
+          Training made the model
+          sensitive to framing. It did not make any particular framing reliably
+          better. Whether a please helps, a threat helps, or neither does
+          anything is left open by the sensitivity itself, and it is settled
+          only by measurement.
+        </p>
+      </section>
+
+      <section data-nb-section="tests-disagree" id="tests-disagree">
+        <h2>The controlled tests disagree</h2>
+        <p>
+          That wording can move a score is already established. The open
+          question is whether tone moves it reliably in one direction, and when
+          researchers test that under controls the results do not line up.
+        </p>
+        <p>
+          Yin and colleagues built an eight-level politeness scale, from most
+          polite at level 8 to rudest at level 1, and ran it across several
+          models. On GPT-3.5 answering the MMLU knowledge test, the most polite
+          prompt scored 60.02 and the rudest scored 51.93, a gap of about eight
+          points. A middling level 3 scored 59.44, so maximum politeness barely
+          beat the middle.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          But the strongest model they tested, GPT-4, stayed relatively stable
+          across the scale, while the smaller, open Llama-2-70B swung nearly in
+          proportion to how polite the prompt was. The stronger the model, the
+          flatter its response to tone.
+        </p>
+        <p>
+          The studies run on the newest models find no dependable direction at
+          all. On the hard GPQA Diamond benchmark, a Wharton team found that
+          saying please rather than issuing an order could shift a single
+          question by up to 60 points either way on GPT-4o, yet the differences
+          washed out across the full set.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          A companion study tested tips and threats on GPT-4o, Gemini, and
+          o4-mini and found no meaningful average gain. Per-question effects ran
+          from a 36-point improvement to a 28-point loss, and a plea that the
+          answer mattered to a sick relative moved only one model, by about ten
+          points.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          A separate group rewrote fifty questions into five tone levels and
+          found the reverse of Yin: on ChatGPT-4o the rudest prompts scored
+          84.8 percent against 80.8 percent for the most polite.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          And an independent test of tips from $100 to $100,000, of fines, and
+          of death threats found no coherent pattern, with the best output
+          carrying neither a tip nor a threat; its author called the result
+          inconclusive.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Controlled tests of politeness, tips, and threats. The size and even the direction of the effect change from model to model and study to study.
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Study</th>
+              <th class="txt">Model and test</th>
+              <th class="txt">What it found</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Yin et al.<sup class="nb-cite"><a href="#s3">3</a></sup></td>
+              <td class="txt">GPT-3.5, GPT-4, Llama-2-70B on MMLU and others</td>
+              <td class="txt">Rude usually hurt; the effect shrank on the stronger model and grew on the smaller one.</td>
+            </tr>
+            <tr>
+              <td class="txt">Wharton Report 1<sup class="nb-cite"><a href="#s4">4</a></sup></td>
+              <td class="txt">GPT-4o on GPQA Diamond</td>
+              <td class="txt">Politeness swung a single question up to 60 points either way; no reliable average direction.</td>
+            </tr>
+            <tr>
+              <td class="txt">Wharton Report 3<sup class="nb-cite"><a href="#s5">5</a></sup></td>
+              <td class="txt">GPT-4o, Gemini, o4-mini on GPQA and MMLU-Pro</td>
+              <td class="txt">Tips and threats gave no meaningful average gain; per-question effects ran +36 to -28 points.</td>
+            </tr>
+            <tr>
+              <td class="txt">Mind Your Tone<sup class="nb-cite"><a href="#s6">6</a></sup></td>
+              <td class="txt">ChatGPT-4o, 250 prompts</td>
+              <td class="txt">Rudest prompts beat politest, 84.8% to 80.8%: the reverse of Yin's direction.</td>
+            </tr>
+            <tr>
+              <td class="txt">Woolf<sup class="nb-cite"><a href="#s7">7</a></sup></td>
+              <td class="txt">GPT-3.5 and GPT-4, tips and threats</td>
+              <td class="txt">No coherent incentive gradient; the author called it inconclusive.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Read together, the direction of the effect is not stable. Polite
+          helps here, rude helps there, nothing dependable elsewhere. That
+          disagreement across careful studies is itself the finding. The
+          per-question swings are large, so a reframing clearly does something
+          to any one answer. Across a full benchmark those somethings point both
+          ways and cancel. On current models, no specific trick reliably and
+          substantially improves the answer.
+        </p>
+      </section>
+
+      <section data-nb-section="strongest-case" id="strongest-case">
+        <h2>The strongest case that a trick helps</h2>
+        <p>
+          The folklore is not baseless. Two papers report large gains from
+          exactly these moves.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The claim, stated at full strength</span>
+          <p>
+            Appending a sentence that carries no task information, such as
+            "This is very important to my career," reportedly improved results
+            on the BIG-Bench task suite by 115 percent and on a set of
+            instruction tasks by 8 percent, a method its authors named
+            EmotionPrompt.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          </p>
+        </div>
+        <p>
+          A second paper codified the same instincts into prompting principles:
+          do not bother being polite, add "I'm going to tip $xxx for a better
+          solution," and add "You will be penalized." Its reported gains rose
+          with model size and were largest on GPT-4.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          These are genuine measurements. The story skips two steps, though. The
+          115 percent is a relative gain drawn against a best-case aggregation,
+          which inflates a headline number against an ordinary average, and both
+          papers run mostly on 2023-era or smaller models, from Flan-T5 and
+          Vicuna to GPT-3.5. The controlled studies that find nothing run on the
+          2024 and 2025 models. Set beside Yin's own result that the effect
+          flattens on the strongest model in the same study, the pattern across
+          all of this evidence points one way: the gains shrink as the models
+          get better. The strong old numbers do not show that a trick reliably
+          helps the models in use today.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The model does read your tone. It was trained on human approval, and
+          approval tracks how you ask, so a please or a threat genuinely
+          changes the answer it predicts. What it does not do is change the
+          answer reliably for the better. Careful tests on current models
+          disagree even on the sign of the effect, one finding polite ahead and
+          another finding rude ahead, and the large swings on individual
+          questions cancel to nothing across a full test. So when someone tells
+          you a particular phrasing works, the settled half of that claim is
+          that it moves the output, and the unsettled half is that it moves the
+          output your way. The better the model, the flatter that effect tends
+          to run.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://gail.wharton.upenn.edu/research-and-insights/">Wharton Generative AI Labs, Prompting Science reports</a>: the controlled tests of politeness, tips, and threats, in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://minimaxir.com/2024/02/chatgpt-tips-analysis/">Max Woolf, Does offering ChatGPT a tip improve its text?</a>: one careful attempt to reproduce the viral claim, with its data.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.techradar.com/computing/artificial-intelligence/new-chatgpt-prompt-goes-viral-with-sam-altmans-approval"
+              >TechRadar · New ChatGPT prompt goes viral with Sam Altman's approval</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.02155"
+              >arXiv · Ouyang et al., Training language models to follow instructions with human feedback</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2024.sicon-1.2/"
+              >ACL Anthology · Yin et al., Should We Respect LLMs? A Cross-Lingual Study on the Influence of Prompt Politeness on LLM Performance</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://gail.wharton.upenn.edu/research-and-insights/tech-report-prompt-engineering-is-complicated-and-contingent/"
+              >Wharton Generative AI Labs · Prompting Science Report 1: Prompt Engineering Is Complicated and Contingent</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://gail.wharton.upenn.edu/research-and-insights/techreport-threaten-or-tip/"
+              >Wharton Generative AI Labs · Prompting Science Report 3: Threaten or Tip</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2510.04950"
+              >arXiv · Mind Your Tone: Investigating How Prompt Politeness Affects LLM Accuracy</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://minimaxir.com/2024/02/chatgpt-tips-analysis/"
+              >Max Woolf · Does Offering ChatGPT a Tip Cause It to Generate Better Text?</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.11760"
+              >arXiv · Li et al., Large Language Models Understand and Can Be Enhanced by Emotional Stimuli</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2312.16171"
+              >arXiv · Bsharat et al., Principled Instructions Are All You Need for Questioning LLaMA-1/2, GPT-3.5/4</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
