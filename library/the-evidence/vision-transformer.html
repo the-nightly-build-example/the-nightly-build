@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Vision Transformer lost to a plain CNN until it was fed 300 million images · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "vision-transformer",
+        "template": "lesson",
+        "title": "The Vision Transformer lost to a plain CNN until it was fed 300 million images",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-26",
+        "tags": ["computer-vision", "vision-transformer", "imagenet", "pretraining"],
+        "sources": 6,
+        "words": 1936,
+        "reading_minutes": 8,
+        "dek": "Dosovitskiy and his coauthors pinned the reversal to Google's private 303-million-image set, and a qualifier in their own introduction named the missing ingredient a later model supplied on ImageNet alone.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">The Vision Transformer lost to a plain CNN until it was fed 300 million images</h1>
+        <p class="nb-dekline">
+          Dosovitskiy and his coauthors pinned the reversal to Google's private
+          303-million-image set, and a qualifier in their own introduction named
+          the missing ingredient a later model supplied on ImageNet alone.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-26</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Many of the systems that now let a computer label a photo, from image
+          search to the vision half of a multimodal assistant, use a Vision
+          Transformer at their core. The idea comes from one 2020 paper that
+          asked whether the network powering language models could read pictures
+          too. Its answer came with a famous condition, that you need enormous
+          amounts of data, and that condition now gets cited as a hard law of the
+          architecture. This lesson reads what the paper actually measured: what
+          it did to an image, and the accuracy numbers it reported with the scale
+          of data behind them. It then asks why the condition it attached was a
+          fact about its 2020 training recipe rather than a permanent property of
+          Transformers. Read it and the headline number stops being a slogan:
+          you can see how large a foundation sits under it, and where the common
+          way of citing it claims more than the paper proved.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/reading-images.html">A chatbot slices your
+            photo into a few hundred squares and turns each into a word</a>: how a
+            picture is cut into patches and each patch becomes a vector, the step
+            this paper reused.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/attention-is-all-you-need.html">The paper
+            credited with starting the LLM era never trained a language
+            model</a>: the Transformer this one pointed at images.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/word-order.html">Self-attention can't tell
+            "dog bites man" from "man bites dog"</a>: why a Transformer needs a
+            separate signal for where each piece of input sat.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A Transformer built for sentences, pointed at pictures</h2>
+        <p>
+          In 2020 a team led by Alexey Dosovitskiy at Google Brain took the
+          Transformer, the network built to read a sentence as a sequence of
+          words, and pointed it at images with almost nothing changed.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+          The trick was to make a picture look like a sentence. They cut each
+          image into a grid of fixed squares, sixteen pixels on a side, and
+          turned every square into a vector, the way a language model turns a
+          word into one. How a photo becomes a row of vectors like that is
+          <a href="../the-mechanics/reading-images.html">its own lesson</a>, as
+          is the <a href="../the-mechanics/word-order.html">position information</a>
+          that tells the model where each square sat and the
+          <a href="../the-evidence/attention-is-all-you-need.html">self-attention</a>
+          the encoder runs over them. The paper is remembered for none of that.
+          It is remembered for the accuracy it reached and the amount of data it
+          took to get there.
+        </p>
+        <p>
+          The design choice that made this work is also what put the paper at
+          risk. A 224-pixel image becomes 196 patches, a short and coarse
+          description of a photo, and the model has no idea in advance that two
+          patches sitting next to each other are related.<sup class="nb-cite"><a
+          href="#s1">1</a></sup> A convolutional network, the kind that had won
+          every image contest for eight years, is built to know exactly that. The
+          paper's own summary of what it found is two clauses. Trained on a
+          mid-size set such as ImageNet "without strong regularization," the model
+          lands "a few percentage points below ResNets of comparable size." Feed
+          it far more data, and "the picture changes."<sup class="nb-cite"><a
+          href="#s1">1</a></sup> The first of those two clauses turned out to
+          matter more than the citation history remembers.
+        </p>
+      </section>
+
+      <section data-nb-section="what-a-convolution-assumes" id="what-a-convolution-assumes">
+        <h2>What a convolution assumes, and a Transformer does not</h2>
+        <p>
+          To see why more data reversed the ordering, start with what a
+          convolutional network knows before it sees a single image. Its
+          arithmetic slides the same small filter across every position, so it
+          assumes two things about pictures without being told. A useful pattern
+          is local: nearby pixels belong together. And a pattern means the same
+          thing wherever it appears, so a cat in the corner and a cat in the
+          center are read the same way. Assumptions built into the shape of a
+          model like that, rather than learned from examples, are its inductive
+          bias. They happen to be true of photographs, which is why convolutions
+          worked so well for so long.
+        </p>
+        <p>
+          A Transformer reading patches has almost none of that inductive bias.
+          Every patch can attend to every other patch from the first layer, with
+          no built-in sense that neighbors matter more or that a shape keeps its
+          meaning when it moves. Even the position of each patch is not known in
+          advance; the model learns it from a table of position vectors. So the
+          Vision Transformer has to discover from data the regularities a
+          convolution is born with. The paper compresses its whole result into
+          one line: "large scale training trumps inductive bias."<sup
+          class="nb-cite"><a href="#s1">1</a></sup> With little data, the
+          convolution's free assumptions win. With enough data, the Transformer
+          learns assumptions of its own that are better than the ones a
+          convolution is stuck with.
+        </p>
+      </section>
+
+      <section data-nb-section="how-far-the-picture-changes" id="how-far-the-picture-changes">
+        <h2>How far the picture changes</h2>
+        <p>
+          "Enough data," in this paper, means a very large jump in scale. The
+          mid-size end is ImageNet itself: roughly 1.3 million
+          labeled photos across 1,000 categories, the set that had defined the
+          field's leaderboard for years.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The large end is JFT, a Google-internal collection the paper describes
+          as 303 million high-resolution images across 18,000 classes.<sup
+          class="nb-cite"><a href="#s1">1</a></sup> JFT is private, so no one
+          outside Google can rerun the exact experiment. The paper that first put
+          it in the literature, by Chen Sun and colleagues, describes its own
+          snapshot slightly differently, as around 300 million images carrying
+          more than 375 million noisy labels.<sup class="nb-cite"><a
+          href="#s2">2</a></sup> Two papers, two snapshots of the same internal
+          collection; keep the figures with their owners. The large set is more
+          than two hundred times the size of the one the field had been training
+          on.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">1.3M</span
+            ><span class="nb-stat-l">ImageNet photos (mid-size)</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">303M</span
+            ><span class="nb-stat-l">JFT images (large-scale)</span>
+          </div>
+        </div>
+        <p>
+          Across that range the ordering flips, and the cleanest way to see it is
+          to hold one model fixed while only its pretraining set changes. ViT-L/16,
+          the "Large" configuration with sixteen-pixel patches, pretrained on the
+          public 14-million-image ImageNet-21k, reaches 85.30% top-1 accuracy on
+          ImageNet.<sup class="nb-cite"><a href="#s1">1</a></sup> The same
+          architecture pretrained on JFT reaches 87.76%.<sup class="nb-cite"><a
+          href="#s1">1</a></sup> Same model, same test; the only change is the
+          size of what it saw first, and it buys 2.46 points. The largest model,
+          ViT-H/14, pretrained on JFT, reaches 88.55%.<sup class="nb-cite"><a
+          href="#s1">1</a></sup> The convolutional baseline the paper measured
+          against is BiT-L, a ResNet-152 with every layer widened fourfold,
+          pretrained on the same JFT set, at 87.54%.<sup class="nb-cite"><a
+          href="#s3">3</a></sup> At JFT scale the Vision Transformer edges the
+          best convolutional network. On ImageNet alone, as the paper's own
+          sentence conceded, it would have trailed it.
+        </p>
+        <table class="nb-table">
+          <caption>
+            ImageNet top-1 accuracy by model and pretraining set. Holding
+            ViT-L/16 fixed, the jump from the public 14-million-image set to JFT
+            is worth 2.46 points; at JFT scale ViT-H/14 edges the BiT-L
+            convolutional baseline. ViT rows from the ViT paper;<sup
+            class="nb-cite"><a href="#s1">1</a></sup> BiT-L from Big
+            Transfer.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>model</th>
+              <th class="txt">pretraining set</th>
+              <th>ImageNet top-1</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">ViT-L/16</span></td>
+              <td class="txt">ImageNet-21k (14M images)</td>
+              <td>85.30%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">ViT-L/16</span></td>
+              <td class="txt">JFT (303M images)</td>
+              <td>87.76%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">ViT-H/14</span></td>
+              <td class="txt">JFT (303M images)</td>
+              <td>88.55%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">BiT-L</span></td>
+              <td class="txt">JFT (303M images)</td>
+              <td>87.54%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The paper made a second claim the data story tends to drop. ViT reached
+          these numbers "while requiring substantially fewer computational
+          resources to train" than the convolutional baselines it beat.<sup
+          class="nb-cite"><a href="#s1">1</a></sup> The headline was never only
+          about how many images the model needed. It was also about how cheaply,
+          once it had them, it turned them into accuracy.
+        </p>
+      </section>
+
+      <section data-nb-section="the-recipe-not-the-architecture" id="the-recipe-not-the-architecture">
+        <h2>The condition was the recipe, not the architecture</h2>
+        <p>
+          Read quickly, the finding hardened into a slogan: Vision Transformers
+          need JFT-scale data. A peer-reviewed survey of vision Transformers,
+          published in 2022, states the requirement as settled, that
+          "pre-training ViT on a medium-range dataset would not give competitive
+          results."<sup class="nb-cite"><a href="#s4">4</a></sup> That a survey
+          could still state it that flatly in 2022, two years on, shows how
+          durable the reading became. The word doing the damage is "need." A need sounds like a property of the architecture, something
+          true of Transformers as such. What the paper showed was narrower, and it said so in the clause
+          most citations drop. Its comparison was to ImageNet "without strong
+          regularization," meaning without the aggressive data augmentation and
+          training tricks that squeeze more accuracy out of a small set.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The paper's own qualifier</span>
+          <blockquote>
+            "When trained on mid-sized datasets such as ImageNet without strong
+            regularization, these models yield modest accuracies of a few
+            percentage points below ResNets of comparable size."<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">Dosovitskiy et al., Introduction</span>
+          </blockquote>
+        </div>
+        <p>
+          Within a year another team supplied that missing regularization. Hugo
+          Touvron and colleagues at Facebook AI trained the same Vision
+          Transformer architecture on ImageNet alone, with no JFT and no other
+          outside data, using heavy augmentation. Their reference model reaches
+          83.1% top-1, trained on a single eight-GPU machine in a few days, before
+          any of the further gains they get by distilling from a convolutional
+          teacher.<sup class="nb-cite"><a href="#s5">5</a></sup> The JFT-scale set
+          was not a requirement of the architecture. It was one way to buy what
+          strong regularization could also buy. The ViT authors had named the
+          gap, and DeiT filled it.
+        </p>
+        <p>
+          The other half of the slogan, that Transformers had beaten
+          convolutions, did not survive the next idea either. Zhuang Liu and
+          colleagues took a plain ResNet and modernized it, adopting the
+          Transformer era's training schedule and design choices one at a time.
+          The result, ConvNeXt, matched or beat the Swin Transformer, the leading
+          vision Transformer of the moment, at every model size on ImageNet, and
+          reached 87.8% with public ImageNet-22k pretraining.<sup
+          class="nb-cite"><a href="#s6">6</a></sup> The 2020 gap was never
+          convolution against attention in the abstract. It closed as soon as each
+          side adopted the other's methods. The architecture itself kept
+          spreading regardless: the vision half of
+          <a href="../the-evidence/clip.html">CLIP</a> is a Vision Transformer,
+          trained on image-caption pairs rather than labels at all.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The Vision Transformer paper made a real and surprising finding. A
+          network built for sentences, fed images as patches, could match the best
+          convolutional networks. But in 2020 it could do so only after
+          pretraining on hundreds of millions of images, because it had to learn
+          from data the assumptions a convolution gets for free. That much holds.
+          What the citation history added is a word the paper did not, that
+          Transformers "need" data at that scale. They do not. The paper's own
+          introduction flagged that its comparison ran without strong
+          regularization, and within a year DeiT supplied the regularization and
+          reached 83.1% on ImageNet alone. A modernized convolutional network then
+          caught the Transformers at equal data. The honest reading keeps two
+          facts the slogan collapses into one. The 2020 result was true. And the
+          barrier it measured was the training recipe the authors themselves had
+          named, not a property of the architecture.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2012.12877">Training data-efficient
+            image transformers &amp; distillation through attention</a>: the DeiT
+            paper, which trained the same architecture to 83.1% on ImageNet alone.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2201.03545">A ConvNet for the
+            2020s</a>: how a modernized pure convolutional network caught back up
+            to the Transformers at equal data.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2010.11929"
+              >arXiv · Dosovitskiy et al., &ldquo;An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale&rdquo; (ICLR 2021)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1707.02968"
+              >arXiv · Sun, Shrivastava, Singh &amp; Gupta, &ldquo;Revisiting Unreasonable Effectiveness of Data in Deep Learning Era&rdquo; (ICCV 2017)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1912.11370"
+              >arXiv · Kolesnikov et al., &ldquo;Big Transfer (BiT): General Visual Representation Learning&rdquo; (ECCV 2020)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2101.01169"
+              >arXiv · Khan et al., &ldquo;Transformers in Vision: A Survey&rdquo; (ACM Computing Surveys, 2022)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2012.12877"
+              >arXiv · Touvron et al., &ldquo;Training data-efficient image transformers &amp; distillation through attention&rdquo; (ICML 2021)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2201.03545"
+              >arXiv · Liu et al., &ldquo;A ConvNet for the 2020s&rdquo; (CVPR 2022)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
