@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The same model scored 1673 or 2214 on Codeforces · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "codeforces-rating",
+        "template": "lesson",
+        "title": "The same model scored 1673 or 2214 on Codeforces, depending on the scaffolding",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-26",
+        "tags": ["codeforces-rating", "elo", "competitive-programming", "code-generation", "benchmarks"],
+        "sources": 8,
+        "words": 1875,
+        "reading_minutes": 8,
+        "dek": "OpenAI's own paper reports that gap, and every other AI Codeforces figure in circulation, up to o3's 2724, is the same kind of number: an estimate fit to contests the model never entered live.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">
+          The same model scored 1673 or 2214 on Codeforces, depending on the
+          scaffolding
+        </h1>
+        <p class="nb-dekline">
+          OpenAI's own paper reports that gap, and every other AI Codeforces
+          figure in circulation, up to o3's 2724, is the same kind of number: an
+          estimate fit to contests the model never entered live.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-26</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When a lab wants to prove its newest model can write code, it often
+          reaches for a Codeforces rating, a single number from the site that
+          runs timed competitive-programming contests. The figure gets read as a
+          rank against the world's best programmers. This lesson takes one of those
+          numbers apart. You will learn how a Codeforces rating is built, what it
+          actually measures, and what a claim like "o3 is the 175th best
+          competitive programmer" really rests on. What it measures is a placing
+          against whoever entered a given round. Read it and the next headline
+          rating stops being a verdict and becomes a set of questions you know
+          how to ask.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/chatbot-arena-elo.html"
+              >Chatbot Arena's Elo is a preference vote that pays out for
+              style</a
+            >: how Elo turns a game's outcome into a rating change, before this
+            lesson stretches it to a whole contest.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/humaneval-pass-at-k.html"
+              >Hand-writing HumanEval's 164 problems solved contamination in
+              2021 and caused it by 2024</a
+            >: the pass@k idea, where a model gets many tries at a problem and
+            only its best is scored.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A Codeforces rating is a placing against whoever entered</h2>
+        <p>
+          Codeforces runs timed programming contests, and after each rated round
+          it updates a single number for every entrant. That number is the
+          contestant's rating. It sorts a competitor into a color-coded tier and,
+          lately, has been quoted to say how strong an AI system is at writing
+          code. The site's founder defines the rating as a generalization of
+          chess's Elo system to contests with many participants at once.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Elo itself is
+          <a href="../the-instruments/chatbot-arena-elo.html"
+            >its own lesson</a
+          >: a way to turn a game's outcome into a rating change, where beating a
+          stronger opponent lifts your number more than beating a weaker one.
+        </p>
+        <p>
+          What Codeforces adds is a way to run that idea over a whole field at
+          once. Before a round, the system computes each contestant's seed, the
+          place it expects them to finish, by summing their probability of
+          beating every other person who entered. Those probabilities come
+          straight from the rating gaps. A 200-point edge means the higher-rated
+          contestant places ahead with probability about 0.75; a 400-point edge,
+          about 0.9.<sup class="nb-cite"><a href="#s1">1</a></sup> After the
+          round the arithmetic is plain: finish ahead of your seed and your
+          rating rises, finish behind it and your rating falls.
+        </p>
+        <p>
+          A rating is therefore a standing inside a field. It records where a
+          contestant placed among the people who entered that round, on those
+          problems, within that time limit. Change the field and the same
+          performance yields a different number.
+        </p>
+      </section>
+
+      <section data-nb-section="titles-and-percentile" id="titles-and-percentile">
+        <h2>Turning the number into a title and a percentile</h2>
+        <p>
+          A bare rating is hard to feel, so Codeforces attaches names to ranges
+          of it. In a 2013 post the founder laid out the color-coded titles,
+          from Newbie at the bottom to Legendary Grandmaster at the
+          top.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Codeforces titles and their rating ranges, as posted in
+            2013.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Title</th>
+              <th>Rating range</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="txt">Newbie</td><td>0 – 1199</td></tr>
+            <tr><td class="txt">Pupil</td><td>1200 – 1399</td></tr>
+            <tr><td class="txt">Specialist</td><td>1400 – 1599</td></tr>
+            <tr><td class="txt">Expert</td><td>1600 – 1899</td></tr>
+            <tr><td class="txt">Candidate Master</td><td>1900 – 2199</td></tr>
+            <tr><td class="txt">Master</td><td>2200 – 2299</td></tr>
+            <tr><td class="txt">International Master</td><td>2300 – 2399</td></tr>
+            <tr><td class="txt">Grandmaster</td><td>2400 – 2599</td></tr>
+            <tr><td class="txt">International Grandmaster</td><td>2600 – 2899</td></tr>
+            <tr><td class="txt">Legendary Grandmaster</td><td>2900 +</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Those cutoffs are not fixed for all time. Codeforces has pushed the top
+          bands upward since that post, so the exact number that earns
+          a top title depends on the year you ask. A rating quoted without its
+          date is already a little loose.
+        </p>
+        <p>
+          The other way people read a rating is as a percentile. In a 2021
+          tabulation of the distribution, a contributor counted 99,832 players
+          who had competed in the previous six months and lined each rating up
+          against the fraction of that pool below it.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          That denominator is the part to hold onto. A percentile on Codeforces
+          is a rank among recently active contestants, not among all programmers
+          and not among all people. When a paper says a system beat 72% of
+          users, those users are the ones who entered contests that season.
+        </p>
+      </section>
+
+      <section data-nb-section="estimates-and-scaffolding" id="estimates-and-scaffolding">
+        <h2>The AI ratings are estimates that move with the scaffolding</h2>
+        <p>
+          Now the numbers people actually quote. In 2022 DeepMind's AlphaCode
+          entered ten recent Codeforces contests, each with more than 5,000
+          participants, and averaged a placing in the top 54.3%. From those
+          placings the authors estimated a rating of 1238, which they put in the
+          top 28% of recently active users.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Read against the 2013 bands, 1238 is Pupil territory. The estimate rode
+          on a specific procedure: the system generated up to roughly a million
+          candidate programs per problem, then filtered and clustered them down
+          to at most ten submissions, an average of 2.4 for each problem it
+          solved.<sup class="nb-cite"><a href="#s4">4</a></sup> The rating is
+          what a million tries, screened to ten, placed at.
+        </p>
+        <p>
+          OpenAI's 2025 paper reports a fuller ladder from its own simulated
+          contests: GPT-4o at 808, o1-preview at 1258, o1 at 1673, and o3 at
+          2724, the 99.8th percentile.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          The sharpest comparison in that paper is inside a single model.
+          The same base o1 reports 1673 on its own and 2214 once a hand-built
+          test-time strategy, clustering and reranking its many attempts, the
+          same trick AlphaCode used, is wrapped around it.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          One model, two ratings, 541 points apart, and the gap is the
+          scaffolding. o3 then passed that 2214 without the hand-built strategy,
+          its search learned during training rather than bolted on at the
+          end.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="codeforces-rating/chart-1.png"
+            alt="Horizontal bar chart of estimated Codeforces ratings: GPT-4o 808, AlphaCode 1238, o1-preview 1258, o1 1673, o1-ioi 1807, o1-ioi with the full test-time strategy 2214, and o3 2724, with dotted reference lines at the 2013 Pupil (1200), Expert (1600), and Grandmaster (2400) thresholds."
+          />
+          <figcaption>
+            Fig. 1 · Estimated Codeforces ratings quoted for AI systems, each fit
+            to placements the system did not earn in a live sitting. The same o1
+            appears twice, at 1673 and at 2214 with the full test-time strategy.
+            Reference lines mark the 2013 Pupil, Expert, and Grandmaster
+            thresholds.<sup class="nb-cite"
+              ><a href="#s4">4</a></sup
+            ><sup class="nb-cite"><a href="#s5">5</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Every figure on that chart is an estimate, fit to the rankings a model
+          produced under conditions its makers chose. None is a rating a system
+          walked in and earned against a live field. That is not a scandal, but
+          it is the qualifier that keeps getting dropped.
+        </p>
+      </section>
+
+      <section data-nb-section="real-judge-and-contamination" id="real-judge-and-contamination">
+        <h2>What actually-judged runs and contamination checks show</h2>
+        <p>
+          Two objections to these numbers are worth taking seriously, because
+          each is half right. The first is that a rating fit to a paper's own
+          contests never faced the real judge. For AlphaCode that is not quite
+          true: the authors submitted their selected programs to the live
+          Codeforces judge and read the actual standings, on contests that had
+          already finished.<sup class="nb-cite"><a href="#s4">4</a></sup> The
+          honest line is narrower. AlphaCode's submissions were graded for real;
+          what is estimated is the rating derived from those placings, and the
+          run was a retroactive entry into a closed contest rather than a live
+          sitting against the clock with everyone else.
+        </p>
+        <p>
+          The second objection is contamination: a model may score well because
+          the contest problems, or ones like them, sat in its training data.
+          That worry is real for coding benchmarks in general, and one study went
+          looking for it. LiveCodeBench dated its problems and checked whether
+          models did worse on ones released after their training cutoff. For one
+          model the drop was sharp, but it landed on LeetCode problems
+          specifically; on Codeforces the same model's performance was smooth
+          over time.<sup class="nb-cite"><a href="#s6">6</a></sup> The
+          memorization signal that inflates other coding scores is, for the
+          models tested, the one thing the Codeforces numbers come out clean on.
+        </p>
+        <p>
+          And when general-purpose models are run through real contests instead
+          of a paper's simulation, the numbers come down. One team put ChatGPT,
+          Gemini, and Meta AI into nine virtual contests judged by the real
+          online judge. In the easier divisions the models beat 63% to 70% of
+          participants; in the harder Division 1 and Division 2 rounds, where the
+          high-rated humans compete, they did poorly.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          That was an older, non-reasoning generation of models, and it is
+          exactly the kind of independent grading the headline ratings do not
+          carry.
+        </p>
+      </section>
+
+      <section data-nb-section="the-175th-gloss" id="the-175th-gloss">
+        <h2>How 2724 became the 175th best programmer</h2>
+        <p>
+          OpenAI's paper gives o3 an estimated 2724, fit to the rankings in its
+          simulated contests.<sup class="nb-cite"><a href="#s5">5</a></sup> When o3 was
+          announced in December 2024, the coverage carried a flat 2727.
+          VentureBeat reported that the model "achieves a Codeforces rating of
+          2727," and beats a specific person, OpenAI's own chief scientist.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          The report gives no hint that the number was estimated from simulated
+          contests. The launch framing went further and called o3 on par with
+          the 175th
+          best competitive programmer in the world, a gloss that traces to the
+          announcement and its retellings rather than to any document that owns
+          it. The primary record is the paper, and it reports 2724.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            The launch framing kept the number and dropped the two words that
+            qualify it: estimated, and simulated. A rating fit to a lab's own
+            reconstructed contests was read as a live human ranking, 175th on
+            Earth, that no live contest ever produced.
+          </p>
+        </div>
+        <p>
+          The paper's 2724 is a real result under conditions it states. The
+          "175th best programmer" reading is a claim about the live human field,
+          and nothing in the paper makes it. Same for AlphaCode's 1238 and every
+          bar on the chart: each is true about the contests it was measured in,
+          and each says less than the round-number percentile suggests.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A Codeforces rating is an honest instrument for the job it was built
+          for: ranking a contestant against the specific field that entered a
+          round, on set problems, in a set time. It was never built to certify
+          skill in the abstract, and no single figure survives being lifted out
+          of its contest and its date. Every AI rating in circulation is an
+          estimate laid over that instrument. It comes from contests the model
+          did not enter live, under conditions its makers chose: how many
+          attempts it got, what strategy reranked them, which season's field it
+          was scored against. Those conditions swung the same o1 by 541 points. So when the
+          next model is announced at the 99th percentile, or as the 175th best
+          programmer alive, treat that figure as where the reading starts. Ask
+          which contests, live or reconstructed, how many attempts per
+          problem, and which season's field it was scored against. Those answers
+          turn a headline percentile back into the placing it always was.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2502.06807"
+              >Competitive Programming with Large Reasoning Models</a
+            >: OpenAI's own account of the o1 and o3 Codeforces ratings and the
+            test-time strategies behind them.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2203.07814"
+              >Competition-Level Code Generation with AlphaCode</a
+            >: DeepMind's full description of the million-sample procedure behind
+            the 1238 estimate.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://codeforces.com/blog/entry/20762"
+              data-nb-locator="General ideas; author MikeMirzayanov; updated October 2015"
+              >Codeforces · Codeforces rating system</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://codeforces.com/blog/entry/20638"
+              data-nb-locator="Title table; author MikeMirzayanov; ~2013"
+              >Codeforces · Colors and titles</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://codeforces.com/blog/entry/68288"
+              data-nb-locator="Distribution table; author EbTech; 30 May 2021"
+              >EbTech · Codeforces rating distribution</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.07814"
+              data-nb-locator="Abstract; Section 5.1, Codeforces competitions evaluation"
+              >Li et al., DeepMind · Competition-Level Code Generation with AlphaCode</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2502.06807"
+              data-nb-locator="Abstract; results (Figure 3 and surrounding text)"
+              >OpenAI · Competitive Programming with Large Reasoning Models</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2403.07974"
+              data-nb-locator="Contamination section, cross-platform comparison"
+              >Jain et al. · LiveCodeBench: Holistic and Contamination Free Evaluation of Large Language Models for Code</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2409.05824"
+              data-nb-locator="Abstract; RQ3 virtual-contest standings and Table 3"
+              >Billah et al., ESEM 2024 · Are Large Language Models a Threat to Programming Platforms?</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://venturebeat.com/ai/openai-confirms-new-frontier-models-o3-and-o3-mini/"
+              data-nb-locator="o3 benchmark rundown; David and Franzen; 20 December 2024"
+              >VentureBeat · OpenAI confirms new frontier models o3 and o3-mini</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
