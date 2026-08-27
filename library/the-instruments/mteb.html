@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A model can top the MTEB average and be ordinary at retrieval · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "mteb",
+        "template": "lesson",
+        "title": "A model can top the MTEB average and be ordinary at retrieval",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-27",
+        "tags": ["mteb", "text-embeddings", "benchmarks", "retrieval", "leaderboards"],
+        "sources": 8,
+        "words": 1964,
+        "reading_minutes": 9,
+        "dek": "The number that sorts the MTEB leaderboard is one flat average over 58 datasets, weighting retrieval fifteen times as heavily as summarization purely because retrieval happens to have more of them.",
+        "harness": "Claude Code",
+        "model": "Claude Opus"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">A model can top the MTEB average and be ordinary at retrieval</h1>
+        <p class="nb-dekline">
+          The number that sorts the MTEB leaderboard is one flat average over 58 datasets, weighting retrieval fifteen times as heavily as summarization purely because retrieval happens to have more of them.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-27</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When a team builds a system that answers questions from its own
+          documents, one of its first decisions is which embedding model to
+          trust. Almost everyone makes that decision the same way: they open
+          the MTEB leaderboard and take a model near the top. That leaderboard
+          sorts models by a single number. This lesson opens up how that number
+          is made, from a score on one dataset up to the average that decides the
+          ranking, and shows the two places the average quietly bends. By the end
+          you will know what a high MTEB rank does and does not tell you about the
+          model you are about to build on. You will also see why the people who
+          maintain the benchmark have spent the last year rebuilding it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/word-embeddings.html">A transformer redraws a word's vector for every sentence it appears in</a>:
+            what an embedding is, and how a model turns a piece of text into a
+            point in space.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/retrieval.html">A chatbot quotes your PDF without learning a word of it</a>:
+            how those points let a system find the passages nearest a question,
+            the task most of these models are bought for.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A team picks an embedding model by one number</h2>
+        <p>
+          An embedding model turns a piece of text into a
+          <a href="../the-mechanics/word-embeddings.html">vector</a>: a list of
+          numbers that places the text as a point in space. A search system uses
+          those points to pull back the passages nearest a question. MTEB, the
+          Massive Text Embedding Benchmark, is the standard way of comparing those
+          models. In the paper that defines it, MTEB runs each frozen model across
+          8 task types spread over 58 datasets in 112 languages, and the authors
+          report results for 33 models.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Two things share the name and are worth keeping apart. The benchmark is
+          the collection of datasets and the rules for scoring a model on them.
+          The leaderboard is the ranked table people actually read, a public page
+          on Hugging Face that lists models best to worst.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The benchmark produces a score for each model. The leaderboard sorts on
+          it. A team choosing an embedding model for a
+          <a href="../the-mechanics/retrieval.html">retrieval</a> system lets that
+          one score stand in for everything the model might do well or badly.
+        </p>
+      </section>
+
+      <section data-nb-section="construction" id="construction">
+        <h2>One average, eight different rulers</h2>
+        <p>
+          The tasks MTEB scores are not variations on one skill. Retrieval asks a
+          model to rank the right passage above the wrong ones. Classification
+          asks it to sort texts into labeled bins. Clustering asks it to group
+          texts with no labels at all. Because the tasks differ, each is scored by
+          its own metric on its own scale. Retrieval uses nDCG@10, classification
+          uses accuracy, clustering uses v-measure, and so on through all
+          eight.<sup class="nb-cite"><a href="#s1">1</a></sup> These numbers do not
+          share a unit. An nDCG@10 and an accuracy measure different things on
+          different scales, and there is no natural exchange rate between them.
+        </p>
+
+        <table class="nb-table">
+          <caption>
+            The eight task types, the metric each is scored by, and how many
+            datasets each holds.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Task type</th>
+              <th class="txt">Main metric</th>
+              <th>Datasets</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Bitext mining</td>
+              <td class="txt">F1</td>
+              <td>2</td>
+            </tr>
+            <tr>
+              <td class="txt">Classification</td>
+              <td class="txt">Accuracy</td>
+              <td>12</td>
+            </tr>
+            <tr>
+              <td class="txt">Clustering</td>
+              <td class="txt">V-measure</td>
+              <td>11</td>
+            </tr>
+            <tr>
+              <td class="txt">Pair classification</td>
+              <td class="txt">Average precision on cosine similarity</td>
+              <td>3</td>
+            </tr>
+            <tr>
+              <td class="txt">Reranking</td>
+              <td class="txt">MAP</td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td class="txt">Retrieval</td>
+              <td class="txt">nDCG@10</td>
+              <td>15</td>
+            </tr>
+            <tr>
+              <td class="txt">Semantic textual similarity</td>
+              <td class="txt">Spearman correlation on cosine similarity</td>
+              <td>10</td>
+            </tr>
+            <tr>
+              <td class="txt">Summarization</td>
+              <td class="txt">Spearman correlation on cosine similarity</td>
+              <td>1</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          The overall score does the simplest possible thing with these
+          unlike numbers. It averages each dataset's main-metric score across all
+          the datasets, with no weighting, and the leaderboard sorts on that
+          mean.<sup class="nb-cite"><a href="#s1">1</a></sup> The headline English
+          figure runs over 56 of the 58 datasets, dropping the two bitext-mining
+          sets, which are multilingual. The shape is the same either way: a score
+          on one dataset, folded in with every other, then divided by the count.
+        </p>
+        <p>
+          Folding scores this way treats a point of nDCG@10 on a retrieval set and
+          a point of accuracy on a classification set as worth the same, because
+          the average adds them and divides. Text embedding has no single
+          dimension along which one model is simply better than another. Being
+          good at retrieval and being good at clustering are different abilities,
+          and a model can have one without the other. The single MTEB number
+          exists only by averaging across that difference.
+        </p>
+      </section>
+
+      <section data-nb-section="retrieval-slice" id="retrieval-slice">
+        <h2>A model can lead the mean and be ordinary at retrieval</h2>
+        <p>
+          The table's last column shows the imbalance: retrieval holds 15
+          datasets, summarization holds 1. Nothing weights the average by how much a task
+          matters, so it is weighted by how many datasets a task happens to have,
+          and retrieval counts fifteen times as heavily as summarization for that
+          reason alone. The authors say so plainly in their own limitations
+          section.
+        </p>
+
+        <div class="nb-note">
+          <span class="nb-note-label">The authors' own limitation</span>
+          <blockquote>
+            "Tasks in MTEB have a different amount of datasets with summarization
+            consisting of only a single dataset. This means MTEB average scores,
+            which are computed over all datasets, are biased towards tasks with
+            many datasets, notably retrieval, classification and
+            clustering."<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">Muennighoff, Tazi, Magne &amp; Reimers, MTEB paper, Appendix B</span>
+          </blockquote>
+        </div>
+
+        <p>
+          This is a property of the mean, not a hidden scandal, and it cuts in
+          both directions. A model can climb near the top of the overall average
+          while being no better than ordinary at retrieval, because retrieval is
+          one slice among eight and strong scores elsewhere carry it. A model
+          genuinely tuned for retrieval can also sit lower than it deserves,
+          dragged down by the categories a retrieval user does not care about. One
+          independent writeup makes the second case directly. A model tuned for
+          retrieval and semantic similarity, "the two categories most correlated
+          with production performance in RAG and search," can "underperform on
+          clustering or classification, which brings down the
+          average."<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Either way, the overall rank and the rank on the task a model is
+          actually being chosen for are two different measurements, and the
+          leaderboard sorts on the first. Being ranked above most other models is
+          not the same as being the best model for one particular job. The
+          maintainers now build the leaderboard to be filtered down to the tasks
+          that matter to a given use, and note that a single pre-defined board
+          "might only contain 50% of the tasks that you care
+          about."<sup class="nb-cite"><a href="#s4">4</a></sup> The
+          overall number was never meant to answer the retrieval question on its
+          own. It is read as though it were.
+        </p>
+      </section>
+
+      <section data-nb-section="reversal" id="reversal">
+        <h2>The authors changed their minds about contamination</h2>
+        <p>
+          The imbalance was on the record from the start. The second weakness was
+          not, and its history is the more instructive one, because the same
+          people reversed their position on it. Contamination is the worry that a
+          model scores well because it was trained on data too close to the test.
+          In 2022 the MTEB authors considered it and set it aside.
+        </p>
+
+        <div class="nb-note">
+          <span class="nb-note-label">The 2022 dismissal</span>
+          <blockquote>
+            "Our scale of experiments and that of model pre-training make
+            controlling for data contamination challenging. Thus, we ignore
+            overlap of MTEB datasets with model training datasets in MTEB scores.
+            As long as enough datasets are averaged, we believe these effects to
+            be insignificant."<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">MTEB paper, 2022</span>
+          </blockquote>
+        </div>
+
+        <p>
+          By 2025 the same team, revising its own benchmark, treats contamination
+          as a first-order problem. In an engineering paper on maintaining MTEB,
+          the maintainers describe a subtler failure than a test answer leaking
+          into training: models trained "using training splits from the same
+          source as benchmark evaluation tasks."<sup class="nb-cite"><a href="#s5">5</a></sup>
+          To measure it, a model reports which benchmark datasets it trained on,
+          and MTEB computes a zero-shot score: the share of the benchmark the
+          model did not train on. Their worked case is e5-mistral-7b-instruct,
+          which scores 95% zero-shot on the legacy English benchmark, meaning it
+          trained on only about 5% of that benchmark's datasets. It still scores well, which the authors read as
+          real ability rather than a leak.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The point of the exercise is the models on the other end, where a high
+          overall score sits next to a low zero-shot score. Outside groups note that "many
+          embedding models are partially trained on data that overlaps with MTEB
+          datasets," which "contaminates the
+          leaderboard."<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          The rebuild answers both weaknesses without throwing the old number
+          away. For imbalance, the multilingual expansion MMTEB keeps the plain
+          per-category scores and adds two things on top. The first is a ranking by
+          Borda count, a method from voting theory the maintainers argue is sturdier
+          than a raw mean. The second is an average weighted by task
+          category.<sup class="nb-cite"><a href="#s7">7</a></sup> The flat average
+          still exists; it is now one view among several rather than the only one.
+          For contamination, MMTEB is built as a zero-shot benchmark that excludes
+          the datasets models most often train on, naming MS MARCO and Natural
+          Questions.<sup class="nb-cite"><a href="#s7">7</a></sup> And a newer
+          board, RTEB, keeps some datasets private and scored only by the
+          maintainers, so that "a model with a significant performance drop between
+          the open and the private datasets would suggest
+          overfitting."<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          None of this makes the leaderboard a trick. The MTEB average is a real,
+          usable summary of how a model does across a wide spread of tasks, and it
+          was built for a reason. Both weaknesses are limits on how to read the
+          number, not evidence that the number is fake: one task is a slice of the
+          average, and a very high score can carry a little training on the test.
+          The maintainers took their own measure seriously enough to keep repairing
+          it, which is a reason to trust the repaired benchmark rather than to
+          throw the whole thing out.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The number that sorts the MTEB leaderboard is a plain average. It scores
+          a model on 58 datasets, each with its own metric on its own scale, and
+          divides. Two things follow. The average is weighted by how many datasets
+          each task has, not by how much the task matters. So a high overall rank
+          does not tell you the model is strong at retrieval, the job most readers
+          are choosing a model for. And because the same average can reward a model
+          for training on data close to the test, a top score is not proof the
+          model will do as well on your own documents. The people who built MTEB
+          said the first thing themselves in 2022, reversed their earlier dismissal
+          of the second by 2025, and rebuilt the benchmark to answer both. So take
+          the move the maintainers now push. Filter the board to the task you
+          actually care about, read the overall number as a rough summary rather
+          than a verdict, and judge a model finally on how it does on your own data.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2502.13595">Enevoldsen et al., "MMTEB: Massive Multilingual Text Embedding Benchmark" (ICLR 2025)</a>:
+            the maintainers' full rebuild, with the Borda-count ranking and the
+            zero-shot design.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2506.21182">Chung et al., "Maintaining MTEB" (2025)</a>:
+            the maintainers' own account of the contamination problem and the
+            zero-shot score they use to measure it.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract (8 tasks, 58 datasets, 112 languages, 33 models); §3.2 per-task metrics; Table 1 caption (average of the main metric, 56 datasets); §5 Reranking (contamination dismissal); Appendix B.2 Task imbalance"
+              href="https://arxiv.org/abs/2210.07316"
+              >Muennighoff, Tazi, Magne &amp; Reimers (Hugging Face) · MTEB: Massive Text Embedding Benchmark (2022, rev. Mar 2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Space header; the ranked leaderboard table, rendered client-side"
+              href="https://huggingface.co/spaces/mteb/leaderboard"
+              >mteb (Hugging Face) · MTEB Leaderboard (live ranked table)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Body, on interpreting the overall score (retrieval and STS most correlated with RAG and search; weak clustering or classification brings down the average)"
+              href="https://modal.com/blog/mteb-leaderboard-article"
+              >Yiren Lu (Modal) · Understanding the MTEB leaderboard (2025)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Body, on customization and task coverage (a pre-defined board may hold ~50% of the tasks a user cares about)"
+              href="https://huggingface.co/blog/Samoed/mteb-v3-leaderboard"
+              >Solomatin, Enevoldsen &amp; Chung (mteb) · The MTEB v3 Leaderboard (2025)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§5.1 Case Study 1 (zero-shot score z = 1 − n_train/n_total; e5-mistral-7b-instruct 95% zero-shot); Figure 2 caption; the same-source training-split mechanism"
+              href="https://arxiv.org/abs/2506.21182"
+              >Chung, Kerboua, Kardos, Solomatin &amp; Enevoldsen (mteb) · Maintaining MTEB (2025)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Body, on leaderboard contamination (many embedding models trained on data overlapping MTEB datasets or close paraphrases)"
+              href="https://zeroentropy.dev/concepts/mteb/"
+              >Alexander Rocha (ZeroEntropy) · On the MTEB leaderboard and its limits (2025)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract (500+ tasks, 250+ languages); benchmark-construction (zero-shot; MS MARCO and Natural Questions excluded); results reporting (Borda-count ranking; per-category and category-weighted average)"
+              href="https://arxiv.org/abs/2502.13595"
+              >Enevoldsen, Muennighoff et al. (mteb) · MMTEB: Massive Multilingual Text Embedding Benchmark (ICLR 2025)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Opening problem statement (public-benchmark scores diverge from real performance); Private Datasets section (held-out private sets; open-vs-private gap signals overfitting)"
+              href="https://huggingface.co/blog/rteb"
+              >Enevoldsen et al. (mteb / Hugging Face) · Introducing RTEB (Oct 2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
