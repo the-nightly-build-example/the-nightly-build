@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A strict output format can block the reasoning a model needs to be right · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "structured-output",
+        "template": "lesson",
+        "title": "A strict output format can block the reasoning a model needs to be right",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-27",
+        "tags": [],
+        "sources": 8,
+        "words": 1899,
+        "reading_minutes": 8,
+        "dek": "The program holding a model's output to a schema blocks every next token that would break the format, sometimes the very ones the model needed to reason with.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A strict output format can block the reasoning a model needs to be right</h1>
+        <p class="nb-dekline">
+          The program holding a model's output to a schema blocks every next token that would break the format, sometimes the very ones the model needed to reason with.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-27</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Developers wire language models into programs every day, and a program
+          needs clean, predictable data: an object with known fields, not a
+          paragraph. So they tell the model to return strict JSON, and they often
+          watch the answers get worse. That trade, between data a program can
+          read and answers a model gets right, is a real cost in production
+          systems right now. This lesson works backward from the worse answer to
+          the exact part of the system that produces it. By the end you will be
+          able to say why a strict schema can lower a model's accuracy, when it
+          does and when it does not, and the one change that removes most of the
+          cost.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/prefill-and-decode.html">A chatbot reads your whole prompt at once but writes its reply one word at a time</a>:
+            how a model draws each next token from a spread over its whole vocabulary.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/thinking-out-loud.html">A transformer can only compute more by writing more</a>:
+            why the intermediate steps a model writes are the computation, the fact this lesson's cost rests on.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/tool-use.html">A model that calls a tool never runs it</a>:
+            why the JSON a model emits is just text until a program acts on it.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Ask for clean JSON, get a worse answer</h2>
+        <p>
+          You can watch this happen with any capable chatbot. Give it an
+          arithmetic word problem in plain language and it works through the
+          steps and lands on the right number. Ask the same model for the answer
+          as strict JSON, an object with an <code>answer</code> field and nothing
+          else, wire that into a program, and the answers start coming back wrong
+          more often. Anyone who has connected a model to code and told it to
+          return only JSON has felt the quality slip.
+        </p>
+        <p>
+          In a 2024 study, researchers put a number on it: holding several models
+          to a strict output format lowered their accuracy on grade-school math
+          problems.<sup class="nb-cite"><a href="#s1">1</a></sup> How large that
+          cost is turns out to be the disputed part, and its size only comes into
+          focus once you can see what the format does to the model as it writes.
+        </p>
+      </section>
+
+      <section data-nb-section="the-mask" id="the-mask">
+        <h2>The format is enforced one token at a time</h2>
+        <p>
+          Start with how a program pins a model's output to a shape at all. Left
+          alone, the model produces its reply the way
+          <a href="../the-mechanics/prefill-and-decode.html">prefill-and-decode</a>
+          described: at each step it holds a probability spread over its whole
+          vocabulary, every token it could write next with a weight on each, and
+          it draws one. To force valid JSON, the program slips a step in between
+          the spread and the draw. It builds a mask, a list marking every token
+          that would keep the output valid and every token that would break it,
+          and it drives the weight of the invalid ones to zero before the draw
+          happens.<sup class="nb-cite"><a href="#s2">2</a></sup> The model can
+          only pick from what survives.
+        </p>
+        <p>
+          Watch a single step. You have asked for an object that starts with an
+          <code>answer</code> field. At the very first token, the model's own
+          spread might most favor <code>Sure</code> or <code>Here</code>: it was
+          trained on prose, and prose is what it reaches for. But
+          <code>Sure</code> is not the start of valid JSON, so the mask zeroes it.
+          The only tokens left alive are the ones that can legally open the
+          required object, an opening brace or a space. Whatever the model was
+          leaning toward, it opens with a brace, because that is all the mask left
+          standing.
+        </p>
+        <p>
+          This is settled engineering. Two independent implementations describe
+          the same step. Willard and Louf compute the mask as a list of ones and
+          zeros multiplied into the distribution before a token is
+          sampled.<sup class="nb-cite"><a href="#s2">2</a></sup> XGrammar builds a
+          grammar for the required format and, at each step, sets every
+          grammar-breaking token's weight to negative infinity, so it has no
+          chance of being drawn.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            A part of the program keeps track of where it is in the required
+            format and, at every step, crosses out the words that would not fit,
+            so the model chooses only among the words that keep the shape
+            valid.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          </p>
+        </div>
+        <p>
+          Providers ship this. OpenAI calls its schema-enforcing version
+          Structured Outputs, and it works by exactly this masking: the company
+          turns your schema into a grammar and holds the model to tokens that
+          match.<sup class="nb-cite"><a href="#s5">5</a></sup> It saves the name
+          JSON mode for a weaker, older setting that only promises the output is
+          valid JSON, with no guarantee the fields are the ones you
+          asked for.<sup class="nb-cite"><a href="#s6">6</a></sup> The two are not
+          the same feature, and the names matter here, because the study we
+          started with uses JSON mode to mean the hard-constrained kind. To keep
+          them apart, the hard kind is called constrained decoding from here on,
+          and JSON mode is kept for the weak one.
+        </p>
+      </section>
+
+      <section data-nb-section="lost-reasoning" id="lost-reasoning">
+        <h2>The blocked tokens were where the thinking went</h2>
+        <p>
+          Now the cost.
+          <a href="../the-mechanics/thinking-out-loud.html">Thinking-out-loud</a>
+          showed that a transformer does a fixed amount of computation per token:
+          the only way it can spend more effort on a hard problem is to write
+          intermediate steps and read them back. The scratch work is where the
+          computation happens. Take away the model's room to write those steps and
+          you take away the computation itself.
+        </p>
+        <p>
+          A strict schema can do exactly that. Picture a schema shaped
+          <code>{"answer": ..., "reason": ...}</code>, the answer first and the
+          reason second, which is a natural way to lay out a form. Once the model
+          has written <code>{"answer":</code>, the mask will only let it write a
+          valid answer value next. Every token that would begin a sentence of
+          reasoning is blocked, because a sentence of reasoning is not a valid
+          answer value. So the model commits to the answer before the reason field
+          exists, before it has written a single step of the work that would have
+          found the answer. The reason field, when it comes, is filled in after
+          the fact.
+        </p>
+        <p>
+          This is not hypothetical. In the 2024 study, one model under the hard
+          constraint put the answer key ahead of the reason key in 100% of its
+          responses. Every time, the format marched the answer out first and
+          collapsed the step-by-step working into a blind
+          guess.<sup class="nb-cite"><a href="#s1">1</a></sup> The mask did not make
+          the model worse at math. It took away the space where the model did the
+          math.
+        </p>
+      </section>
+
+      <section data-nb-section="disputed-size" id="disputed-size">
+        <h2>Two teams measured the cost and disagree</h2>
+        <p>
+          The mechanism is clear and the direction is clear: block the reasoning
+          and accuracy falls. What is genuinely unsettled is the size, and the two
+          teams that have measured it disagree sharply.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The same grade-school-math benchmark, measured by two teams. Tam's
+            schema put the answer before the reasoning. The Outlines team kept the
+            reasoning and matched the prompts across
+            conditions.<sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s7">7</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Study and model</th>
+              <th>Free text</th>
+              <th>Constrained</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Tam et al., GPT-3.5-Turbo</td>
+              <td>76.0%</td>
+              <td>49.3%</td>
+            </tr>
+            <tr>
+              <td class="txt">Tam et al., Claude-3-Haiku</td>
+              <td>86.5%</td>
+              <td>23.4%</td>
+            </tr>
+            <tr>
+              <td class="txt">dottxt re-run, Llama-3-8B</td>
+              <td>77%</td>
+              <td>78%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Tam and colleagues report large drops. On grade-school math, GPT-3.5-Turbo
+          fell from about 76% correct in free text to 49% under the constraint, and
+          Claude-3-Haiku fell from about 87% to 23%.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Taken at face value, those numbers say the format is enormously
+          expensive.
+        </p>
+        <p>
+          The team behind Outlines, a constrained-decoding library, re-ran the same
+          tasks and found the opposite: with the format enforced, their model
+          matched or slightly beat its free-text score, 78% against 77% on the same
+          math benchmark.<sup class="nb-cite"><a href="#s7">7</a></sup> They argue the
+          earlier drops came from the setup, not the constraint. The prompts given
+          to the constrained runs were not the same as the free-text prompts, and
+          the schema forced the answer ahead of the reasoning, the exact
+          foreclosure described above.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          This is a party with a stake, since they sell structured generation, and
+          worth reading with that in mind. Their objection is still concrete and
+          checkable.
+        </p>
+        <p>
+          And the case does not rest on dottxt alone. Constrained decoding is
+          not always a tax. Earlier work found it can raise accuracy on some tasks
+          by keeping a model from wandering off the required
+          format.<sup class="nb-cite"><a href="#s8">8</a></sup> Tam's own
+          results show format restriction helping on some classification tasks even
+          as it hurt the reasoning ones.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The honest reading is that the mask itself is cheap. What is expensive is
+          a schema that leaves the model no room to reason before it answers.
+        </p>
+      </section>
+
+      <section data-nb-section="the-fix" id="the-fix">
+        <h2>Let the model reason before it fills the form</h2>
+        <p>
+          The fix follows straight from the cause, and both camps agree on it: give
+          the model room to reason before you force the format. Put a reasoning
+          field first and the answer field last, so the schema asks for the work
+          before it asks for the conclusion. Or let the model reason in plain prose
+          and convert that to JSON in a second step. OpenAI's own documentation lays
+          out a schema exactly this way, a <code>steps</code> array of reasoning
+          followed by a <code>final_answer</code> field, as the recommended shape
+          for a problem that needs thinking.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The thing that matters is the order the schema asks for things in. A
+          schema that reasons first costs little. A schema that answers first can
+          cost a great deal.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A strict output format is enforced by constrained decoding: at every
+          token, a program masks out the words that would break the format, and the
+          model chooses only from what is left. That masking is cheap and
+          mechanical. The cost appears when the mask blocks the intermediate words a
+          model reasons with. It appears most when the schema demands the answer
+          before it allows any reasoning, because a transformer that cannot write
+          its steps cannot compute them. That is why the same benchmark can show a
+          collapse in one study and no loss in another: the two studies were
+          constraining different things. The clean data a program needs and the
+          correct answer a model gives were never truly at odds. What set them
+          against each other was the order the schema demanded, and reversing it,
+          reasoning first and answer last, mostly dissolves the cost.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2408.02442">Let Me Speak Freely? (Tam et al., 2024)</a>:
+            the study that reported the drops, with the full task list and tables.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://blog.dottxt.ai/say-what-you-mean.html">Say What You Mean (dottxt)</a>:
+            the rebuttal, with its re-run numbers and its case against the original setup.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://www.aidancooper.co.uk/constrained-decoding/">A Guide to Structured Outputs Using Constrained Decoding (Aidan Cooper)</a>:
+            an accessible tour of how the masking is built and where it helps.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2408.02442"
+              >arXiv · Tam et al., "Let Me Speak Freely? A Study on the Impact of Format Restrictions on the Performance of Large Language Models" (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.09702"
+              >arXiv · Willard &amp; Louf, "Efficient Guided Generation for Large Language Models"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2411.15100"
+              >arXiv · Dong et al., "XGrammar: Flexible and Efficient Structured Generation Engine for Large Language Models"</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://letsdatascience.com/blog/structured-outputs-making-llms-return-reliable-json"
+              >Let's Data Science · "Structured Outputs: Making LLMs Return Reliable JSON"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://simonwillison.net/2024/Aug/6/openai-structured-outputs/"
+              >Simon Willison · "OpenAI's Structured Outputs" (6 Aug 2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://developers.openai.com/api/docs/guides/structured-outputs"
+              >OpenAI · Structured Outputs developer documentation</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://blog.dottxt.ai/say-what-you-mean.html"
+              >dottxt · "Say What You Mean: A Response to 'Let Me Speak Freely'"</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.aidancooper.co.uk/constrained-decoding/"
+              >Aidan Cooper · "A Guide to Structured Outputs Using Constrained Decoding"</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
