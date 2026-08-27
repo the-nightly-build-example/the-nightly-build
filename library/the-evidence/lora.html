@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LoRA matched full fine-tuning by training 4.7M of GPT-3's 175 billion weights · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "lora",
+        "template": "lesson",
+        "title": "LoRA matched full fine-tuning by training 4.7M of GPT-3's 175 billion weights",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-27",
+        "tags": [],
+        "sources": 6,
+        "words": 1919,
+        "reading_minutes": 8,
+        "dek": "The 2021 Microsoft paper that made cheap fine-tuning routine reported parity only on the constrained language benchmarks it ran.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">LoRA matched full fine-tuning by training 4.7M of GPT-3's 175 billion weights</h1>
+        <p class="nb-dekline">
+          The 2021 Microsoft paper that made cheap fine-tuning routine reported parity only on the constrained language benchmarks it ran.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-27</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Almost every "custom" model you hear about is a fine-tune of an open
+          base model, and almost every one of those is built with the method
+          this lesson reads. LoRA is how specializing a large model stopped
+          requiring a data center: the character adapters, domain adapters, and
+          low-cost "custom" models traded on model hubs are its direct product.
+          This lesson walks through what its 2021 paper actually did, what it
+          froze, what it trained, the figures it reported, and the one benchmark
+          result the whole field now quotes. By the end you will know what
+          "fine-tuning a model" usually means in practice today, why it costs so
+          little, and the exact conditions under which its headline claim holds.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/parameter-count.html">Parameter count</a>:
+            what the billions of numbers in a model are and how they are
+            counted.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/gradient-descent.html">Gradient descent</a>:
+            how training moves a model's weights to lower its error.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A frozen model with a small pair of matrices bolted on</h2>
+        <p>
+          Fine-tuning means continuing to train a finished model on new data,
+          nudging its weights by
+          <a href="../the-mechanics/gradient-descent.html">gradient descent</a>
+          until it does a new job. For a small model that is cheap. For GPT-3,
+          with its 175 billion
+          <a href="../the-instruments/parameter-count.html">parameters</a>, it
+          is not. Full fine-tuning updates every one of those weights, needs
+          enough memory to hold a gradient for all of them, and leaves you with
+          a fresh 350-gigabyte copy of the model for each task you train. Do
+          that for ten customers and you are storing ten GPT-3s.
+        </p>
+        <p>
+          LoRA, short for Low-Rank Adaptation, removes almost all of that cost
+          with one change. It freezes the pretrained weights, so none of the
+          original 175 billion numbers move during training. Beside a weight
+          matrix it wants to adapt, it adds a detour: a pair of much smaller
+          matrices, call them A and B, and trains only that pair.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          A takes the layer's input and squeezes it down to a handful of
+          numbers. B expands that handful back to the layer's full width and
+          adds the result to what the frozen weights already produce. If A
+          projects down to eight numbers, then A and B together hold a few
+          thousand weights where the frozen matrix holds millions.
+        </p>
+        <p>
+          In the GPT-3 experiments the authors did not even adapt every matrix.
+          They inserted the low-rank pairs only into the query and value
+          projections inside each
+          <a href="../the-mechanics/attention.html">attention layer</a>, the
+          part that decides what each position reads from the rest of the
+          sequence, and set the squeeze as narrow as four numbers.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">10,000&times;</span
+            ><span class="nb-stat-l">fewer trainable weights</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">3&times;</span
+            ><span class="nb-stat-l">less training memory</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">35 MB</span
+            ><span class="nb-stat-l">saved adapter, from 350 GB</span>
+          </div>
+        </div>
+        <p>
+          Training touched about 4.7 million weights instead of 175 billion.
+          The memory needed to train fell from
+          1.2 terabytes to 350 gigabytes, a threefold cut. And the thing you
+          save at the end, the trained adapter, is 35 megabytes rather than a
+          350-gigabyte model, about ten thousand times smaller.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The ten customers now cost you one GPT-3 and ten small files.
+        </p>
+      </section>
+
+      <section data-nb-section="low-rank" id="low-rank">
+        <h2>The change in the weights was low-rank all along</h2>
+        <p>
+          Why should a few million numbers be enough to teach a
+          175-billion-weight model a new task? The paper's answer is a guess
+          about what fine-tuning actually changes. When you fine-tune, every
+          weight is free to move, but the authors proposed that the total change
+          is far simpler than that freedom allows. It has, in their words, a low
+          "intrinsic rank."<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Rank measures how much independent variety a grid of numbers holds. A
+          matrix of weight changes could in principle push the model in as many
+          independent directions as it has rows. The claim is that it does not:
+          the update a task needs can be rebuilt from a handful of directions,
+          so writing that update as a narrow A-times-B product throws almost
+          nothing away. That is why B can expand a squeeze of eight numbers
+          rather than eight thousand. The authors tested it directly. Sweeping
+          the squeeze from a rank of 64 down to 1, accuracy on their tasks
+          barely moved, and the paper reports that a rank as small as one
+          suffices for adapting those query and value matrices.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          The idea did not come from nowhere. A year earlier, Aghajanyan and
+          colleagues had shown something adjacent and striking: they tuned
+          RoBERTa to 90 percent of its full performance on one task by
+          optimizing only 200 numbers, projected at random into the full weight
+          space.<sup class="nb-cite"><a href="#s2">2</a></sup> That measured how
+          few dimensions fine-tuning needs inside some random subspace. LoRA's
+          contribution was the sharper, more useful bet: that the weight change
+          itself is low-rank, and so can be written as an explicit small product
+          you train and then fold away.
+        </p>
+      </section>
+
+      <section data-nb-section="merge-back" id="merge-back">
+        <h2>The trained pair folds back into the frozen weights</h2>
+        <p>
+          A detour beside every attention layer sounds like it should make the
+          model slower to run. Earlier methods that inserted extra trainable
+          layers, called adapters, did exactly that: they added computation the
+          model had to perform on every token, at every use, for as long as the
+          adapter was attached.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          LoRA does not, and the reason is arithmetic. The trained pair A and B
+          multiply out to a matrix of exactly the same shape as the frozen
+          weight matrix beside them. Once training is done you add that product
+          into the frozen weights a single time and discard the pair.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          What remains is an ordinary model of the original size and speed, with
+          the new behavior baked into its weights. No detour is left to run.
+        </p>
+        <p>
+          This is the property that sets LoRA apart from the adapters before it,
+          and it is why a base model and its adapter can be shipped, swapped, and
+          merged as casually as they are now. The 35-megabyte file is a patch:
+          apply it to the base weights and the adaptation costs nothing at the
+          moment of use.
+        </p>
+      </section>
+
+      <section data-nb-section="parity" id="parity">
+        <h2>Parity, inside the paper's own benchmarks</h2>
+        <p>
+          The headline claim is that this cheap method matches the expensive
+          one. On the tasks the paper measured, it does, and here and there it
+          wins.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Trainable parameters and scores, full fine-tuning versus LoRA, on
+            the paper's own benchmarks.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model and task</th>
+              <th>Full fine-tune</th>
+              <th>LoRA</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">GPT-3 175B, MNLI-matched (accuracy)</td>
+              <td>175 256 M &middot; 89.5</td>
+              <td>4.7 M &middot; 91.7</td>
+            </tr>
+            <tr>
+              <td class="txt">GPT-3 175B, WikiSQL (accuracy)</td>
+              <td>175 256 M &middot; 73.8</td>
+              <td>4.7 M &middot; 73.4</td>
+            </tr>
+            <tr>
+              <td class="txt">RoBERTa large, GLUE (average)</td>
+              <td>355 M &middot; 88.9</td>
+              <td>0.8 M &middot; 89.0</td>
+            </tr>
+            <tr>
+              <td class="txt">GPT-2 medium, E2E (BLEU)</td>
+              <td>355 M &middot; 68.2</td>
+              <td>0.35 M &middot; 70.4</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Read down the trainable-parameter column and the gap is stark: LoRA
+          trains between a thousandth and a ten-thousandth of the weights and
+          lands on the same scores.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Then read what the tasks are. GLUE is a suite of sentence
+          classification problems. E2E and WikiSQL turn short structured inputs
+          into short outputs. MNLI asks whether one sentence follows from
+          another. These are real benchmarks, and they are also narrow:
+          constrained inputs, constrained outputs, no long body of new knowledge
+          the model has to take on. Matching full fine-tuning is a result on
+          tasks like these, not a law of adaptation.
+        </p>
+        <p>
+          A 2024 study, "LoRA Learns Less and Forgets Less," pushed on exactly
+          that boundary. Training Llama-2-7B on programming and mathematics, it
+          found that LoRA substantially underperforms full fine-tuning.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The gap was sharpest in the hardest case: continued pretraining on tens
+          of billions of new tokens, where the model must absorb a large new
+          domain rather than adjust to a task.
+          The same study offers a mechanism that fits the original hypothesis
+          instead of breaking it. Full fine-tuning, it found, learns weight
+          changes of a rank ten to a hundred times higher than the ranks LoRA
+          typically uses.<sup class="nb-cite"><a href="#s3">3</a></sup> When the
+          update a task needs is genuinely low-rank, LoRA loses nothing. When
+          the task needs a richer change than a narrow squeeze can carry, LoRA
+          has no way to express it.
+        </p>
+        <p>
+          That constraint has a compensating side. Because LoRA moves the model
+          less, it also disturbs it less: the same study found that LoRA better
+          preserved the base model's other abilities and produced more varied
+          output.<sup class="nb-cite"><a href="#s3">3</a></sup> Training fewer
+          parameters buys the limitation and the safety in one stroke.
+        </p>
+      </section>
+
+      <section data-nb-section="today" id="today">
+        <h2>Now almost every fine-tune is a LoRA</h2>
+        <p>
+          Five years on, the method is the default. Of the model cards on the
+          Hugging Face Hub that name a single
+          parameter-efficient technique, 98.4 percent name LoRA, 20 509 out of
+          20 834; among image-generation checkpoints the share is 95
+          percent.<sup class="nb-cite"><a href="#s4">4</a></sup> When someone
+          says they fine-tuned an open model, they almost certainly mean this.
+        </p>
+        <p>
+          A 2023 successor, QLoRA, pushed the cost down again by storing the
+          frozen base model in four-bit numbers while training the same
+          low-rank pair on top. It fit the fine-tuning of a 65-billion-parameter
+          model onto a single 48-gigabyte GPU, the kind one person can rent by
+          the hour.<sup class="nb-cite"><a href="#s5">5</a></sup> Its authors
+          reported that the result reached 99.3 percent of ChatGPT's level,
+          though on a benchmark scored by GPT-4's preferences rather than by
+          task accuracy, a softer measure than the tables above.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          What travels with all this reach is the parity claim, stripped of its
+          scope. "Matches full fine-tuning" gets repeated as though it held
+          everywhere, when the paper only ever showed it on constrained language
+          tasks<sup class="nb-cite"><a href="#s1">1</a></sup> and a later study
+          found it trailing on code and math.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The standard open-source toolkit for the method, Hugging Face's PEFT
+          library, demonstrates LoRA first among its options.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          The stand-in has become so routine that the scope drops off the claim.
+          For most fine-tunes, on tasks as constrained as the paper's, that is
+          harmless. For teaching a model a large new domain like code or math,
+          it lands exactly where the expensive method still does something the
+          cheap one cannot.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          LoRA freezes a model and trains a small pair of matrices beside it, on
+          the bet that the change fine-tuning needs is simple enough to write in
+          a few directions. On GPT-3 that bet cut the trainable weights ten
+          thousandfold and shrank the saved model from 350 gigabytes to 35
+          megabytes, at no cost to how fast the finished model runs. On the
+          language benchmarks the paper tested, the cheap method matched the
+          expensive one. What the paper did not test, and what today's shorthand
+          quietly assumes, is the harder case: a model taking on a large new
+          domain, where a later study found the narrow squeeze leaves real
+          ground behind. LoRA made cheap specialization the norm, and its match
+          with full fine-tuning is real inside the tasks the paper ran and
+          unproven outside them.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2305.14314">QLoRA: Efficient Finetuning of Quantized LLMs</a>:
+            the quantized successor that put a 65B fine-tune on one GPU.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://github.com/huggingface/peft">Hugging Face PEFT</a>:
+            the open library where LoRA is the default demonstrated method.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2106.09685"
+              >arXiv &middot; Hu et al., "LoRA: Low-Rank Adaptation of Large Language Models" (2021)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2012.13255"
+              >arXiv &middot; Aghajanyan, Zettlemoyer, Gupta, "Intrinsic Dimensionality Explains the Effectiveness of Language Model Fine-Tuning" (2020)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2405.09673"
+              >arXiv &middot; Biderman et al., "LoRA Learns Less and Forgets Less" (2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/blog/peft-beyond-lora"
+              >Hugging Face &middot; Beyond LoRA: Can you beat the most popular fine-tuning technique? (2026)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.14314"
+              >arXiv &middot; Dettmers et al., "QLoRA: Efficient Finetuning of Quantized LLMs" (2023)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://github.com/huggingface/peft"
+              >Hugging Face &middot; PEFT, the parameter-efficient fine-tuning library</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
