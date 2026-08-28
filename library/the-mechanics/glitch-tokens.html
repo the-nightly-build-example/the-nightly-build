@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The token a model can't repeat back · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "glitch-tokens",
+        "template": "lesson",
+        "title": "The token a model can't repeat back",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-28",
+        "tags": ["tokenizers", "glitch-tokens", "training"],
+        "sources": 8,
+        "words": 2162,
+        "reading_minutes": 9,
+        "dek": "SolidGoldMagikarp reached the model's vocabulary from a Reddit counting forum and never reached its training.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">The token a model can't repeat back</h1>
+        <p class="nb-dekline">
+          SolidGoldMagikarp reached the model's vocabulary from a Reddit
+          counting forum and never reached its training.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-28</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every time you type into a chatbot, your words are first cut into
+          tokens drawn from a fixed list the model's makers built before
+          training ever started. Almost always that list and the training agree,
+          and you never notice the seam. Glitch tokens are the place they come
+          apart: a string the vocabulary kept but the model barely learned, so
+          asking for it back produces some other word entirely. By the end you
+          will be able to say why <code> SolidGoldMagikarp</code> breaks a model
+          that borrowed the GPT-2 tokenizer. You will also see why the same string
+          is fine in the model that tokenizer was built for, and where the honest
+          explanation still runs out.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/word-embeddings.html">What an embedding is</a>:
+            how a token becomes a learned vector, and what "learned" is doing in
+            that phrase.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/letter-counting.html">Why a model miscounts letters</a>:
+            the reverse puzzle, where the trouble is characters hidden inside a
+            token the model knows well.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The token that comes back as something else</h2>
+        <p>
+          In early 2023, two researchers asked a GPT-3 model to do the simplest
+          thing a language model can do. They typed, in effect, "Please repeat
+          back the string <code> SolidGoldMagikarp</code> to me." The model
+          answered <code>distribute</code>.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Not a refusal and not an error message. A different word, returned with
+          full confidence.
+        </p>
+        <p>
+          The string was not alone. Working at a research program over two
+          months, Jessica Rumbelow and Matthew Watkins ran a clustering algorithm
+          over one model's token embeddings. It pulled out a cluster of about 141
+          strings that sat closest to the center of the whole vocabulary. Asked to
+          repeat any of them, GPT-3 and ChatGPT failed in the same odd family of
+          ways: substituting another word, dodging the question, hallucinating,
+          claiming they could not, and in some cases insulting the user. Rumbelow
+          and Watkins called the strings anomalous, weird, and
+          unspeakable.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Writers outside that forum soon reported the same behavior, citing back
+          to the original posts.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          These are the tokens the popular version of the story calls glitch
+          tokens. The obvious first thought is that they are exotic strings the
+          model simply never saw. That thought is close to right, and the rest
+          is a matter of making it exact. We can work backward from the wrong
+          word to the one decision that produced it, one step at a time.
+        </p>
+      </section>
+
+      <section data-nb-section="vocabulary-first" id="vocabulary-first">
+        <h2>The vocabulary is printed before the model trains</h2>
+        <p>
+          Start with what <code> SolidGoldMagikarp</code> is to the model. It is
+          not a word and not seventeen letters. It is a single token, one entry in a
+          fixed list of 50,257 that GPT-2 and the models built on it read text
+          through.<sup class="nb-cite"><a href="#s3">3</a></sup> The model never
+          sees characters. It sees token numbers, and that list of tokens is
+          decided in advance.
+        </p>
+        <p>
+          The list is built by frequency. The method, byte-pair encoding, starts
+          from single characters and repeatedly merges whichever adjacent pair
+          occurs most often across a big pile of text. Common runs like
+          <code>the</code> and <code> and</code> collapse into one token, while
+          rare runs stay broken into pieces.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Feed that process enough text in which some string keeps appearing, and
+          it earns its own token.
+        </p>
+        <p>
+          A vocabulary built this way is like a phrasebook printed before a trip.
+          The phrases are chosen from one body of text, the book is bound, and
+          nothing that happens once you land can change what is on the pages. In
+          the model this is literal. The tokenizer loads two files from disk, the
+          token list and the ordered merge rules, and uses them unchanged no
+          matter which trained weights sit behind
+          it.<sup class="nb-cite"><a href="#s4">4</a></sup> The vocabulary is a
+          finished artifact before the model has learned anything. That much is
+          settled engineering: a token can be in the book while the model behind
+          it is a total stranger to that token.
+        </p>
+      </section>
+
+      <section data-nb-section="where-it-came-from" id="where-it-came-from">
+        <h2>Where SolidGoldMagikarp came from</h2>
+        <p>
+          So where did the strangers come from? Watkins traced them one by one.
+          <code> SolidGoldMagikarp</code>, <code> TheNitromeFan</code>, and
+          <code> RandomRedditorWithNo</code> are usernames from r/counting, a
+          subreddit whose members count upward together and so post enormous
+          volumes of near-identical short messages. The most prolific counters'
+          handles showed up often enough in the tokenizer's source text that each
+          was merged into a single token. Other glitch tokens came from software
+          rather than people: <code>PsyNetMessage</code> from the game Rocket
+          League, <code>externalToEVA</code> and <code>InstoreAndOnline</code> from
+          e-commerce backends.<sup class="nb-cite"><a href="#s5">5</a></sup> The
+          leading space in <code> SolidGoldMagikarp</code> is part of the token,
+          not a typo; the tokenizer treats a word and the same word with a space
+          in front as two different entries.
+        </p>
+        <p>
+          The text that built the tokenizer is not the text the
+          model trained on. GPT-2 trained on WebText, a scrape of every outbound
+          link from Reddit that had at least three
+          karma.<sup class="nb-cite"><a href="#s3">3</a></sup> The username
+          <code> SolidGoldMagikarp</code> was common enough in the tokenizer's
+          source to win a token, but the counting posts that carried it were
+          scarce or absent from the pages WebText actually collected. The token
+          existed. The model almost never met it.
+        </p>
+        <p>
+          When a model trains, each token's embedding, its
+          <a href="../the-mechanics/word-embeddings.html">learned vector</a>, gets
+          nudged a little every time the token appears in the text. A token that
+          never appears is never nudged. Its embedding stays close to the random
+          values it was handed at the start, which is roughly where all the
+          untouched vectors sit together, near the center of the
+          space.<sup class="nb-cite"><a href="#s6">6</a></sup> That is exactly
+          where Rumbelow and Watkins found the glitch tokens
+          clustered.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Now the parts are all named, so here is the mismatch in one line. The
+          vocabulary was built from one body of text, the model was trained on
+          another, and a token frequent in the first but missing from the second
+          sits inside the model wearing an embedding it never learned.
+        </p>
+      </section>
+
+      <section data-nb-section="not-just-rare" id="not-just-rare">
+        <h2>Why "just a rare word" is the wrong guess</h2>
+        <p>
+          The natural explanation is that the model rarely saw the word, the way
+          it rarely sees any obscure word. That guess predicts something the
+          evidence does not show. If mere rarity were the cause, every rare word
+          would glitch, and they do not. A genuinely uncommon ordinary word still
+          turns up now and then in training, gets its embedding nudged a little,
+          and comes back correctly when you ask for it. The glitch tokens differ
+          in kind, not degree: not rare, but very nearly absent from training
+          while still holding a permanent slot in the vocabulary.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Under-trained token</span>
+          <blockquote>
+            "tokens present in the tokenizer vocabulary but that are nearly or
+            entirely absent during model training."<sup class="nb-cite"
+              ><a href="#s7">7</a></sup
+            >
+            <span class="nb-note-who">Sander Land and Max Bartolo, "Fishing for Magikarp"</span>
+          </blockquote>
+        </div>
+        <p>
+          The second correction matters more, because the popular version gets it
+          wrong. People say GPT-2 has these glitch tokens. It is loose. Sander
+          Land and Max Bartolo measured under-trained tokens across 25 models.
+          <code> SolidGoldMagikarp</code> verified as under-trained in GPT-J and
+          Phi-2, which reuse the GPT-2 tokenizer but train on their own data. It
+          did not verify in GPT-2
+          itself.<sup class="nb-cite"><a href="#s7">7</a></sup> The tokenizer is
+          the constant. The training data decides whether a given token is
+          actually dead. The original failures appeared on GPT-3 models
+          and ChatGPT,<sup class="nb-cite"><a href="#s1">1</a></sup> which share
+          that tokenizer family. A glitch token is a property of one
+          tokenizer-and-model pairing, never of a model name on its own.
+        </p>
+        <p>
+          Land and Bartolo also showed the effect is measurable rather than
+          anecdotal. Their detector reads a model's weights alone and flags the
+          under-trained tokens without being told what the model trained on. On
+          one model whose training counts were made public, the detector's signal
+          tracked how often each token appeared in training across ten orders of
+          magnitude.<sup class="nb-cite"><a href="#s7">7</a></sup> Detecting these
+          tokens is a solved problem. Across all 25 models, the severely
+          under-trained ones ran between a tenth and one percent of the
+          vocabulary.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">50,257</span
+            ><span class="nb-stat-l">tokens in the vocabulary</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">~141</span
+            ><span class="nb-stat-l">strings in the original cluster</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">0.1–1%</span
+            ><span class="nb-stat-l">under-trained, across 25 models</span>
+          </div>
+        </div>
+        <p>
+          The per-model counts carry the pairing argument on their own. The
+          models that reuse the GPT-2 tokenizer but train on unrelated text run
+          high. The two whose tokenizer was trained on the very same corpus as
+          the model, the Pile, run far lower, because there the vocabulary and the
+          training barely disagree about what is common.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Verified under-trained tokens per model, from the same detector.
+            The two aligned models sit at the bottom.<sup class="nb-cite"
+              ><a href="#s7" data-nb-locator="Table 1">7</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th>Confirmed</th>
+              <th>Tested</th>
+              <th class="txt">Tokenizer vs. training</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">GPT-J 6B</td>
+              <td>200</td>
+              <td>999</td>
+              <td class="txt">GPT-2 tokenizer, different data</td>
+            </tr>
+            <tr>
+              <td class="txt">Phi-2</td>
+              <td>103</td>
+              <td>999</td>
+              <td class="txt">GPT-2 tokenizer, different data</td>
+            </tr>
+            <tr>
+              <td class="txt">GPT-2 XL</td>
+              <td>67</td>
+              <td>999</td>
+              <td class="txt">its own tokenizer</td>
+            </tr>
+            <tr>
+              <td class="txt">Pythia 6.7B</td>
+              <td>14</td>
+              <td>993</td>
+              <td class="txt">tokenizer trained on the Pile, as the model was</td>
+            </tr>
+            <tr>
+              <td class="txt">GPT-NeoX 20B</td>
+              <td>10</td>
+              <td>993</td>
+              <td class="txt">tokenizer trained on the Pile, as the model was</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section data-nb-section="where-it-runs-out" id="where-it-runs-out">
+        <h2>Where the explanation still runs out</h2>
+        <p>
+          Two honest limits sit on top of all this. The first is that
+          under-training is the main cause but not the only one. Land and Bartolo
+          separate several other classes: fragments left over from an
+          intermediate merge, tokens that normal text can never actually produce
+          because of how a string is split into pieces before the merges apply,
+          and plain configuration mistakes.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Some of these are a mismatch between how text is split during training
+          and during use, not a token that was merely rare. A token that sits in
+          the vocabulary but is absent from training is the cleanest and most
+          common case, and it is not the whole catalogue.
+        </p>
+        <p>
+          The second limit is that a token's looks do not settle anything; you
+          have to measure. The same study found special strings such as
+          <code>&lt;mask&gt;</code>, which the authors expected to be untrained,
+          showing signs of training instead, because code and tutorials use those
+          strings as ordinary text.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          A token can look exotic and be perfectly healthy, or look ordinary and
+          be dead. The detector settles it, not the spelling.
+        </p>
+        <p>
+          Even the people who study these tokens cannot yet close the last step.
+          What is settled is why the embedding is near-dead. What is
+          still a guess is the exact path from a near-dead embedding to a specific
+          wrong output. Why <code> SolidGoldMagikarp</code> returns
+          <code>distribute</code> and not some other word, why one dead token
+          makes a model evasive and another makes it rude, has no worked
+          explanation in any of the sources. The phenomenon has since entered
+          general reference works, which repeat the
+          <code> SolidGoldMagikarp</code> behavior and treat detection and
+          mitigation as an open research
+          target.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            Land and Bartolo do explain one side of it. During training the
+            untrained embeddings all get pushed in a shared direction, which lets
+            the model assign those tokens strongly negative odds and so avoid ever
+            emitting them.<sup class="nb-cite"><a href="#s7">7</a></sup> That says
+            why the model will not say the token. It does not say why it says the
+            particular thing it says instead.
+          </p>
+        </div>
+        <p>
+          This puzzle has a mirror at the other end of the same series. A model's trouble
+          <a href="../the-mechanics/letter-counting.html">counting the letters in a word</a>
+          comes from characters hidden inside a token the model knows perfectly
+          well: it can use the word but cannot see into it. A glitch token is the
+          reverse, a whole string the model treats as one unit it never learned to
+          handle. Both grow from the single fact that the model reads tokens and
+          not characters, worked from opposite directions.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A token can sit in a model's vocabulary and still be a stranger to it.
+          The vocabulary is printed first, by frequency, from one body of text.
+          The model then learns from another. Any token that was common in the
+          first but missing from the second keeps its slot, and its embedding
+          stays near where it started. Ask for that token and the model, which
+          never learned to handle it, hands back something else. That much is
+          settled and countable. You can find these tokens from the weights alone,
+          and they run about a tenth to one percent of the vocabulary. What no one
+          can tell you yet is why a given dead token fails in its own particular
+          way. When someone explains SolidGoldMagikarp by pointing at GPT-2, you
+          now know which step they skipped.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.lesswrong.com/posts/aPeJE8bSo6rAFoLqg/solidgoldmagikarp-plus-prompt-generation">The SolidGoldMagikarp series</a>:
+            the original three posts, with the full token list and the archaeology
+            of where each string came from.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://aclanthology.org/2024.emnlp-main.649/">Fishing for Magikarp</a>:
+            the peer-reviewed method for detecting under-trained tokens from a
+            model's weights, with per-model counts.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.lesswrong.com/posts/aPeJE8bSo6rAFoLqg/solidgoldmagikarp-plus-prompt-generation"
+              >LessWrong · Jessica Rumbelow and Matthew Watkins, "SolidGoldMagikarp (plus, prompt generation)"</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.kith.org/words/2023/12/10/solidgoldmagikarp-and-other-glitch-tokens/"
+              >kith.org · Jed Hartman, "SolidGoldMagikarp and other glitch tokens"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf"
+              >OpenAI · Alec Radford et al., "Language Models are Unsupervised Multitask Learners" (GPT-2)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/openai/gpt-2/blob/master/src/encoder.py"
+              >OpenAI · GPT-2 tokenizer, <code>encoder.py</code></a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.lesswrong.com/posts/8viQEp8KBg2QSW4Yc/solidgoldmagikarp-iii-glitch-token-archaeology"
+              >LessWrong · Matthew Watkins, "SolidGoldMagikarp III: Glitch token archaeology"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.lesswrong.com/posts/Ya9LzwEbfaAMY8ABo/solidgoldmagikarp-ii-technical-details-and-more-recent"
+              >LessWrong · Jessica Rumbelow and Matthew Watkins, "SolidGoldMagikarp II: technical details and more recent findings"</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2024.emnlp-main.649/"
+              >ACL Anthology · Sander Land and Max Bartolo, "Fishing for Magikarp: Automatically Detecting Under-trained Tokens in Large Language Models" (EMNLP 2024)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://en.wikipedia.org/wiki/Glitch_token"
+              >Wikipedia · "Glitch token"</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
