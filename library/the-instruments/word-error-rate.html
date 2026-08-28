@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>'Human parity' in speech recognition came down to how you count the humans · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "word-error-rate",
+        "template": "lesson",
+        "title": "'Human parity' in speech recognition came down to how you count the humans",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-28",
+        "tags": ["speech-recognition", "evaluation"],
+        "sources": 8,
+        "words": 2169,
+        "reading_minutes": 9,
+        "dek": "Word Error Rate counts the word edits between a transcript and a reference, and when IBM re-transcribed the same phone calls the human benchmark on the hard set dropped from 11.3 percent to 6.8.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">
+          'Human parity' in speech recognition came down to how you count the
+          humans
+        </h1>
+        <p class="nb-dekline">
+          Word Error Rate counts the word edits between a transcript and a
+          reference, and when IBM re-transcribed the same phone calls the human
+          benchmark on the hard set dropped from 11.3 percent to 6.8.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-28</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You meet speech recognition every day now, dictating a message,
+          reading live captions, or letting software produce a medical or legal
+          transcript, and you keep meeting the claim that it now works as well as
+          a person. That claim is almost always a
+          single percentage, a Word Error Rate, standing in for how often the
+          system gets a word wrong. This lesson takes apart the most famous
+          version of it, the "human parity" milestone in conversational speech,
+          to show how the number is built, what it can honestly settle, and the
+          specific things it cannot see. By the end you will know what a Word
+          Error Rate counts, and why "human parity" was a claim about one
+          benchmark and one way of counting. It also leaves you three questions
+          to ask of any speech-recognition score: measured on which speech,
+          against whose reference, and normalized how.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/whisper.html">Whisper</a>: the speech model
+            that posts low error rates and still fabricates fluent text.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/bleu.html">BLEU</a>: the overlap score
+            for machine translation, where a metric misses meaning the same way.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-instruments/rouge.html">ROUGE</a>: the overlap score
+            for summaries, and what word counting can and cannot judge.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Parity arrives as a percentage</h2>
+        <p>
+          In October 2016, a team at Microsoft announced that its speech
+          recognition system had reached "human parity" on conversational
+          telephone speech. On the
+          Switchboard portion of a standard test set, the system missed 5.8
+          percent of the words, while a professional transcription vendor given
+          the same audio missed 5.9 percent.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          By the field's own yardstick, a machine now transcribed casual
+          conversation about as accurately as a person.
+        </p>
+        <p>
+          That yardstick is Word Error Rate, and the 5.8 percent is not a
+          reading off a thermometer. It is a count. To produce it, you line the
+          system's transcript against a reference a human prepared. Then you
+          tally the word edits it would take to turn one into the other, and
+          divide by the number of words in the reference. The
+          percentage is edits over reference words, and nothing else.
+          Everything the headline meant rests on two choices: which edits get
+          counted, and what reference they are counted against.
+        </p>
+      </section>
+
+      <section data-nb-section="the-count" id="the-count">
+        <h2>How a transcript becomes a number</h2>
+        <p>
+          Begin with the two lines of text. The reference is what was actually
+          said. The hypothesis is what the system wrote down. Scoring lines them
+          up word for word, picking the alignment that needs the fewest edits,
+          and sorts every mismatch into one of three kinds. A substitution is
+          one word standing in for another, as when the system writes "slow"
+          where the speaker said "quick." A deletion is a reference word the
+          system left out. An insertion is a word the system added that no one
+          spoke. Correct words cost nothing. The reference-scoring tool the
+          field settled on, NIST's sclite, finds that alignment by minimizing a
+          weighted distance. It charges 4 for a substitution, 3 for a deletion, 3
+          for an insertion, and 0 for a correct word, and keeps whichever reading
+          of the two lines is cheapest.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          Written out, the score is the three edit counts added together, over
+          the length of the reference:
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \mathrm{WER} = 100 \times \frac{ \htmlClass{nb-mc1}{S} +
+            \htmlClass{nb-mc2}{D} + \htmlClass{nb-mc3}{I} }{ \htmlClass{nb-mc4}{N}
+            }
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">S</span
+              ><span>substitutions: one word written in place of another.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">D</span
+              ><span>deletions: a reference word the system dropped.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">I</span
+              ><span>insertions: a word the system added that no one said.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc4">N</span
+              ><span>the number of words in the reference transcript.</span>
+            </li>
+          </ul>
+          <figcaption>
+            The three edit counts summed over the reference length, times one
+            hundred. Because insertions sit on top, the rate can pass 100
+            percent.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </figcaption>
+        </figure>
+        <p>Take a six-word reference and a system that got most of it:</p>
+        <table class="nb-table">
+          <caption>
+            Aligning a six-word reference to the system's transcript: one
+            substitution, one deletion, one insertion, a Word Error Rate of 3
+            over 6, or 50 percent.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Reference</th>
+              <th>System</th>
+              <th class="txt">Edit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>the</td>
+              <td>the</td>
+              <td class="txt">correct</td>
+            </tr>
+            <tr>
+              <td>quick</td>
+              <td>slow</td>
+              <td class="txt">substitution</td>
+            </tr>
+            <tr>
+              <td>brown</td>
+              <td>brown</td>
+              <td class="txt">correct</td>
+            </tr>
+            <tr>
+              <td>fox</td>
+              <td>fox</td>
+              <td class="txt">correct</td>
+            </tr>
+            <tr>
+              <td>happily</td>
+              <td>&mdash;</td>
+              <td class="txt">deletion</td>
+            </tr>
+            <tr>
+              <td>jumps</td>
+              <td>jumps</td>
+              <td class="txt">correct</td>
+            </tr>
+            <tr>
+              <td>&mdash;</td>
+              <td>now</td>
+              <td class="txt">insertion</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The split into the three kinds is less obvious than the two lines make
+          it look. The same 50 percent could be read as three substitutions
+          rather than one substitution, one deletion, and one insertion, and the
+          total error would come out identical. sclite's weights are what make
+          the intuitive reading the official one. One substitution, one
+          deletion, and one insertion cost 4 plus 3 plus 3, or 10, while three
+          substitutions cost 12, so the alignment that matches a person's
+          intuition is also the cheapest.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          The percentage also has no ceiling at 100. Because insertions are
+          counted, a system that pads its output can score worse than getting
+          everything wrong. Transcribe the single word "hello" as "hello there
+          my friend" and you have three insertions over a one-word reference, a
+          Word Error Rate of 300 percent.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="same-test" id="same-test">
+        <h2>What the count can settle</h2>
+        <p>
+          Held to one test set, one reference, and one set of text-formatting
+          rules, Word Error Rate does the job it was built for. If two systems
+          transcribe the same audio against the same reference, the one with the
+          lower rate genuinely made fewer word errors, and the distance between
+          them is real. It is why speech-recognition leaderboards are Word Error
+          Rate tables, and why the Microsoft and IBM systems could be compared at
+          all: they ran on the same NIST tapes.
+        </p>
+        <p>
+          The score is
+          built on raw string comparison, so it charges the system for
+          differences that mean nothing to a listener: "okay" where the
+          reference has "OK," "7" for "seven," a comma the reference omits. When
+          OpenAI built <a href="../the-evidence/whisper.html">Whisper</a>, a
+          speech model this course has already met, its team wrote a text
+          normalizer to strip those non-semantic differences before scoring, and
+          reported that on some datasets the step alone cut the measured error
+          rate by as much as half.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          None of the words the system got right had changed. Only the
+          bookkeeping had. A Word Error Rate is comparable only to another figure
+          normalized the same way. That is the first question worth asking of any
+          two scores placed side by side.
+        </p>
+      </section>
+
+      <section data-nb-section="parity-case" id="parity-case">
+        <h2>The human baseline moves</h2>
+        <p>
+          Return to that 5.9 percent human figure. It is the softest number in
+          the story. Microsoft measured it by slipping the test audio,
+          unlabeled, into a commercial vendor's ordinary weekly workload: one
+          transcription pass from scratch, one pass correcting it, nothing more
+          elaborate.<sup class="nb-cite"><a href="#s1">1</a></sup> On the harder
+          CallHome portion, where friends and family talk loosely rather than
+          strangers on an assigned topic, that same vendor scored 11.3 percent
+          against the system's 11.0. Parity seemed to hold on both halves.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Microsoft ran an error analysis and found that its system and the human
+          transcribers stumbled in the same places, on the same short function
+          words, with the same difficult speakers. Judges shown the two
+          transcripts could not reliably tell which was the machine's.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Where the system erred, a person often erred too, and not in ways that
+          wrecked the meaning any more than the human's did. On this test set,
+          the number was not quietly hiding a difference in kind between the two.
+        </p>
+        <p>
+          What it was hiding was the softness of the thing it measured against.
+          Prompted by the gap between Microsoft's 5.9 percent and an older,
+          widely repeated 4 percent figure, IBM commissioned its own measurement
+          of the same tapes, using three independent transcribers whose work a
+          fourth senior transcriber checked. After that check, the best
+          transcriber reached 5.1 percent on Switchboard and a "surprisingly
+          low" 6.8 percent on CallHome, against Microsoft's 11.3.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          The human error rate on the hard set had nearly halved, though no one
+          had spoken differently. The transcript was simply prepared with more
+          care, and IBM traced almost the whole difference to deletions: the
+          rushed vendor pass dropped words the careful one kept.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">5.1%</span
+            ><span class="nb-stat-l">Machine, Switchboard (2017)</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">5.1%</span
+            ><span class="nb-stat-l">Human, Switchboard (IBM)</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">11.3%</span
+            ><span class="nb-stat-l">Human, CallHome (Microsoft vendor)</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">6.8%</span
+            ><span class="nb-stat-l">Human, CallHome (IBM)</span>
+          </div>
+        </div>
+        <p>
+          Reviewing the dispute in its 2017 follow-up, Microsoft conceded the
+          point in plain words.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The concession</span>
+          <blockquote>
+            "Together with a prior study by LDC, we can conclude that human
+            performance, unsurprisingly, falls within a range depending on the
+            level of effort expended."<sup class="nb-cite"
+              ><a href="#s6">6</a></sup
+            >
+            <span class="nb-note-who">Microsoft, 2017 system report</span>
+          </blockquote>
+        </div>
+        <p>
+          Two readings survive, and both are true. On Switchboard, parity was
+          real: Microsoft's improved 2017 system reached 5.1 percent, matching
+          IBM's best human transcriber exactly.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          But Switchboard is an easy test, with 36 of its 40 evaluation speakers
+          also present in the data the systems trained on. On CallHome, where the
+          human number had moved to 6.8 percent, no machine had reached parity at
+          all.<sup class="nb-cite"><a href="#s5">5</a></sup> The
+          milestone was genuine, as the linguist Mark Liberman noted at the
+          time.<sup class="nb-cite"><a href="#s7">7</a></sup> It was also a
+          milestone on one benchmark, against a human baseline whose value
+          depended on how hard someone had been asked to try.
+        </p>
+      </section>
+
+      <section data-nb-section="blind-spots" id="blind-spots">
+        <h2>The errors a percentage can't tell apart</h2>
+        <p>
+          The parity result held up because its errors happened to be benign.
+          That is not something Word Error Rate can promise, because the metric
+          cannot see meaning at all. It counts word edits, and every edit costs
+          the same. Dropping the word "not" from "do not resuscitate" is a single
+          deletion, worth exactly what swapping a filler "uh" for an "um" is
+          worth. A fluent, confident sentence the speaker never said scores the
+          same as an audible mishearing of equal length. The number reports how
+          many words differ, never which of the differences matters.
+        </p>
+        <p>
+          Reported over a whole test set, that blindness compounds. A headline
+          rate is an average, so a few segments where the system invented text
+          can hide inside a low overall number, smoothed away by the clean
+          segments around it. Whisper does exactly this.
+          OpenAI's own analysis records it getting stuck in repeat loops,
+          skipping the first or last words of a segment, and at times producing
+          "a transcript entirely unrelated to the actual audio."<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Someone reading the caption has no way to tell, from the score alone,
+          whether an error was a harmless slip or a sentence of confident
+          fiction.
+        </p>
+        <p>
+          The number travels badly, too. Run the same systems on accented or
+          dialect speech and it moves sharply. A 2020 study of five commercial systems
+          found an average Word Error Rate of 0.35 for Black speakers against
+          0.19 for white speakers on matched conversational audio, close to
+          double in every system tested. The authors traced the gap to acoustic
+          models trained on too little Black speech.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          Add background noise and even the ranking can flip: systems that post
+          nearly identical numbers on clean audio pull apart as the signal
+          degrades.<sup class="nb-cite"><a href="#s4">4</a></sup> Microsoft's 5.8
+          percent was true. It was true of one corpus, read
+          against one reference, normalized one way.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A Word Error Rate is a count of word edits against one reference
+          transcript on one body of audio, divided by the number of words in that
+          reference. It can settle which of two systems did better on the same
+          test, read the same way, and little more. The "human parity" headline
+          was true where the audio was easy and the human transcript was rushed,
+          and it dissolved on harder speech once someone re-transcribed the
+          reference with more care, moving the human number from 11.3 percent to
+          6.8 on the same tapes. The metric counts words, not meaning. It grades
+          a fluent invention and a dropped "not" as gently as it grades a filler
+          sound, and it does not carry from one accent, one noise level, or one
+          corpus to the next. When you next read that a system transcribes
+          at human parity, the number is a real measurement of a narrow thing.
+          Ask what speech it was measured on, whose reference it was scored
+          against, and how the text was normalized, and you will know what the
+          percentage can carry.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://web.stanford.edu/~jurafsky/slp3/16.pdf"
+              >Jurafsky &amp; Martin, Speech and Language Processing, Ch. 16</a
+            >: the standard textbook treatment of Word Error Rate and how speech
+            systems are scored.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.pnas.org/doi/10.1073/pnas.1915768117"
+              >Koenecke et al., "Racial disparities in automated speech
+              recognition"</a
+            >: the study behind the accent and dialect gap, in full.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1610.05256"
+              >Microsoft Research (Xiong et al.) · Achieving Human Parity in
+              Conversational Speech Recognition</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/usnistgov/SCTK/blob/master/doc/sclite.htm"
+              >NIST · sclite scoring documentation (SCTK)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://web.stanford.edu/~jurafsky/slp3/16.pdf"
+              >Jurafsky &amp; Martin · Speech and Language Processing, 3rd ed.,
+              Ch. 16</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2212.04356"
+              >OpenAI (Radford et al.) · Robust Speech Recognition via
+              Large-Scale Weak Supervision</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1703.02136"
+              >IBM (Saon et al.) · English Conversational Telephone Speech
+              Recognition by Humans and Machines</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1708.06073"
+              >Microsoft Research (Xiong et al.) · The Microsoft 2017
+              Conversational Speech Recognition System</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://languagelog.ldc.upenn.edu/nll/?p=28894"
+              >Language Log (Mark Liberman) · Commentary on Microsoft's
+              human-parity result</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.pnas.org/doi/10.1073/pnas.1915768117"
+              >Koenecke et al. · Racial disparities in automated speech
+              recognition (PNAS)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
