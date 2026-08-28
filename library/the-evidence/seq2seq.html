@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google packed a whole sentence into a single vector · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "seq2seq",
+        "template": "lesson",
+        "title": "Google packed a whole sentence into a single vector",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-28",
+        "tags": ["machine-translation", "encoder-decoder", "seq2seq"],
+        "sources": 6,
+        "words": 1872,
+        "reading_minutes": 8,
+        "dek": "The 2014 LSTM that gave machine translation its encoder-decoder shape leaned on a source-reversing hack that attention made unnecessary within months.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Google packed a whole sentence into a single vector</h1>
+        <p class="nb-dekline">
+          The 2014 LSTM that gave machine translation its encoder-decoder shape
+          leaned on a source-reversing hack that attention made unnecessary
+          within months.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-28</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Almost every system that turns one piece of text into another, a
+          translator, a chatbot drafting a reply, a model shortening a long
+          document, inherits its basic shape from one 2014 paper. That paper
+          taught a network to read a sentence into a single list of numbers, and
+          a second network to write that list back out as a translation, and it
+          called the setup sequence to sequence. This lesson reads the paper:
+          what it actually built, how small the result really was, the
+          hand-adjustment it depended on, and which part of it the field kept
+          once a better idea arrived. By the end you can say what the 2014 system
+          did and did not show, and tell the durable idea from the mechanism that
+          was replaced within months.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/attention-is-all-you-need.html"
+              >Attention Is All You Need</a
+            >: the design that replaced recurrence with attention and now sits
+            under most large language models.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1409.3215"
+              >Sequence to Sequence Learning with Neural Networks</a
+            >: the original paper, nine pages, readable in an afternoon.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Reading a sentence into one vector</h2>
+        <p>
+          In 2014, three Google researchers reported a translation system built
+          on a single idea. One neural network reads an English sentence and
+          squeezes it into a fixed-length list of numbers, and a second reads that
+          list back out as French.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The authors were Ilya Sutskever, Oriol Vinyals, and Quoc Le. They named
+          the arrangement sequence to sequence, and the name now covers a large
+          share of what neural networks do with language.
+        </p>
+        <p>
+          Start with the list of numbers, because it is the whole trick. A
+          nutrition label reduces any dish, an apple or a lasagna, to the same
+          short row of numbers, and two foods whose rows are close are alike in
+          the ways the label measures. The encoder network does this to a
+          sentence. It reads the words one at a time, keeps a running summary,
+          and when the sentence ends it hands over that summary: a fixed-length
+          vector, a list of the same length whether the sentence ran three words
+          or thirty.<sup class="nb-cite"><a href="#s1">1</a></sup> The difference
+          from a nutrition label is size. A label has a handful of fields; the
+          vector here is built inside network layers that each carry a thousand
+          numbers, room enough, the authors bet, to hold everything the second
+          network needs to rewrite the sentence in another language.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Both networks are long short-term memory networks, or LSTMs, a kind of
+          recurrent network built to carry information across long stretches of
+          text. The second one runs the first in reverse. Given the vector, it
+          writes French one word at a time, each word chosen from the vector and
+          the words already written.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The single most likely word at each step does not always add up to the
+          best sentence, so the decoder keeps a short list of the most promising
+          partial translations and extends them together, a procedure called beam
+          search.<sup class="nb-cite"><a href="#s1">1</a></sup> Read a sequence in
+          with one network, write a sequence out with another: that is the shape
+          the paper is remembered for.
+        </p>
+      </section>
+
+      <section data-nb-section="scale" id="scale">
+        <h2>What 34.81 is actually made of</h2>
+        <p>
+          The system was tested on one task, translating English news text into
+          French, on the standard WMT'14 benchmark.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The thing it had to beat was not another neural network. It was a
+          phrase-based statistical translator, the mainstream method of the day,
+          which scored 33.30 on the benchmark's BLEU scale, a 0-to-100 measure of
+          how closely a machine translation matches human reference
+          translations.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          A single one of the paper's LSTMs, with the source reversed, scored
+          30.59, below the statistical baseline.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The headline 34.81 came from stacking: five separately trained networks
+          voting together, decoded with a beam of twelve.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          And the best number in the paper, 36.5, was not the LSTM translating on
+          its own. It was that same five-network ensemble used to re-rank the
+          statistical system's own thousand best guesses.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">34.81</span
+            ><span class="nb-stat-l">headline BLEU</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">33.30</span
+            ><span class="nb-stat-l">baseline it beat</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">384M</span
+            ><span class="nb-stat-l">parameters</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">~10 days</span
+            ><span class="nb-stat-l">on 8 GPUs</span>
+          </div>
+        </div>
+        <table class="nb-table">
+          <caption>
+            BLEU on WMT'14 English-to-French, by system and decoding. The 34.81
+            headline is a five-network ensemble. A single network reaches
+            30.59.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Table 1, Section 3.6">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">System</th>
+              <th>BLEU</th>
+              <th class="txt">What produced it</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Baseline</span></td>
+              <td>33.30</td>
+              <td class="txt">The phrase-based statistical translator.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Forward</span></td>
+              <td>26.17</td>
+              <td class="txt">One LSTM, source read in order.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Reversed</span></td>
+              <td>30.59</td>
+              <td class="txt">One LSTM, source read backward.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Ensemble beam 1</span></td>
+              <td>33.00</td>
+              <td class="txt">Five networks voting, one word at a time.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Ensemble beam 12</span></td>
+              <td>34.81</td>
+              <td class="txt">The headline result.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Rescoring</span></td>
+              <td>36.5</td>
+              <td class="txt">The ensemble re-ranking the baseline's guesses.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The whole model held about 384 million adjustable numbers, most of them
+          not in the translating layers but in two lookup tables: one row for
+          each of the 160,000 English words it could read and each of the 80,000
+          French words it could write.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          It trained on 12 million sentence pairs, 304 million English words
+          against 348 million French, on eight GPUs for about ten days.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          For 2014 that was a large machine, and the entire return on it was one
+          direction of one language pair.
+        </p>
+      </section>
+
+      <section data-nb-section="reversing" id="reversing">
+        <h2>Why they reversed the English</h2>
+        <p>
+          The single change that bought the most was strange. Before training,
+          the authors reversed the word order of every English source sentence,
+          feeding "sat cat the" in place of "the cat sat" while leaving the
+          French target in normal order.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          On its own that flip raised the single-model score from 25.9 to 30.6
+          BLEU and dropped the network's perplexity, a measure of how surprised
+          it is by the next word, from 5.8 to 4.7.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 3.3">1</a></sup
+          >
+        </p>
+        <p>
+          Their explanation was partial, and they said so. Reversing the source
+          puts the first English words next to the first French words they line
+          up with, shortening the distance the network has to carry an early
+          dependency before it starts producing output.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Why one flip helped so evenly across a whole sentence, and not only its
+          opening, they could not fully say. In their own words, "we do not have a
+          complete explanation to this phenomenon."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 3.3">1</a></sup
+          >
+        </p>
+        <p>
+          The trick worked and its numbers were real, and a hand-adjustment of
+          that size tells you something. A network that needed its input flipped,
+          to keep early words close to their translations, was feeling the strain
+          of carrying a long sentence through one vector. That is a narrower
+          admission than the one the field later pinned on the paper, and the
+          authors made only the narrow one. On the larger question, whether a
+          single fixed vector was a ceiling, they claimed the opposite.
+        </p>
+      </section>
+
+      <section data-nb-section="bottleneck" id="bottleneck">
+        <h2>The bottleneck the paper never conceded</h2>
+        <p>
+          Squeezing a whole sentence into one fixed vector sounds like it should
+          break on long sentences, where there is more to hold. The authors
+          expected that, and found the reverse.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Their system's score held roughly flat as sentences grew, out to about
+          thirty-five words, with only slight slippage on the longest.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 3.7">1</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">What the paper claimed</span>
+          <blockquote>
+            "We were surprised to discover that the LSTM did well on long
+            sentences."<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Section 3.7">1</a></sup
+            >
+            <span class="nb-note-who"
+              >Sutskever, Vinyals, and Le, Section 3.7</span
+            >
+          </blockquote>
+        </div>
+        <p>
+          The diagnosis the field remembers as this paper's flaw is not in this
+          paper. It was made the same month, by a different group. Dzmitry
+          Bahdanau, Kyunghyun Cho, and Yoshua Bengio conjectured "that the use of
+          a fixed-length vector is a bottleneck in improving the performance of
+          this basic encoder-decoder architecture."<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          They offered a fix. Instead of one vector for the whole sentence,
+          encode the source as a sequence of vectors, and let the decoder pick
+          which of them to read for each word it writes. That fix is attention.
+        </p>
+        <p>
+          A companion paper then measured the failure the conjecture predicted.
+          Cho and colleagues tested a plain recurrent encoder-decoder and watched
+          its quality "suffer significantly as the length of the sentences
+          increases."<sup class="nb-cite"><a href="#s3">3</a></sup> They blamed
+          "the fixed-length vector representation," which "does not have enough
+          capacity to encode a long sentence."<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The breakdown was not measured on Sutskever's deep, reversed,
+          five-network system. It was measured on a single-layer model without the
+          reversing trick.<sup class="nb-cite"><a href="#s3">3</a></sup> The
+          bottleneck was a property of the approach, and the particular machine in
+          the seq2seq paper had been tuned, by reversing and depth and
+          ensembling, to hold it off.
+        </p>
+        <p>
+          The account that reached the textbooks kept the bottleneck and dropped
+          the surprise. A standard deep-learning text now introduces the encoder
+          as turning "a variable-length sequence as input" into "a fixed-shape
+          hidden state," then moves straight to attention as the way past that
+          single fixed-length limit.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Attention won. Within three years the
+          <a href="../the-evidence/attention-is-all-you-need.html">Transformer</a>
+          kept attention and dropped recurrence entirely, "dispensing with
+          recurrence and convolutions,"<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          and it became the design nearly every large language model now uses.
+        </p>
+        <p>
+          So what did 2014 actually establish? The durable part was the shape,
+          not the score. Today "sequence to sequence" names a general recipe:
+          read a sequence in, write a sequence out. It covers translation,
+          summarization, and question answering alike. One widely used framework,
+          T5, casts every text task into a single text-in, text-out
+          form.<sup class="nb-cite"><a href="#s6">6</a></sup> The founding result
+          under that sweeping name did one direction of one language pair and
+          leaned on a hack a better idea made obsolete. The framing lasted. The
+          fixed vector it was built on did not.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The 2014 paper gave the field a shape and a name that both held. Read a
+          sequence into a representation with one network, write the next
+          sequence out of it with another: that split still organizes machine
+          translation and much of what large language models do. What did not
+          hold was the paper's own version of the representation, a single
+          fixed-length vector carrying the whole sentence. The authors reported it
+          worked, even on long sentences, and reversed their input by hand to make
+          it work better. The same month, another group named that single vector a
+          bottleneck and measured a plainer model breaking on long inputs, and
+          attention, one vector per word instead of one for the sentence, took its
+          place. Keep the real size of the founding result in view: one direction
+          of one language pair, pulled just past a statistical baseline by
+          stacking five networks. The encoder-decoder split and the name are what
+          the paper is rightly cited for; the single fixed vector it packed each
+          sentence into is the part attention had to remove.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1409.0473"
+              >Neural Machine Translation by Jointly Learning to Align and
+              Translate</a
+            >: the paper that named the bottleneck and introduced attention.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1910.10683"
+              >Exploring the Limits of Transfer Learning with a Unified
+              Text-to-Text Transformer</a
+            >: how "text-to-text" turned one recipe into a general-purpose method.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1409.3215"
+              >arXiv · Sutskever, Vinyals, Le, Sequence to Sequence Learning with
+              Neural Networks (2014)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1409.0473"
+              >arXiv · Bahdanau, Cho, Bengio, Neural Machine Translation by
+              Jointly Learning to Align and Translate (2014)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1409.1259"
+              >arXiv · Cho et al., On the Properties of Neural Machine
+              Translation: Encoder-Decoder Approaches (2014)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://d2l.ai/chapter_recurrent-modern/seq2seq.html"
+              >Dive into Deep Learning · Sequence-to-Sequence Learning for Machine
+              Translation</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.03762"
+              >arXiv · Vaswani et al., Attention Is All You Need (2017)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1910.10683"
+              >arXiv · Raffel et al., Exploring the Limits of Transfer Learning
+              with a Unified Text-to-Text Transformer (2019)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
