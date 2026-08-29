@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tested on Atari and robots in 2017, PPO now tunes billion-parameter models · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "proximal-policy-optimization",
+        "template": "lesson",
+        "title": "Tested on Atari and robots in 2017, PPO now tunes billion-parameter models",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-29",
+        "tags": [],
+        "sources": 9,
+        "words": 2479,
+        "reading_minutes": 11,
+        "dek": "Its one durable idea is a clip that keeps a policy update from overshooting, and the trust that the method aligns language models was built entirely by later papers.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Tested on Atari and robots in 2017, PPO now tunes billion-parameter models</h1>
+        <p class="nb-dekline">
+          Its one durable idea is a clip that keeps a policy update from overshooting, and the trust that the method aligns language models was built entirely by later papers.
+        </p>
+        <div class="nb-byline">
+          <span>11 min read</span><span>2026-08-29</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Proximal Policy Optimization is the reinforcement-learning method
+          OpenAI, DeepSeek, and most labs training a chat model reach for when
+          they tune it against human feedback. It is the RL in RLHF. Yet the 2017
+          paper that introduced it taught a simulated robot to walk and a program
+          to play Atari, and it proved none of what the method is now trusted to
+          do. This lesson teaches the one idea the paper is built on, the clipped
+          objective, through a worked example you can check by hand. Then it
+          separates what the paper measured in 2017 from what the field later
+          decided to believe about PPO.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="deep-rl-from-human-preferences.html">Two more papers turned a robot's backflip trick into InstructGPT's training recipe</a>:
+            where the reward-from-human-preferences idea that PPO optimizes in RLHF came from.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="instructgpt.html">A 1.3B model beat GPT-3 on the one metric OpenAI trained it to win</a>:
+            the three-step RLHF recipe that made PPO the standard alignment optimizer.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="direct-preference-optimization.html">DPO turns preference tuning into a single classification loss</a>:
+            the method that removes PPO from preference tuning, covered here from the other side.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>PPO exists to make TRPO unnecessary</h2>
+        <p>
+          A reinforcement-learning agent learns by trial and error. It follows a
+          policy, a rule that reads the current situation and assigns a
+          probability to each action it might take. It collects a batch of
+          experience by acting on that policy, then nudges the policy toward the
+          actions that paid off. The nudging is gradient ascent, the
+          hill-climbing that trains a neural network, run on the policy's
+          parameters.
+        </p>
+        <p>
+          Collecting experience is expensive, so you would like to take several
+          gradient steps on each batch before discarding it.
+          Every step changes the policy. Once it has moved, the batch was
+          collected under a policy that no longer exists. Push too far and the
+          update is optimizing against stale data, and the policy can
+          collapse.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Trust Region Policy Optimization, from the same lead author two years
+          earlier, solved this with a guarantee. TRPO maximizes the expected
+          improvement subject to a hard constraint: the new policy may not
+          diverge too far from the old one. It measures that distance by KL
+          divergence, a standard measure of how far apart two probability
+          distributions are. Stay inside that trust region and each update is
+          provably at least as good as the
+          last.<sup class="nb-cite"><a href="#s2">2</a></sup> The guarantee is
+          real. The cost is that enforcing it needs a second-order optimization,
+          estimating the curvature of the constraint by conjugate gradients. That
+          is intricate to implement, and it does not drop cleanly into code built
+          for ordinary gradient
+          descent.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          PPO keeps the goal and drops the hard constraint and the second-order
+          solve. Its question is whether a first-order method, plain gradient
+          ascent and nothing more, can hold the update inside a trust region on
+          its own. The answer the paper gives is the clipped
+          objective.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="clipped-objective" id="clipped-objective">
+        <h2>Clipping the ratio removes the reason to overshoot</h2>
+        <p>
+          Two numbers describe a single action the agent took. The first is the
+          advantage: how much better the action turned out than the policy
+          expected from that state on average, positive when it beat expectation
+          and negative when it fell short.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The second is the probability ratio, written r: the probability the
+          current policy assigns to the action divided by the probability the old
+          policy, the one that collected the batch, assigned to it. At the start
+          of an update the two policies match, so r equals 1. As the update makes
+          the action more likely, r climbs above 1; as it makes the action less
+          likely, r drops below 1.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The obvious objective multiplies the two: r times the advantage.
+          Maximizing it makes good actions more likely and bad ones less likely,
+          which is right in direction and unbounded in size. Nothing stops the
+          update from driving r to 5 or 50 to bank a large positive advantage,
+          the exact runaway the trust region existed to
+          stop.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>PPO's fix is one line, and it is the idea the whole paper rests on.</p>
+
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            L^{CLIP}(\theta)=\hat{\mathbb{E}}_t\!\left[\htmlClass{nb-mc4}{\min}\!\left(\htmlClass{nb-mc1}{r_t(\theta)}\,\htmlClass{nb-mc2}{\hat{A}_t},\ \htmlClass{nb-mc3}{\operatorname{clip}\!\left(r_t(\theta),\,1-\epsilon,\,1+\epsilon\right)}\,\htmlClass{nb-mc2}{\hat{A}_t}\right)\right]
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">r_t(\theta)</span
+              ><span>The probability ratio: the new policy's probability for this action over the old policy's. It is 1 when the update begins.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">\hat{A}_t</span
+              ><span>The advantage: how much better the action was than the policy's baseline expectation.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">\operatorname{clip}</span
+              ><span>The clip: holds the ratio inside 1&#8722;&#949; to 1+&#949;, which is 0.8 to 1.2 at &#949;&#160;=&#160;0.2.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc4">\min</span
+              ><span>Takes the smaller product, so a ratio pushed past the clip earns nothing more.</span>
+            </li>
+          </ul>
+          <figcaption>
+            The clipped surrogate objective, for one action, averaged over a
+            batch.<sup class="nb-cite"><a href="#s1" data-nb-locator="Eq. 7 · p. 3" data-nb-url="https://arxiv.org/pdf/1707.06347#page=3">1</a></sup>
+          </figcaption>
+        </figure>
+
+        <p>
+          Read it from the inside. The clip holds r inside the interval from 1
+          minus epsilon to 1 plus epsilon. The paper recommends epsilon equal to
+          0.2, so the ratio is pinned to 0.8 through
+          1.2.<sup class="nb-cite"><a href="#s1">1</a></sup> The objective then
+          takes the smaller of two products: the true ratio times the advantage,
+          and the clipped ratio times the advantage. The minimum is what makes it
+          pessimistic, crediting the update with the less favorable
+          reading.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Work one action through it. Take a good action with advantage +2.
+          Suppose the update has already made it 1.5 times as likely as before,
+          so r is 1.5, past the 1.2 ceiling. The true product is 1.5 times 2, or
+          3.0. The clipped product pins r at 1.2, giving 2.4. The objective is the
+          smaller of the two, 2.4. That same 2.4 is what the update scores at r
+          equal to 1.2, to 3, or to 50. Once r crosses the ceiling the score
+          stops rising, the gradient goes flat, and the update has no reason to
+          push r further.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+
+        <table class="nb-table">
+          <caption>
+            One term of the clipped objective for advantage &#177;2 at &#949; = 0.2,
+            the ratio clipped to 0.8 through 1.2. The minimum takes the capped
+            product only when the update moved the way the advantage already
+            favors.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Advantage A</th>
+              <th>Ratio r</th>
+              <th>r &#183; A</th>
+              <th>clip &#183; A</th>
+              <th>min</th>
+              <th class="txt">What the minimum does</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>+2</td>
+              <td>1.5</td>
+              <td>3.0</td>
+              <td>2.4</td>
+              <td>2.4</td>
+              <td class="txt">Capped. Past the ceiling the score stops rising; no reward for pushing r higher.</td>
+            </tr>
+            <tr>
+              <td>+2</td>
+              <td>0.5</td>
+              <td>1.0</td>
+              <td>1.6</td>
+              <td>1.0</td>
+              <td class="txt">Uncapped. The step made a good action less likely, so the full gradient pulls back.</td>
+            </tr>
+            <tr>
+              <td>-2</td>
+              <td>0.5</td>
+              <td>-1.0</td>
+              <td>-1.6</td>
+              <td>-1.6</td>
+              <td class="txt">Capped. Past the floor the score stops rising; no reward for suppressing r further.</td>
+            </tr>
+            <tr>
+              <td>-2</td>
+              <td>1.5</td>
+              <td>-3.0</td>
+              <td>-2.4</td>
+              <td>-3.0</td>
+              <td class="txt">Uncapped. The step made a bad action more likely, so the full penalty applies.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          The clip is one-sided on purpose: it only removes the reward for moving
+          further in the direction the advantage already favors. When a step
+          moves the wrong way, the minimum picks the unclipped product and the
+          full corrective gradient survives. The paper draws both cases.
+        </p>
+
+        <figure class="nb-figure">
+          <img src="proximal-policy-optimization/asset-1.png" alt="Two plots of the clipped objective for one action against the probability ratio r. Left, for a positive advantage: the objective rises with r until 1 plus epsilon and then stays flat. Right, for a negative advantage: it stays flat until 1 minus epsilon and then falls. A red dot on each marks the starting point r equals 1." />
+          <figcaption>
+            Fig. 1 &#183; One term of the clipped objective against the
+            probability ratio r, for a positive advantage (left) and a negative
+            one (right). The red dot marks the update's starting point, r = 1;
+            past 1 + &#949; on the left and below 1 &#8722; &#949; on the right,
+            the objective is flat.<sup class="nb-cite"><a href="#s1" data-nb-locator="Fig. 1 · p. 3" data-nb-url="https://arxiv.org/pdf/1707.06347#page=3" data-nb-note="Shows the clip flattening the objective past the trust region, the mechanism the worked example computes.">1</a></sup>
+          </figcaption>
+        </figure>
+
+        <p>
+          Because the objective flattens the moment a step would carry the policy
+          past the trust region, the policing TRPO did with a hard constraint
+          falls out of the objective itself. That is what lets PPO reuse a batch.
+          The paper runs ten gradient epochs over each batch of MuJoCo
+          experience, ten passes that would blow up an unclipped objective, and
+          the clip absorbs the
+          excess.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="benchmark-scope" id="benchmark-scope">
+        <h2>Every number came from robots and Atari games</h2>
+        <p>
+          The paper's evidence is two benchmark suites, both small next to the
+          models PPO now trains. The first is seven MuJoCo continuous-control
+          tasks, simulated robots learning to walk, hop, and swim, each run for
+          one million timesteps.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The second is 49 Atari games.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          No language, no text. The method that now tunes 175-billion-parameter language
+          models<sup class="nb-cite"><a href="#s3">3</a></sup> was, in the paper,
+          measured on a simulated cheetah learning to
+          run.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          On the robots, clipping earns its place. The paper sweeps the clip
+          width and scores each setting on a scale where a random policy is 0 and
+          the best result is 1. No clipping at all scores minus 0.39, worse than
+          random. Epsilon equal to 0.2 scores 0.82, the best of any setting
+          tried.<sup class="nb-cite"><a href="#s1">1</a></sup> Without the clip,
+          the objective is actively bad.
+        </p>
+        <p>
+          Atari is where the tidy story breaks. The paper scores the 49 games two
+          ways. By average reward across all of training, which rewards fast
+          learning, PPO wins 30 games to ACER's 18. By average reward over the
+          last 100 episodes, which rewards the final policy, the order reverses:
+          ACER wins 28 to PPO's 19.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          PPO learns faster and finishes second. The abstract says only that on
+          Atari, PPO performs "similarly to ACER though it is much
+          simpler."<sup class="nb-cite"><a href="#s1">1</a></sup> A lesson that
+          says PPO swept the benchmarks has read the first scoring and skipped
+          the second.
+        </p>
+      </section>
+
+      <section data-nb-section="no-proof" id="no-proof">
+        <h2>The paper convinces without proving</h2>
+        <p>
+          For a paper this influential, it proves remarkably little. TRPO came
+          with a theorem; PPO comes with an intuition and a set of experiments.
+          The paper calls its objective a "lower bound," a "pessimistic bound" on
+          the naive one, not an optimum.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          It says the clipped objective "emulates" TRPO's monotonic improvement
+          rather than achieving it.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          It picks its central constant with a shrug: the paper writes "where
+          epsilon is a hyperparameter, say, &#949; = 0.2." The constants in its
+          alternative KL-penalty version it calls "chosen
+          heuristically."<sup class="nb-cite"><a href="#s1">1</a></sup> None of
+          this is hidden; it is all on the page. But a reader who wants a proof
+          that PPO stays inside the trust region will not find one.
+        </p>
+        <p>
+          Later work turned that gap into a sharper claim: PPO's edge may not come
+          from the clip at all. Engstrom and coauthors reimplemented PPO and TRPO
+          and isolated the "code-level optimizations," adjustments that live in
+          released implementations or pass as auxiliary details rather than in
+          the objective. They found these are "responsible for most of PPO's gain
+          in cumulative reward over TRPO."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          A companion catalog counted 37 implementation details needed to
+          reproduce PPO's results, most nowhere in the clipped objective the
+          paper is known for.<sup class="nb-cite"><a href="#s5">5</a></sup> The
+          objective is real, and it is what people mean by PPO. Whether it, rather
+          than years of accumulated engineering, is what won PPO its benchmarks is
+          a question the paper does not settle.
+        </p>
+      </section>
+
+      <section data-nb-section="second-life" id="second-life">
+        <h2>The optimizer found a second life tuning language models</h2>
+        <p>
+          None of what makes PPO famous now is in the 2017 paper. The bridge to
+          language models was built afterward, one paper at a time.
+        </p>
+        <p>
+          The first crossing came in 2019. Ziegler and coauthors at OpenAI
+          fine-tuned a 774-million-parameter GPT-2 with PPO. The reward was no
+          longer a game score. It came from a reward model trained to predict
+          which of two text continuations a human would prefer. To stop the
+          policy from drifting into text that merely gamed that reward, they
+          added a penalty for straying too far from the original model, measured
+          again by KL divergence.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          That setup became the template. InstructGPT, in 2022, ran the same
+          three-step recipe at 175 billion parameters, and its
+          reinforcement-learning step is PPO by
+          name.<sup class="nb-cite"><a href="#s3">3</a></sup> That is the lineage
+          that made "PPO" a word used daily by people who have never seen a
+          MuJoCo robot.
+        </p>
+        <p>
+          The lineage is also being routed around, in two directions. Direct
+          Preference Optimization, in 2023, replaced the whole
+          reward-model-then-PPO loop with a single classification-style loss over
+          preference pairs, with no reinforcement learning at all. It keeps the
+          objective PPO was optimizing and drops the
+          optimizer.<sup class="nb-cite"><a href="#s7">7</a></sup> Group Relative
+          Policy Optimization, introduced with DeepSeekMath in 2024, went the
+          other way. It keeps PPO's clipped ratio exactly but discards the value
+          network, the second model PPO trains to estimate the advantage, often
+          as large as the policy itself. GRPO estimates that baseline from a group
+          of sampled answers to the same question instead. Dropping the value
+          network removed a model "of comparable size as the policy," a real
+          saving in memory and
+          compute.<sup class="nb-cite"><a href="#s8">8</a></sup> GRPO is the
+          algorithm DeepSeek used to train its R1 reasoning model, in active use
+          as of early 2025.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <p>
+          The clipped objective from 2017 still runs
+          inside the largest training pipelines. But "PPO is how you align a
+          model" is a belief the field assembled after the paper, on tasks the
+          paper never ran. It is already being taken apart: DPO dropping the
+          reinforcement learning, GRPO dropping the value network, both from
+          people asking which parts of PPO were ever doing the work.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          PPO's lasting idea is small and checkable. Take the smaller of the real
+          and the clipped advantage-weighted ratio, and a policy update loses its
+          reason to leave the trust region, so one batch of experience can feed
+          several gradient steps without the policy running away. That was shown
+          in 2017 on seven simulated robots and 49 Atari games, with no proof
+          underneath it and a record that was strong but not a clean sweep.
+          Everything beyond that came later. PPO now aligns billion-parameter
+          language models and is the default optimizer to reach for. But that
+          standing is trust the field extended on tasks the paper never touched,
+          and it is already being re-examined. When you read that a model was
+          "trained with PPO," you are
+          reading about a 2017 clip doing a job it was never tested for, wrapped
+          in years of engineering the paper never described.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="http://incompleteideas.net/book/RLbook2020.pdf">Sutton and Barto, <em>Reinforcement Learning: An Introduction</em></a>:
+            the standard text, for the policy-gradient foundations the paper assumes.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://iclr-blog-track.github.io/2022/03/25/ppo-implementation-details/">The 37 Implementation Details of Proximal Policy Optimization</a>:
+            a line-by-line account of everything a working PPO needs that the paper leaves out.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2402.03300">DeepSeekMath (Shao et al., 2024)</a>:
+            introduces GRPO, the PPO variant now training reasoning models.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1707.06347"
+              >arXiv · Schulman et al., Proximal Policy Optimization Algorithms (2017)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1502.05477"
+              >arXiv · Schulman et al., Trust Region Policy Optimization (2015)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.02155"
+              >arXiv · Ouyang et al., Training Language Models to Follow Instructions with Human Feedback (2022)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2005.12729"
+              >arXiv · Engstrom et al., Implementation Matters in Deep Policy Gradients: A Case Study on PPO and TRPO (2020)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://iclr-blog-track.github.io/2022/03/25/ppo-implementation-details/"
+              >ICLR Blog Track · Huang et al., The 37 Implementation Details of Proximal Policy Optimization (2022)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1909.08593"
+              >arXiv · Ziegler et al., Fine-Tuning Language Models from Human Preferences (2019)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.18290"
+              >arXiv · Rafailov et al., Direct Preference Optimization: Your Language Model is Secretly a Reward Model (2023)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2402.03300"
+              >arXiv · Shao et al., DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models (2024)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2501.12948"
+              >arXiv · DeepSeek-AI, DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
