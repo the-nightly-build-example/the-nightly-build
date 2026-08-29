@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adding six wrong answers to each MMLU question fixed its guessing problem · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "mmlu-pro",
+        "template": "lesson",
+        "title": "Adding six wrong answers to each MMLU question fixed its guessing problem",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-29",
+        "tags": [],
+        "sources": 9,
+        "words": 1746,
+        "reading_minutes": 8,
+        "dek": "The same rebuild that expanded every question's options also swapped in enough new problems to make Math the largest subject, and two years on the top models already sit within a point of one another near 88%.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">Adding six wrong answers to each MMLU question fixed its guessing problem</h1>
+        <p class="nb-dekline">
+          The same rebuild that expanded every question's options also swapped in
+          enough new problems to make Math the largest subject, and two years on
+          the top models already sit within a point of one another near 88%.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-29</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every new model now arrives with a number labeled MMLU-Pro, and it has
+          quietly replaced the MMLU score you may have read a year ago. This
+          lesson takes that number apart: who builds it, how a single question is
+          made, and what the two design changes behind it actually buy. By the
+          end you will be able to say which of MMLU's known flaws MMLU-Pro fixed,
+          which it only reduced, and what a gap between two MMLU-Pro scores does
+          and does not tell you.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/mmlu.html">The lab that ships an MMLU score rarely says how it was measured</a>:
+            the test MMLU-Pro was built to replace, and how its own score is put together.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.argmin.net/p/benchmark-studies">Ben Recht, "Benchmark Studies"</a>:
+            why competitive testing on shared benchmarks drives the field, from a researcher who studies the practice.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The number that took MMLU's place</h2>
+        <p>
+          Meta's model card for Llama 4, published in 2025, lists a benchmark
+          called MMLU-Pro near the top of its benchmark
+          tables.<sup class="nb-cite"><a href="#s1">1</a></sup> The switch was not
+          cosmetic. By 2024 the strongest models were clearing the high 80s on
+          <a href="../the-instruments/mmlu.html">MMLU</a>, the 2020 test of
+          general knowledge across 57 school and professional subjects, and a
+          test almost everyone passes has stopped sorting
+          anyone.<sup class="nb-cite"><a href="#s2">2</a></sup> Hugging Face
+          reached the same conclusion and dropped MMLU from its Open LLM
+          Leaderboard in favor of MMLU-Pro, calling the older test "noisy" and
+          "too easy."<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          MMLU-Pro was released in 2024 by TIGER-Lab, a research group led by
+          Wenhu Chen at the University of Waterloo, and it was built to repair
+          three specific things MMLU got
+          wrong.<sup class="nb-cite"><a href="#s2">2</a></sup> Whether it
+          repaired them is the question worth asking of any score, and MMLU-Pro
+          turns out to have three different answers to it.
+        </p>
+      </section>
+
+      <section data-nb-section="construction" id="construction">
+        <h2>How each question gets built</h2>
+        <p>
+          MMLU-Pro is not written from scratch. TIGER-Lab assembled it in five
+          passes over questions that mostly already existed.
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>Start from MMLU</h3>
+            <p>
+              The build began with 13,937 questions drawn from
+              MMLU.<sup class="nb-cite"><a href="#s4">4</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Drop the easy ones</h3>
+            <p>
+              Eight open-source models answered every question, and any that more
+              than four of them got right was cut as too easy. That removed 5,886
+              questions.<sup class="nb-cite"><a href="#s4">4</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Add harder sources</h3>
+            <p>
+              New questions came in from STEM websites, TheoremQA, and SciBench,
+              with GPT-4-Turbo pulling a short answer out of each worked
+              solution.<sup class="nb-cite"><a href="#s4">4</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Expand four options to ten</h3>
+            <p>
+              GPT-4-Turbo wrote six extra plausible wrong answers for each
+              question, taking the four original choices up to
+              ten.<sup class="nb-cite"><a href="#s4">4</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Review every option twice</h3>
+            <p>
+              Human experts checked the answer keys, then Gemini-1.5-Pro
+              re-examined every option to catch anything wrongly marked wrong,
+              followed by a second human pass.<sup class="nb-cite"><a href="#s4">4</a></sup>
+            </p>
+          </li>
+        </ol>
+        <p>
+          What comes out is 12,032 questions across 14
+          disciplines.<sup class="nb-cite"><a href="#s4">4</a></sup> Of those,
+          6,810 came from MMLU. The other 43% are new, and they change what the
+          test covers: Math is now the single largest discipline at 1,351
+          questions, ahead of Physics and
+          Chemistry.<sup class="nb-cite"><a href="#s4">4</a></sup> So MMLU-Pro is
+          not MMLU made harder. It measures a different, STEM-weighted subject
+          mix, and a model's MMLU-Pro score and its MMLU score are grading partly
+          different knowledge.
+        </p>
+      </section>
+
+      <section data-nb-section="levers" id="levers">
+        <h2>Ten options, and a reward for thinking out loud</h2>
+        <p>
+          Two of those five passes carry almost the whole design, and they aim at
+          different weaknesses. The first is the jump from four options to ten.
+          The guess rate is the score a model earns by picking answers at random,
+          and on MMLU's four options it is 25%, one in
+          four.<sup class="nb-cite"><a href="#s5">5</a></sup> Add six more wrong
+          answers and that floor falls to roughly one in ten. TIGER-Lab states
+          the purpose plainly: "by increasing the distractor numbers, we
+          significantly reduce the probability of correct guess by
+          chance."<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          The second change is subtler. By filtering out questions the models
+          already solved and tilting toward ones that need working through,
+          MMLU-Pro rewards reasoning. Chain-of-thought is a prompt that tells a
+          model to work through its steps before committing to an answer, rather
+          than naming an option straight away. On MMLU that habit barely helped:
+          GPT-4o scored 1.5 points higher with it than without. On MMLU-Pro the
+          same model gained 19.1 points from
+          it.<sup class="nb-cite"><a href="#s4">4</a></sup> The wider gap is
+          evidence that the questions reward reasoning, though not proof that the
+          models reason: a follow-up test, MMLU-Pro+, found strong models still
+          often lock onto a first-picked option instead of reworking the
+          problem.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">25% → ~10%</span
+            ><span class="nb-stat-l">Random-guess floor, four options to ten</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">+1.5 → +19.1</span
+            ><span class="nb-stat-l">Chain-of-thought gain for GPT-4o, MMLU to MMLU-Pro</span>
+          </div>
+        </div>
+        <p>
+          Those are the two levers TIGER-Lab pulled. Whether they repaired MMLU's
+          known flaws has three separate answers.
+        </p>
+      </section>
+
+      <section data-nb-section="grades" id="grades">
+        <h2>Three flaws, three different grades</h2>
+        <p>
+          The guessing floor is the one repair that worked by arithmetic. Ten
+          options instead of four cannot be talked around: a model guessing
+          blindly now clears about 10% rather than 25%, and no choice of prompt or
+          grader moves that number. The single qualification is small. Because
+          17% of questions carry fewer than ten options, averaging 9.47, the real
+          floor sits just above 10% rather than exactly on
+          it.<sup class="nb-cite"><a href="#s4">4</a></sup> Graded on its own
+          terms, this repair is finished.
+        </p>
+        <p>
+          Label noise is harder to grade. It is the share of questions whose
+          marked-correct answer is actually wrong, or that have no single correct
+          answer, and MMLU had a real amount of it. In 2024 a team led by Aryo
+          Gema re-annotated MMLU and estimated that 6.49% of its questions contain
+          such errors.<sup class="nb-cite"><a href="#s8">8</a></sup> In one
+          subject, Virology, 57% of the questions they examined had a problem, a
+          third of them a flatly wrong answer
+          key.<sup class="nb-cite"><a href="#s8">8</a></sup> The errors changed
+          results: once the broken Virology questions were removed, Llama 3.1 405B
+          moved from 16th place to
+          1st.<sup class="nb-cite"><a href="#s8">8</a></sup> MMLU-Pro's two-phase
+          expert review is aimed squarely at this defect and surely reduces it.
+          But no one has since measured MMLU-Pro's own error rate the way Gema
+          measured MMLU's, so "reduced" is the most the evidence supports, not
+          "removed."
+        </p>
+        <p>
+          Prompt sensitivity is how far a model's score moves when the questions
+          stay fixed and only the wording of the surrounding instructions
+          changes. Here TIGER-Lab measured its own repair: across 24 prompt
+          styles, a model's MMLU score swung 4 to 5 points, while its MMLU-Pro
+          score swung about 2.<sup class="nb-cite"><a href="#s2">2</a></sup> That
+          improvement is real and measured. It also has a hard edge that the
+          measurement does not reach. Prompt wording is only one format a
+          benchmark can be sensitive to, and a separate 2024 study shuffled the
+          order of the answer options on MMLU and watched accuracy fall for every
+          model tested, by 6 points for one and 27 for
+          another.<sup class="nb-cite"><a href="#s9">9</a></sup> That study never
+          ran on MMLU-Pro, and TIGER-Lab's robustness test never touched answer
+          order. MMLU-Pro is steadier against prompt wording and simply untested
+          against answer order.
+        </p>
+      </section>
+
+      <section data-nb-section="reading-a-gap" id="reading-a-gap">
+        <h2>What a gap between two scores is worth</h2>
+        <p>
+          Put those grades together and a rule falls out for the thing readers
+          actually do with the number: compare two models by it. A small gap is
+          the first place the rule bites, because a small gap can come from the
+          measurement rather than the models. Meta's own Llama 4 card reports the
+          same Maverick model at 62.9 and at 80.5, an 18-point spread, because one
+          run is a pretrained model measured with five worked examples and the
+          other an instruction-tuned model measured with
+          none.<sup class="nb-cite"><a href="#s1">1</a></sup> If the setup can
+          move a single model 18 points, a 2-point gap between two models from
+          different labs says nothing until you know both were run the same way.
+        </p>
+        <p>
+          Saturation is the second place. Two years on, the top of the MMLU-Pro
+          board is crowding the way MMLU's did before it. As of August 2026 the
+          leading models sit near 88%, the top four within a point of each
+          other.<sup class="nb-cite"><a href="#s6">6</a></sup> That is roughly
+          where MMLU stood when it stopped telling models apart. Near the ceiling,
+          the point separating first from fourth is closer to noise than to a
+          real difference in ability.
+        </p>
+        <p>
+          The number is worth trusting where its construction is strongest: a
+          large gap between two models run the same way, on a mix that is now
+          weighted toward STEM. A ten-point MMLU-Pro gap between two like-for-like
+          runs is a real signal. A two-point gap, or any gap between numbers
+          measured under different settings, is not something to rank on. And
+          because the questions lean on STEM, a high MMLU-Pro score increasingly
+          certifies a model's STEM multiple-choice more than the broad general
+          knowledge the name still implies.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          MMLU-Pro is three repairs to MMLU wearing one score. The guessing floor
+          came down by arithmetic and stayed down, so that repair is finished. The
+          wrong answer keys were reviewed away in bulk but never counted
+          afterward, so "fewer" is the most anyone can say. The prompt sensitivity
+          TIGER-Lab measured did shrink, while the answer-order sensitivity nobody
+          measured is just unknown. And the rebuild changed the subject on the
+          way: with Math the largest discipline, a high MMLU-Pro score now
+          certifies STEM multiple-choice more than general knowledge. Treat a
+          large gap between two models run the same way as real, treat a small one
+          as noise, and treat a gap between two numbers measured differently as no
+          gap at all. The top of the board already sits near 88%, which is where
+          MMLU was when it stopped telling anyone apart.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2406.01574">Wang et al., "MMLU-Pro"</a>:
+            the full construction, the per-discipline composition, and the robustness measurements behind this lesson.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2406.04127">Gema et al., "Are We Done with MMLU?"</a>:
+            the re-annotation that measured MMLU's label errors and reordered its leaderboard.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/meta-llama/llama-models/blob/main/models/llama4/MODEL_CARD.md"
+              >Meta AI · Llama 4 model card</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.01574"
+              >Wang et al. · MMLU-Pro: A More Robust and Challenging Multi-Task Language Understanding Benchmark</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://dataphoenix.info/hugging-faces-open-llm-leaderboard-v2-increases-difficulty-and-delivers-fairer-scores/"
+              >Data Phoenix · Hugging Face's Open LLM Leaderboard v2 increases difficulty and delivers fairer scores</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/html/2406.01574v6"
+              >Wang et al. · MMLU-Pro, full text (construction and composition tables)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2009.03300"
+              >Hendrycks et al. · Measuring Massive Multitask Language Understanding</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro"
+              >TIGER-Lab · MMLU-Pro dataset card and leaderboard</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2409.02257"
+              >Taghanaki et al. · MMLU-Pro+: Evaluating Higher-Order Reasoning and Shortcut Learning</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.04127"
+              >Gema et al. · Are We Done with MMLU?</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.19470"
+              >Gupta et al. · Changing Answer Order Can Decrease MMLU Accuracy</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
