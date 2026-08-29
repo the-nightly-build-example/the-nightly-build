@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>'No onions' gets onions, 'no elephant' gets an elephant · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "negation",
+        "template": "lesson",
+        "title": "'No onions' gets onions, 'no elephant' gets an elephant",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-29",
+        "tags": [],
+        "sources": 8,
+        "words": 1989,
+        "reading_minutes": 9,
+        "dek": "Negation is rare in the text language models train on and nearly invisible to the encoders that read image prompts, so the one word meant to remove something is the easiest for a model to override.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">'No onions' gets onions, 'no elephant' gets an elephant</h1>
+        <p class="nb-dekline">
+          Negation is rare in the text language models train on and nearly invisible to the encoders that read image prompts, so the one word meant to remove something is the easiest for a model to override.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-29</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Telling a model what to leave out is one of the most ordinary things
+          people type: no onions, no text in the picture, don't mention the
+          price. It is also one of the most reproducible ways to be ignored,
+          and nowhere more than in image generators, where "a room with no
+          elephant" is a reliable way to get an elephant. This lesson works
+          backward from that failure through two systems: a language model that
+          predicts one token at a time, and a text-to-image model that reads
+          your prompt through a separate encoder. The same weakness sits under
+          both. By the end you will know why the word "not" underperforms, and
+          which parts of the answer are settled and which are still open. You
+          will also be able to spot an explanation that skips a step.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/word-order.html">Self-attention can't tell "dog bites man" from "man bites dog"</a>:
+            why word order has to be added from outside the core operation, which
+            is the same slack the image case exploits.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/image-generation.html">How an image generator removes noise into a picture</a>:
+            the diffusion process a negative prompt steers, taught from scratch.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Two systems drop the same word</h2>
+        <p>
+          The failure is measurable, and the cleanest measurement is in an older
+          kind of language model. Allyson Ettinger tested BERT on simple
+          category sentences of the form "A robin is a ___," scoring how often
+          the model gave the true, category-matching word a higher probability
+          than a false one. On the plain sentences both model sizes preferred
+          the true completion in 100% of items. On the same sentences with one
+          word added, "A robin is not a ___," they preferred it in 0% of items,
+          putting the higher probability on the false word every
+          time.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec 9.2, Table 12">1</a></sup>
+        </p>
+        <p>
+          The word "not" flipped the meaning and the model did not follow. The
+          same thing happens when you type "a room with no elephant" into an
+          image tool and get a room with an elephant. These look like two
+          unrelated quirks. They are one weakness surfacing in two places: a
+          model that
+          <a href="../the-mechanics/autoregressive-generation.html">predicts the next token</a>
+          from the words around it, and an image model whose text reader treats
+          your prompt as a loose bundle of concepts. Each system adds one step
+          to the same failure. Most of those steps are settled engineering, and
+          the last one is still open.
+        </p>
+      </section>
+
+      <section data-nb-section="token-prediction" id="token-prediction">
+        <h2>A language model bets on the words it has seen most</h2>
+        <p>
+          A language model chooses each word by predicting the most likely next
+          token given the ones before it. Strong content words pull hard toward
+          themselves: after "birds can," the word "fly" is an easy bet, because
+          the model has seen the pairing countless times. The words that reverse
+          a meaning, "not" and "no," are short, common, and carry little of that
+          pull on their own. To change the answer they have to overturn the
+          content word next to them, and often they do not.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">100%</span><span class="nb-stat-l">affirmatives: true word preferred</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">0%</span><span class="nb-stat-l">negatives: false word preferred</span>
+          </div>
+        </div>
+        <p>
+          Ettinger's 100-to-0 split is the sharpest version of this, on 72
+          category sentences.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec 9.2, Table 12">1</a></sup>
+          Nora Kassner and Hinrich Schütze found the same across a far larger
+          set. They built 42,867 factual cloze sentences and their negations,
+          then measured how much a model's ranked predictions moved when the
+          negation was inserted. For most sources the rank correlation between a
+          fact and its negation stayed above 85%: the model's guesses barely
+          shifted when "not" was
+          added.<sup class="nb-cite"><a href="#s2" data-nb-locator="Sec 3, Table 2">2</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Fact and its negation, one prediction</span>
+          <blockquote>
+            "Models are equally prone to generate facts ('Birds can fly') and
+            their incorrect negation ('Birds cannot
+            fly')."<sup class="nb-cite"><a href="#s2" data-nb-locator="Sec 1">2</a></sup>
+            <span class="nb-note-who">Kassner and Schütze, on negated factual probes</span>
+          </blockquote>
+        </div>
+      </section>
+
+      <section data-nb-section="rarity-in-data" id="rarity-in-data">
+        <h2>The training data almost never says no</h2>
+        <p>
+          Why does the weak word lose? The authors of both studies offer the
+          same explanation, and it is an explanation rather than a counted
+          figure: negated sentences are far rarer in ordinary text than
+          affirmative ones. People write "birds can fly" and "the theory was
+          developed by Einstein" constantly, and write out the false negations
+          almost never. A model that fills a blank from the most similar
+          sentences it has seen fills it from those affirmative ones. Ettinger's data
+          carries a direct clue. BERT-large prefers the true completion in 100%
+          of negated sentences phrased naturally and 0% of stilted ones, which
+          she attributes to the natural phrasings being more frequent in the
+          training text, not to anything the model understands about
+          them.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec 9.4, Table 14; Sec 10">1</a></sup>
+        </p>
+        <p>
+          That points at the data and the prediction objective, not at a wall in
+          the architecture. Kassner and Schütze checked this directly. They
+          pretrained a fresh BERT on a balanced corpus with equal numbers of
+          positive and negative sentences. It still failed, scoring 0.2 accuracy
+          on both. But after supervised fine-tuning on a true-or-false task, its
+          accuracy on both went to
+          1.0.<sup class="nb-cite"><a href="#s2" data-nb-locator="Sec 3, Table 5">2</a></sup>
+          Negation is learnable. What the plain pretraining objective does not
+          reward, direct supervision teaches.
+        </p>
+        <p>
+          This is why the crisp version of the failure belongs to masked and
+          early autoregressive models, and why the story has been changing.
+          Thinh Truong and colleagues ran a sweep across model sizes and found
+          that instruction tuning, not raw scale, is the lever. On reasoning
+          under negation, base GPT-3 scored 0.525, barely above the 0.5 you
+          would get by guessing. The instruction-tuned version of the same model
+          scored 0.767. An 11-billion-parameter instruction-tuned model beat
+          the 175-billion base model on most such
+          tasks.<sup class="nb-cite"><a href="#s3" data-nb-locator="Finding 4, Table 5">3</a></sup>
+          On the plain sensitivity test, bigger
+          models did worse rather than better, the smallest one tested being the
+          most sensitive to negation, so scale alone can move the wrong
+          way.<sup class="nb-cite"><a href="#s3" data-nb-locator="Finding 1, Fig 1">3</a></sup>
+          And the researchers note their own findings may already understate
+          newer chat models. For frontier text models the failure has receded
+          toward harder reasoning and edge cases. The sharpest, most
+          reproducible version now lives in image generation.
+        </p>
+      </section>
+
+      <section data-nb-section="bag-of-words" id="bag-of-words">
+        <h2>An image model reads the prompt as a bag of words</h2>
+        <p>
+          A text-to-image model does not read your prompt with the drawing
+          network. It hands the words to a separate text encoder, which turns
+          them into the target the image is drawn toward. The trouble is how
+          little of the sentence that encoder keeps. Mert Yuksekgonul and
+          colleagues shuffled every word in the captions a CLIP encoder uses to
+          match text to images, then checked whether it still retrieved the
+          right picture. Its top-hit accuracy fell only from 50.3% to 34.1%.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">50.3%</span><span class="nb-stat-l">captions intact</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">34.1%</span><span class="nb-stat-l">every word shuffled</span>
+          </div>
+        </div>
+        <p>
+          If scrambling the word order barely changes which image the encoder
+          points to, the encoder is reading the caption as a bag of words rather
+          than a sentence. On the same benchmark it scored near the 50% chance
+          line on which object relates to which and which attribute belongs to
+          which.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          A later benchmark tested negation head-on across 79,000 examples and
+          found that modern vision-language models "struggle significantly with
+          negation, often performing at chance
+          level."<sup class="nb-cite"><a href="#s5">5</a></sup>
+          In a bag of words, "no elephant" and "elephant" carry nearly the same
+          content, because the encoder scarcely registers the "no." So the
+          phrase meant to exclude the elephant hands the generator the elephant.
+        </p>
+        <p>
+          These numbers need one qualification. They come from
+          discriminative models, ones picking the matching image or answering
+          multiple choice, not from a generator drawing your prompt and getting
+          it wrong at some counted rate. The link from the bag-of-words result
+          to the elephant in your picture is an inference, though a sound one.
+          Text-to-image models reuse the same style of CLIP text encoder, so the
+          weakness the benchmarks measure is the weakness the generator inherits.
+          It is not a measured generation-failure statistic, and no one should
+          quote it as one.
+        </p>
+      </section>
+
+      <section data-nb-section="negative-prompts" id="negative-prompts">
+        <h2>Negative prompts do the subtracting the model can't</h2>
+        <p>
+          Because the model cannot reliably subtract a concept named inside a
+          positive prompt, image tools give you a separate place to name what to
+          avoid, called a negative prompt. Underneath it is a technique called
+          classifier-free guidance. Jonathan Ho and Tim Salimans trained one
+          network to predict an image two ways, once given the prompt and once
+          given nothing, by randomly dropping the prompt during training. At
+          generation time the sampler extrapolates: it pushes the result away
+          from the promptless prediction and toward the prompted
+          one.<sup class="nb-cite"><a href="#s6" data-nb-locator="Sec 3.2, Eq. 6">6</a></sup>
+          A negative prompt reuses that same lever, swapping the promptless
+          prediction for one conditioned on the thing you do not want, so the
+          sampler steps away from
+          it.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Ho and Salimans never wrote about user-supplied negative prompts.
+          Their paper is class-conditioned image generation, and the extension
+          to arbitrary unwanted text is the reading that later tools and
+          explainers put on
+          it.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          Several things here are settled. The measured negation gaps are real.
+          Image-text encoders behave like bags of words. Instruction tuning
+          shrinks the text failure, and negative prompts and guidance route
+          around the image one. The reason usually given for all of it, that
+          negation is rare in ordinary training text and thin in the instruction
+          forms users type, is the authors' explanation rather than a counted
+          frequency. What is not settled sits one level below all of that. No one has a mechanism-level account, inside
+          the network's
+          <a href="../the-mechanics/attention.html">attention</a>, of exactly
+          how a strong content word overrides the weak "not" beside it, token by
+          token. The studies here show the failure is learnable and that
+          frequency tracks it. The step from those facts to the precise internal
+          computation is the part still open even to the people who build these
+          systems.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The one word meant to remove something is the easiest for a model to
+          drop, and for a shared reason. Language models learn from text where
+          negation is rare, so a strong content word outbids a weak "not"; image
+          encoders barely track word order, so "no elephant" reads almost like
+          "elephant." That is not the same as saying models cannot do negation.
+          Supervision teaches it, instruction tuning has already pushed the text
+          failure back to hard cases, and image tools hand you a negative prompt
+          to say what to avoid. The piece left open is the token-by-token
+          account inside attention. So when someone says a model "just ignores
+          negatives," you have the missing step ready. The question is not
+          whether it drops the word but where: rare in the data, dropped by the
+          prediction objective, and in image models flattened by an encoder that
+          reads a bag of words.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://aclanthology.org/2020.tacl-1.3/">Ettinger, "What BERT is not"</a>:
+            the psycholinguistic diagnostics behind the 100-to-0 result, and
+            what else they reveal about what a model does and does not track.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2501.09425">Alhamoud et al., "NegBench"</a>:
+            the benchmark that measures vision-language negation directly, plus a
+            data-side fix that lifts negated-query accuracy.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1907.13528"
+              >arXiv · Allyson Ettinger, "What BERT is not: Lessons from a new suite of psycholinguistic diagnostics for language models" (TACL 2020)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2020.acl-main.698/"
+              >ACL Anthology · Nora Kassner and Hinrich Schütze, "Negated and Misprimed Probes for Pretrained Language Models: Birds Can Talk, But Cannot Fly" (ACL 2020)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2023.starsem-1.10/"
+              >ACL Anthology · Thinh Hung Truong, Timothy Baldwin, Karin Verspoor and Trevor Cohn, "Language models are not naysayers: An analysis of language models on negation benchmarks" (*SEM 2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2210.01936"
+              >arXiv · Mert Yuksekgonul et al., "When and why vision-language models behave like bags-of-words, and what to do about it?" (ICLR 2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2501.09425"
+              >arXiv · Kumail Alhamoud et al., "Vision-Language Models Do Not Understand Negation" (NegBench, CVPR 2025)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2207.12598"
+              >arXiv · Jonathan Ho and Tim Salimans, "Classifier-Free Diffusion Guidance" (2022)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://theaisummer.com/classifier-free-guidance-part-2/"
+              >AI Summer · Nikolas Adaloglou and Tim Kaiser, "An overview of classifier-free diffusion guidance: impaired model guidance with a bad version of itself (part 2)"</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/docs/diffusers/en/using-diffusers/weighted_prompts"
+              >Hugging Face · Diffusers documentation, "Prompting" (negative_prompt and prompt weighting)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
