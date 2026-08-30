@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A model's "37% hallucination rate" was its wrong-answer share on SimpleQA · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "simpleqa",
+        "template": "lesson",
+        "title": "A model's \"37% hallucination rate\" was its wrong-answer share on SimpleQA",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-30",
+        "tags": ["benchmark-design", "factuality", "hallucination"],
+        "sources": 8,
+        "words": 2028,
+        "reading_minutes": 9,
+        "dek": "SimpleQA keeps only questions a strong model already missed and grades a declined answer apart from a wrong one, so the share it marks incorrect was never a measure of how often a model makes things up.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">A model's "37% hallucination rate" was its wrong-answer share on SimpleQA</h1>
+        <p class="nb-dekline">
+          SimpleQA keeps only questions a strong model already missed and grades
+          a declined answer apart from a wrong one, so the share it marks
+          incorrect was never a measure of how often a model makes things up.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-30</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When a new model launches, one of the figures in the announcement is
+          its SimpleQA score. Within a day it tends to reappear in the coverage
+          as a hallucination rate: this model "hallucinated 37 per cent of the
+          time." SimpleQA is a factual-recall test OpenAI released in
+          2024, and it gets quoted so often because it looks like a plain answer
+          to an obvious question, namely how often a model gets its facts wrong.
+          This lesson follows the score from the questions it is built on to the
+          grade each answer receives. The point is that the next time you read
+          that a model hallucinates a third of the time, you can say what that
+          number counted and what it quietly left out.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/truthfulqa.html">More than half of TruthfulQA is questions a model already failed</a>:
+            the misconception test SimpleQA is most often confused with.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/hallucination-rate.html">A faithful summary of a false passage passes the hallucination test</a>:
+            the leaderboard behind "which AI hallucinates least," and what it
+            actually scores.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-instruments/llm-as-a-judge.html">Answer order alone swung a language model's verdict by 80 points</a>:
+            what can go wrong when a model grades the answers.
+          </dd>
+          <dt>04</dt>
+          <dd>
+            <a href="../the-mechanics/hallucination.html">A model builds a fake citation the same way it builds a true one</a>:
+            what a hallucination actually is, mechanically.
+          </dd>
+          <dt>05</dt>
+          <dd>
+            <a href="../the-mechanics/false-confidence.html">Post-training makes a model less able to tell when it's wrong</a>:
+            why a model's stated confidence is not a reading of what it knows.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A quiz score, reported as a hallucination rate</h2>
+        <p>
+          In March 2025, ABC's science desk reported that GPT-4.5, then OpenAI's
+          newest model, "hallucinated 37 per cent of the time," and that the
+          model before it, GPT-4o, "hallucinated 62 per cent of the time."<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+          The figures are real, and they come from one specific test. GPT-4.5
+          sits at the top of OpenAI's public SimpleQA leaderboard, answering
+          62.5 percent of the benchmark's questions correctly and getting about
+          37 percent of them wrong.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          SimpleQA is a factual-recall benchmark OpenAI published in late 2024: a
+          fixed set of short, fact-seeking questions, each written to have one
+          indisputable answer, and a grade for whether a model's response
+          matches it.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Calling the wrong share a "hallucination rate" is not the reporter's
+          coinage. OpenAI's own o1 system card, from December 2024, lists
+          SimpleQA inside a section headed "Hallucination Evaluations" and
+          prints, beside each model's accuracy, a "hallucination rate (lower is
+          better)" that is exactly the share of answers the grader marked
+          wrong.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The coverage carried OpenAI's own label to the next model. So one run
+          of one test yields two headlines. "Answers 62.5 percent correct" and
+          "hallucinates 37 percent of the time" describe the same model sitting
+          the same quiz. Only the first label is fair to the test.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">62.5%</span
+            ><span class="nb-stat-l">Answered correctly by GPT-4.5, per the leaderboard</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">37%</span
+            ><span class="nb-stat-l">The same run, reported as "hallucinated"</span>
+          </div>
+        </div>
+      </section>
+
+      <section data-nb-section="how-questions-chosen" id="how-questions-chosen">
+        <h2>Every question stumped at least one of four models</h2>
+        <p>
+          A benchmark's number is only as meaningful as the questions behind it,
+          and SimpleQA's questions were selected by a rule that shapes
+          everything downstream. The finished set holds 4,326 questions.<sup
+            class="nb-cite"><a href="#s3">3</a></sup>
+          Each one was made the same way.
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>Write a question with a single answer</h3>
+            <p>
+              A human trainer wrote a short question whose answer is one
+              indisputable fact, backed by a specific reference web page, and
+              chosen so the answer would not change over time.<sup
+                class="nb-cite"><a href="#s3">3</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Confirm the answer independently</h3>
+            <p>
+              A second trainer answered the same question without seeing the
+              first trainer's answer, and the question was kept only if the two
+              matched. On a 1,000-question recheck by a third trainer, the
+              answers agreed about 94 percent of the time, and the authors
+              estimate the finished set still carries roughly a 3 percent
+              labeling error.<sup class="nb-cite"><a href="#s3">3</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Keep it only if a model gets it wrong</h3>
+            <p>
+              The trainer then showed the question to four separate answers from
+              GPT-4-class models. The question survived only if at least one of
+              the four answered incorrectly. If all four got it right, the
+              trainer was instructed to discard the question and write a harder
+              one.<sup class="nb-cite"><a href="#s3">3</a></sup>
+            </p>
+          </li>
+        </ol>
+        <p>
+          SimpleQA is not a sample of the facts a model meets in a day. It keeps
+          only the facts a strong model was already prone to miss. A SimpleQA percentage is therefore
+          always a percentage on questions pre-selected for being hard for
+          models of roughly that class. When OpenAI released the benchmark, the
+          models it tested scored below half: GPT-4o answered 38.2 percent of the
+          questions correctly, and Claude 3.5 Sonnet 28.9 percent.<sup
+            class="nb-cite"><a href="#s3">3</a></sup>
+          Those low numbers are the design working as intended, not a verdict
+          that the models are bad at facts in general.
+        </p>
+      </section>
+
+      <section data-nb-section="three-grades" id="three-grades">
+        <h2>A wrong answer and a blank are graded apart</h2>
+        <p>
+          How each answer is graded matters as much as which questions get
+          asked. Every response lands in one of three bins.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup>
+        </p>
+        <ul>
+          <li>
+            <strong>Correct:</strong> the answer contains the reference answer
+            and does not contradict it.
+          </li>
+          <li>
+            <strong>Incorrect:</strong> the answer contradicts the reference
+            answer in any way, even when the contradiction is hedged.
+          </li>
+          <li>
+            <strong>Not attempted:</strong> the answer neither states the
+            reference answer nor contradicts it, which is what a model declining
+            to commit looks like.
+          </li>
+        </ul>
+        <p>
+          An automated grader, a prompted copy of ChatGPT, reads each response
+          and files it in one of the three bins.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Grading answers with a model has its own failure modes, which
+          <a href="../the-instruments/llm-as-a-judge.html">a separate lesson</a>
+          takes up. What matters here is the split itself, because it is the
+          part the "hallucination rate" framing erases. A model that says "I'm
+          not sure" is not scored the same as a model that states something
+          false with confidence. Only the second is counted incorrect.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Four models on SimpleQA at the benchmark's release, in percent. "Not
+            attempted" is the share the model declined to answer; "correct given
+            attempted" is its accuracy on only the questions it tried.<sup
+              class="nb-cite"><a href="#s3" data-nb-locator="Table 3, p. 7">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th>Correct</th>
+              <th>Not attempted</th>
+              <th>Incorrect</th>
+              <th>Correct given attempted</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">GPT-4o</span></td>
+              <td>38.2</td>
+              <td>1.0</td>
+              <td>60.8</td>
+              <td>38.0</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GPT-4o mini</span></td>
+              <td>8.6</td>
+              <td>0.9</td>
+              <td>90.5</td>
+              <td>8.7</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Claude 3.5 Sonnet</span></td>
+              <td>28.9</td>
+              <td>35.0</td>
+              <td>36.1</td>
+              <td>44.5</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">o1-preview</span></td>
+              <td>42.7</td>
+              <td>9.2</td>
+              <td>48.1</td>
+              <td>47.0</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          GPT-4o attempted almost everything and was
+          wrong most of the time, leaving only 1.0 percent of questions
+          unanswered and getting 60.8 percent of them wrong.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup>
+          Claude 3.5 Sonnet did the opposite, declining to answer 35.0 percent
+          of the questions. Read only the raw correct rates, 38.2 for GPT-4o
+          against 28.9 for Claude, and GPT-4o looks clearly stronger on facts.
+          But of the questions each model actually tried, Claude was right more
+          often, 44.5 percent against GPT-4o's 38.0.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Which model is "better" depends on whether you reward answering or
+          reward knowing when to stay quiet, and a single headline percentage
+          buries the choice.
+        </p>
+        <p>
+          SimpleQA reports both. "Correct given attempted" is the score on only
+          the questions the model chose to answer. The benchmark's single
+          summary figure blends that with the overall correct rate, so a model
+          cannot win by staying silent, nor by guessing at everything.<sup
+            class="nb-cite"><a href="#s3">3</a></sup>
+          The reason for measuring abstention at all is that a model which could
+          tell which of its answers were shaky would decline those and answer
+          the rest. Models are poor at that self-assessment and tend to overstate
+          their confidence, a failure with
+          <a href="../the-mechanics/false-confidence.html">its own lesson</a>,
+          which is exactly why the not-attempted grade has to be kept separate
+          from the wrong one.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="rename" id="rename">
+        <h2>How the incorrect share became a hallucination rate</h2>
+        <p>
+          When OpenAI's o1 system card renamed the
+          incorrect share a "hallucination rate," it took a number defined as
+          "answered a hard trivia question wrong." It then attached the name of
+          a different and scarier event: a model
+          <a href="../the-mechanics/hallucination.html">inventing a fact</a> that
+          has no basis at all.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Those are not the same thing. A model can miss a SimpleQA question
+          because the answer is genuinely obscure and it never learned it, which
+          is closer to a gap in knowledge than a fabrication. And because the
+          questions were selected for being missable, the wrong-answer share is
+          inflated by design against how often the same model would slip on an
+          ordinary fact.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">What the label swaps</span>
+          <p>
+            SimpleQA's grader has no category for a fabricated fact. It has
+            "incorrect," which counts any answer that contradicts the reference,
+            whether the model guessed, misremembered, or made something up.
+            Renaming that share a hallucination rate assigns one cause to an
+            outcome that has several.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </p>
+        </div>
+        <p>
+          GPT-4.5's own system card does report a
+          hallucination rate, but it measures that with a different test,
+          PersonQA, a set of questions about facts on named people, rather than
+          with SimpleQA.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The 62.5 percent correct that circulates for GPT-4.5 comes instead
+          from OpenAI's simple-evals leaderboard.<sup
+            class="nb-cite"><a href="#s2">2</a></sup>
+          The "37 percent" paired with it is just the wrong-answer share of that
+          same run, the leftover of 62.5, not anything the system card's
+          hallucination table reports. Two numbers about one model, drawn from
+          two different tests, get merged into a single claim about how often it
+          hallucinates.
+        </p>
+        <p>
+          None of this makes SimpleQA a bad number. It makes it a narrow one.
+          Its own authors write that it "only measures factuality under the
+          constrained setting of short, fact-seeking queries with a single,
+          verifiable answer."<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The score is also tied to one language and one slice of facts.
+          DeepSeek reported its V3 model answering 24.9 percent of SimpleQA's
+          English questions correctly, while scoring 64.8 on a separate
+          Chinese-language version of the same test.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          And a SimpleQA result says nothing about whether a model repeats the
+          false beliefs people actually hold, which is a different measurement
+          again,
+          <a href="../the-instruments/truthfulqa.html">TruthfulQA</a>, built from
+          817 questions designed around common human misconceptions.<sup
+            class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          The trouble starts whenever the number is lifted out of that setting.
+          One industry compilation lines up self-reported SimpleQA and
+          hallucination scores from across labs, and warns that "relying solely
+          on public scores like TruthfulQA or SimpleQA creates a false sense of
+          readiness." That same table then files SimpleQA in one bucket with the
+          misconception test and the people-facts test, the exact merge the
+          score cannot support.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Daswin de Silva, an AI researcher quoted in the same ABC report, put
+          the limit plainly. The benchmark, he said, "is only testing for short,
+          fact-based queries and that's not really the first-use case for
+          ChatGPT."<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A SimpleQA score is the percentage of short, deliberately obscure
+          factual questions a model answers correctly. Every question was kept
+          because a strong model had already gotten it wrong, and choosing
+          not to answer is graded as its own outcome rather than counted against
+          the model. When the incorrect share of that score is reported as a
+          hallucination rate, it carries a
+          claim the test cannot make. It is not a measure of how often the model
+          invents facts in ordinary use. It is how often the model guessed wrong
+          on a quiz assembled to be hard and scored to reward knowing when to
+          stay quiet. As a way to compare models on that narrow skill, the number
+          is fair. As an estimate of how much any one of them makes up, it is a
+          poor one.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2509.07968">SimpleQA Verified</a>: a
+            2025 Google DeepMind revision that reworks the question set to make
+            the score more reliable.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.argmin.net/p/benchmarking-our-benchmarks">Benchmarking our benchmarks</a>:
+            Ben Recht on why a benchmark number is only worth the community's
+            trust in how it was assembled.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.abc.net.au/news/science/2025-03-20/openai-generative-ai-hallucinations-chatbot-gpt45-test/105041122"
+              >ABC Science · Ellen Phiddian, reporting on GPT-4.5's SimpleQA results (20 March 2025)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/openai/simple-evals"
+              >GitHub · openai/simple-evals, the SimpleQA dataset, grader, and leaderboard</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2411.04368"
+              >arXiv · Wei et al. (OpenAI), "Measuring short-form factuality in large language models" (2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2412.16720"
+              >arXiv · OpenAI, "OpenAI o1 System Card" (2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/gpt-4-5-system-card-2272025.pdf"
+              >OpenAI · "GPT-4.5 System Card" (27 February 2025)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2412.19437"
+              >arXiv · DeepSeek-AI, "DeepSeek-V3 Technical Report" (2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2109.07958"
+              >arXiv · Lin, Hilton &amp; Evans, "TruthfulQA: Measuring How Models Mimic Human Falsehoods" (2021)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.aimon.ai/posts/the-llm-unleaderboard-self-reported-hallucination-accuracy-top-models/"
+              >AIMon · Puneet Anand, on self-reported SimpleQA and hallucination scores across labs (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
