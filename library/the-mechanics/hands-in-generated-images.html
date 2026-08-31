@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>An image generator never counts the fingers it draws · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "hands-in-generated-images",
+        "template": "lesson",
+        "title": "An image generator never counts the fingers it draws",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-31",
+        "tags": ["diffusion", "image-generation", "hands"],
+        "sources": 8,
+        "words": 1751,
+        "reading_minutes": 8,
+        "dek": "Hands are the worst case for a model that learns how images look but not how a hand is built, and better data is slowly closing the gap.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">An image generator never counts the fingers it draws</h1>
+        <p class="nb-dekline">
+          Hands are the worst case for a model that learns how images look but
+          not how a hand is built, and better data is slowly closing the gap.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-08-31</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Image generators are in ad art, in stock photos, and in the pictures
+          that fill a social feed, and for a while the fastest way to catch one
+          was to look at the hands. This lesson explains why hands, of all
+          things, are what gives these systems away: why a model that renders a
+          convincing face will set six fingers on the hand beside it. By the end
+          you will be able to say what in the generator produces the bad hand,
+          why hands are the hardest case for it, and why the problem is easing
+          rather than fixed. You will also be able to tell when someone's
+          account of it skips a step.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/image-generation.html">Image generation</a>:
+            how a diffusion model turns a field of noise into a picture.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The assumption behind a six-fingered hand</h2>
+        <p>
+          An image generator asked to draw a person routinely gets the hands
+          wrong. Often enough that it became the standard tell of a fake
+          picture, one hand
+          comes back with six fingers, or with two fingers fused into one, or
+          with a thumb where no thumb belongs. The failure is common enough that
+          researchers have built tools whose only job is to find these hands in
+          generated images and redraw them.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          The natural reaction is that the model should know better. A hand has
+          five fingers, the model has seen millions of hands, so somewhere
+          inside it there ought to be a fact, a hand has five fingers, that it
+          keeps failing to apply. That assumption is worth saying out loud,
+          because everything about how these pictures are made cuts against it.
+          The model holds no such fact. Seeing why means following the finished
+          picture back to the process that drew it, one step at a time.
+        </p>
+      </section>
+
+      <section data-nb-section="no-counting-step" id="no-counting-step">
+        <h2>Nothing in the process counts fingers</h2>
+        <p>
+          An image generator of this kind is a diffusion model. It begins with a
+          field of random noise and removes a little of it at each step, nudging
+          the pixels toward a picture that looks plausible under the prompt,
+          until an image emerges from what started as static. The earlier lesson
+          on
+          <a href="../the-mechanics/image-generation.html">image generation</a>
+          walks through that denoising step by step, so take it as given here.
+        </p>
+        <p>
+          Training rewards one thing: reconstructing a picture from a noised
+          version of itself.<sup class="nb-cite"><a href="#s2">2</a></sup> The
+          model is shown images with varying amounts of noise added and learns
+          to predict the noise, so that at generation time it can subtract its
+          way from static back to a clean image. Stable Diffusion, the system
+          most of the hand studies test against, runs that same denoising in a
+          compressed space and steers it with the text prompt.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The objective it is trained on has terms for pixels and noise. It has
+          no term for a hand, or for a finger, or for the number five. No step in
+          the training target counts parts or checks anatomy.
+        </p>
+        <p>
+          This is a claim about the objective as written, not an experiment
+          anyone ran. A large model trained on enough pictures can still pick up
+          an implicit, statistical sense of what hands tend to look like, and
+          that rough sense is exactly what the later fixes try to sharpen. What
+          is absent is any explicit step that verifies a hand has five fingers.
+          The model settles on a patch that looks locally like real skin and an
+          image that hangs together as a whole, and a plausible-looking hand
+          with six fingers satisfies both. As the AI-and-arts researcher Amelia
+          Winger-Bearskin put it, the system is only ever
+          "looking at how hands are represented in the images that it has been
+          trained on," not learning what a hand is.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            The model is scored on whether its output looks like real images,
+            pixel by pixel and as a whole. It is never scored on whether the
+            hand it drew has five fingers. A six-fingered hand that still looks
+            real is, by that scoring, correct.<sup class="nb-cite"
+              ><a href="#s2">2</a></sup
+            >
+          </p>
+        </div>
+      </section>
+
+      <section data-nb-section="few-pixels-many-joints" id="few-pixels-many-joints">
+        <h2>Few pixels, many joints</h2>
+        <p>
+          If no image gets its fingers counted, why do hands fail so much more
+          often than faces or chairs? There are two reasons, and they are
+          different reasons, though they are easy to run together.
+        </p>
+        <p>
+          The first is what hands look like in the training pictures. According
+          to Stability AI, the maker of Stable Diffusion, human images in these
+          datasets "display hands less visibly than they do faces," and hands
+          "tend to be much smaller in the source images, as they are relatively
+          rarely visible in large form."<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The model sees far fewer clear, large examples of hands than of faces,
+          so it has less to learn from. This is the explanation that reached
+          general readers, and a reference-work account of why AI art "screws
+          up" hands gives the same training-data reason.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          It is true, and it is only the first of the two reasons.
+        </p>
+        <p>
+          The second reason holds even where hands are plentiful. A hand is a
+          small, intricate object that can take an enormous range of shapes.
+          HanDiffuser's authors put it that hands "often take up a small part of
+          the image, but are highly articulate," with fingers that "bend to
+          various degrees relatively independently."<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          A kinematic model of a single hand counts sixteen joints and
+          twenty-seven degrees of freedom. The figure comes from ElKoura and
+          Singh's 2003 study of hand animation, and is the count HandRefiner
+          cites when it explains the difficulty.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Add the angle a hand is seen from, what it is holding, and which
+          fingers hide behind others, and the same five-fingered object turns up
+          across the training set as a near-endless variety of pixel
+          arrangements. FoundHand's authors give both halves in one line: hands
+          "are not well-sampled in these datasets" because "they either occupy
+          very few pixels, or complex articulations are not captured."<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+        <p>
+          So the model's internal sense of a hand is spread thin across all
+          those arrangements. When it denoises a new one, it lands on something
+          hand-shaped and plausible, and with the target that diffuse, plausible
+          often means the wrong number of fingers. How often is not something
+          anyone in this literature has measured cleanly. When HanDiffuser's
+          researchers asked people to rate Stable Diffusion's hands, only 27
+          percent were rated good or better for plausibility.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          That is a judgment by human raters on one model, not a count of
+          missing fingers, but it puts a number on how routine the failure is.
+        </p>
+      </section>
+
+      <section data-nb-section="gap-closing" id="gap-closing">
+        <h2>The gap keeps closing</h2>
+        <p>
+          Two things are worth holding apart here: how well the cause is
+          understood, and whether the failure is fixed. They have different
+          answers.
+        </p>
+        <p>
+          The cause is on firm ground. Three research groups, working
+          independently, arrive at the same two reasons: hands are small in the
+          frame and hugely variable in pose.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          The model's own maker gives the matching account of its training
+          data.<sup class="nb-cite"><a href="#s4">4</a></sup> That much is
+          settled.
+        </p>
+        <p>
+          The frequency is not settled, and neither is whether to call the
+          problem solved. No study in this set measures how often generated
+          hands come out wrong. The failure is attested by how obvious it is and
+          by the fact that repairing it became its own research topic. And it is
+          receding, so it is not a permanent limit of the method. The fixes run
+          in two directions. One adds explicit structure. HandRefiner redraws
+          the hand region after the fact, using a three-dimensional hand mesh as
+          a guide.<sup class="nb-cite"><a href="#s7">7</a></sup> HanDiffuser
+          feeds the generator explicit hand-pose parameters, so the model no
+          longer has to infer a plausible hand from nothing.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          The other adds data: FoundHand trains on a dedicated set of ten
+          million hand images labeled with keypoints, attacking the scarcity
+          that started the trouble.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Each reports real gains. That the failure gives way to more data and
+          better guidance is the strongest sign that it was always a matter of
+          coverage, not something the method cannot do.
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>
+                Why hands are hard is well understood: small in the frame, and
+                drawn from a huge range of poses and grips.<sup class="nb-cite"
+                  ><a href="#s6">6</a></sup
+                >
+              </li>
+              <li>
+                No step in the process checks anatomy, which follows from the
+                training objective as written.<sup class="nb-cite"
+                  ><a href="#s2">2</a></sup
+                >
+              </li>
+              <li>
+                The failure recedes with more hand data and explicit pose or
+                mesh guidance.<sup class="nb-cite"><a href="#s8">8</a></sup>
+              </li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>
+                No study here measures how often hands come out malformed, so
+                the frequency stays qualitative.
+              </li>
+              <li>
+                Saying the model "interpolates to a plausible hand" describes
+                the trained model's behavior, not a mechanism any paper isolates.
+              </li>
+              <li>
+                Whether the problem is solved is a moving target, better each
+                year rather than a finished result.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The six-fingered hand is not a bug that slipped through. It is what a
+          process built to make plausible-looking pixels produces when it draws
+          something small, intricate, and rarely seen up close, with no step
+          anywhere that stops to count. Hands are the worst case for that
+          process, and they are the worst case for a knowable reason, one that
+          more hand data and explicit pose guidance are already walking back. So
+          when you next see a mangled hand, you can read it right: not a model
+          that forgot how many fingers a hand has, but a model that was never
+          keeping track.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2311.17957">HandRefiner</a>: how one
+            fix redraws a malformed hand after the fact, guided by a
+            three-dimensional hand mesh.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2412.02690">FoundHand</a>: the
+            ten-million-image hand dataset built to attack the scarcity behind
+            the problem.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2312.04236"
+              >arXiv · Zhang, Qin, Liu &amp; Campbell, Detecting and Restoring
+              Non-standard Hands in Stable Diffusion Generated Images</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2006.11239"
+              >arXiv · Ho, Jain &amp; Abbeel, Denoising Diffusion Probabilistic
+              Models</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2112.10752"
+              >arXiv · Rombach, Blattmann, Lorenz, Esser &amp; Ommer,
+              High-Resolution Image Synthesis with Latent Diffusion Models</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.buzzfeednews.com/article/pranavdixit/ai-generated-art-hands-fingers-messed-up"
+              >BuzzFeed News · Pranav Dixit, Why AI Art Generators Keep
+              Struggling to Draw Hands</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.britannica.com/topic/Why-does-AI-art-screw-up-hands-and-fingers-2230501"
+              >Britannica · Meg Matthias, Why Does AI Art Screw Up Hands and
+              Fingers?</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2403.01693"
+              >arXiv · Narasimhaswamy, Zhao, Wang, Zhang, Nguyen, Hoai &amp; Ren,
+              HanDiffuser: Text-to-Image Generation With Realistic Hand
+              Appearances</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2311.17957"
+              >arXiv · Lu, Xu, Zhang, Wang &amp; Tao, HandRefiner: Refining
+              Malformed Hands in Generated Images by Diffusion-based Conditional
+              Inpainting</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2412.02690"
+              >arXiv · Chen, Song, Ye, Ren, Fan, Yang, Kim, Wang &amp; Pavlakos,
+              FoundHand: Large-Scale Domain-Specific Learning for Controllable
+              Hand Image Generation</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
