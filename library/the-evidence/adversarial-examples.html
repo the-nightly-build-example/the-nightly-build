@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>One gradient step still fools image classifiers, a decade on · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "adversarial-examples",
+        "template": "lesson",
+        "title": "One gradient step still fools image classifiers, a decade on",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-31",
+        "tags": ["adversarial-examples", "robustness", "computer-vision"],
+        "sources": 9,
+        "words": 2178,
+        "reading_minutes": 9,
+        "dek": "Goodfellow, Shlens, and Szegedy's 2015 paper blamed the panda-to-gibbon trick on models being too linear, a claim later work disputes, and proposed a defense that had to be rebuilt before it worked.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">One gradient step still fools image classifiers, a decade on</h1>
+        <p class="nb-dekline">
+          Goodfellow, Shlens, and Szegedy's 2015 paper blamed the panda-to-gibbon trick on models being too linear, a claim later work disputes, and proposed a defense that had to be rebuilt before it worked.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-31</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have probably seen the panda that a neural network was certain
+          was a gibbon. It is one of the most reproduced images in machine
+          learning, and it usually arrives with no explanation. The paper
+          behind it, from 2015, did two things. It named the reason a picture
+          can be changed by an amount too small to see and still flip to a
+          confident wrong answer. And it turned that weakness into a way to
+          train sturdier models. The same weakness now shows up in stop signs a
+          car misreads and in filters that spammers slip past. By the end you
+          will know what the paper claimed, how its one-line attack works, and
+          how much of it a decade of harder tests left standing.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://en.wikipedia.org/wiki/Adversarial_machine_learning">Adversarial machine learning</a>:
+            a map of where these attacks and defenses sit in the wider field.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1409.4842">Going Deeper with Convolutions</a>:
+            GoogLeNet, the classifier fooled in the panda demonstration.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The panda that turned into a gibbon</h2>
+        <p>
+          In 2015, three Google researchers, Ian Goodfellow, Jonathon Shlens,
+          and Christian Szegedy, took a photograph of a panda that their image
+          classifier, GoogLeNet, labeled correctly with 57.7% confidence. They
+          added faint noise whose largest change to any pixel was 0.007, the
+          smallest step a single bit of an eight-bit color value can make. The two images look identical to a person. GoogLeNet
+          read the second as a gibbon, and it was 99.3%
+          confident.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="adversarial-examples/asset-1.png"
+            alt="Three panels. Left: a photograph of a panda, labeled panda at 57.7% confidence. Middle: a field of colored static, times 0.007, labeled nematode at 8.2%. Right: the two added together, visually identical to the first panda, labeled gibbon at 99.3% confidence."
+          />
+          <figcaption>
+            Fig. 1 &middot; The panda, the added pattern, and the result. The middle
+            panel is the perturbation itself, scaled by 0.007. Added to the
+            panda it produces an image a person cannot tell from the original
+            that GoogLeNet reads as a gibbon.<sup class="nb-cite"><a
+              href="#s1"
+              data-nb-locator="Fig. 1"
+              data-nb-note="The panda-to-gibbon demonstration on GoogLeNet: epsilon 0.007, 57.7% to 99.3%."
+              >1</a
+            ></sup>
+          </figcaption>
+        </figure>
+        <p>
+          The paper is called &ldquo;Explaining and Harnessing Adversarial
+          Examples,&rdquo; and the picture is only its advertisement. The title
+          names what it delivered: an explanation for why a change too small to
+          see can flip a confident answer, and a method that turns the same
+          weakness into a defense. Both parts have been argued over ever since.
+        </p>
+      </section>
+
+      <section data-nb-section="blind-spots" id="blind-spots">
+        <h2>The blind spots came first</h2>
+        <p>
+          The images were not new in 2015. A year earlier, Christian Szegedy
+          and six colleagues, Goodfellow among them, had published
+          &ldquo;Intriguing Properties of Neural Networks,&rdquo; the paper
+          that first exhibited adversarial examples.<sup class="nb-cite"><a
+            href="#s2">2</a></sup> They found the images by search. For a
+          correctly classified picture, they looked for the smallest pixel
+          change that would flip its label. They found one every time: on
+          handwritten digits, on ImageNet photographs, and on a network with
+          about a billion parameters trained on frames from YouTube. Every
+          change was almost too small to see.
+        </p>
+        <p>
+          The finding that unsettled people was transfer. An adversarial image
+          built to fool one network was often still misread by a second network
+          trained separately, with different settings or on different
+          data.<sup class="nb-cite"><a href="#s2">2</a></sup> That is not how a
+          random glitch behaves. But the 2013 paper offered no account of why it
+          happened. It described the images as blind spots, rare pockets of
+          input space that training had never covered.
+        </p>
+        <p>
+          Two of that paper's authors, Goodfellow and Szegedy, wrote the 2015
+          paper too. This was not one camp correcting another. It was the same
+          researchers returning to a phenomenon they had helped find, now with
+          an explanation.
+        </p>
+      </section>
+
+      <section data-nb-section="too-linear" id="too-linear">
+        <h2>Too linear, not too complex</h2>
+        <p>
+          The natural suspect is complexity. A modern classifier has millions
+          of parameters and many nonlinear layers, so a picture that fools it
+          looks as though it found some strange, narrow crevice. The 2013
+          blind-spots framing fit that suspicion. The 2015 paper argued the
+          reverse: the main cause is that the networks behave too linearly, not
+          too strangely.<sup class="nb-cite"><a href="#s1">1</a></sup> Linear
+          behavior in high-dimensional spaces, the paper says, is by itself
+          enough to produce adversarial examples.
+        </p>
+        <p>
+          Linearity is enough on its own, for a concrete reason. One part of
+          the model works as a weighted sum: it adds up its inputs, each pixel
+          times a weight that is positive or negative. An image has thousands of
+          pixels. Nudging each one the way its weight rewards, up for a positive
+          weight and down for a negative one, is on its own far below what an eye
+          can register. But the thousands of nudges all push the sum the same
+          way. Together they add up to one large move in the model's score,
+          enough to flip the label. Each pixel stays under the threshold of
+          sight. The total does not.
+        </p>
+        <p>
+          That also explains the transfer the earlier paper could not. Two
+          networks trained on similar data weight the pixels in similar
+          directions, so a change aligned against one is aligned against the
+          other.
+        </p>
+        <p>
+          And it hands the attacker the cheapest possible move. If the damage
+          comes from matching each pixel's change to the sign of the model's
+          gradient, the fastest attack is to compute that sign once and apply
+          it. The paper named the recipe the fast gradient sign method, and it
+          fits on one line.
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \htmlClass{nb-mc1}{\eta} \;=\; \htmlClass{nb-mc2}{\epsilon}\,\htmlClass{nb-mc3}{\operatorname{sign}}\!\left(\htmlClass{nb-mc4}{\nabla_{\!x}\, J(\theta, x, y)}\right)
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">\eta</span><span
+                >the pattern added to every pixel of the image.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">\epsilon</span><span
+                >how far each pixel is allowed to move, 0.007 in the panda
+                demonstration.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">\operatorname{sign}</span><span
+                >keep only the direction of each pixel's push, up or down, and
+                drop its size.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc4">\nabla_{\!x}\, J</span><span
+                >the gradient of the model's loss with respect to the input,
+                from one backward pass.</span
+              >
+            </li>
+          </ul>
+          <figcaption>
+            The fast gradient sign method: read the gradient once, keep its
+            sign, add a small step. No search, no iteration.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          The gradient of the loss, the quantity training works to push down,
+          comes from a single backward pass. Its sign at each pixel gives the
+          direction. A small step in that direction, added to the image, is the
+          entire perturbation. That single pass is what made the attack cheap
+          enough to run across a whole test set. For the panda that step was
+          0.007.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The panda is one picture, but the attack was not special to it. On
+          MNIST, a set of handwritten digits, one of the paper's networks that
+          normally misreads well under 1% of test images misread 89.4% of the
+          adversarial digits, and stayed 97.6% confident while it was wrong. A
+          shallower model missed 99.9% of them.<sup class="nb-cite"><a
+            href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-harness" id="the-harness">
+        <h2>Training on the attack</h2>
+        <p>
+          The paper's title promises to harness adversarial examples, and this
+          is the harness. Because the attack is one cheap function, it can run
+          inside the training loop: at each step the model makes adversarial
+          versions of its training images, is given their correct labels, and
+          learns those too. The model is trained against its own weakness.
+        </p>
+        <p>
+          On the digits it worked. The same network, trained this way, cut its
+          error on adversarial digits from 89.4% to 17.9%, while its error on
+          ordinary digits barely moved.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            One of the paper's networks on MNIST, before and after adversarial
+            training. Training on the attack barely touched accuracy on ordinary
+            digits and removed most of the error on adversarial ones.<sup
+              class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Training</th>
+              <th>Error on ordinary digits</th>
+              <th>Error on adversarial digits</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Standard</span></td>
+              <td>0.94%</td>
+              <td>89.4%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Adversarial</span></td>
+              <td>0.84%</td>
+              <td>17.9%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The lesson the paper drew was hopeful: the cheap attack doubled as a
+          cheap defense, and a model shown enough adversarial examples would
+          learn to shrug them off.
+        </p>
+      </section>
+
+      <section data-nb-section="neither-solved-nor-stuck" id="neither-solved-nor-stuck">
+        <h2>Neither solved nor stuck</h2>
+        <p>
+          The trouble reached the paper's own defense first. In 2018 Aleksander
+          Madry and four colleagues showed that single-step adversarial
+          training, the exact method the paper proposed, buys very little real
+          protection. A model trained only against the one-step attack learns
+          to beat that one attack and stays wide open to a stronger one, an
+          effect later called gradient masking: the defense hides the gradient
+          the attacker reads instead of removing the weakness.<sup
+            class="nb-cite"><a href="#s3">3</a></sup> Their fix kept the idea and
+          changed the attack inside it: in place of one step, many small ones,
+          staying inside the allowed budget. They call the result projected
+          gradient descent, a multi-step version of the fast gradient sign
+          method. Train against that, and the model keeps real accuracy under
+          real pressure.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Adversarial training survived. The single-step version the paper used
+          did not.
+        </p>
+        <p>
+          The paper's defense was not the only one to fall. A wave of defenses
+          published after 2015 turned out to be the same illusion. In a 2018
+          study of nine defenses accepted at a leading conference, Anish
+          Athalye, Nicholas Carlini, and David Wagner found that seven relied on
+          obfuscated gradients, gradient masking under other names. New attacks
+          built to see through the masking broke six of them completely and one
+          in part.<sup class="nb-cite"><a href="#s4">4</a></sup> They had looked
+          robust only because the standard attacks could not find the openings.
+        </p>
+        <p>
+          What held was the rebuilt version. A model trained against a strong
+          multi-step attack is genuinely harder to fool. On MNIST, Madry's
+          trained model kept about 89% accuracy under
+          the strongest attack the team tried. On CIFAR-10, a harder set of
+          small photographs, it held about 46% under a twenty-step attack that
+          would push an undefended model to near zero.<sup class="nb-cite"><a
+            href="#s3">3</a></sup> Six years later the record on that same
+          CIFAR-10 setting had risen to about 74%, against about 94% on
+          untouched images.<sup class="nb-cite"><a href="#s5">5</a></sup> That is
+          real progress and a wide remaining gap at once. The group that set the
+          mark argues it will not fully close: its scaling analysis has
+          robustness rising slowly, then flattening well short of clean
+          accuracy, with perfect robustness out of reach.<sup class="nb-cite"><a
+            href="#s5">5</a></sup>
+        </p>
+        <p>
+          The explanation fared no better than the defense. The too-linear
+          claim never settled into a consensus. In 2016 Thomas Tanay and Lewis
+          Griffin built simple image classes on which a linear model is perfect
+          and has no adversarial examples at all, so linearity cannot by itself
+          be the cause. They proposed instead that the trouble is geometric, a
+          decision boundary tilted to sit close to the data.<sup class="nb-cite"><a
+            href="#s6">6</a></sup> In 2019 Andrew Ilyas and colleagues offered a
+          different account again: the perturbations exploit real, predictive
+          patterns in the data that are simply invisible to people. In their
+          experiment, a model trained only on those invisible patterns still
+          classified ordinary test images correctly about 44% of the time. That
+          works only if the patterns carry genuine signal.<sup class="nb-cite"><a
+            href="#s7">7</a></sup> A survey the year before had already found no
+          agreement in the field on why the images exist.<sup class="nb-cite"><a
+            href="#s8">8</a></sup>
+        </p>
+        <p>
+          The danger also lives elsewhere. The panda attack is a change too
+          small to see, but physical attacks are often the
+          opposite. In 2018 a team stuck patches that look like ordinary
+          graffiti onto a real stop sign, and a road-sign classifier read it as
+          a 45 mph speed-limit sign in every lab image and in 84.8% of frames
+          filmed from a moving car.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          The change was plainly visible. The imperceptible perturbation the
+          2015 paper studied is one setting among several.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The 2015 paper got the harder half right and the easier half wrong.
+          Its cheap attack was real and is still cheap: one gradient, one step,
+          and an undefended image model falls. Its hopeful defense needed
+          rebuilding, and adversarial training only works with a strong,
+          many-step attack inside it, not the single-step version the paper
+          used. Its explanation, that models fail because they are too linear,
+          never became the settled answer, and competing accounts left it one
+          hypothesis among several. The fix that did hold is real but partial:
+          the best defended models still miss about a quarter of the hardest
+          CIFAR-10 attacks. The panda still turns into a gibbon, and a decade of
+          work has not stopped it. What the decade produced instead is a measure
+          of the problem: how small the change can be, and how far the strongest
+          defenses still fall short.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://robustbench.github.io/">RobustBench</a>: a live
+            leaderboard of the best adversarial robustness reported today,
+            updated as new defenses land.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://distill.pub/2019/advex-bugs-discussion/">A Discussion of &ldquo;Adversarial Examples Are Not Bugs, They Are Features&rdquo;</a>:
+            researchers debate the non-robust-features account.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1412.6572"
+              >arXiv &middot; Goodfellow, Shlens &amp; Szegedy, &ldquo;Explaining and Harnessing Adversarial Examples&rdquo; (ICLR 2015)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1312.6199"
+              >arXiv &middot; Szegedy, Zaremba, Sutskever, Bruna, Erhan, Goodfellow &amp; Fergus, &ldquo;Intriguing Properties of Neural Networks&rdquo; (ICLR 2014)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.06083"
+              >arXiv &middot; Madry, Makelov, Schmidt, Tsipras &amp; Vladu, &ldquo;Towards Deep Learning Models Resistant to Adversarial Attacks&rdquo; (ICLR 2018)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1802.00420"
+              >arXiv &middot; Athalye, Carlini &amp; Wagner, &ldquo;Obfuscated Gradients Give a False Sense of Security&rdquo; (ICML 2018)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.09349"
+              >arXiv &middot; Bartoldson, Diffenderfer, Parasyris &amp; Kailkhura, &ldquo;Adversarial Robustness Limits via Scaling-Law and Human-Alignment Studies&rdquo; (ICML 2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1608.07690"
+              >arXiv &middot; Tanay &amp; Griffin, &ldquo;A Boundary Tilting Perspective on the Phenomenon of Adversarial Examples&rdquo; (2016)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1905.02175"
+              >arXiv &middot; Ilyas, Santurkar, Tsipras, Engstrom, Tran &amp; Madry, &ldquo;Adversarial Examples Are Not Bugs, They Are Features&rdquo; (NeurIPS 2019)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/1801.00553"
+              >arXiv &middot; Akhtar &amp; Mian, &ldquo;Threat of Adversarial Attacks on Deep Learning in Computer Vision: A Survey&rdquo; (IEEE Access 2018)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1707.08945"
+              >arXiv &middot; Eykholt, Evtimov, Fernandes, Li, Rahmati, Xiao, Prakash, Kohno &amp; Song, &ldquo;Robust Physical-World Attacks on Deep Learning Visual Classification&rdquo; (CVPR 2018)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
