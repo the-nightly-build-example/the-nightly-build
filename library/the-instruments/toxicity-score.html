@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>'Gay' filled 3% of toxic comments, so the classifier marked the word toxic · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "toxicity-score",
+        "template": "lesson",
+        "title": "'Gay' filled 3% of toxic comments, so the classifier marked the word toxic",
+        "mode": "open",
+        "order": null,
+        "date": "2026-08-31",
+        "tags": ["toxicity", "classifiers", "benchmarks", "bias"],
+        "sources": 8,
+        "words": 2088,
+        "reading_minutes": 9,
+        "dek": "The number that ranks language models for toxicity is one classifier's probability, and the same labels score African-American English as more toxic.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">'Gay' filled 3% of toxic comments, so the classifier marked the word toxic</h1>
+        <p class="nb-dekline">
+          The number that ranks language models for toxicity is one classifier's probability, and the same labels score African-American English as more toxic.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-08-31</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When someone says one model is less toxic than another, that
+          comparison almost always traces to a single number: the share of a
+          model's output that a classifier scored as toxic. The classifier is
+          usually Jigsaw's Perspective API, and the benchmark that made the
+          number standard, RealToxicityPrompts, runs tens of thousands of web
+          prompts through a model and scores what comes back. By the end you
+          will know each step that turns a pile of comments into that one
+          number, and where a human judgment enters the chain. You will also
+          know the specific thing the number gets wrong. It scores text that
+          names an identity, or text in African-American English, as more toxic
+          than plain equivalents, and every ranking built on it inherits that.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.perspectiveapi.com/">Perspective API</a>: the
+            live classifier this lesson takes apart, free to try on your own
+            text.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://jigsaw.google.com/">Google Jigsaw</a>: the team that
+            builds Perspective and publishes its own research on the tool's
+            bias.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What "a less toxic model" is counting</h2>
+        <p>
+          Put two language models side by side, and the claim that one is less
+          toxic than the other usually rests on a single measurement. Feed each
+          model a batch of prompts, collect what it writes, and send every
+          continuation through a classifier that returns a number between 0 and
+          1 for how toxic the text is. Average those numbers, and the model with
+          the lower average wins. The classifier behind almost all of these
+          numbers is Jigsaw's Perspective API, and the benchmark that turned it
+          into a standard is RealToxicityPrompts, which scores model output
+          against Perspective's TOXICITY attribute.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          The word toxic is doing narrow, specific work here, well short of its
+          everyday sense.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">TOXICITY</span>
+          <p>
+            Perspective defines TOXICITY as a rude, disrespectful, or
+            unreasonable comment that is likely to make people leave a
+            discussion. The model scores the statement, not the speaker: its own
+            documentation says it detects toxicity in a piece of text and is not
+            meant to judge anything about the person who wrote it.<sup
+              class="nb-cite"
+              ><a href="#s2">2</a></sup
+            >
+          </p>
+        </div>
+        <p>
+          Two things about the number are easy to miss. First, it is a
+          probability. Perspective is calibrated with isotonic regression, so its
+          score reads as the probability that a piece of text is toxic, and
+          RealToxicityPrompts draws the toxic line at 0.5.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Second, that probability is one classifier's estimate, learned from
+          examples people labeled by hand. Everything the score can and cannot
+          support follows from how those two facts play out down the chain.
+        </p>
+      </section>
+
+      <section data-nb-section="from-comment-to-score" id="from-comment-to-score">
+        <h2>From one comment to one score</h2>
+        <p>
+          The chain from a human judgment to a model ranking has five links.
+          Each one replaces a person's call with a stand-in for it.
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>People judge the comments</h3>
+            <p>
+              Perspective's English classifier is trained on comments from
+              online forums, mainly English Wikipedia talk pages and New York
+              Times comments, each labeled toxic or not by crowd raters.<sup
+                class="nb-cite"
+                ><a href="#s2">2</a></sup
+              >
+              The Wikipedia labels came from a project that had crowd workers
+              rate talk-page comments. The classifier it produced was built to
+              match the aggregate of three such raters, on a corpus where
+              personal attacks run about 1% of comments.<sup class="nb-cite"
+                ><a href="#s3">3</a></sup
+              >
+            </p>
+          </li>
+          <li>
+            <h3>A model copies the judgments</h3>
+            <p>
+              The shipped English model is a convolutional neural network over
+              word embeddings. RealToxicityPrompts scored against a version of
+              it, trained on those Wikipedia-and-news comments, with an area
+              under the ROC curve of 0.97. That figure says how cleanly the
+              score separates toxic comments from clean ones, where 1.0 is
+              perfect and 0.5 is a coin flip.<sup class="nb-cite"
+                ><a href="#s1">1</a></sup
+              ><sup class="nb-cite"><a href="#s2">2</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>The model returns a probability</h3>
+            <p>
+              For any new sentence, the calibrated model returns a number
+              between 0 and 1: its estimate of the chance a reader would find the
+              sentence toxic.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>A threshold makes it yes or no</h3>
+            <p>
+              RealToxicityPrompts counts a sentence as toxic at 0.5 and above.<sup
+                class="nb-cite"
+                ><a href="#s1">1</a></sup
+              >
+              Where to put that line is a choice, not a fact. Move it and text
+              that was toxic becomes clean, with nothing in the text having
+              changed.
+            </p>
+          </li>
+          <li>
+            <h3>An average makes it one score</h3>
+            <p>
+              Generate many continuations for many prompts, run each through the
+              classifier, and report the aggregate. That average is the toxicity
+              score that ranks the models.<sup class="nb-cite"
+                ><a href="#s1">1</a></sup
+              >
+            </p>
+          </li>
+        </ol>
+        <p>
+          The labelers' sense of what is
+          rude becomes the training signal, the model's fit to that signal
+          becomes the probability, and the threshold and the average become the
+          score. Nothing in the finished number records whose sense of rude it
+          started from.
+        </p>
+      </section>
+
+      <section data-nb-section="the-ranking-average" id="the-ranking-average">
+        <h2>The average that ranks the models</h2>
+        <p>
+          RealToxicityPrompts fixed how the averaging is done. Its authors drew
+          100,000 sentences from the OpenWebText Corpus, a body of English web
+          text scraped from links posted to Reddit. They sampled 25,000 from
+          each of four equal bands of Perspective toxicity, so the set spans
+          clean to toxic.<sup class="nb-cite"><a href="#s1">1</a></sup> By the 0.5
+          threshold, about 22,000 of the prompts count as toxic and the rest do
+          not.<sup class="nb-cite"><a href="#s1">1</a></sup> Each sentence is
+          split in half: the first half is the prompt, the second the
+          continuation, and both are scored.
+        </p>
+        <p>
+          To rank a model, the benchmark generates 25 continuations per prompt
+          and reports two aggregates. The first is the expected maximum
+          toxicity: the average, across prompts, of the single most toxic of a
+          model's 25 tries. The second is the probability that at least one of
+          the 25 crosses 0.5. Both are defined at exactly 25 generations, and
+          both rise as that number grows, so a score means something only next to
+          another score measured the same way.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            Two RealToxicityPrompts metrics for four models, at 25 generations
+            per prompt, split by whether the prompt was itself toxic. Even from
+            non-toxic prompts, the chance a model produces a toxic span sits near
+            one in two.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Sec 4.2, Table 2"
+                data-nb-url="https://arxiv.org/pdf/2009.11462"
+                data-nb-note="Expected maximum toxicity and toxic-span probability per model, by prompt split."
+                >1</a
+              ></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Exp. max toxicity, non-toxic prompt</th>
+              <th>Exp. max toxicity, toxic prompt</th>
+              <th>P(any span &ge; 0.5), non-toxic prompt</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">GPT-1</span></td>
+              <td>0.58</td>
+              <td>0.78</td>
+              <td>0.60</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GPT-2</span></td>
+              <td>0.51</td>
+              <td>0.75</td>
+              <td>0.48</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GPT-3</span></td>
+              <td>0.52</td>
+              <td>0.75</td>
+              <td>0.50</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">CTRL</span></td>
+              <td>0.52</td>
+              <td>0.73</td>
+              <td>0.50</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          As a ranking, the differences are slight: on non-toxic prompts the
+          four models sit within seven hundredths of one another. The more
+          telling number is the level. A neutral prompt still gives roughly even
+          odds of a toxic continuation by this classifier's 0.5 line.
+        </p>
+        <p>
+          The Perspective model is not
+          fixed. RealToxicityPrompts scored against the convolutional network
+          just described; the current production Perspective is a different
+          model, a multilingual character-level transformer Jigsaw described in
+          2022.<sup class="nb-cite"><a href="#s4">4</a></sup> A score taken from
+          one endpoint on one date does not transfer to another, which is why
+          every number in this lesson carries the study and the year that
+          produced it.
+        </p>
+      </section>
+
+      <section data-nb-section="the-hidden-penalty" id="the-hidden-penalty">
+        <h2>The penalty the average hides</h2>
+        <p>
+          On average the score tracks human judgment fairly well. When
+          RealToxicityPrompts' authors hand-checked 100 web documents
+          themselves, their toxic-or-not calls agreed with Perspective's about
+          88% of the time, a correlation of 0.83.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The number is not noise. That aggregate agreement is exactly what
+          hides the failures: they concentrate on a few kinds of text, and a
+          strong average absorbs them.
+        </p>
+        <p>
+          The first kind is text that names an identity. Jigsaw's own
+          researchers found that early versions of the Wikipedia-trained
+          classifier gave clearly non-toxic statements like "I am a gay man"
+          unreasonably high toxicity scores, a pattern they named false positive
+          bias.<sup class="nb-cite"><a href="#s5">5</a></sup> The cause was in
+          the training data. The word gay appeared in 3% of the comments labeled
+          toxic but only 0.5% of comments overall, so the model learned the term
+          itself as a signal of toxicity; "queer" and "homosexual" carried the
+          same imbalance.<sup class="nb-cite"><a href="#s5">5</a></sup> Tested
+          from outside Jigsaw in 2017, before that bias was mitigated, the public
+          demo scored "I am a gay black woman" at 87% toxic while "I am a man"
+          ranked among the least toxic phrases.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <p>
+          The second kind is dialect. In a 2019 study, Maarten Sap and
+          colleagues measured how often hate-speech classifiers, and Perspective
+          itself, flag text written in African-American English, using a method
+          that infers the dialect from word patterns.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Markers of the dialect correlated with the labels in two widely
+          used datasets at a Pearson correlation of 0.42 and 0.35. A classifier
+          trained on one of them called almost half of the non-offensive
+          African-American English tweets offensive: a 46% false-positive rate,
+          against 9% for tweets in white-aligned English.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Querying Perspective directly in December 2018, the authors found its
+          TOXICITY score correlated with the dialect at 0.31 and 0.45, and
+          negatively with white-aligned text.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            Perspective TOXICITY scores for African-American English phrases and
+            their mainstream-English equivalents, as tested for the 2019 study.
+            Same meaning, opposite score.<sup class="nb-cite"
+              ><a
+                href="#s7"
+                data-nb-locator="Figure 1"
+                data-nb-url="https://aclanthology.org/P19-1163.pdf"
+                data-nb-note="Perspective scores for AAE phrases and their mainstream-English equivalents."
+                >7</a
+              ></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">African-American English</th>
+              <th>Score</th>
+              <th class="txt">Mainstream equivalent</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">"Wussup, n*gga!"</td>
+              <td>90%</td>
+              <td class="txt">"What's up, bro!"</td>
+              <td>7%</td>
+            </tr>
+            <tr>
+              <td class="txt">"I saw his ass yesterday"</td>
+              <td>95%</td>
+              <td class="txt">"I saw him yesterday"</td>
+              <td>6%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The gap is not one dataset's quirk. A separate team reached the same
+          result independently. Davidson and colleagues trained classifiers on
+          five widely used abuse datasets and compared how often each flagged
+          black-aligned against white-aligned tweets. Every dataset showed the
+          gap, with black-aligned text flagged between about 1.4 and 2.7 times as
+          often.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          The bias enters at the first link of the chain, in the labels. When
+          Sap's team told annotators which dialect a tweet was written in, the
+          annotators marked African-American English tweets as offensive
+          noticeably less often, dropping the mean rating from 0.55 to 0.44.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The judgment the classifier learned to imitate was itself sensitive to
+          who the writer appeared to be, and step one of the pipeline turned that
+          judgment into a number.
+        </p>
+      </section>
+
+      <section data-nb-section="what-the-score-costs" id="what-the-score-costs">
+        <h2>What a lower score buys</h2>
+        <p>
+          Put the links together and the cost of ranking models by this number
+          is specific. A toxicity score cannot separate what a model wrote from
+          how the classifier reads it. A model that discusses being gay, or that
+          renders African-American speech, collects the toxicity the classifier
+          assigns to those features, so a leaderboard that sorts models by
+          average toxicity scores that model as worse for doing it.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          ><sup class="nb-cite"><a href="#s7">7</a></sup> The same pressure runs
+          the other way in training. A team lowering its model's toxicity score
+          is optimizing against the classifier. Wherever the classifier is
+          wrong, the cheapest way to score lower is to steer the model away from
+          the text it overrates, which is text about identity.
+        </p>
+        <p>
+          Perspective's own documentation warns against this use. It states the
+          tool is not intended for fully automated moderation, and that it
+          detects toxicity in a statement, not anything about the person who
+          wrote it.<sup class="nb-cite"><a href="#s2">2</a></sup> Averaging its
+          scores to rank or tune models is the automated, decontextualized use
+          its owner cautions against.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A toxicity score is a real measurement wearing the clothes of an
+          objective one. It does track whether text reads as rude, on average
+          and by the standard of the people who labeled its training data. But
+          average is where its authority ends. The same score marks a sentence
+          about being gay, or a sentence in African-American English, as toxic
+          because the labels behind it did, and it cannot tell that penalty apart
+          from anything a model actually got wrong. So when you next read that
+          one model is less toxic than another, translate it narrowly. One
+          model's output drew a lower average from one classifier, on one date.
+          And that classifier is hardest on the very speech that names who is
+          talking.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://aclanthology.org/D16-1120/">Blodgett, Green &amp; O'Connor, 2016</a>:
+            how researchers infer African-American English at scale, the method
+            Sap and Davidson both build on.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1903.04561">Borkan et al., 2019</a>: a
+            later Jigsaw benchmark that measures a classifier's bias directly, on
+            a separate comment dataset.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2020.findings-emnlp.301/"
+              >ACL Anthology · Gehman, Gururangan, Sap, Choi &amp; Smith, RealToxicityPrompts: Evaluating Neural Toxic Degeneration in Language Models (EMNLP Findings 2020)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/conversationai/perspectiveapi/blob/main/model-cards/English/toxicity.md"
+              >Jigsaw / Conversation AI · Perspective API English TOXICITY model card</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://dl.acm.org/doi/10.1145/3038912.3052591"
+              >WWW 2017 · Wulczyn, Thain &amp; Dixon, Ex Machina: Personal Attacks Seen at Scale</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2202.11176"
+              >arXiv (KDD 2022) · Lees et al., A New Generation of Perspective API: Efficient Multilingual Character-level Transformers</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://dl.acm.org/doi/10.1145/3278721.3278729"
+              >AIES 2018 · Dixon, Li, Sorensen, Thain &amp; Vasserman, Measuring and Mitigating Unintended Bias in Text Classification</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.engadget.com/2017-09-01-google-perspective-comment-ranking-system.html"
+              >Engadget · Violet Blue, testing Google's Perspective comment-scoring demo (Sept 1, 2017)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/P19-1163/"
+              >ACL 2019 · Sap, Card, Gabriel, Choi &amp; Smith, The Risk of Racial Bias in Hate Speech Detection</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/W19-3504/"
+              >ACL 2019 Workshop · Davidson, Bhattacharya &amp; Weber, Racial Bias in Hate Speech and Abusive Language Detection Datasets</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
