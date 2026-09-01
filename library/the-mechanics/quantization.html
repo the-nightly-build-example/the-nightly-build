@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quantization · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "quantization",
+        "template": "lesson",
+        "title": "Quantization rounds a model's weights to a coarser grid, and a few oversized values decide what that costs",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-01",
+        "tags": ["quantization", "inference", "memory", "outlier-features", "4-bit"],
+        "sources": 8,
+        "words": 1941,
+        "reading_minutes": 8,
+        "dek": "A careful 4-bit scheme costs a 7-billion-parameter model under 1% of its perplexity, but round the same weights naively, or below four bits, and its answers can collapse.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">
+          Quantization rounds a model's weights to a coarser grid, and a few
+          oversized values decide what that costs
+        </h1>
+        <p class="nb-dekline">
+          A careful 4-bit scheme costs a 7-billion-parameter model under 1% of
+          its perplexity, but round the same weights naively, or below four
+          bits, and its answers can collapse.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-01</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The version of a model that runs on your phone, or answers on a
+          cheaper tier, is often a quantized copy. It is the same trained
+          network, with each of its numbers stored in fewer bits so it fits
+          smaller, cheaper hardware. That copy usually answers about as well as
+          the full one, and
+          sometimes noticeably worse, and the word alone tells you nothing about
+          which. By the end you will know what quantization changes inside the
+          model. You will see why the same rounding is nearly free down to about
+          four bits and ruinous below it, and why a few unusually large values
+          are what the good schemes spend all their effort protecting.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/gradient-descent.html"
+              >One gradient step drops the loss from 7.0 to 0.225</a
+            >: what a weight is and how training sets it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/perplexity.html"
+              >Tokenize the same sentence by letters instead of words, and its
+              perplexity falls 66 percent</a
+            >: the score used throughout to measure the damage.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The cheaper copy answers worse</h2>
+        <p>
+          Run the small, on-device build of a language model beside the full
+          one and the small build often gives a weaker answer, though both are
+          sold under the same name. What changed is not the network's design and
+          not its training. It is how the network's numbers are stored.
+        </p>
+        <p>
+          Those numbers are its
+          <a href="../the-mechanics/gradient-descent.html">weights</a>, the
+          values training left behind. By default each one is held in a 16-bit
+          floating-point format: sixteen bits of storage per weight. A
+          modern model has
+          <a href="../the-instruments/parameter-count.html">billions</a> of
+          them, and because there are so many, the weights are almost the whole
+          of the model's memory. The arithmetic is blunt. GPT-3 has 175 billion
+          weights. At sixteen bits each, they occupy 326 GB, more than any single
+          accelerator holds, enough to require five 80 GB A100 GPUs just to load
+          the model.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          An independent measurement puts the same footprint at 350 GB.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          That pressure, to make the model fit in less, is what the whole
+          practice answers, and the name for the practice is quantization.
+        </p>
+      </section>
+
+      <section data-nb-section="coarser-grid" id="coarser-grid">
+        <h2>Fewer bits is a coarser grid</h2>
+        <p>
+          Quantization stores each weight using fewer bits, an 8-bit or a 4-bit
+          integer in place of the 16-bit float. Fewer bits means fewer distinct
+          values to land on. Four bits offer sixteen levels in all. Picture a
+          ruler marked only at every quarter inch: any length you measure gets
+          read off as the nearest mark, and a value that falls between two marks
+          is reported as whichever is closer. Quantization does that to every
+          weight, snapping each to the nearest value the coarser grid allows.
+          The error introduced in any one weight is small. There are billions of
+          weights, so whether those small errors stay small is the entire
+          question.
+        </p>
+        <p>
+          The payoff is immediate. A 7-billion-weight model held at sixteen bits
+          is 13.0 GB on disk; stored at four bits it is 3.80 GB, about a third
+          the size, small enough to run on a laptop or a consumer graphics
+          card.<sup class="nb-cite"><a href="#s3">3</a></sup> The weights carry
+          this saving because they dominate the memory in the first place: a
+          model has billions of weights against only millions of the smaller
+          quantities beside them, so the effort goes where the bytes are.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          This is a different move from
+          <a href="../the-evidence/knowledge-distillation.html">distillation</a
+          >, which trains a smaller network to copy a bigger one. Quantization
+          keeps the same network and rewrites each weight in fewer bits. The
+          first thing it buys is room. Speed follows only where there are fewer
+          bytes to move for each weight, which is why the weight-only 4-bit
+          tools run faster while the memory-only 8-bit schemes need not.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="near-flat-top" id="near-flat-top">
+        <h2>Down to four bits, almost free</h2>
+        <p>
+          The tool most on-device users actually run publishes exactly what each
+          bit-width costs. It measures that cost as
+          <a href="../the-instruments/perplexity.html">perplexity</a>, the
+          model's surprise at held-out text, where lower is better and the
+          16-bit model sets the baseline.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Eight-bit storage is free to two decimal places. Six-bit stays within
+          a tenth of a percent. Four-bit, the recommended default, costs under
+          one percent while cutting the file by more than three-quarters. The
+          cost stays flat across that range and only begins to climb once the
+          grid drops below four bits.
+        </p>
+        <table class="nb-table">
+          <caption>
+            LLaMA-7B perplexity on WikiText, lower is better, and file size by
+            quantization setting, against the 16-bit baseline.<sup
+              class="nb-cite"
+              ><a href="#s3">3</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Perplexity</th>
+              <th>File size</th>
+              <th>vs 16-bit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">16-bit</span></td>
+              <td>5.9066</td>
+              <td>13.0 GB</td>
+              <td>baseline</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">6-bit</span></td>
+              <td>5.9110</td>
+              <td>5.15 GB</td>
+              <td>+0.1%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">5-bit</span></td>
+              <td>5.9208</td>
+              <td>4.45 GB</td>
+              <td>+0.2%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">4-bit</span></td>
+              <td>5.9601</td>
+              <td>3.80 GB</td>
+              <td>+0.9%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">3-bit</span></td>
+              <td>6.1503</td>
+              <td>3.06 GB</td>
+              <td>+4.1%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">2-bit</span></td>
+              <td>6.7764</td>
+              <td>2.67 GB</td>
+              <td>+14.8%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The flat top is not a quirk of one tool. A study spanning more than
+          35,000 runs, across bit-widths from three to eight and model sizes
+          from 19 million to 176 billion parameters, found four-bit precision
+          almost universally the best trade of total storage against
+          accuracy.<sup class="nb-cite"><a href="#s5">5</a></sup> Above four bits
+          you spend storage you do not need. So the tidy version of the story is
+          real: down to about four bits, a good scheme costs almost nothing. Both
+          of the words holding it up, good and about four, are doing more work
+          than they look.
+        </p>
+      </section>
+
+      <section data-nb-section="outliers" id="outliers">
+        <h2>One big value ruins the grid for the rest</h2>
+        <p>
+          Start with good. The cheap results above come from schemes that work
+          to place the grid well. The naive alternative, round-to-nearest,
+          simply snaps every weight to its closest level under a single scale
+          for the whole tensor, and it is not cheap where the model is large. On
+          OPT-175B, a careful 4-bit scheme scores 8.37 in perplexity against the
+          16-bit model's 8.34. Naive 4-bit rounding on the same weights scores
+          10.54. Naive 3-bit rounding sends perplexity to roughly 73,000, a model
+          that has stopped producing sense.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The gap
+          widens with scale rather than closing: naive 8-bit rounding scores
+          worse at 13 billion parameters than at 6.7 billion, while an
+          outlier-aware method holds the full-precision baseline at both.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <p>
+          The reason is a small set of unusually large numbers. Past roughly 6.7
+          billion parameters, a handful of the model's internal feature
+          dimensions begin carrying values far larger than the rest, up to
+          twenty times larger. About 150,000 of these outliers appear in a
+          single 2,048-token pass, concentrated in fewer than seven dimensions.
+          They arrive suddenly, in a phase shift between 6 and 6.7 billion
+          parameters, after which every layer is affected.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">20×</span
+            ><span class="nb-stat-l">largest outliers vs a typical dimension</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">&le; 7</span
+            ><span class="nb-stat-l">dimensions hold ~150,000 outliers per sequence</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">+600&ndash;1000%</span
+            ><span class="nb-stat-l">perplexity from zeroing 0.1% of features</span>
+          </div>
+        </div>
+        <p>
+          Those few dimensions carry the model. Zero them out, though they are
+          only about a tenth of a percent of the features, and perplexity rises
+          by 600 to 1,000 percent. Zero the same count of ordinary features
+          chosen at random, and perplexity moves about a tenth of a percent.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Under a single scale for the whole tensor, one such outlier stretches
+          the range the grid has to cover, and every ordinary weight is then
+          rounded on a grid spread too thin to hold it. That is why naive
+          rounding collapses precisely on the largest models: their outliers
+          break the quantization of everything around them.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          The good schemes are the ones that refuse to let that happen. One
+          keeps the outlier dimensions in 16 bits and quantizes the other 99.9
+          percent to 8 bits, which recovers full-precision quality up to 175
+          billion parameters and still cuts memory by about half.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Another protects the roughly one percent of weight channels the
+          largest activations flow through, picking them by those activations
+          rather than by the weights themselves. It also scales the weights in
+          small groups, so no single value sets the range for a whole tensor.
+          Keeping that one percent of an OPT-6.7B model precise pulls its naive
+          3-bit perplexity from 23.54 back to 11.39, close to the 10.86 of the
+          full model.<sup class="nb-cite"><a href="#s7">7</a></sup> The same
+          large-value problem also appears in the model's activations, where it
+          can be shifted offline into the weights by an exact, offsetting rescale
+          of each channel, so both sides quantize cleanly to 8 bits.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="below-four-bits" id="below-four-bits">
+        <h2>Below four bits, the floor gives way</h2>
+        <p>
+          Protecting the outliers buys the flat top down to four bits. It does
+          not buy the range below. Even a careful scheme loses real ground once
+          the grid gets coarser than four bits. Llama-2-7B rises from 5.47 in
+          perplexity to 5.60 at four bits, a tenth of a point, then to 6.24 at
+          three bits, about a seventh worse.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The on-device tool's two-bit setting costs nearly 15 percent.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <p>
+          Perplexity can also understate how bad three-bit gets. On an image
+          captioning task, a nine-billion-parameter model scored on how well its
+          captions match the reference lost 16.9 points at naive three-bit,
+          against 1.17 for a good four-bit scheme.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The number a person would actually notice fell much further than the
+          surprise score alone would warn. Rounding is cheap for good schemes
+          down to about four bits, and it is expensive when the scheme is naive,
+          when the model is large, or when the grid drops below four bits, three
+          conditions the tidy version leaves out.
+        </p>
+        <p>
+          Two questions here are open even for the people who build these
+          models. The first is why the outliers arise at all. The sudden shift
+          near 6.7 billion parameters is documented, and an earlier finding ties
+          some outliers to dimensions that push attention onto a sentence's
+          separator token, but no account settles why the model grows them.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          ><sup class="nb-cite"><a href="#s8">8</a></sup> The second is where the
+          floor sits. Four bits is the best measured trade of accuracy for
+          storage, and pushing lower loses accuracy faster than it saves memory,
+          but how far a model can safely be pushed below four is not
+          settled.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Quantization rounds every weight to a coarser grid of allowed values.
+          Down to about four bits, a scheme that protects the handful of
+          large-magnitude values costs a model under one percent of its quality
+          while cutting its size by three-quarters. That is why the copy on your
+          phone can be genuinely the same model. Round the same weights naively,
+          on a large model, or below four bits, and those large values wreck the
+          grid for everything else. The answers can fall apart while a surprise
+          score barely flinches. When someone tells you the small model is the
+          same model, you now know what was traded and where it holds. You know
+          that a few oversized numbers decide which.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.maartengrootendorst.com/blog/quantization/"
+              >A Visual Guide to Quantization</a
+            >: the same mechanics drawn out step by step for a general reader.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2208.07339"
+              >LLM.int8(): 8-bit Matrix Multiplication for Transformers at
+              Scale</a
+            >: the paper that isolated the outlier features and measured what
+            they carry.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§1 (326 GB); Table 4 (OPT-175B); §4 Practical Speedups"
+              href="https://arxiv.org/abs/2210.17323"
+              >Frantar, Ashkboos, Hoefler &amp; Alistarh · GPTQ: Accurate
+              Post-Training Quantization for Generative Pre-trained Transformers
+              (2022)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§1 (350 GB); §1 and Fig. 2 (migrate difficulty)"
+              href="https://arxiv.org/abs/2211.10438"
+              >Xiao, Lin, Seznec, Wu, Demouth &amp; Han · SmoothQuant: Accurate
+              and Efficient Post-Training Quantization for Large Language Models
+              (2022)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="PR #1684 perplexity and file-size tables (LLaMA-7B)"
+              href="https://github.com/ggml-org/llama.cpp/pull/1684"
+              >ikawrakow · llama.cpp k-quants (Pull Request #1684, 2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Memory motivation; range-versus-precision tradeoff"
+              href="https://www.maartengrootendorst.com/blog/quantization/"
+              >Maarten Grootendorst · A Visual Guide to Quantization (2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract (4-bit universally optimal; 35,000 runs)"
+              href="https://arxiv.org/abs/2212.09720"
+              >Dettmers &amp; Zettlemoyer · The case for 4-bit precision: k-bit
+              Inference Scaling Laws (2022)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; §1; Table 1; §4 (outliers, phase shift, zeroing)"
+              href="https://arxiv.org/abs/2208.07339"
+              >Dettmers, Lewis, Belkada &amp; Zettlemoyer · LLM.int8(): 8-bit
+              Matrix Multiplication for Transformers at Scale (2022)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Tables 1, 3, 4, 6; §3.1 (salient 1%)"
+              href="https://arxiv.org/abs/2306.00978"
+              >Lin, Tang, Tang, Yang et al. · AWQ: Activation-aware Weight
+              Quantization for LLM Compression and Acceleration (2023)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract (structured outliers; attention to separator token)"
+              href="https://arxiv.org/abs/2109.12948"
+              >Bondarenko, Nagel &amp; Blankevoort · Understanding and Overcoming
+              the Challenges of Efficient Transformer Quantization (2021)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
