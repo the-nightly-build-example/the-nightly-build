@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meta's Galactica invented citations for real researchers · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "galactica",
+        "template": "lesson",
+        "title": "Meta's Galactica invented citations for real researchers, and its public demo lasted about two days",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-01",
+        "tags": ["hallucination", "training-data"],
+        "sources": 9,
+        "words": 1910,
+        "reading_minutes": 8,
+        "dek": "The demo warned on every output that the text might be invented, and Meta's own paper had already measured the model fabricating most citations to rarely-cited work.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">Meta's Galactica invented citations for real researchers, and its public demo lasted about two days</h1>
+        <p class="nb-dekline">
+          The demo warned on every output that the text might be invented, and Meta's own paper had already measured the model fabricating most citations to rarely-cited work.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-01</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          In November 2022, Meta put a language model for science on the open
+          web. It could write a paragraph on almost any technical topic in the
+          confident voice of a review paper, references included, and some of
+          those references were to papers that do not exist. This lesson follows
+          what the model, Galactica, did in the roughly two days it was public,
+          and then works out why a system built to sound like science produces
+          fabrications that read like findings. The same design now sits inside
+          the research assistants that answer a question with sources attached,
+          so how this one failed is worth holding onto before you trust the next
+          one.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/hallucination.html">A model builds a fake citation the same way it builds a true one</a>:
+            the general mechanism, and why nothing in a model checks whether a
+            reference is real.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../when-ai-breaks/microsoft-tay.html">Microsoft's Tay chatbot learned racism from Twitter users in about 16 hours</a>:
+            a deployed model that failed a different way, turned by users rather
+            than by its own training.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Meta trained a language model on 48 million papers</h2>
+        <p>
+          Galactica was a language model that Meta's Papers with Code team
+          trained only on scientific writing, with Ross Taylor as its first
+          author. The corpus ran to 106 billion tokens, drawn from 48 million
+          papers, textbooks, and lecture notes, plus millions of chemical
+          compounds and protein sequences.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+          The largest version held 120 billion parameters. The team released the
+          model family openly and presented it as a new interface for science,
+          a single tool that could draft a literature review, work through a
+          formula, or answer a technical question.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          On 15 November 2022 they put a public demo online at galactica.org,
+          where anyone with a browser could type a prompt and read back
+          paragraphs of technical prose. The team posted the paper describing
+          the model to arXiv the next day.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Yann LeCun, Meta's chief AI scientist and the model's most prominent
+          promoter, told users what to expect: type a text, he wrote, and
+          Galactica would generate a paper with the relevant references and
+          formulas.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="fabrications" id="fabrications">
+        <h2>On launch day it wrote a false biography and invented a paradox</h2>
+        <p>
+          The same day the demo opened, Ernest Davis and Andrew Sundstrom,
+          computer scientists at NYU, ran a set of prompts through it and wrote
+          down what came back.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Asked for an encyclopedia article on the experiment that measured the
+          gravitational constant, the model produced a fluent article about a
+          different experiment. It built a biography to match, sending the
+          physicist Leonard Schiff to a professorship at the University of
+          Maryland. Schiff spent his career at Stanford.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Asked about the transit of Venus, it listed transit dates from
+          centuries before the telescope. It stated that the last known transit
+          was in 1882, as though the widely watched transits of 2004 and 2012
+          had never happened.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Asked to explain the Solomonov-Russell paradox, which does not exist,
+          it did not decline. It invented a coin-flipping thought experiment and
+          set it out in the same even voice as the rest.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Others found the same thing on subjects they knew cold. Michael Black,
+          who directs a Max Planck institute for intelligent systems, tested the
+          live model and reported the pattern in a public thread. The output was
+          "wrong or biased but sounded right and authoritative," he wrote, and it
+          fabricated citations, hanging invented results on the names of real
+          researchers. He warned it could bring on "an era of deep scientific
+          fakes."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The day after launch, Gary Marcus called the results "pitch perfect
+          and utterly bogus imitations of science and math, presented as the
+          real thing."<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          None of this slipped out unlabeled. Every result the demo returned
+          carried a printed warning.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The warning on every output</span>
+          <blockquote>
+            "Warning: outputs may be unreliable! Language models are prone to
+            hallucinate text," and, printed beside every result, "never follow
+            advice from a language model without verification."<sup class="nb-cite"><a href="#s6">6</a></sup>
+            <span class="nb-note-who">Galactica public demo, galactica.org</span>
+          </blockquote>
+        </div>
+        <p>
+          The warning was accurate, and the fabrications went out under it
+          anyway. The demo even screened for some content: ask it about racism
+          or AIDS and it refused, replying that the query did not pass its
+          content filters.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          It had no equivalent check on whether an answer was true. What it
+          returned looked like a settled reference, and a reader who trusts that
+          form reads straight past a caution printed beside it.
+        </p>
+      </section>
+
+      <section data-nb-section="takedown" id="takedown">
+        <h2>Criticism was public before Meta paused the demo</h2>
+        <p>
+          The demo did not come down ahead of the criticism. The most detailed
+          expert warning was already public when Meta paused it, on 17 November
+          2022.
+        </p>
+        <ol class="nb-timeline">
+          <li class="nb-tl-event">
+            <span class="nb-tl-date">17 Nov, 06:47 UTC</span>
+            <h3>
+              Michael Black calls the model dangerous<sup class="nb-cite"><a href="#s4">4</a></sup>
+            </h3>
+            <p>
+              In a public thread he reports that on topics he knows well the
+              output is wrong yet authoritative, and warns of an era of deep
+              scientific fakes.
+            </p>
+          </li>
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">17 Nov, 15:05 UTC</span>
+            <h3>
+              Papers with Code pauses the public demo<sup class="nb-cite"><a href="#s7">7</a></sup>
+            </h3>
+            <p>
+              The team thanks users for their feedback and keeps the model
+              available to researchers who want to reproduce the paper. It
+              concedes no specific fault.
+            </p>
+          </li>
+          <li class="nb-tl-event">
+            <span class="nb-tl-date">17 Nov, 17:20 UTC</span>
+            <h3>
+              LeCun says the demo is offline<sup class="nb-cite"><a href="#s8">8</a></sup>
+            </h3>
+            <p>
+              Meta's chief AI scientist writes that it is no longer possible to
+              have some fun by "casually misusing it."
+            </p>
+          </li>
+        </ol>
+        <p>
+          That left the public demo online for about two days, from 15 to 17
+          November. Much of the coverage counted the calendar dates and called
+          the run three days, and the phrase stuck.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Meta did not describe the model as broken. LeCun's line put the fault
+          on the critics for misusing it. A year later Joelle Pineau, who led AI
+          research at Meta, gave the fuller account. Galactica had been a
+          research demo, pulled so people were not misled into treating it as a
+          product, and released without the responsible-use guidance that would
+          have set expectations. "The gap between the expectation, and where the
+          research was, was too big," she said.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          That account is a real one, and the demo was labeled a demo. It also
+          runs against the model's own paper, which had measured the failure and
+          warned against exactly the use the demo invited.
+        </p>
+      </section>
+
+      <section data-nb-section="mechanism" id="mechanism">
+        <h2>A science interface makes a guess read as a result</h2>
+        <p>
+          Galactica did not look facts up and report them. Like any language
+          model, it produced the most likely next stretch of text given the
+          prompt, and a citation is just more text to continue. The Nightly
+          Build has a lesson on why
+          <a href="../the-mechanics/hallucination.html">a model builds a fake citation the same way it builds a true one</a>;
+          the short version is that nothing inside the model separates a real
+          reference from a plausible-looking one. Both are patterns it learned to
+          continue.
+        </p>
+        <p>
+          What Galactica added was the surface. Its output wore the form of a
+          review paper: the register, the structure, the trailing list of
+          references. That surface is what a reader leans on to decide whether to
+          trust a claim, so an invention arrived carrying the same signals as a
+          result. The team was not blind to this. Their own paper names
+          hallucination as a property of storing knowledge in a model's weights,
+          where information may blend together rather than be retrieved
+          intact.<sup class="nb-cite"><a href="#s1" data-nb-locator="§2 Related Work; §7.1 Limitations">1</a></sup>
+        </p>
+        <p>
+          They also measured it. In an ablation on 1,705 methods, the
+          6.7-billion-parameter model got the citation right 13.8 percent of the
+          time for papers that had been cited only once, and invented the
+          citation outright more than half the time. For papers cited more than
+          500 times, it never fabricated the citation at all.<sup class="nb-cite"><a href="#s1" data-nb-locator="Appendix A.3, Table 26">1</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">54.5%</span><span class="nb-stat-l">citations fabricated for papers cited once</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">0.0%</span><span class="nb-stat-l">citations fabricated for papers cited 500+ times</span>
+          </div>
+        </div>
+        <p>
+          The model reproduced the
+          references it had seen often and invented the ones it had barely seen.
+          Obscure work, the kind a real literature search most needs to surface,
+          is exactly where it failed.<sup class="nb-cite"><a href="#s1" data-nb-locator="§3.1; Appendix A.3">1</a></sup>
+          The same paper's limitations section said the model likely required
+          augmentation before being used in a production setting.<sup class="nb-cite"><a href="#s1" data-nb-locator="§7.1 Limitations">1</a></sup>
+          The public demo put the unaugmented model in front of anyone with a
+          browser.
+        </p>
+      </section>
+
+      <section data-nb-section="now" id="now">
+        <h2>Fluent citations still ship in research assistants</h2>
+        <p>
+          The builders had already named the fix. Their paper said the model
+          would need augmentation and verification before any production
+          use.<sup class="nb-cite"><a href="#s1" data-nb-locator="§7.1 Limitations">1</a></sup>
+          The augmentation they meant is now common: today's research assistants
+          and answer engines pair a language model with a retrieval step, so the
+          citations can point at documents that were actually fetched. That
+          closes part of the gap Galactica left open. It does not close all of
+          it, because the model still writes the claims around those documents,
+          and it can still describe a fetched source as saying something it does
+          not.
+        </p>
+        <p>
+          This was not Microsoft's
+          <a href="../when-ai-breaks/microsoft-tay.html">Tay</a>, corrupted in
+          hours by users who fed it slurs. No one had to attack Galactica. It
+          fabricated from its training, doing what it was built to do. And the
+          fabrication does not stay on the screen. The clearest picture of where
+          it lands is a courtroom: a lawyer once filed a brief citing
+          <a href="../when-ai-breaks/mata-v-avianca.html">six cases a chatbot had invented</a>,
+          and paid for it.
+        </p>
+        <p>
+          Galactica failed loudly, in front of scientists who could check its
+          work inside a day. A retrieval-backed assistant fails more quietly. It
+          gets most of its citations right, and that is what makes the invented
+          one hard to catch.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Galactica fabricated because it was a language model, and a language
+          model writes the most likely text, not the true one. What made the
+          fabrications dangerous was the science styling, which handed every
+          guess the surface of a result. Meta's later framing, that this was a
+          research demo held to the wrong expectation, is fair as far as it goes.
+          The record is that the failure was not a surprise: the model's own
+          paper had measured it inventing citations and warned against production
+          use, and the team put an open public demo up anyway. The warning
+          printed on every output did not save it, because the output was built
+          to look more trustworthy than the warning beside it. The tools that now
+          answer with sources attached run on the same weakness, and it is
+          better hidden than it was in 2022.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2211.09085">Galactica: A Large Language Model for Science</a>:
+            the team's own paper, including the citation ablation in Appendix A.3
+            that measured the fabrication rate.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://cs.nyu.edu/~davise/papers/ExperimentWithGalactica.html">Ernest Davis and Andrew Sundstrom's launch-day transcript</a>:
+            the prompts and the invented output, side by side, from the day the
+            demo went live.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2211.09085"
+              >Meta AI, Papers with Code · Galactica: A Large Language Model for Science (arXiv:2211.09085)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.technologyreview.com/2022/11/18/1063487/meta-large-language-model-ai-only-survived-three-days-gpt-3-science/"
+              >MIT Technology Review · Will Douglas Heaven · Why Meta's latest large language model survived only three days online</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cs.nyu.edu/~davise/papers/ExperimentWithGalactica.html"
+              >Ernest Davis and Andrew Sundstrom · An Experiment with Galactica</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://x.com/Michael_J_Black/status/1593133722316189696"
+              >Michael J. Black · Thread testing the live Galactica demo</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://garymarcus.substack.com/p/a-few-words-about-bullshit"
+              >Gary Marcus · A Few Words About Bullshit</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://galactica.org/"
+              >Galactica · Public demo per-output warning, November 2022</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://x.com/paperswithcode/status/1593259033787600896"
+              >Papers with Code · Statement pausing the Galactica demo</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://x.com/ylecun/status/1593293058174500865"
+              >Yann LeCun · Post on the demo going offline</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://venturebeat.com/ai/what-meta-learned-from-galactica-the-doomed-model-launched-two-weeks-before-chatgpt"
+              >VentureBeat · Sharon Goldman · What Meta learned from Galactica, the doomed model launched two weeks before ChatGPT</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
