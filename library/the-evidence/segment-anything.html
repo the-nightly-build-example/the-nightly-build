@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Segment Anything returns a mask and never a name · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "segment-anything",
+        "template": "lesson",
+        "title": "Segment Anything returns a mask and never a name",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-01",
+        "tags": [],
+        "sources": 6,
+        "words": 1902,
+        "reading_minutes": 8,
+        "dek": "Kirillov and his Meta coauthors let the 2023 model draw 99.1% of its own billion-mask training set, then measured it losing to a task-specific model on the standard segmentation score.",
+        "harness": "claude-code",
+        "model": "Claude Opus"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Segment Anything returns a mask and never a name</h1>
+        <p class="nb-dekline">
+          Kirillov and his Meta coauthors let the 2023 model draw 99.1% of its
+          own billion-mask training set, then measured it losing to a
+          task-specific model on the standard segmentation score.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-01</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When Meta released Segment Anything in 2023, the labeling tools you
+          click through to tag a photo and the medical-imaging startups
+          fine-tuning their own segmenters both reached for it within weeks. The
+          model does one narrow thing: you point at something in an image and it
+          hands back the exact pixels that belong to it. This lesson reads the
+          paper to see what that thing is and what it is not. By the end you will
+          know what the model takes in and what it puts out. You will know where
+          the billion masks in its training set actually came from, and why the
+          popular line that it "solved segmentation" claims more than the paper
+          measured.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/vision-transformer.html">Vision Transformer</a>:
+            the architecture that reads an image as a grid of patches, which
+            Segment Anything uses for its image encoder.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/clip.html">CLIP</a>: a model that does output
+            a name for an image, learned from captions. The opposite of a mask
+            with no label.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-evidence/denoising-diffusion.html">Denoising Diffusion</a>:
+            a model that generates a new image. Segment Anything only marks up an
+            image it is given.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What SAM hands back is a shape with no name</h2>
+        <p>
+          Click once inside a dog in a photo, or drag a rough box around a street
+          sign, and the Segment Anything Model returns the precise set of pixels
+          that make up that object. That set of pixels is a mask: the object cut
+          cleanly out of its background, edges and all.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 3">1</a></sup
+          >
+          What the model does not return is the word "dog" or the word "sign." A
+          mask from this model carries no class label of any kind. The people who
+          built its training data deliberately attached none.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 5">1</a></sup
+          >
+        </p>
+        <p>
+          The click and the box are prompts. The paper's central idea is a task
+          it calls promptable segmentation: return one valid mask for any prompt,
+          whether that prompt is a point, a box, or a rough mask sketched by
+          hand.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 3">1</a></sup
+          >
+          A prompt here is a place, not a request in words. Point at a spot and
+          the model outlines whatever is there. It does not read a description
+          and go find the object, and it does not tell you what the object was.
+          Naming, the paper is clear, is somebody else's job.
+        </p>
+      </section>
+
+      <section data-nb-section="architecture" id="architecture">
+        <h2>One heavy encoder, one decoder light enough for a browser</h2>
+        <p>
+          The model is built in three parts.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 3">1</a></sup
+          >
+          An image encoder does the expensive work. It is a
+          <a href="../the-evidence/vision-transformer.html">vision transformer</a>,
+          pre-trained by having it reconstruct images with patches blanked out,
+          and it reads the whole photo once into a dense numerical summary. A
+          small prompt encoder turns your point or box into a handful of numbers.
+          A lightweight mask decoder takes the image summary and the prompt
+          together and draws the mask.
+        </p>
+        <p>
+          Splitting the work this way is what makes the model feel live. The
+          photo is summarized only once. After that, each new prompt runs through
+          the small decoder in about 50 milliseconds inside a web browser, fast
+          enough that dragging a point around updates the outline as you
+          move.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 3">1</a></sup
+          >
+          A single prompt is often ambiguous. A point on a shirt could mean the
+          shirt, the person wearing it, or both. Rather than commit to one guess,
+          the model returns several masks at once and scores each, and the tool
+          around it picks or lets you choose.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 3">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="data-engine" id="data-engine">
+        <h2>The people drop out over three stages</h2>
+        <p>
+          The released dataset, called SA-1B, holds roughly 1.1 billion masks
+          across 11 million images, about 100 masks on every image.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          No team of annotators drew a billion masks. The model drew almost all
+          of them, in a three-stage data engine where a person did less work at
+          each stage than the stage before.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 4">1</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            The three data-engine stages: as the model improved, it covered more
+            of each image and people touched less of it.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Sec. 4">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Stage</th>
+              <th>Masks added</th>
+              <th>Masks per image</th>
+              <th class="txt">Who drew them</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Assisted</span></td>
+              <td>4.3 M</td>
+              <td>20 to 44</td>
+              <td class="txt">An annotator clicks; the model refines the mask.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Semi-automatic</span></td>
+              <td>5.9 M</td>
+              <td>44 to 72</td>
+              <td class="txt">
+                The model proposes masks; a person fills in what it missed.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Automatic</span></td>
+              <td>1.1 B</td>
+              <td>~100</td>
+              <td class="txt">The model alone, prompted by a grid of points.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          In the first stage, annotators clicked and corrected while the model
+          was retrained six times on their work. The time to mark one mask fell
+          from 34 seconds to 14, and the masks on an average image rose from 20
+          to 44.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 4">1</a></sup
+          >
+          In the second stage the model proposed masks on its own and people only
+          drew the ones it had missed, pushing the average to 72 masks an image
+          and the running total to 10.2 million.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 4">1</a></sup
+          >
+          The third stage removed the person. The team pointed a regular grid of
+          points at all 11 million images and kept the masks the model returned,
+          which is how the count jumped to 1.1 billion.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 5">1</a></sup
+          >
+          Of the released masks, 99.1% come from that automatic stage. The
+          10.2 million a person ever touched are the remaining 0.9%.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 5">1</a></sup
+          >
+          Meta puts the result at 400 times more masks than any earlier
+          segmentation dataset, built 6.5 times faster than drawing COCO's masks
+          by hand.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <p>
+          The accuracy of those billion automatic masks rests on a single check: a
+          study Meta ran on 500 sampled images, comparing the automatic masks to
+          careful corrections by experts. On that sample, 94% of the mask pairs
+          agreed on more than 90% of their area, measured by intersection over
+          union, the share of two masks' combined area where they overlap.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 5">1</a></sup
+          >
+          That is a real number, and it covers 500 images out of 11 million. No
+          independent audit of the full billion masks exists in the record.
+        </p>
+      </section>
+
+      <section data-nb-section="specialist-wins" id="specialist-wins">
+        <h2>Handed the boxes, SAM still trails the specialist</h2>
+        <p>
+          The paper's headline promise is zero-shot transfer: point the trained
+          model at a task it was never trained for, add no new training, and see
+          how it does.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 7">1</a></sup
+          >
+          It runs five such tests. The most telling is instance segmentation,
+          the job of outlining every separate object in a scene. The model cannot
+          find the objects itself, so the authors hand it the boxes from a
+          separate object detector, ViTDet, and ask it only to fill in the mask
+          inside each box.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 7.4">1</a></sup
+          >
+          On the field's standard score, average precision, it loses to that same
+          detector's own specialist model on both benchmarks.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Zero-shot Segment Anything against the task-specific ViTDet-H, mask
+            average precision. The specialist scores higher on both sets.<sup
+              class="nb-cite"
+              ><a href="#s1" data-nb-locator="Sec. 7.4">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Benchmark</th>
+              <th>SAM</th>
+              <th>ViTDet-H</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">COCO</span></td>
+              <td>46.5</td>
+              <td>51.0</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">LVIS</span></td>
+              <td>44.7</td>
+              <td>46.6</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The paper argues the gap is partly the metric's fault: COCO's own
+          reference masks are rough, the specialist has learned to match their
+          roughness, and human raters shown both actually preferred the model's
+          masks.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 7.4">1</a></sup
+          >
+          The number favors the specialist; the paper contests what the number
+          measures. But the setup had already conceded the real point: the model
+          never picked a single object. The detector supplied every box and every
+          class, and the model only colored inside the lines it was given. The
+          same gap between prose and table shows up in the other tests. On
+          generating object proposals it trails on the all-objects average, 59.3
+          against 63.0, even while it leads on the rare and medium ones.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 7.3">1</a></sup
+          >
+          On edge detection it lands near the decade-old HED and below the
+          current EDETR, which the authors report as an emergent ability well
+          short of the record.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 7.2">1</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The paper draws its own line</span>
+          <blockquote>
+            "it is unclear how to design simple prompts that implement semantic
+            and panoptic segmentation."<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Sec. 8">1</a></sup
+            >
+            <span class="nb-note-who">Kirillov et al., Segment Anything, discussion</span>
+          </blockquote>
+        </div>
+        <p>
+          Semantic and panoptic segmentation are the tasks that do put a class
+          name on every pixel: this region is road, that one is car. Those are
+          exactly the tasks the authors say they do not know how to make the
+          model do. The boundary is not a critic's reading of the paper. It is
+          the paper's own account of where its model stops.
+        </p>
+      </section>
+
+      <section data-nb-section="after-fine-tuning" id="after-fine-tuning">
+        <h2>The medical wins came after fine-tuning, not before</h2>
+        <p>
+          Meta launched the model as a step toward "the first foundation model
+          for image segmentation."<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Independent coverage ran with it, calling the release a foundation
+          model for vision and "a GPT-esque moment," and slotting it into
+          labeling pipelines as a fast first-pass tool. That same coverage noted
+          the free-text prompting the paper showed off was never actually
+          shipped.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          From there the framing hardened into a claim the paper never made, that
+          segmentation was now solved.
+        </p>
+        <p>
+          Medical imaging is where that claim got tested at scale, because it is
+          full of images unlike the everyday photos the model was trained on. One
+          independent team assembled a benchmark of 1,050,311 images with about 6
+          million masks across 18 imaging types, ran the original model on it with
+          no fine-tuning, and got a mean Dice score of 58.52%.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Dice is another overlap score, close cousin to the one from the quality
+          study, and 58.52% means the automatic masks and the true ones agreed on
+          a little over half their area on average. On many of those datasets the
+          model simply failed, and specialist models beat it.
+        </p>
+        <p>
+          The gap closed only when someone retrained the model on the new domain.
+          MedSAM, a version fine-tuned on 1,570,263 medical image-mask pairs
+          spanning ten imaging types and more than 30 cancer types, reports
+          better accuracy than the modality-specific specialists it was measured
+          against.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Zero-shot, the model trailed. Adapted, it led. That is the honest shape
+          of a foundation model: a strong place to start that you retrain for
+          your problem, not a system that already knows it.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Segment Anything gives you the shape of an object and never its name.
+          You prompt it with a point or a box. It returns the pixels, and the
+          class label is left for some other model to supply. Its billion-mask
+          dataset is real, and 99.1% of those masks were drawn by the model
+          itself, with the only quality check being a 500-image study by the team
+          that built it. Run it cold on a domain it never saw and it trails the
+          specialists; only after someone fine-tuned it did the medical wins
+          arrive. Read that way, "foundation model" is a fair label and
+          "segmentation is solved" is not. It gives you an outline to build on,
+          which is a great deal, and less than the phrase suggests.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2304.02643">Kirillov et al., Segment Anything (2023)</a>:
+            the paper itself, with the data-engine and zero-shot tables read here.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://ai.meta.com/datasets/segment-anything/">The SA-1B dataset page</a>:
+            browse the released masks and the research-only license.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://www.nature.com/articles/s41467-024-44824-z">Ma et al., MedSAM (2024)</a>:
+            the fine-tune that adapted the model to medical images.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2304.02643"
+              >arXiv · Kirillov et al., Segment Anything, Meta AI Research (2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://ai.meta.com/datasets/segment-anything/"
+              >Meta AI · Segment Anything 1-Billion mask dataset (SA-1B)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://ai.meta.com/blog/segment-anything-foundation-model-image-segmentation/"
+              >Meta AI · Introducing Segment Anything, release announcement (2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://blog.roboflow.com/segment-anything-breakdown/"
+              >Roboflow · What is Segment Anything Model (SAM)? A breakdown (2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2304.14660"
+              >arXiv · Huang et al., Segment Anything Model for Medical Images?,
+              Medical Image Analysis (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.nature.com/articles/s41467-024-44824-z"
+              >Nature Communications · Ma et al., Segment anything in medical
+              images (MedSAM) (2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
