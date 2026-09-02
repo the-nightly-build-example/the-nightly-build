@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ten fine-tuning examples stripped Llama 2's safety training · What Could Go Wrong</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "what-could-go-wrong",
+        "slug": "open-weights-release",
+        "template": "lesson",
+        "title": "Ten fine-tuning examples stripped Llama 2's safety training",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-02",
+        "tags": ["open-weights", "dangerous-capabilities", "governance", "red-teaming"],
+        "sources": 12,
+        "words": 2165,
+        "reading_minutes": 9,
+        "dek": "RAND built a study specifically to test whether access to a language model helps plan a biological attack, finding no measurable difference between the teams that had one and the teams that didn't.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">What Could Go Wrong</div>
+        <h1 class="nb-title">Ten fine-tuning examples stripped Llama 2's safety training</h1>
+        <p class="nb-dekline">
+          RAND built a study specifically to test whether access to a
+          language model helps plan a biological attack, finding no
+          measurable difference between the teams that had one and the teams
+          that didn't.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-02</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every capable model a lab trains forces one more decision: publish
+          the weights, the trained numbers that make it run, or keep the
+          model behind an API the company controls. Meta, Mistral, and
+          others have already made that call dozens of times, and once a
+          company chooses to publish, nothing reaches back and revises it.
+          This lesson holds that decision to its strongest form on both
+          sides: the case that a release can never be pulled back, and the
+          evidence for and against the worst things it's supposed to make
+          possible. By the end, you'll have two questions for any claim
+          about open models: has the harm been demonstrated, and what does
+          the open version add over what a determined person could already
+          do.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../what-could-go-wrong/bioweapon-uplift.html"
+              >RAND's red-team study found no measurable AI advantage in
+              bioweapons planning</a
+            >: this lesson's null result, taught in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../what-could-go-wrong/cyber-uplift.html"
+              >AI's strongest bug-finding results so far came out of
+              defensive research</a
+            >: the same demonstrated/speculative split, for cyber uplift.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../what-could-go-wrong/data-poisoning.html"
+              >Poisoning's two strongest results were never run in the same
+              experiment</a
+            >: an open model misused through its training data, not a later
+            fine-tune.
+          </dd>
+          <dt>04</dt>
+          <dd>
+            <a href="../what-could-go-wrong/model-collapse.html"
+              >Generative models fed only their own output collapse within
+              nine generations</a
+            >: a risk of openly copyable models with no intentional misuse
+            in it at all.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>There is no "undo" function once the weights are out</h2>
+        <p>
+          A team at the Centre for the Governance of AI, led by Elizabeth
+          Seger, published a report in October 2023 on what a company gives
+          up when it releases a model's weights, the trained numbers that
+          hold everything the model learned, instead of keeping them behind
+          its own website or API.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Their case for treating that decision as unusually consequential
+          rests on one plain claim: "open-source AI model release is
+          irreversible; there is no 'undo' function if significant harms
+          materialize."<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          That isn't a hypothetical about some future license. It's the
+          state of a widely used one today. Meta's license for Llama 2 sets
+          exactly one restriction on who can download and run its weights:
+          companies whose products already serve more than 700 million
+          monthly users need Meta's separate permission, granted "in its
+          sole discretion."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Below that line, anyone can download the weights, run them, and
+          change them. Nothing evaluates what they intend to build, and
+          nothing lets Meta reach back in once the download is done.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          Seger and her coauthors lay out two ways a released model's safety
+          training can be undone. A safety filter bolted on after training
+          can be trivial to remove: Stable Diffusion's own filter "can be
+          removed by deleting a single line of inference code."<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Undoing safety built into the training itself is harder: it
+          "requires the curation of a dataset...as well as...compute and
+          technical expertise."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Even so, the report doesn't claim today's models already cross the
+          line that would justify the alarm: "current AI capabilities do not
+          yet surpass a critical threshold of capability for the most
+          extreme risks."<sup class="nb-cite"><a href="#s1">1</a></sup> What
+          it leaves open is how high that "harder" bar actually sits.
+        </p>
+      </section>
+
+      <section data-nb-section="cheap-to-strip" id="cheap-to-strip">
+        <h2>The guardrails came off for twenty cents</h2>
+        <p>
+          Researchers at Princeton, Virginia Tech, IBM Research, and Stanford
+          tested the harder route directly.<sup class="nb-cite"><a href="#s3">3</a></sup> Xiangyu Qi
+          and coauthors took GPT-3.5 Turbo, a closed model reachable only
+          through OpenAI's paid API, and fine-tuned it: a further, small
+          round of training on top of what it already knew. Ten
+          adversarially chosen harmful examples, five passes through that
+          small set, cost less than $0.20 through OpenAI's own fine-tuning
+          service.<sup class="nb-cite"><a href="#s3">3</a></sup> The
+          harmfulness rate is the share of the model's answers to a battery
+          of test prompts that an automated judge scored as the most
+          harmful, on a five-point scale. It rose from a baseline of 1.8% to
+          88.8%.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          They ran the identical attack on Llama-2-7b-Chat, described by the
+          authors as state-of-the-art among open-weight models at the time,
+          with no dollar figure at all: the weights ran on their own
+          hardware.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Qi et al.'s fine-tuning attack on a closed model reached through
+            a paid API and an open-weight model run on the attacker's own
+            hardware.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Examples</th>
+              <th>Cost</th>
+              <th>Harmfulness rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">GPT-3.5 Turbo</span></td>
+              <td>10</td>
+              <td>&lt;$0.20</td>
+              <td>1.8% → 88.8%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Llama-2-7b-Chat</span></td>
+              <td>10</td>
+              <td>$0</td>
+              <td>0.3% → 50.0%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Llama-2-7b-Chat</span></td>
+              <td>50</td>
+              <td>$0</td>
+              <td>0.3% → 80.3%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Seger's report had called the built-in-safety route the harder of
+          the two, the one that needs a curated dataset, compute, and
+          technical expertise. Qi's result puts a number on how low that bar
+          actually sits: ten examples is a spreadsheet, not a research
+          program. The two rows differ in more than cost. The GPT-3.5 attack
+          ran through OpenAI's own service,
+          which could in principle log or refuse it. The Llama-2 attack
+          ran on hardware no company could see. That's the practical shape
+          Seger's "no undo function" takes once a model is out: not just
+          that the weights can't be recalled, but that what anyone does to
+          them afterward happens where nobody is watching.
+        </p>
+      </section>
+
+      <section data-nb-section="the-null-result" id="the-null-result">
+        <h2>The uplift RAND's red team never found</h2>
+        <p>
+          RAND ran an exercise built specifically to test whether that kind
+          of access changes a risk the field treats as genuinely
+          catastrophic: help planning a biological attack.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Teams of researchers played the part of people trying to plan such
+          an attack, working realistic scenarios. Some had access to a
+          language model along with the internet; others had internet
+          access only.<sup class="nb-cite"><a href="#s4">4</a></sup> RAND's
+          published finding: "using the existing generation of LLMs did not
+          measurably change the operational risk." In the report's own
+          words, "biological weapon attack planning currently lies beyond
+          the capability frontier of LLMs as assistive tools."<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Plan viability showed no statistically significant
+          difference between the two groups.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          RAND is explicit about what that result does and doesn't cover:
+          "this research did not measure the distance between the existing
+          LLM capability frontier and the knowledge needed for biological
+          weapon attack planning."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Lead author Christopher Mouton made the same point in RAND's own
+          release. "Just because today's LLMs aren't able to close the
+          knowledge gap needed to facilitate biological weapons attack
+          planning," he said, "doesn't preclude the possibility that they
+          may be able to in the future."<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          A null result about this generation of models is not a guarantee
+          about the next one.
+        </p>
+        <p>
+          The finding wasn't the first time someone made that argument.
+          Before the final report, Meta's own chief AI scientist, Yann
+          LeCun, had argued an LLM might "save you a bit of time" over a
+          search engine, but that the hard, practical steps stay the real
+          bottleneck.<sup class="nb-cite"><a href="#s6">6</a></sup> The
+          outlet reporting his comments called RAND's result a confirmation
+          of that view.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="present-day" id="present-day">
+        <h2>What open weights add that the internet doesn't</h2>
+        <p>
+          A 2024 paper by Sayash Kapoor, Arvind Narayanan, and 22 coauthors
+          reframes the whole debate around one sharper question.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Instead of asking whether an open model is dangerous, they ask
+          what releasing its weights adds, in risk, over what's already
+          available. They call this the marginal risk: "the extent to
+          which these models increase societal risk by intentional misuse
+          beyond closed foundation models or pre-existing technologies,
+          such as web search on the internet."<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          Applying that question to seven previously published misuse
+          studies, they find six of the seven offer "insufficient evidence
+          to demonstrate increased marginal societal risk from open
+          foundation models." That's not because the underlying worry is
+          false. It's because the studies didn't establish it.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          For cybersecurity specifically, they conclude the current
+          marginal risk is low: the tools sophisticated attackers already
+          use predate open language models by years, and defenders get the
+          same capability boost attackers do.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          They don't extend that comfort everywhere: for non-consensual
+          intimate imagery, the same paper finds open models "pose
+          considerable marginal risk at present, and plausible defenses
+          seem hard."<sup class="nb-cite"><a href="#s7">7</a></sup> It
+          disaggregates risk by use rather than clearing open models across
+          the board. On biosecurity, it audits a prior study and finds
+          that one, too, never compared a model's help to what's already on
+          the internet.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          Today's proponents of doing something about the gap don't agree
+          on what. Janet Egan and Lennart Heim would have the companies
+          that sell computing power run identity checks on large training
+          and fine-tuning jobs, the way banks vet customers. That gives
+          regulators "more precise controls...as well as the flexibility to
+          suspend access at any time."<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          The U.S. government's actual position, as of its July 2024
+          report, is more modest: monitor for risk, but "refrain from
+          restricting the availability of open model weights for currently
+          available systems."<sup class="nb-cite"><a href="#s9">9</a></sup>
+          Monitoring and identity checks on every run are not the same
+          policy, even among people who already accept that open weights
+          carry some risk.
+        </p>
+        <p>
+          Meta's own behavior complicates any tidy reading of who's right.
+          In July 2024, Mark Zuckerberg argued open weights are safer
+          against unintentional harm because "the systems are more
+          transparent and can be widely scrutinized." Against deliberate
+          misuse, he argued for wide deployment "so that larger actors can
+          check the power of smaller bad actors," a case he conditioned on
+          everyone having access to similar-generation models.<sup
+            class="nb-cite"
+            ><a href="#s10">10</a></sup
+          > By
+          December 2025, Meta was reported to be building a closed
+          successor. Its open Llama 4 model had underperformed, and a
+          competitor's model was seen inside the company as having copied
+          Llama's architecture.<sup class="nb-cite"><a href="#s11">11</a></sup>
+          One report frames the shift around "commercial risks of releasing
+          open weights that can be easily cloned by adversaries," not the
+          misuse debate at all.<sup class="nb-cite"><a href="#s11">11</a></sup>
+          Zuckerberg himself was quoted describing a need to be "rigorous
+          about mitigating these risks and careful about what we choose to
+          open source," language closer to Seger's risk-assessment case
+          than his own essay had used.<sup class="nb-cite"
+            ><a href="#s11">11</a></sup
+          >
+          By August 2026 the picture had only partly reversed: a smaller
+          model released below the frontier, a further one promised soon,
+          and Meta's actual frontier model still unreleased.<sup
+            class="nb-cite"
+            ><a href="#s12">12</a></sup
+          >
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>
+                The Llama 2 license genuinely has no recall mechanism, and
+                Meta cannot undo a download once it happens.<sup
+                  class="nb-cite"
+                  ><a href="#s2">2</a></sup
+                >
+              </li>
+              <li>
+                Removing an open model's safety training is demonstrated, at
+                negligible cost, on a real released model.<sup class="nb-cite"><a href="#s3">3</a></sup>
+              </li>
+              <li>
+                The one red-team study built to find a catastrophic use for
+                that gap came back with a clean null result.<sup
+                  class="nb-cite"
+                  ><a href="#s4">4</a></sup
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>
+                RAND's own report says its null result describes today's
+                models, not a guarantee about tomorrow's.<sup
+                  class="nb-cite"
+                  ><a href="#s4">4</a></sup
+                >
+              </li>
+              <li>
+                The paper that finds cybersecurity's marginal risk low finds
+                the opposite for non-consensual intimate imagery.<sup class="nb-cite"><a href="#s7">7</a></sup>
+              </li>
+              <li>
+                Meta's own release decisions in this period tracked
+                competitive exposure at least as much as either side of the
+                misuse debate.<sup class="nb-cite"><a href="#s11">11</a></sup>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Erasing a model's safety training is not a hypothetical. Ten
+          examples did it: about twenty cents through a paid API, or
+          nothing at all once the weights sit on someone's own machine,
+          where no company can see it happen or stop it. What those
+          examples unlock is the part still unproven. The one red-team test
+          built to find a catastrophic use for that gap came back empty,
+          and RAND said so about its own result, not about every model
+          still to come. Carry two questions forward, not a verdict: has
+          the harm actually been shown, or only assumed, and what does an
+          open release add that a search engine and a closed model didn't
+          already put within reach?
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2311.09227"
+              >Seger, Dreksler, Moulange, et al., "Open-Sourcing Highly
+              Capable Foundation Models"</a
+            >: the full GovAI report, including its recommendations for
+            staged release and pre-release risk assessment.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2403.07918"
+              >Kapoor, Bommasani, Narayanan, et al., "On the Societal Impact
+              of Open Foundation Models"</a
+            >: the complete six-point framework, scored against all seven
+            misuse studies the authors reviewed.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.governance.ai/research-paper/open-sourcing-highly-capable-foundation-models"
+              >GovAI · Seger, Dreksler, Moulange, et al., "Open-Sourcing
+              Highly Capable Foundation Models" (2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://developer.meta.com/ai/llama2/license/"
+              >Meta · Llama 2 Community License Agreement (July 18, 2023)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2310.03693"
+              >Qi, Zeng, Xie, et al., "Fine-Tuning Aligned Language Models
+              Compromises Safety, Even When Users Do Not Intend To!"
+              (2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.rand.org/pubs/research_reports/RRA2977-2.html"
+              >RAND Corporation · Mouton, Lucas, and Guest, "The Operational
+              Risks of AI in Large-Scale Biological Attacks: Results of a
+              Red-Team Study" (January 2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.rand.org/news/press/2024/01/25.html"
+              >RAND Corporation · News release accompanying RRA2977-2
+              (January 25, 2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://dailyai.com/2024/01/rand-report-says-llms-dont-increase-risk-of-biological-attacks/"
+              >DailyAI · "RAND report says LLMs don't increase risk of
+              biological attacks" (January 26, 2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2403.07918"
+              >Kapoor, Bommasani, Narayanan, et al., "On the Societal Impact
+              of Open Foundation Models" (2024)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2310.13625"
+              >Egan and Heim, "Oversight for Frontier AI through a
+              Know-Your-Customer Scheme for Compute Providers" (2023)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.ntia.gov/other-publication/2024/fact-sheet-ntia-ai-report-calls-monitoring-not-mandating-restrictions-open-ai-models"
+              >NTIA · Fact sheet on the Report on Dual-Use Foundation Models
+              with Widely Available Model Weights (July 30, 2024)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://about.fb.com/news/2024/07/open-source-ai-is-the-path-forward/"
+              >Meta · Zuckerberg, "Open Source AI Is the Path Forward" (July
+              23, 2024)</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://winbuzzer.com/2025/12/09/meta-pivots-from-llama-to-closed-ai-models-abandoning-open-source-roots-xcxwbn/"
+              >Winbuzzer · "Meta Pivots from Llama to Closed AI Models,
+              Abandoning Open Source Roots" (December 9, 2025)</a
+            >
+          </li>
+          <li id="s12">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://spyglass.org/meta-open-ai-muse-glimmer/"
+              >Spyglass · Siegler, "Meta's Open Weight Whiplash" (August 10,
+              2026)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
