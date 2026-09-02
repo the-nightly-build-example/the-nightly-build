@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anthropic taught an AI judge sixteen rules and trained a less harmful chatbot · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "constitutional-ai",
+        "template": "lesson",
+        "title": "Anthropic taught an AI judge sixteen rules and trained a less harmful chatbot",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-02",
+        "tags": [],
+        "sources": 6,
+        "words": 2182,
+        "reading_minutes": 9,
+        "dek": "Bai et al.'s 2022 paper measured that edge as a preference margin from 8,135 crowdworker harmlessness comparisons on Anthropic's own 52B models, the size behind a term now used far more loosely.",
+        "harness": "Claude Code",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Anthropic taught an AI judge sixteen rules and trained a less harmful chatbot</h1>
+        <p class="nb-dekline">
+          Bai et al.'s 2022 paper measured that edge as a preference margin from 8,135 crowdworker harmlessness comparisons on Anthropic's own 52B models, the size behind a term now used far more loosely.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-02</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every few months another chatbot ships with a "constitution," and
+          most arguments about whether an AI system can judge harm for itself
+          eventually point back to one 2022 paper. This lesson opens that
+          paper and reads what it actually built. Two AI models, a written
+          list of instructions short enough to read in full, and a claim
+          about harm that Anthropic measured with a preference test, not a
+          fixed score. By the end you will be able to explain what an "AI
+          feedback" label is, what a model's "constitution" is mechanically,
+          and how much of today's confident talk about either one the 2022
+          result can actually support.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="instructgpt.html"
+              >A 1.3B model beat GPT-3 on the one metric OpenAI trained it to
+              win</a
+            >: how RLHF turns a rater's preference into a training signal.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="deep-rl-from-human-preferences.html"
+              >Two more papers turned a robot's backflip trick into
+              InstructGPT's training recipe</a
+            >: where the preference model that scores answers came from.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="direct-preference-optimization.html"
+              >DPO turns preference tuning into a single classification
+              loss</a
+            >: a later method that skips this paper's separate preference
+            model.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One paper swapped human harm labels for an AI judge</h2>
+        <p>
+          In December 2022, Anthropic published a paper describing how it
+          trained a chatbot to refuse harmful requests without paying anyone
+          to label which requests were harmful.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The paper is Bai et al.'s "Constitutional AI: Harmlessness from AI
+          Feedback" (arXiv 2212.08073). It is now the document people cite
+          whenever an argument about AI safety needs the term "RLAIF" or the
+          phrase "the model has a constitution."<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Every chatbot trained to avoid harmful answers needs some way to
+          tell a real refusal from an evasive one. The standard fix at the
+          time was reinforcement learning from human feedback: people compare
+          pairs of model answers, and their choices train a preference model
+          that scores new answers. An earlier lesson on
+          <a href="instructgpt.html">InstructGPT</a> walks through that
+          recipe in full. Anthropic's own version of it had already found
+          that a model pushed hard against harm starts giving evasive,
+          unhelpful answers instead of actually harmless ones.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Bai and her coauthors wanted a model that stayed both harmless and
+          helpful. Their fix: make one AI model check another AI model's
+          work, guided by a short written list of instructions they called a
+          constitution.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="two-stages" id="two-stages">
+        <h2>Critique, revise, then let a second model choose</h2>
+        <p>
+          The method runs in two stages, and each one replaces a different
+          human judgment with an AI one.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>Stage one: critique and revise</h3>
+            <p>
+              Researchers start with a "helpful-only" model: capable, but
+              never trained to avoid harm. They give it a prompt designed to
+              provoke a harmful answer, let it answer, then ask it to
+              critique its own answer against one instruction drawn at
+              random from the constitution, then to rewrite the answer
+              following that critique.<sup class="nb-cite"
+                ><a href="#s1">1</a></sup
+              >
+              The model repeats this on its own revision several times over,
+              and a fresh pretrained model is finetuned on the final,
+              most-revised answers.<sup class="nb-cite"
+                ><a href="#s1">1</a></sup
+              >
+              Anthropic calls the result SL-CAI, for supervised learning.
+            </p>
+          </li>
+          <li>
+            <h3>Stage two: an AI judge, not a person</h3>
+            <p>
+              The SL-CAI model then generates two candidate answers to the
+              same kind of prompt. A separate copy of the model compares
+              them, guided this time by one of a different sixteen
+              principles, and picks the response it judges less harmful.<sup
+                class="nb-cite"
+                ><a href="#s1">1</a></sup
+              >
+              Those AI-made choices are exactly the kind of preference label
+              a
+              <a href="deep-rl-from-human-preferences.html"
+                >preference model</a
+              >
+              needs. Here a model makes them instead of a person, which is
+              why Anthropic calls the whole approach reinforcement learning
+              from AI feedback, or RLAIF.<sup class="nb-cite"
+                ><a href="#s1">1</a></sup
+              >
+              The resulting preference model blends 182,831 AI-made
+              harmlessness labels with human-made helpfulness labels.
+              Reinforcement learning against that combined score produces
+              the paper's final model, RL-CAI.<sup class="nb-cite"
+                ><a href="#s1">1</a></sup
+              >
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section data-nb-section="the-rulebook" id="the-rulebook">
+        <h2>The rulebook run through both stages is short</h2>
+        <p>
+          The "constitution" in Constitutional AI is not a charter or a set
+          of legal principles. It is two short lists Bai and her coauthors
+          wrote themselves. Sixteen instructions guide the critique-and-revise
+          step in stage one, and a different sixteen guide the comparison
+          step in stage two: thirty-two instructions in total.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Here is the entire instruction the AI judge follows, word for
+          word:
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">A stage-two comparison principle</span>
+          <blockquote>
+            Which of these assistant responses is less harmful? Choose the
+            response that a wise, ethical, polite and friendly person would
+            more likely say.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">Constitutional AI, Appendix C</span>
+          </blockquote>
+        </div>
+        <p>
+          And here is the critique-and-revision pair from stage one:
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">A stage-one critique-revision pair</span>
+          <blockquote>
+            Identify specific ways in which the assistant's last response is
+            harmful, unethical, racist, sexist, toxic, dangerous, or
+            illegal. Please rewrite the assistant response to remove any and
+            all harmful, unethical, racist, sexist, toxic, dangerous, or
+            illegal content.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">Constitutional AI, Appendix C</span>
+          </blockquote>
+        </div>
+        <p>
+          The paper is direct about how these thirty-two instructions were
+          chosen: "These principles were selected in an ad hoc manner for
+          research purposes, and were not carefully designed as in [Glaese
+          et al., 2022]."<sup class="nb-cite"><a href="#s1">1</a></sup> Bai
+          and her coauthors were building a research prototype, not a
+          governing document, and they say so themselves.
+        </p>
+      </section>
+
+      <section data-nb-section="how-big" id="how-big">
+        <h2>A preference margin, not a score</h2>
+        <p>
+          The headline claim rests on one evaluation: crowdworkers comparing
+          pairs of model answers in open-ended conversation. It is the same
+          kind of preference judgment stage two asks an AI model to make,
+          except here the judges are people.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Anthropic collected 10,274 of those comparisons on helpfulness and
+          8,135 on harmlessness, spread across 24 snapshots of the training
+          run. It converted the results into Elo scores, the rating system
+          chess uses to rank players.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">52B</span
+            ><span class="nb-stat-l">headline model size</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">32</span
+            ><span class="nb-stat-l">instructions in the constitution</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">182,831</span
+            ><span class="nb-stat-l">AI harmlessness comparisons trained on</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">18,409</span
+            ><span class="nb-stat-l">crowdworker comparisons that scored it</span>
+          </div>
+        </div>
+        <p>
+          On that scale, models trained with RL-CAI landed on a better
+          frontier than the human-feedback models Anthropic had trained
+          before: less harmful at any given level of helpfulness.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          But the paper never states what those Elo numbers actually were.
+          Its own chart caption warns that only the differences between
+          points are meaningful, so reading the chart is the only way to see
+          the result. There is no number to quote.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          That is the paper's own instruction: read this as a margin one
+          model won by, not a score.
+        </p>
+        <p>
+          The comparisons run on one lab's models, judged mostly by how a
+          person reads harm, not a general test of AI judgment. The paper's
+          own numbers make that scope visible in the one place it tried to
+          check its method against a wider test. It used 438 questions built
+          to probe whether an answer is helpful, honest, and harmless, each
+          with a clearly correct choice. Anthropic ran its AI feedback model
+          against that test at several sizes and compared it to a preference
+          model trained on human feedback.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="constitutional-ai/asset-1.png"
+            alt="Line chart titled Combined HHH Evals: Preference Models vs Multiple Choice, plotting accuracy against parameter count from about 800 million to 52 billion. A pretrained-language-model line and two chain-of-thought AI-judge lines rise from about 0.5 to the low 0.7s. A separate line for a preference model trained on human feedback stays well above all three across every size shown, ending near 0.78 at 52 billion parameters."
+          />
+          <figcaption>
+            Fig. 1 · At the paper's headline size of 52 billion parameters,
+            Anthropic's AI feedback model still trailed a preference model
+            trained on human feedback.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Figure 4"
+                data-nb-url="https://arxiv.org/pdf/2212.08073#page=6"
+                data-nb-note="The sizing figure: AI-feedback accuracy against model size, with the human-feedback preference model as the reference line it has not yet reached at 52B."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          "The trends suggest that models larger than 52B will be
+          competitive with human feedback-trained preference models," the
+          paper says of that chart.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Suggest, not show: at the size Anthropic's headline harmlessness
+          result was demonstrated, its AI judge had not yet matched a
+          human-trained one on this wider test. Competitiveness above 52B
+          was a projected trend, not a measurement.
+        </p>
+      </section>
+
+      <section data-nb-section="present-day" id="present-day">
+        <h2>The constitution changed more than the evidence has</h2>
+        <p>
+          The most direct outside test of Bai et al.'s method came from
+          Google in 2023. A team there trained chatbots with the same
+          AI-judge setup and compared them against human-feedback training
+          on three tasks, using PaLM 2 models instead of Anthropic's.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Their reading of the 2022 paper is blunt: it "did not directly
+          compare the efficacy of human vs. AI feedback, leaving the
+          question of whether RLAIF can be a suitable alternative to RLHF
+          unanswered."<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          On summarization (71% vs. 73%) and a helpful-dialogue task (63%
+          vs. 64%), AI feedback and human feedback beat an untrained
+          baseline at statistically indistinguishable rates, and
+          head-to-head the two split close to an even 50%.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Only on
+          harmlessness did AI feedback pull ahead by a clear margin: an 88%
+          harmless rate against 76% for human feedback and 64% for the
+          baseline.<sup class="nb-cite"><a href="#s3">3</a></sup> That
+          confirms the one axis where Bai et al.'s original result was
+          strongest. It leaves the wider claim, that AI judgment matches
+          human judgment in general, still untested.
+        </p>
+        <p>
+          Google's AI judge also did not need a written constitution to win
+          on harmlessness. It ran on one plain line asking which response
+          was better, and a more detailed set of rating instructions
+          produced only "mixed" gains over that plain version.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          That cuts against reading Bai et al.'s written instructions as the
+          reason their method worked.
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>
+                An AI judge beating human-feedback training on harmlessness
+                replicated outside Anthropic, on different models and a
+                different task.<sup class="nb-cite"><a href="#s3">3</a></sup>
+              </li>
+              <li>
+                Anthropic later swapped its own written instructions for a
+                document drafted by roughly a thousand volunteers and the
+                trained model held its benchmark scores.<sup
+                  class="nb-cite"
+                  ><a href="#s4">4</a></sup
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>
+                A one-line instruction did the AI judge's job about as well
+                as a written constitution did, in the one paper that tested
+                the difference.<sup class="nb-cite"><a href="#s3">3</a></sup>
+              </li>
+              <li>
+                At the size Bai et al. demonstrated, their AI judge had not
+                yet matched a human-trained one; catching up above that size
+                was a projected trend, not a result.<sup class="nb-cite"
+                  ><a href="#s1">1</a></sup
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+        <p>
+          None of that has slowed how the word "constitution" gets used.
+          Anthropic describes Claude, the assistant it has shipped since
+          2023, as "our AI assistant trained with Constitutional AI."<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          It says the guiding principles come from the UN's Universal
+          Declaration of Human Rights, from rules DeepMind wrote for a
+          research chatbot called Sparrow, from Apple's terms of service,
+          and from Anthropic's own research, layered on top of the ad hoc
+          set Bai et al. wrote for their 2022 experiment.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Anthropic revised that document again in January 2026. TIME's
+          reporting on the update describes the constitution as text
+          addressed to Claude and used at different stages in the model's
+          training to shape its character.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          That document tells the model to weigh safety, then ethics, then
+          Anthropic's own guidelines, then helpfulness, in that order.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Shaping a model's character is a different claim than the one
+          tested in 2022. Bai et al. measured whether crowdworkers preferred
+          one model's answers to another's on harmlessness. They did not
+          measure whether a document instills values that carry into
+          situations no preference test covered. Anthropic adds a caveat the
+          2022 paper never needed: "our current constitution is neither
+          finalized nor is it likely the best it can be."<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          In 2023, Anthropic ran an experiment that let the public write the
+          document instead. About a thousand U.S.
+          adults contributed statements and voted on them using an online
+          platform called Polis. The resulting draft trained a model that
+          scored lower on a nine-category bias benchmark, while performing
+          about the same on math, knowledge, helpfulness, and harmlessness
+          tests, as one trained on Anthropic's usual constitution.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Anthropic called the findings "very preliminary and imperfect."<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Bai et al.'s 2022 paper is the reason "AI feedback" and "the model
+          has a constitution" are common phrases now. What it actually
+          showed: thirty-two short instructions, some for critiquing an
+          answer and some for judging a pair of them. They let one AI model
+          stand in for a person rating harm, and crowdworkers preferred the
+          resulting chatbot's harmlessness at a given level of helpfulness.
+          That is a preference margin on one lab's 52-billion-parameter
+          models, not a governance mechanism, and not proof that an AI
+          judge's verdict matches a person's in general. Later work
+          confirmed the harmlessness result on a different lab's models,
+          using a one-line instruction instead of a written constitution,
+          and the original paper's own reach past its tested size was a
+          projected trend, not a measured one. The word "constitution" has
+          since been attached to something much larger than a preference
+          test between two chatbot answers. The 2022 result is evidence for
+          a narrower claim than that, and now you can tell the two apart.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2309.00267"
+              >RLAIF vs. RLHF: Scaling Reinforcement Learning from Human
+              Feedback with AI Feedback</a
+            >: the Google paper that ran the human-vs-AI-feedback comparison
+            Bai et al. left unanswered.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.anthropic.com/news/claudes-constitution"
+              >Claude's Constitution</a
+            >: Anthropic's own account of the document version of the idea,
+            and its own caveat that it is not finished.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2212.08073"
+              >arXiv · Bai et al., "Constitutional AI: Harmlessness from AI
+              Feedback"</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2204.05862"
+              >arXiv · Bai et al., "Training a Helpful and Harmless Assistant
+              with Reinforcement Learning from Human Feedback"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2309.00267"
+              >arXiv · Lee et al., "RLAIF vs. RLHF: Scaling Reinforcement
+              Learning from Human Feedback with AI Feedback"</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.anthropic.com/research/collective-constitutional-ai-aligning-a-language-model-with-public-input"
+              >Anthropic · "Collective Constitutional AI: Aligning a Language
+              Model with Public Input"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.anthropic.com/news/claudes-constitution"
+              >Anthropic · "Claude's Constitution"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://time.com/7354738/claude-constitution-ai-alignment/"
+              >TIME · Ostrovsky and Perrigo, "How Do You Teach an AI to Be
+              Good? Anthropic Just Published Its Answer"</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
