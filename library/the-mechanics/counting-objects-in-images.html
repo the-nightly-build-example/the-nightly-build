@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      An image generator turns "six apples" into "some apples" before it
+      draws a single pixel · The Mechanics
+    </title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "counting-objects-in-images",
+        "template": "lesson",
+        "title": "An image generator turns \"six apples\" into \"some apples\" before it draws a single pixel",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-02",
+        "tags": [],
+        "sources": 9,
+        "words": 2119,
+        "reading_minutes": 9,
+        "dek": "Accuracy holds up for the first handful of objects, then collapses the same way in system after system tested.",
+        "harness": "claude-code",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">
+          An image generator turns "six apples" into "some apples" before it
+          draws a single pixel
+        </h1>
+        <p class="nb-dekline">
+          Accuracy holds up for the first handful of objects, then collapses
+          the same way in system after system tested.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-02</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have almost certainly asked an image generator for a specific
+          number of something, a hand of cards, a row of icons for a slide, a
+          six-pack of apples for a grocery ad, and gotten back a count that
+          was close but not right. That is not a one-off glitch you happened
+          to hit. It is what these systems do, measurably, across every
+          current model tested. The reason is traceable: a prompt-reading
+          step that barely registers numbers, handed to a painting step that
+          was never built to hold one. By the end of
+          this lesson you can point to the exact place in the pipeline where
+          "six" stops being a number and becomes a suggestion, say why that
+          gets worse as the count rises, and tell which fixes for it are
+          proven and which are still open.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/image-generation.html"
+              >An image generator turns a field of static into your picture by
+              removing the noise a little at a time</a
+            >: the denoising process this lesson's painting step relies on.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/hands-in-generated-images.html"
+              >An image generator never counts the fingers it draws</a
+            >: the same "nothing counts" pipeline, on anatomy rather than
+            discrete objects.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/text-in-images.html"
+              >A generated image gets its letters wrong before the picture is
+              ever drawn</a
+            >: another case where the prompt loses information at the
+            reading step, before the painting step ever starts.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What the Model Receives From "Six Apples"</h2>
+        <p>
+          Type "six apples" into an image generator and you may get five, or
+          seven, or an arrangement loose enough that it is not obviously any
+          number at all. Across fifteen current text-to-image systems tested
+          on requests for one to fifteen objects, every one of them gets the
+          count wrong somewhere in that range, and how often depends heavily
+          on how high the number is.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The pattern is common enough that a public explainer could already
+          name it in one line: these models have no firm sense of a quantity
+          like four, so asking for an exact number runs straight into that
+          gap.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The wrong count is not a rendering slip, the way a smudged line
+          might be. It sits upstream of the canvas entirely, in how the word
+          "six" gets represented before generation starts, and in a painting
+          process that was never built to place a counted set of anything.
+        </p>
+      </section>
+
+      <section data-nb-section="the-encoders-checklist" id="the-encoders-checklist">
+        <h2>The Text Encoder Barely Registers the Number</h2>
+        <p>
+          Before a single pixel exists, the prompt has to become something the
+          painting step can use: a fixed-length list of numbers standing for
+          what the sentence means, produced by a text encoder. Nearly every
+          current text-to-image system leans on the same family of encoder
+          for this, the kind introduced as CLIP, whose text side is a
+          twelve-layer Transformer that reads the prompt and takes its final
+          activation as the sentence's meaning.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          CLIP's own authors are direct about where that meaning falls short.
+          In their list of the model's limits, they name counting outright:
+          CLIP "struggles with more abstract and systematic
+          tasks such as counting the number of objects in an image."<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <p>
+          A later benchmark tested how far that struggle reaches. Across more
+          than fifty thousand test cases probing whether these encoders track
+          word order, and whether they connect the right attribute to the
+          right object, CLIP-style encoders score close to chance on
+          attribution and lose almost all sensitivity to order.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The researchers trace the cause to how the encoder was trained, not
+          to some accident of scale. The training task rewards matching an
+          image to its caption. On the datasets used, that match can be won
+          without the encoder ever needing to track order or exact
+          composition, so it never learns to.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Call this the encoder's checklist: it can register that apples are
+          present, and largely ignore how many.
+        </p>
+        <p>
+          A separate study measured the checklist problem specifically on
+          count, and found the same shortcut at work. Asked to match an image
+          to a caption naming an exact count, a standard CLIP encoder got it
+          right only about 32 percent of the time. Fine-tuned specifically on
+          count-labeled pairs, the same architecture got it right about 76
+          percent of the time.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The gap traces back to the captions the encoder learned from.
+          Photos captioned with an exact count get rarer as the count rises.
+          Past about six objects a caption typically says "a group of" or
+          "many" instead of naming a number, so the training data itself
+          barely uses the word "six."<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Counting also does little for the matching task the encoder is
+          actually trained on, since which objects appear is a stronger
+          signal than how many, so nothing in training pushes the encoder to
+          learn it.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          By the time "six apples" reaches the painting step, what survives
+          in the encoder's checklist is mostly "apples."
+        </p>
+      </section>
+
+      <section data-nb-section="the-painter-has-no-tally" id="the-painter-has-no-tally">
+        <h2>The Painter Never Gets a Tally to Check Against</h2>
+        <p>
+          A diffusion model paints by starting from noise and repeatedly
+          guessing what to remove, dozens of times, until a picture remains.
+          The prompt steers
+          that guessing through cross-attention: at every step, every patch
+          of the forming image looks at the encoder's checklist and asks
+          which of its entries apply here. The architecture that made this
+          practical describes its own purpose plainly: cross-attention layers
+          make diffusion models "powerful and flexible generators for general
+          conditioning inputs such as text."<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          What that mechanism hands every patch is the same checklist, spread
+          across the whole canvas at once. It is built to answer "does 'apple'
+          belong here," not "is this the sixth apple."
+        </p>
+        <p>
+          Researchers working to fix this describe the gap on the
+          painting side in almost identical terms to the encoder's. Even in
+          systems that succeed at nearly everything else about a prompt,
+          controlling exactly how many objects appear is, in their words,
+          "surprisingly hard."<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Getting a count right would require the model to track a separate
+          identity for every individual instance it paints, including
+          instances that end up looking identical, and add them up while the
+          image is still forming.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Nothing in an ordinary diffusion pass does either of those things.
+          There is no step anywhere in the process that holds a running
+          count or checks the finished image against the number in the
+          prompt. Whatever count comes out is whatever the training data made
+          statistically likely for that scene.
+        </p>
+        <p>
+          The two blind spots are separate, and closing only one still leaves
+          the count wrong. A quantity-aware encoder handed to today's
+          painting step would still be read by a process with no tally
+          sheet. A painting step with a tally sheet would still be steered by
+          an embedding that already treated "six" and "some" as close to
+          interchangeable. "Six apples" comes out wrong because of what both
+          steps fail to do together, not because of either one alone.
+        </p>
+      </section>
+
+      <section data-nb-section="how-wrong-and-when" id="how-wrong-and-when">
+        <h2>Five Objects Are Usually Right, Eleven Rarely Are</h2>
+        <p>
+          Google's own
+          Imagen paper states the same weak point about the encoder its
+          system relies on, plainly and in passing: "CLIP is ineffective at
+          counting."<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The paper's own evaluation set, DrawBench, spends one of its eleven
+          prompt categories specifically on getting the number of objects
+          right, alongside spatial relations and text rendering, because
+          count is a known trouble spot across this entire family of
+          systems.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          The failure is not a flat coin flip, though. Tested across fifteen
+          current models on requests from one to fifteen objects, accuracy
+          runs roughly 60 to 80 percent when the request is for five objects
+          or fewer, falls to roughly 10 to 30 percent for six to ten, and
+          drops under 10 percent for eleven to fifteen, in nearly every model
+          tested.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          That shape matches the caption scarcity the encoder studies found:
+          training data is thick with pictures captioned "three apples" and
+          nearly empty of ones captioned "thirteen apples," so past a handful
+          the model has barely seen the number it is being asked to paint.
+        </p>
+        <p>
+          The gap is also closing, generation over generation, on a benchmark
+          built to measure this exact weakness. Scored from 0 to 1 on prompts
+          asking for one to eight objects, Stable Diffusion's earliest public
+          model comes in around 0.45. Two model generations later, Stable
+          Diffusion 3 and FLUX.1 both score around 0.62 (Fig. 1).<sup
+            class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+          That is real progress, and it still falls well short of getting the
+          count right most of the time.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="counting-objects-in-images/chart-1.png"
+            alt="Bar chart of T2I-CompBench numeracy scores, 0 to 1, for five text-to-image models ordered by release. Stable Diffusion 1.4 scores about 0.45, Stable Diffusion 2 about 0.46, DALL-E 3 about 0.59, Stable Diffusion 3 about 0.62, and FLUX.1 about 0.62."
+          />
+          <figcaption>
+            Fig. 1 &middot; Approximate numeracy scores from a benchmark that
+            checks whether a generated image contains the requested count of
+            one to eight objects. The score is a detection-based composite,
+            not a plain percent-correct figure. Newer models score higher,
+            without approaching a solved task.<sup class="nb-cite"
+              ><a href="#s9">9</a></sup
+            >
+          </figcaption>
+        </figure>
+      </section>
+
+      <section data-nb-section="what-fixes-and-what-doesnt" id="what-fixes-and-what-doesnt">
+        <h2>The Fixes That Work Reach the Encoder and the Painter</h2>
+        <p>
+          Every fix that has actually closed part of this gap acts directly
+          on one of the two blind spots just traced, rather than hoping more
+          of the same training data eventually solves it on its own.
+        </p>
+        <p>
+          On the encoder side, training it against pairs designed to trip up
+          the shortcut it learned, swapped word order, swapped attributes,
+          closes much of the gap on order and composition that the encoder
+          benchmark measured.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Training it specifically on count-labeled images does the same for
+          quantity: the fine-tuned encoder mentioned earlier went from right
+          about 32 percent of the time to right about 76 percent of the
+          time.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          On the painting side, a method that identifies and corrects
+          individual object instances partway through denoising, instead of
+          leaving the final count to whatever the noise settles into, does
+          the same for the painter. It roughly doubles count accuracy over an
+          unmodified baseline on one counting benchmark, raises it by close
+          to two-thirds on another, and comes out ahead of DALL-E 3 on
+          both.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          One fix that sounds obvious does not work: rewording the prompt.
+          Testing four different ways of refining a counting prompt across
+          the same fifteen models found that every one of them made counting
+          worse, not better, cutting average accuracy by more than 40 percent
+          relative to the plain request.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The fix is not something a user can type their way into.
+        </p>
+        <p>
+          That leaves a clean line between settled and open. Settled: no part
+          of the ordinary path from prompt to pixels holds a count anywhere,
+          and nothing in either the encoder's usual training or the painter's
+          usual denoising pass needs one for everything else these systems do
+          well.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Open: whether the fix that eventually holds is a count-aware
+          encoder, a painting step with a tally sheet built in, or most
+          likely both together. Also open is how far each can be pushed
+          before some other part of the pipeline becomes the next limit.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Ask for six apples and the number that comes back is a guess built
+          from a checklist that mostly registered "apples," painted by a
+          process that spreads that checklist across the canvas with no
+          tally sheet anywhere in the loop. Both gaps are real, and neither
+          one alone explains the wrong count. It takes both together. The
+          failure has a shape: small requests, five objects or fewer, come
+          back right most of the time, and the odds fall fast past that
+          point, in system after system tested. Training an encoder or a painter
+          specifically on count closes real ground, rewording the prompt
+          does not, and the newest systems already count better than the
+          oldest ones did, without yet counting reliably.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2406.10210"
+              >Make It Count (Binyamin et al., 2024)</a
+            >: the mid-denoising method that corrects object counts as the
+            image is still forming.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2302.12066"
+              >Teaching CLIP to Count to Ten (Paiss et al., 2023)</a
+            >: how a count-aware encoder is built and how much of the
+            encoder-side gap it closes.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2503.06884"
+              >Guo et al. &middot; Text-to-Image Diffusion Models Cannot Count,
+              and Prompt Refinement Cannot Help</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://theconversation.com/if-ai-image-generators-are-so-smart-why-do-they-struggle-to-write-and-count-208485"
+              >The Conversation &middot; If AI image generators are so smart,
+              why do they struggle to write and count?</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2103.00020"
+              >Radford et al. &middot; Learning Transferable Visual Models From
+              Natural Language Supervision (CLIP)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2210.01936"
+              >Yuksekgonul et al. &middot; When and Why Vision-Language Models
+              Behave Like Bags-of-Words, and What to Do About It?</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2302.12066"
+              >Paiss et al. &middot; Teaching CLIP to Count to Ten</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2112.10752"
+              >Rombach et al. &middot; High-Resolution Image Synthesis with
+              Latent Diffusion Models</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.10210"
+              >Binyamin et al. &middot; Make It Count: Text-to-Image Generation
+              With an Accurate Number of Objects</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2205.11487"
+              >Saharia et al. &middot; Photorealistic Text-to-Image Diffusion
+              Models with Deep Language Understanding (Imagen)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.06350"
+              >Huang et al. &middot; T2I-CompBench++: An Enhanced and
+              Comprehensive Benchmark for Compositional Text-to-Image
+              Generation</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
