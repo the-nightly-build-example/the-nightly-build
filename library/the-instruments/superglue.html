@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>An ensemble beat SuperGLUE&rsquo;s human score before DeBERTa, the model credited with doing it first · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "superglue",
+        "template": "lesson",
+        "title": "An ensemble beat SuperGLUE's human score before DeBERTa, the model credited with doing it first",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-02",
+        "tags": ["benchmarks", "superglue", "human-baseline"],
+        "sources": 8,
+        "words": 1751,
+        "reading_minutes": 8,
+        "dek": "DeBERTa's single model crossed the human score of 89.8 at 89.9, after Google's T5 + Meena ensemble had already cleared it at 90.2.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">An ensemble beat SuperGLUE&rsquo;s human score before DeBERTa, the model credited with doing it first</h1>
+        <p class="nb-dekline">
+          DeBERTa's single model crossed the human score of 89.8 at 89.9, after Google's T5 + Meena ensemble had already cleared it at 90.2.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-02</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A claim that a model &ldquo;beat the human baseline&rdquo; on some
+          benchmark travels fast, and most people repeating it have seen only
+          the leaderboard&rsquo;s front page. SuperGLUE sits behind one of the
+          loudest versions of that claim: in January 2021, a single AI model
+          scored above human performance on a benchmark built two years
+          earlier specifically to be hard for machines. This lesson takes that
+          one leaderboard number apart: what it averages, how the human score
+          it beat was actually built, and exactly what did and did not cross
+          the line that week. By the end you should be able to take apart the
+          next &ldquo;beat human baseline&rdquo; headline yourself, and know
+          which three questions to ask of it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/glue.html">The &lsquo;human-level&rsquo; language score is an average of nine English tests</a>:
+            GLUE, this benchmark&rsquo;s predecessor, and the same
+            &ldquo;beat the human baseline&rdquo; pattern playing out
+            eighteen months earlier.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The number passed the humans again</h2>
+        <p>
+          SuperGLUE ranks language models with one number: the equal-weighted
+          average of their scores on eight separate English-language tasks,
+          sitting on a public leaderboard beside a row labeled Human.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Some of those tasks are graded by plain accuracy, others by F1 or
+          exact match, and the leaderboard folds all of it into one decimal.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The Human row is not a fixed ceiling. It is what a set of hired
+          annotators scored on the same eight tasks, under a protocol
+          SuperGLUE&rsquo;s own authors published alongside the number.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          On 6 January 2021, a single DeBERTa model scored 89.9 against that
+          Human row&rsquo;s 89.8, and its authors called this the first time a
+          single model had surpassed human performance on SuperGLUE, in terms
+          of macro-average score, their term for the same equal-weighted
+          average described above.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Microsoft, which built the model, announced the result the same
+          day.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          A headline that ran that afternoon put it more plainly: AI models
+          had already surpassed human performance on the benchmark.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          By the week&rsquo;s end, the framing had simplified further, into a
+          new model having surpassed human baseline performance on language
+          understanding, full stop.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="how-eight-become-one" id="how-eight-become-one">
+        <h2>How eight tests become one number</h2>
+        <p>
+          Start with what SuperGLUE actually bundles: eight tasks, each
+          testing something different, scored in three different kinds of
+          measurement. Five are graded by plain accuracy. The other three
+          carry two metrics apiece, an F1 score alongside either exact match
+          or a second accuracy figure, averaged together before that task even
+          enters the eight-task average.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          SuperGLUE&rsquo;s own paper states the rule for combining them as
+          plainly as it sounds: &ldquo;weighing each task equally, and for
+          tasks with multiple metrics, first averaging those metrics to get a
+          task score.&rdquo;<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          To see why that choice matters, invent two tasks of your own,
+          honestly invented and not from SuperGLUE itself. Task A is scored by
+          plain accuracy: a model gets 90. Task B carries two metrics, and the
+          same model scores 70 on one and 50 on the other. Average Task B&rsquo;s
+          two numbers first, the way SuperGLUE&rsquo;s rule does, and it earns
+          a task score of 60. Average that against Task A&rsquo;s 90, and the
+          two-task leaderboard reads 75. Skip that first averaging step and
+          combine all three raw numbers directly instead, 90, 70, and 50, and
+          the same model&rsquo;s average comes out to 70. Two invented tasks,
+          one model, and a five-point swing that traces entirely to which
+          averaging rule got picked, before either task result changed at all.
+        </p>
+        <p>
+          SuperGLUE did not invent this rule. Several of its authors had also
+          built <a href="../the-instruments/glue.html">GLUE</a> two years
+          earlier and carried over the same equal-weight recipe.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          They built SuperGLUE because GLUE had run out of room to measure
+          progress: models had already passed non-expert human performance on
+          it, leaving little headroom for further research.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="the-human-row" id="the-human-row">
+        <h2>The human row is a measurement too</h2>
+        <p>
+          The 89.8 in the Human row came from Amazon Mechanical Turk. For each
+          of the eight tasks, SuperGLUE&rsquo;s authors gave hired crowd
+          workers instructions and up to 30 practice items from the
+          task&rsquo;s own development set, then collected five workers&rsquo;
+          answers per item and took the majority vote as human performance.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The average pay across every task and both stages was $23.75 an
+          hour.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            SuperGLUE&rsquo;s eight tasks, each scored its own way. The Human
+            row spans 51.9 to a perfect 100.0 depending on which one you
+            read.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Metric</th>
+              <th>Human score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">BoolQ</span></td>
+              <td>Accuracy</td>
+              <td>89.0</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">CB</span></td>
+              <td>Accuracy / F1</td>
+              <td>95.8 / 98.9</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">COPA</span></td>
+              <td>Accuracy</td>
+              <td>100.0</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">MultiRC</span></td>
+              <td>F1a / Exact match</td>
+              <td>81.8 / 51.9</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">ReCoRD</span></td>
+              <td>F1 / Exact match</td>
+              <td>91.7 / 91.3</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">RTE</span></td>
+              <td>Accuracy</td>
+              <td>93.6</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">WiC</span></td>
+              <td>Accuracy</td>
+              <td>80.0</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">WSC</span></td>
+              <td>Accuracy</td>
+              <td>100.0</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          One label, 89.8, sits over that whole spread. It is real data, but
+          it is a hired, briefly trained crowd&rsquo;s data, not a fixed fact
+          about what people can do on these eight tasks.
+        </p>
+        <p>
+          A high score on any one of these tasks also does not rule out a
+          shortcut in the data doing the work instead of the model. The
+          earlier lesson on GLUE, this benchmark&rsquo;s predecessor, shows
+          exactly how that can happen: a task score can rise without the model
+          ever weighing the sentence the task was built to test. SuperGLUE&rsquo;s
+          eight tasks carry the same risk, and a single averaged number cannot
+          show whether any one of them is being lifted that way.
+        </p>
+      </section>
+
+      <section data-nb-section="the-line-already-crossed" id="the-line-already-crossed">
+        <h2>The line DeBERTa crossed had already been crossed</h2>
+        <p>
+          By late 2020, the leaderboard&rsquo;s top model was Google&rsquo;s
+          T5, an 11-billion-parameter model that scored 89.3, half a point
+          under the human row.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The gap SuperGLUE had opened with at launch, a nearly 20-point
+          spread between the best model and human performance, had by then
+          closed to less than one point.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">89.8</span><span class="nb-stat-l">HUMAN</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">89.3</span><span class="nb-stat-l">T5, LATE 2020</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">89.9</span><span class="nb-stat-l">DEBERTA, SINGLE MODEL</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">90.2</span><span class="nb-stat-l">T5 + MEENA, ENSEMBLE</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">90.3</span><span class="nb-stat-l">DEBERTA, ENSEMBLE</span>
+          </div>
+        </div>
+        <p>
+          On 6 January 2021, Microsoft announced that a single DeBERTa model,
+          1.5 billion parameters against T5&rsquo;s 11 billion, had reached
+          89.9.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          A DeBERTa ensemble, several DeBERTa models combined, scored 90.3 and
+          topped the leaderboard outright.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          ><sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The single-model qualifier in DeBERTa&rsquo;s own claim is not
+          decoration. DeBERTa&rsquo;s own results table lists a Google entry,
+          an ensemble called T5 + Meena, at 90.2, already above the human row
+          by the time that table was published.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          A report filed the same day named both: DeBERTa from Microsoft and,
+          separately, T5 + Meena from Google, as having surpassed the human
+          baselines.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          DeBERTa was the first single model over the line. It was not the
+          first system to cross it, and its own authors never claimed
+          otherwise.
+        </p>
+        <p>
+          None of this comes from watching the leaderboard change in real
+          time. The page is a client-side application, and an automated fetch
+          of it returns only an HTML shell, not the rendered
+          rankings.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The scores above are pinned instead to DeBERTa&rsquo;s own results
+          table, Microsoft&rsquo;s reproduction of the leaderboard dated 6
+          January 2021, and two reports filed the same day.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          ><sup class="nb-cite"><a href="#s3">3</a></sup
+          ><sup class="nb-cite"><a href="#s4">4</a></sup
+          ><sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="what-the-builders-said" id="what-the-builders-said">
+        <h2>What the builders said the same week</h2>
+        <p>
+          The people who produced the 89.9 said themselves what it did not
+          mean. The paper that reported the result capped its own claim in the
+          same breath.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Their own caveat</span>
+          <blockquote>
+            Despite its promising results on SuperGLUE, the model is by no
+            means reaching the human-level intelligence of NLU.<sup
+              class="nb-cite"
+              ><a href="#s2">2</a></sup
+            >
+            <span class="nb-note-who">DeBERTa&rsquo;s authors, 6 January 2021</span>
+          </blockquote>
+        </div>
+        <p>
+          Microsoft&rsquo;s own announcement of the result carried the same
+          line.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Sam Bowman, a co-author of both GLUE and SuperGLUE, went further the
+          same week.
+        </p>
+        <div class="nb-position">
+          <div class="nb-position-top">
+            <span class="nb-position-who">Sam Bowman, SuperGLUE co-author</span>
+            <span class="nb-position-pill">Position</span>
+          </div>
+          <p class="nb-position-statement">
+            SuperGLUE could no longer be trusted to detect further progress in
+            language understanding.
+          </p>
+          <p class="nb-position-summary">
+            &ldquo;There&rsquo;s no reason to believe that SuperGLUE will be
+            able to detect further progress in natural language processing,
+            at least beyond a small remaining margin.&rdquo;<sup
+              class="nb-cite"
+              ><a href="#s4">4</a></sup
+            >
+          </p>
+        </div>
+        <p>
+          The report carrying Bowman&rsquo;s caution ran the same day as one
+          that did not: a second outlet repeated the crossing, &ldquo;for the
+          first time, a new model surpassed human baseline performance,&rdquo;
+          with no caveat in its body at all.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          The claim that circulated without qualification did not come from
+          the people who built DeBERTa or the people who built SuperGLUE. Both
+          of those groups capped their own claim in writing, the same week
+          they made it. It came from the step after: coverage that dropped the
+          qualifier the builders had kept in.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          SuperGLUE&rsquo;s headline number averages eight tasks scored three
+          different ways, against a human row built by paid crowd workers
+          under a short protocol, not a fixed fact about what people can do.
+          When DeBERTa&rsquo;s single model reached 89.9 against that row&rsquo;s
+          89.8 in January 2021, it was accurately the first single model to do
+          so, exactly as its authors said. It was not the first system: a
+          Google ensemble had already cleared 89.8 by then, and DeBERTa&rsquo;s
+          own results table says so. Neither DeBERTa&rsquo;s authors nor
+          SuperGLUE&rsquo;s own co-author called the crossing evidence of
+          human-level understanding; one of them said in writing that the
+          benchmark could barely tell models apart anymore. The next time a
+          benchmark score claims to beat a human baseline, ask what got
+          averaged into it, how the human row was built, and whether
+          &ldquo;first&rdquo; means the first system or the first of one
+          particular kind.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2104.02145">What Will it Take to Fix Benchmarking in Natural Language Understanding?</a>
+            (Bowman &amp; Dahl): the SuperGLUE co-author&rsquo;s own proposal
+            for benchmarks that don&rsquo;t saturate this fast.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1803.02324">Annotation Artifacts in Natural Language Inference Data</a>
+            (Gururangan et al.): how a shortcut in the data can lift a task
+            score without the model doing the reasoning the task intends.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1905.00537"
+              >Wang et al. · SuperGLUE: A Stickier Benchmark for General-Purpose Language Understanding Systems</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2006.03654"
+              >He et al. · DeBERTa: Decoding-enhanced BERT with Disentangled Attention</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.microsoft.com/en-us/research/blog/microsoft-deberta-surpasses-human-performance-on-the-superglue-benchmark/"
+              >Microsoft Research · DeBERTa surpasses human performance on the SuperGLUE benchmark</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://venturebeat.com/business/ai-models-from-microsoft-and-google-already-surpass-human-performance-on-the-superglue-language-benchmark"
+              >VentureBeat · AI models from Microsoft and Google already surpass human performance on the SuperGLUE language benchmark</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://syncedreview.com/2021/01/06/microsoft-deberta-tops-human-performance-on-superglue-nlu-benchmark/"
+              >SyncedReview · Microsoft DeBERTa tops human performance on SuperGLUE NLU benchmark</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1804.07461"
+              >Wang et al. · GLUE: A Multi-Task Benchmark and Analysis Platform for Natural Language Understanding</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1910.10683"
+              >Raffel et al. · Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://super.gluebenchmark.com/leaderboard"
+              >SuperGLUE leaderboard</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
