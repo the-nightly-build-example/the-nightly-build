@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google's 2017 layer split a model's size from what it computes · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "mixture-of-experts",
+        "template": "lesson",
+        "title": "Google's 2017 layer split a model's size from what it computes",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-03",
+        "tags": ["mixture-of-experts", "sparsity", "parameters"],
+        "sources": 6,
+        "words": 1844,
+        "reading_minutes": 8,
+        "dek": "Noam Shazeer's team sent each token to a few expert sub-networks out of thousands, the design behind why Mixtral today lists 47 billion parameters but runs only 13 billion per token.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">
+          Google's 2017 layer split a model's size from what it computes
+        </h1>
+        <p class="nb-dekline">
+          Noam Shazeer's team sent each token to a few expert sub-networks out
+          of thousands, the design behind why Mixtral today lists 47 billion
+          parameters but runs only 13 billion per token.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-03</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every few months a model arrives wearing a bigger number: 16 billion
+          parameters, 47 billion, a trillion and a half. The number reads like
+          a measure of how much work the model does to answer you, and for one
+          large family of today's models it is not. A layer published in 2017
+          lets a model keep an enormous store of parameters on hand while
+          running only a small slice of them for any single word. Read the
+          paper that introduced it, the sparsely-gated mixture of experts, and
+          the gap between the two quantities stops looking like marketing and
+          starts looking like the design choice it is. That is what this lesson
+          is for: to take one of those headline parameter counts apart and show
+          which part of it a token actually pays for.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/word-embeddings.html"
+              >A transformer redraws a word's vector for every sentence it
+              appears in</a
+            >: what the vector of numbers standing for a token is, the input an
+            expert reads and rewrites.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/attention-is-all-you-need.html"
+              >The paper credited with starting the LLM era never trained a
+              language model</a
+            >: the transformer whose ordinary feed-forward layers a
+            mixture-of-experts layer takes the place of.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Thousands of experts, most of them switched off</h2>
+        <p>
+          In January 2017, seven researchers at Google published a paper with a
+          deliberately immodest title. It was called "Outrageously Large Neural
+          Networks: The Sparsely-Gated Mixture-of-Experts Layer."<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Two of the authors were Geoffrey Hinton and Jeff Dean, and the layer
+          they described has since become the standard way to build a very
+          large language model. The idea behind it is plain. Instead of one
+          part of the network processing every word, you build many parts and
+          let each word use only a few of them.
+        </p>
+        <p>
+          Each of those parts is an expert: a small block of the network that
+          multiplies the numbers standing for one token through a couple of
+          layers of weights and hands back new numbers. (Those incoming numbers,
+          the token's
+          <a href="../the-mechanics/word-embeddings.html">vector</a>, are taught
+          in an earlier lesson.) A normal network, called dense, runs every one
+          of its weights on every token that passes through. The
+          mixture-of-experts layer breaks that habit. It holds a large pool of
+          experts, up to thousands of them, and a small controller that picks a
+          few experts for each token and leaves the rest untouched.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 2">1</a></sup
+          >
+        </p>
+        <p>
+          The paper's headline result shows why the split is worth the trouble.
+          On a standard language benchmark, one of their models carried 4.3
+          billion parameters yet spent only 8.9 million operations on each
+          timestep, meaning each position in the text.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 1">1</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">4.3 billion</span
+            ><span class="nb-stat-l">Parameters the model owned</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">8.9 million</span
+            ><span class="nb-stat-l">Operations it ran per timestep</span>
+          </div>
+        </div>
+        <p>
+          The best earlier model on that benchmark scored slightly worse while
+          using 151 million parameters and 151 million operations per
+          timestep.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 1">1</a></sup
+          >
+          The mixture-of-experts model held roughly 28 times as many parameters
+          and did its work in about 17 times fewer operations per step. Size
+          and cost, which normally climb together, had come apart.
+        </p>
+      </section>
+
+      <section data-nb-section="the-gate" id="the-gate">
+        <h2>How the gate decides which experts run</h2>
+        <p>
+          The controller that picks the experts is the gate, also called the
+          router. For each token it scores every expert in the pool, keeps the
+          few highest scores, and turns those into weights. The experts it did
+          not keep get a weight of zero, and an expert with a weight of zero is
+          never computed. Because it lights up only a handful of many experts,
+          the layer is sparse: most of its parameters sit idle for any given
+          token, which is exactly why a 4.3-billion-parameter model can run on
+          a few million operations.
+        </p>
+        <p>
+          The output of the layer is a weighted sum of the experts it chose.
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            y = \sum_{i} \htmlClass{nb-mc1}{G(x)_i}\,
+            \htmlClass{nb-mc2}{E_i(x)}
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">G(x)_i</span
+              ><span
+                >the gate's weight for expert i. It is zero for every expert the
+                gate did not pick.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">E_i(x)</span
+              ><span
+                >expert i applied to the token x. It runs only when its gate
+                weight is not zero.</span
+              >
+            </li>
+          </ul>
+          <figcaption>
+            The layer's output is the gate-weighted sum of its experts. Because
+            most gate weights are zero, most experts never run.<sup
+              class="nb-cite"
+              ><a href="#s1" data-nb-locator="Eq. 1, Section 2">1</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Shazeer's team scored the experts with a scheme they called Noisy
+          Top-K. The gate multiplies the token by a small weight matrix to give
+          each expert a score. It adds a little random noise to those scores,
+          which keeps the choice from getting stuck on the same experts every
+          time. Then it keeps the k highest scores and turns them into weights
+          that sum to one.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 2.1">1</a></sup
+          >
+          They set k to 4: four experts run for each token, drawn from a pool
+          that could hold thousands.
+        </p>
+        <p>
+          A gate like this has a failure mode. Left to itself it collapses onto
+          a few favorite experts, trains only those, and wastes the rest of the
+          pool. The paper heads that off with two extra terms added to the
+          training goal. One measures how unevenly the experts are chosen, the
+          other how unevenly the load lands on them. Both push usage to spread
+          across the pool.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Appendix A">1</a></sup
+          >
+          Keeping the experts balanced turns out to be the hard part of the
+          design, and it is a problem every later paper here inherits.
+        </p>
+      </section>
+
+      <section data-nb-section="counting-parameters" id="counting-parameters">
+        <h2>What a parameter count is really counting</h2>
+        <p>
+          The 2017 benchmark measured cost in operations per timestep. A modern
+          model usually reports two parameter counts instead. The total count is
+          every parameter the model owns, all of its experts added up. The
+          active count is the
+          parameters a single token actually passes through, its slice of the
+          pool plus the parts of the model that are not experts. In a dense
+          model the two are the same number. In a mixture of experts they are
+          not, and the paper's own results table is where they first pull
+          clearly apart.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The 2017 paper's own benchmark: parameters climb into the billions
+            while the work per timestep stays in the millions, and the score
+            improves anyway. Test perplexity is lower-is-better.<sup
+              class="nb-cite"
+              ><a href="#s1" data-nb-locator="Table 1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th>Parameters</th>
+              <th>Ops / timestep</th>
+              <th>Perplexity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Best prior model (stacked LSTM)</td>
+              <td>151 M</td>
+              <td>151 M</td>
+              <td>34.7</td>
+            </tr>
+            <tr>
+              <td class="txt">Mixture of experts, low compute</td>
+              <td>4.3 B</td>
+              <td>8.9 M</td>
+              <td>34.1</td>
+            </tr>
+            <tr>
+              <td class="txt">Mixture of experts, high compute</td>
+              <td>4.4 B</td>
+              <td>142.7 M</td>
+              <td>28.0</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The gap only widens with scale. In 2021 the Switch Transformer took
+          the same design to 1.571 trillion parameters. It still ran fewer
+          arithmetic operations per input sequence than a conventional dense
+          model of 11 billion parameters, 890 billion against that model's 6.3
+          trillion.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Table 9">2</a></sup
+          >
+          Roughly 143 times the parameters, and less of the arithmetic. On paper
+          the two models sit far apart. In what a token costs to run, the giant
+          is the cheaper one.
+        </p>
+        <p>
+          Shipped models you can download report the split directly. Mixtral, a
+          model Mistral released in 2024, states that each token has access to
+          47 billion parameters but uses only 13 billion of them at inference.<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="Abstract">3</a></sup
+          >
+          Its nickname, "8x7B," reads like eight times seven, which would be 56
+          billion. The real total is 47 billion. Only the feed-forward blocks
+          are split into separate experts. The rest of the model is shared
+          across all of them and counted once.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          DeepSeekMoE,
+          released the same month, owns about 16.4 billion parameters and
+          activates about 2.8 billion per token, routing each one to two
+          always-on shared experts plus six of sixty-four specialized ones.<sup
+            class="nb-cite"
+            ><a href="#s5" data-nb-locator="Section 5.1.2">5</a></sup
+          >
+        </p>
+        <p>
+          None of this makes the larger number a lie. Every parameter Mixtral
+          counts is really there, and it is doing something: it is the
+          knowledge the model can reach for, even though any one token reaches
+          for only part of it. The larger number is measured correctly. It just
+          measures the store, not the work, and it is easy to quote as if it
+          measured both.
+        </p>
+      </section>
+
+      <section data-nb-section="one-expert" id="one-expert">
+        <h2>Then Switch routed each token to one expert</h2>
+        <p>
+          The primaries do not agree on how many experts a token should visit.
+          Shazeer's paper chose four, and argued you needed more than one:
+          routing to a single
+          expert, they reasoned, would leave the gate without usable gradients
+          to learn from.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 2.1">1</a></sup
+          >
+          GShard, a 600-billion-parameter translation model Google trained in
+          2020, sent each token to two.<sup class="nb-cite"
+            ><a href="#s6" data-nb-locator="Section 2.1">6</a></sup
+          >
+        </p>
+        <p>
+          The Switch Transformer, in 2021, went to one. "We instead use a
+          simplified strategy where we route to only a single expert," its
+          authors wrote, reporting that top-1 routing preserved model quality,
+          cut the routing cost, and performed better than sending tokens to
+          more.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Section 2.1">2</a></sup
+          >
+          Noam Shazeer was an author on that paper too, which is the tell that
+          this was a field revising its own earlier guess rather than a rival
+          scoring a point.
+        </p>
+        <p>
+          One thing none of them settled is how to keep the experts balanced
+          while training. Shazeer needed two corrective terms. GShard added a
+          hard cap on how many tokens one expert may accept.<sup class="nb-cite"
+            ><a href="#s6" data-nb-locator="Section 2.2">6</a></sup
+          >
+          Switch replaced the two terms with a single one and, to stop the
+          larger models from
+          diverging, computed the router in higher numerical precision and
+          shrank the starting size of its weights.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sections 2.2-2.3">2</a></sup
+          >
+          A later fix, a term that penalizes runaway router scores, arrived
+          after that.<sup class="nb-cite"><a href="#s4">4</a></sup> Each paper
+          changed the recipe, and each still described training stability as
+          something it was managing rather than a matter it had closed.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The number a model wears is its total parameter count, every expert it
+          owns. The number that decides how fast and how cheaply it answers you
+          is the active count, the few experts one token runs through. The 2017
+          sparsely-gated mixture of experts is where those two came apart, and
+          every model of this kind since has kept them apart on purpose. Mixtral
+          owns 47 billion parameters and runs 13. DeepSeekMoE owns 16.4 billion
+          and runs 2.8. So when the next model arrives wearing a record
+          parameter count, the useful question is not how big it is but how much
+          of itself it runs to answer you. Both numbers are real, and they
+          measure different things. Only the smaller one is what a token pays.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2101.03961"
+              >Switch Transformers (Fedus, Zoph, Shazeer, 2021)</a
+            >: the sequel that routed each token to a single expert and pushed
+            the same design to 1.571 trillion parameters.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://huggingface.co/blog/moe"
+              >Mixture of Experts Explained (Hugging Face)</a
+            >: a practitioner's tour of the whole line, from the 1991 origin to
+            the open models you can run today.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1701.06538"
+              >arXiv · Shazeer et al., "Outrageously Large Neural Networks: The
+              Sparsely-Gated Mixture-of-Experts Layer" (2017)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2101.03961"
+              >arXiv · Fedus, Zoph & Shazeer, "Switch Transformers: Scaling to
+              Trillion Parameter Models with Simple and Efficient Sparsity"
+              (2021)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2401.04088"
+              >arXiv · Jiang et al., "Mixtral of Experts" (2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/blog/moe"
+              >Hugging Face · Sanseviero et al., "Mixture of Experts Explained"
+              (2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2401.06066"
+              >arXiv · Dai et al., "DeepSeekMoE: Towards Ultimate Expert
+              Specialization in Mixture-of-Experts Language Models" (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2006.16668"
+              >arXiv · Lepikhin et al., "GShard: Scaling Giant Models with
+              Conditional Computation and Automatic Sharding" (2020)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
