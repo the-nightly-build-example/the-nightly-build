@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pricing algorithms learn to hold prices high, so far only in simulation · What Could Go Wrong</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "what-could-go-wrong",
+        "slug": "algorithmic-collusion",
+        "template": "lesson",
+        "title": "Pricing algorithms learn to hold prices high, so far only in simulation",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-03",
+        "tags": ["pricing", "antitrust", "reinforcement-learning", "competition"],
+        "sources": 9,
+        "words": 2157,
+        "reading_minutes": 9,
+        "dek": "Two Q-learning agents reached about 85% of the way to monopoly pricing with no instruction to coordinate, and the economists who reopened their code doubt it would survive a real market.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">What Could Go Wrong</div>
+        <h1 class="nb-title">Pricing algorithms learn to hold prices high, so far only in simulation</h1>
+        <p class="nb-dekline">
+          Two Q-learning agents reached about 85% of the way to monopoly pricing with no instruction to coordinate, and the economists who reopened their code doubt it would survive a real market.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-03</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          More than a third of the top sellers in one large sample of Amazon
+          items were setting their prices with software as far back as 2015.
+          The question competition lawyers have
+          asked ever since is plain. If two rival programs are each just told to
+          make as much money as they can, could they learn, with no deal and no
+          shared tool, to keep prices high the way a cartel does? This lesson
+          follows that question from the economists who first posed it to the one
+          lawsuit everyone cites. Follow it and you can tell a result proven in a
+          lab from a fear about real markets, and see why the RealPage case, real
+          as it is, belongs in a different box.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="racing-dynamics.html">Racing dynamics</a>: another argument
+            from this desk, where the thing that goes wrong is competition
+            between the developers, not between their prices.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="algorithmic-monoculture.html">Algorithmic monoculture</a>:
+            what happens when many firms lean on the same model, the near cousin
+            of the shared-tool case here.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A fourth scenario, where nobody agrees to anything</h2>
+        <p>
+          Two competition-law scholars, Ariel Ezrachi and Maurice Stucke, set out
+          four ways pricing algorithms could push prices above the competitive
+          level. Three of them still run on people. A human cartel can use
+          software to carry out a deal it already struck. Rivals can all plug
+          into one supplier's pricing tool and move together through it. Or each
+          firm can adopt an algorithm on its own, hoping the others read the
+          signal and hold their prices up too. The fourth is the one that
+          unsettles them: no person agrees to anything, no firm shares a tool,
+          and independent programs, each told only to maximize its own profit,
+          learn by themselves to keep prices high.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          What makes the fourth scenario a legal problem is a gap in the law. The
+          behavior it describes is <em>tacit collusion</em>: rivals arriving at
+          high prices with no agreement, just by watching each other and
+          matching. Antitrust law reaches an agreement, a meeting of the minds.
+          It does not reach a high price that no one agreed to. Ezrachi and
+          Stucke's argument is that if machines produce that outcome on their
+          own, it slips past Section 1 of the Sherman Act and its European
+          counterpart, because there is no agreement left to find. In their
+          words, algorithms "may arrive at this anticompetitive outcome on their
+          own."<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The setting is not hypothetical. By 2015, as Calvano and colleagues
+          note, more than a third of vendors across a sample of over 1,600
+          best-selling items on Amazon already set prices with software.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The open question is whether those algorithms, left to compete, can
+          teach themselves to collude.
+        </p>
+      </section>
+
+      <section data-nb-section="the-simulation" id="the-simulation">
+        <h2>What two Q-learning agents did in a simulated duopoly</h2>
+        <p>
+          The sharpest evidence for the fourth scenario comes from a 2020 study
+          by Emilio Calvano and three co-authors. They built two agents that
+          learn by <em>Q-learning</em>, a plain form of trial and error: the
+          program tries a price, records the reward it brings, and drifts toward
+          the choices that have paid best. They set the two loose in a repeated
+          Bertrand duopoly, a market of two sellers where each period both post a
+          price and the cheaper one wins more of the demand. Each agent saw only
+          past prices, never communicated with the other, and was never told to
+          cooperate. They "consistently learn to charge supra-competitive prices,
+          without communicating," the authors report.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          How high is the question that matters, and the authors put every run on
+          one scale to answer it. Zero is the Bertrand-Nash price, the low level
+          rivals grind each other down to. One is the monopoly price a single
+          owner would set.
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \Delta \;=\; \frac{\htmlClass{nb-mc1}{\pi}\;-\;\htmlClass{nb-mc2}{\pi_{N}}}{\htmlClass{nb-mc3}{\pi_{M}}\;-\;\htmlClass{nb-mc2}{\pi_{N}}}
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">\pi</span
+              ><span>the profit the two algorithms actually earn.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">\pi_{N}</span
+              ><span>the competitive Bertrand-Nash profit, where the gain reads 0.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">\pi_{M}</span
+              ><span>the monopoly profit one owner would take, where the gain reads 1.</span>
+            </li>
+          </ul>
+          <figcaption>
+            The average profit gain, scaled from competitive at 0 to monopoly at 1.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Across the whole grid of learning speeds and exploration rates the
+          agents landed between about 70% and 90% of the way to monopoly, roughly
+          85% at the middle of the grid.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          An earlier Q-learning experiment by Klein, which the same authors
+          summarize, had reached only about halfway. Giving the agents a wider set
+          of prices to choose from pushed the gain higher.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The reason this counts as collusion and not just high prices is what
+          the agents did when one of them cheated. A cut to grab sales was met by
+          the other with a brief price war, and after a few periods both climbed
+          back up. The deviation, the authors write, "gets punished," and the
+          punishment "is only temporary."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          That reward-and-punishment reflex is how a cartel holds itself together,
+          and here neither agent was built with it. Both learned it.
+        </p>
+      </section>
+
+      <section data-nb-section="language-models" id="language-models">
+        <h2>Language models push prices up too, and a phrase can swing them</h2>
+        <p>
+          Q-learning is an old method. In 2024 Sara Fish, Yannai Gonczarowski,
+          and Ran Shorrer ran the experiment again with pricing agents built on
+          large language models, the kind of system behind a chat assistant,
+          steered by instructions written in ordinary English. In a similar
+          repeated duopoly, with every channel between the agents shut except the
+          prices they posted, these too reached supra-competitive prices quickly
+          and without being told to.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Their finding turns on a detail that cuts two ways. The pricing moved
+          sharply with the wording of the instruction. A prompt that stressed
+          long-run profit produced far higher prices, sometimes near monopoly,
+          than one that mentioned undercutting and units sold. The authors traced
+          part of the gap to the model working to avoid price wars.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          One way to read that deepens the worry: a phrase nobody would flag as an
+          order to collude can tip the pricing toward monopoly. The other way
+          undercuts it: behavior that swings on a single word is fragile, an
+          artifact of what someone typed rather than a strategy the system will
+          hold.
+        </p>
+        <p>
+          The pattern is not confined to a single good, either. Ryan Lin and
+          three co-authors gave current language models a market of several
+          commodities and watched the agents divide it, each coming to
+          "monopolize specific commodities" by adjusting its quantities and
+          allocation, again with no instruction and no direct messaging between
+          them.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          These remain simulations, run in markets the researchers designed and
+          controlled.
+        </p>
+      </section>
+
+      <section data-nb-section="the-skeptics" id="the-skeptics">
+        <h2>Inside the code, the cartel needs a lab</h2>
+        <p>
+          The strongest reply comes from inside the same program. Arnoud den
+          Boer, Janusz Meylahn, and Maarten Pieter Schinkel reran the Calvano
+          algorithm and read closely what it was doing. Their assessment: "there
+          is no immediate reason for alarm."<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>
+                The agents reach high prices across the whole grid of settings,
+                not at one tuned point.<sup class="nb-cite"><a href="#s2">2</a></sup>
+              </li>
+              <li>
+                They hold the price up with a punishment: a cut is met by a short
+                price war, then a return.<sup class="nb-cite"><a href="#s2">2</a></sup>
+              </li>
+              <li>
+                The result survives an outside demand shock, the profit gain
+                falling to about 56% rather than to zero.<sup class="nb-cite"><a href="#s2">2</a></sup>
+              </li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>
+                Every result is a simulation of a stripped-down market.<sup class="nb-cite"><a href="#s6">6</a></sup>
+              </li>
+              <li>
+                Convergence takes hundreds of thousands of rounds, about 850,000
+                at the mid-grid, a patience no firm's profit turns on.<sup class="nb-cite"><a href="#s6">6</a></sup>
+              </li>
+              <li>
+                It needs both firms running the same algorithm, at the same
+                settings, started at the same moment.<sup class="nb-cite"><a href="#s6">6</a></sup>
+              </li>
+              <li>
+                Against a simpler learning rule, the Q-learning agent earns less,
+                so a profit-seeker would not choose it.<sup class="nb-cite"><a href="#s6">6</a></sup>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <p>
+          The learning is real and the high price is real. What den Boer and his
+          co-authors show is that every condition holding the price up points away
+          from an open market. It needs the identical program on both sides, the
+          identical settings, the shared starting gun, and a wait far longer than
+          any quarter a business plans for. A review by Florian Dorner reaches the
+          same place from the literature rather than the code. The studies showing
+          learned collusion, he argues, use simple markets and simple algorithms
+          that skip the hard parts of learning in the world, and "it is likely too
+          early to adapt antitrust law to be able to deal with self-learning
+          algorithms colluding in real markets."<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="real-world" id="real-world">
+        <h2>The one real case is not the one the worry predicts</h2>
+        <p>
+          There is a single enforcement action people reach for as proof, and it
+          repays reading closely. In August 2024 the Department of Justice and
+          several states sued RealPage. Competing landlords had fed the company's
+          software their own nonpublic data, including rents, renewals, and lease
+          terms. The software used that pooled rival information to recommend
+          rents, with a setting that could apply the recommendation
+          automatically. The complaint pleads the arrangement
+          under Sections 1 and 2 of the Sherman Act, and a November 2025
+          settlement bars the sharing of that competitively sensitive data.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          That is the second scenario, not the fourth. The landlords coordinated
+          through one common tool and their own shared data. Nothing in the case
+          shows independent programs teaching themselves to collude. It shows
+          people using a shared instrument to do the coordinating for them. The
+          OECD, surveying the field in 2023, holds exactly this line between a
+          shared-tool arrangement and autonomous collusion, and records that "as
+          far as the Secretariat is aware, there have not been any autonomous
+          tacit collusion cases."<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Three kinds of evidence, and how far each sits from a
+            case of algorithms colluding on their own in a real market.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Register</th>
+              <th class="txt">What has been shown</th>
+              <th class="txt">What it has not shown</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Simulation</span></td>
+              <td class="txt">
+                Q-learning and language-model agents learn supra-competitive
+                prices, 70&ndash;90% of the way to monopoly, and punish price
+                cuts.<sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s4">4</a></sup>
+              </td>
+              <td class="txt">That independent firms do this in any real market.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">RealPage</span></td>
+              <td class="txt">
+                Competing landlords fed one shared tool their private data; the
+                DOJ pleads it as an agreement under the Sherman Act.<sup class="nb-cite"><a href="#s8">8</a></sup>
+              </td>
+              <td class="txt">
+                Any autonomous learning; the coordinating ran through people and a
+                common tool.
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Open markets</span></td>
+              <td class="txt">
+                Nothing yet; the OECD records no autonomous tacit-collusion
+                case.<sup class="nb-cite"><a href="#s9">9</a></sup>
+              </td>
+              <td class="txt">Whether the simulated result transfers at all.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          A further idea sometimes attached to this worry is that pricing agents
+          might learn to coordinate against the people meant to oversee them.
+          Nothing in any of this work stands behind it: these studies are about
+          profit in a market, not about slipping a regulator. It is speculation
+          past the evidence, and worth naming as such. For now the fourth scenario is an
+          argument and a stack of simulations, and the one lawsuit everyone cites
+          is about the second.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The worry is honestly stated and, in a lab, honestly demonstrated.
+          Pricing programs left to compete have learned, on their own, to hold
+          prices most of the way up to monopoly, and to punish each other for
+          cutting, which is what makes it look like collusion rather than
+          coincidence. What has not been shown is any of this happening between
+          real firms in a real market. Every demonstration is a simulation, the
+          learning takes a patience no business has, and it leans on both sides
+          running the identical program from the same start. That is why the
+          researchers who reopened the code see no cause for alarm yet. The one
+          lawsuit that gets cited, against RealPage, is the older kind of
+          coordination: rivals feeding one shared tool their private data, not
+          independent programs teaching themselves. Worth watching, then, and not
+          worth panicking over. The thing to watch for is the first case where
+          neither of those human handholds is present.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.competitionpolicyinternational.com/wp-content/uploads/2020/07/4-Algorithmic-Collusion-A-Real-Problem-for-Competition-Policy-By-Emilio-Calvano-Giacomo-Calzolari-Vincenzo-Denicol%C3%B2-Sergio-Pastorello.pdf">Algorithmic Collusion: A Real Problem for Competition Policy?</a>:
+            the four authors' own short account of what they showed and why it is
+            hard to police.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://papers.tinbergen.nl/22067.pdf">Artificial Collusion</a>:
+            the reexamination of the code that argues the danger has been
+            overstated, and sets out what a real threat would take.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://ora.ox.ac.uk/objects/uuid:fde32e64-30b0-41b8-9477-de4cc716d902"
+              >Ariel Ezrachi &amp; Maurice E. Stucke · Sustainable and Unchallenged Algorithmic Tacit Collusion (2020)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.aeaweb.org/articles?id=10.1257/aer.20190623"
+              >Calvano, Calzolari, Denicolò &amp; Pastorello · Artificial Intelligence, Algorithmic Pricing, and Collusion (American Economic Review, 2020)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.competitionpolicyinternational.com/wp-content/uploads/2020/07/4-Algorithmic-Collusion-A-Real-Problem-for-Competition-Policy-By-Emilio-Calvano-Giacomo-Calzolari-Vincenzo-Denicol%C3%B2-Sergio-Pastorello.pdf"
+              >Calvano, Calzolari, Denicolò &amp; Pastorello · Algorithmic Collusion: A Real Problem for Competition Policy? (CPI Antitrust Chronicle, 2020)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.00806"
+              >Fish, Gonczarowski &amp; Shorrer · Algorithmic Collusion by Large Language Models (arXiv:2404.00806)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2410.00031"
+              >Lin, Ojha, Cai &amp; Chen · Strategic Collusion of LLM Agents: Market Division in Multi-Commodity Competitions (arXiv:2410.00031)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://papers.tinbergen.nl/22067.pdf"
+              >den Boer, Meylahn &amp; Schinkel · Artificial Collusion (Tinbergen Institute Discussion Paper 2022-067; Management Science, 2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2110.04740"
+              >Florian E. Dorner · Algorithmic Collusion: A Critical Review (arXiv:2110.04740)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.justice.gov/atr/case/us-and-plaintiff-states-v-realpage-inc"
+              >U.S. Department of Justice · United States and Plaintiff States v. RealPage, Inc.</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.oecd.org/content/dam/oecd/en/publications/reports/2023/05/algorithmic-competition_2be02d00/cb3b2075-en.pdf"
+              >OECD · Algorithmic Competition (Competition Policy Roundtable Background Note, 2023)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
