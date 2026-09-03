@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Claude 3.7 Sonnet's 59-minute time horizon · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "task-time-horizon",
+        "template": "lesson",
+        "title": "Claude 3.7 Sonnet's 59-minute time horizon is where its success crosses one half",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-03",
+        "tags": ["metr", "benchmarks", "ai-agents", "extrapolation"],
+        "sources": 8,
+        "words": 2196,
+        "reading_minutes": 10,
+        "dek": "METR built the number from 170 timed software tasks, and its seven-month doubling, drawn past the last released model, became a public calendar for automating a month of work.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">
+          Claude 3.7 Sonnet's 59-minute time horizon is where its success crosses
+          one half
+        </h1>
+        <p class="nb-dekline">
+          METR built the number from 170 timed software tasks, and its
+          seven-month doubling, drawn past the last released model, became a
+          public calendar for automating a month of work.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-09-03</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have probably met the claim that AI agents can now handle tasks
+          that take a person an hour, and that the length is doubling every few
+          months. Both come from one measurement: METR's task time horizon, and
+          a trend line drawn through it. The number is real and carefully built.
+          The trouble starts when it travels, because a mark set at 50% success
+          reads like a claim about what a model can do. This lesson builds the
+          number from its parts: the timed human tasks, the pass-or-fail score,
+          and the curve fitted through them. Then it follows it to the point
+          where a seven-month doubling became a public timetable for
+          automating a month of work. You will come away able to read a horizon
+          figure for what it measures, and to spot where someone asks it to
+          predict a date it never reached.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a
+              href="https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/"
+              >METR, Measuring AI Ability to Complete Long Tasks</a
+            >: the result announced and framed by the team that built it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/html/2503.14499v1"
+              >Kwa et al., the full paper</a
+            >: the task suites, the fit, and the limits the authors state
+            themselves.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A task length, read at half success</h2>
+        <p>
+          METR, a research group that evaluates AI systems, gives Claude 3.7
+          Sonnet a 59-minute task time horizon.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The number is not a duration the model runs for, and not a task it can
+          be trusted to finish. It is a length of task, measured by timing
+          skilled people on the same work, at which the model succeeds half the
+          time. On a set of software, machine-learning, and cybersecurity tasks,
+          the ones a person needs about 59 minutes to do are the ones it gets
+          right on roughly one attempt in two. The condition carries
+          as much weight as the figure. Move to shorter tasks and its success
+          rate climbs above half; move to longer ones and it falls below.
+          Fifty-nine minutes is the crossover, the task length where success
+          passes through 50%.
+        </p>
+        <p>
+          This is where the number is easy to misread. A 59-minute horizon sounds
+          like a promise that the model can do an hour of a person's work. It
+          reports something narrower: the point where a curve fitted to many
+          pass-or-fail results crosses one half. METR's own write-up rounds the
+          figure to "approximately one hour,"<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          and the paper's abstract to "around 50 minutes," while the fitted value
+          sitting between them is 59.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          To see why it is a crossover and not a capability, watch it get built.
+        </p>
+      </section>
+
+      <section data-nb-section="fitting-the-curve" id="fitting-the-curve">
+        <h2>Timing the tasks, then fitting a curve</h2>
+        <p>
+          Every horizon needs two facts per task: the human time, and whether the
+          model finished. METR assembled 170 tasks spanning a few
+          seconds to about thirty hours of human work. Sixty-six are very short
+          software actions, 97 are longer software and research-engineering
+          tasks, and 7 are machine-learning research problems.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Skilled professionals, most with about five years in the field, were
+          timed doing them, and a task's "length" is the geometric mean of the
+          times of those who succeeded.
+        </p>
+        <p>
+          Each model then attempts each task, and every attempt is scored one way
+          or the other: it meets the task's success condition or it does not, with
+          no partial credit.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Line the tasks up from shortest to longest, mark each attempt as passed
+          or failed, and a shape appears. On the short tasks almost everything
+          passes. On the long tasks almost everything fails. In between, the
+          fraction that pass slides from near one down toward zero. A logistic
+          curve, an S-shaped fit that starts high, drops through the middle, and
+          flattens low, is drawn through that slide, with success plotted against
+          the logarithm of human task time.
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \htmlClass{nb-mc1}{p_{\text{success}}} \;=\; \sigma\!\bigl(
+            \htmlClass{nb-mc4}{\beta}\,(\log \htmlClass{nb-mc2}{h} - \log
+            \htmlClass{nb-mc3}{t}) \bigr)
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">p_{\text{success}}</span
+              ><span>the fitted chance the model finishes a task.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">h</span
+              ><span
+                >the model's time horizon, the length read off at 50%.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">t</span
+              ><span>the task's human time, the geometric mean above.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc4">\beta</span
+              ><span
+                >the slope, how sharply success falls as tasks get
+                longer.</span
+              >
+            </li>
+          </ul>
+          <figcaption>
+            The logistic fit, with the S-shaped curve written as the sigmoid
+            \sigma. Success is a function of how a task's length compares to the
+            model's horizon.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          The horizon is the human task length where that fitted curve passes
+          through 0.5, and the equation says why the two meet there. When a task's
+          human time <span class="nb-math-in">t</span> equals the horizon
+          <span class="nb-math-in">h</span>, the difference of their logarithms is
+          zero, the whole expression inside collapses to zero, and the sigmoid of
+          zero is exactly one half. The horizon is the definition made mechanical:
+          the task length at which the fit predicts a coin toss.
+        </p>
+      </section>
+
+      <section data-nb-section="raising-the-bar" id="raising-the-bar">
+        <h2>Raise the bar to eighty percent and the hour is gone</h2>
+        <p>
+          Nothing forces the threshold to be one half. Read the same curve where
+          it crosses 0.8 instead and you get the task length the model finishes
+          four times in five. For Claude 3.7 Sonnet that length is not 59 minutes
+          but about 15.<sup class="nb-cite"><a href="#s1">1</a></sup> The two
+          figures describe the same model on the same tasks. They differ only in
+          how often you insist it succeed, and lifting the bar from half the time
+          to most of the time shrinks the horizon by roughly a factor of four.
+        </p>
+        <p>
+          So take a task that sits exactly at the 59-minute mark. It is not a task
+          Claude 3.7 Sonnet can do. It is a task Claude 3.7 Sonnet finishes about
+          half the times it tries. The threshold marks where success is even, not
+          where it is safe.
+        </p>
+        <p>
+          Toby Ord, a philosopher at Oxford, worked out how these thresholds
+          relate under one assumption: that an agent fails at a roughly constant
+          rate for every minute a human would spend on a task. Under that model
+          the 80% horizon sits at about a third of the 50% horizon, and the 99%
+          horizon at about one-seventieth of it.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The exact ratios depend on the assumption holding, and it does not hold
+          exactly. Either way, the more reliably you need the work done, the
+          shorter the tasks the number covers.
+        </p>
+      </section>
+
+      <section data-nb-section="the-doubling" id="the-doubling">
+        <h2>Seven months to a doubling, and the line past the data</h2>
+        <p>
+          One horizon is a snapshot of one model. The claim that reached the
+          headlines is about the trend. Take the 50% horizon of the best model
+          available at each date from 2019 to 2025, and the points climb a
+          straight line on a logarithmic axis. Straight on a log scale means
+          steady multiplication: the horizon roughly doubles every 212 days, with
+          a bootstrap confidence interval of 171 to 249 days.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">59 min</span
+            ><span class="nb-stat-l">Claude 3.7 Sonnet, 50% horizon</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">212 days</span
+            ><span class="nb-stat-l">trend doubling, 2019 to 2025</span>
+          </div>
+        </div>
+        <figure class="nb-figure">
+          <img
+            src="task-time-horizon/asset-1.png"
+            alt="Scatter plot on a logarithmic time axis: the 50% time horizon rising from about two seconds for GPT-2 in 2019 to about one hour for Claude 3.7 Sonnet in 2025, with a fitted trend line, a shaded confidence band, and a dashed extension continuing past the last point toward 2027."
+          />
+          <figcaption>
+            Fig. 1 · METR's 50% time horizon by model release date, on a
+            logarithmic scale. The solid line is the fitted seven-month doubling
+            through released models; the dashed segment extends it past the last
+            one.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Fig. 1"
+                data-nb-url="https://arxiv.org/html/2503.14499v1"
+                data-nb-note="The headline trend plot the lesson reads and warns against extending past its data."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Up to the last released model, this is a measurement: each point is a
+          horizon fitted from real timings and real pass-or-fail results. Draw the
+          line past that last point and it becomes an extrapolation, an assumption
+          that whatever produced the doubling keeps producing it. The authors are
+          careful about the seam. They write that
+          future trend changes and external validity, not the fitting, are
+          "responsible for the majority of our uncertainty."<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          There is a further wrinkle inside the measured stretch. The full
+          six-year trend doubles every seven months, but the most recent years
+          look faster, nearer four to six months across 2023 to 2025. The authors
+          call that speed-up "difficult to distinguish from noise."<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          METR's own 2026 revision, built on a larger task set, moved the recent
+          doubling
+          toward 131 days, attributing part of the change to a shift in task
+          difficulty rather than to capability alone.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The settled fact is the seven-month doubling over the whole period. The
+          acceleration is not settled, including by the group that first reported
+          it.
+        </p>
+      </section>
+
+      <section data-nb-section="the-over-read" id="the-over-read">
+        <h2>How the trend became a new Moore's Law</h2>
+        <p>
+          Extend a straight line on a log chart and it will reach any milestone
+          you name, on a date. AI Digest, a project that explains AI progress to
+          the public, took the doubling and turned it
+          into a calendar under the banner "A new Moore's Law for AI agents."<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            AI Digest's calendar, a straight-line extension of the doubling into
+            dated milestones.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Horizon</th>
+              <th class="txt">In work terms</th>
+              <th>Projected year</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">8 h</span></td>
+              <td class="txt">one work day</td>
+              <td>2027</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">40 h</span></td>
+              <td class="txt">one work week</td>
+              <td>2028</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">167 h</span></td>
+              <td class="txt">one work month</td>
+              <td>2029</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The move is tempting because Moore's law has this shape, a straight
+          line on a log axis that held for decades. The metric underneath
+          was not built to bear it, in two ways its own makers flagged. The first
+          is scope. After the paper's first version, its title changed from
+          "Measuring AI Ability to Complete Long Tasks" to "Long Software
+          Tasks."<sup class="nb-cite"><a href="#s1">1</a></sup> The tasks are
+          software, machine-learning, and cybersecurity work that comes with an
+          automatic way to check the answer, not the open-ended judgment most jobs
+          ask for. Run the same method on visual computer-use tasks and the
+          horizons come out 40 to 100 times shorter; run it on Tesla's
+          self-driving data and the doubling slows to well under one per year.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          The number is a property of a task distribution, and the software one is
+          unusually friendly to it.
+        </p>
+        <p>
+          The second is that the calendar did not begin with AI Digest. The paper
+          itself projects that "within 5 years" agents may automate software tasks
+          that currently take humans a month.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          That is the same leap, made first by the authors and dated downstream.
+          And a month-long horizon read at 50% would still describe a model that
+          fails half of its month-long tasks. Ord's reframing sharpens the gap: if
+          the per-minute failure rate is roughly constant, the reliable horizon
+          trails far behind the 50% one, so the milestone for real work lands well
+          after the headline date. That picture is itself unsettled. Ord notes it
+          does not fit his human baseliners, who stayed above 20% success on
+          twelve-hour tasks where a constant failure rate predicts about 6%.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The intuition survives even if the exact mechanism does not: a 50% mark
+          is a loose upper bound on dependable work, not a measure of it.
+        </p>
+        <p>
+          There is also the question of who grades the work. METR's tasks arrive
+          with an automatic check; real software work does not. An independent
+          review by A. Jesse Jiryu Davis notes that the testing was lopsided:
+          METR capped its human timers at eight hours but gave the models no
+          limit. Davis also points to METR's own finding that about half of the
+          AI-written pull requests passing automated tests would be rejected by a
+          human maintainer.<sup class="nb-cite"><a href="#s8">8</a></sup> A number
+          built where the referee is a script says less about work where the
+          referee is a person. None of this makes the 59-minute figure wrong. It
+          makes it narrow. The figure reports the software task length at which
+          one model succeeded half the time in early 2025. It says nothing on its
+          own about a date, a job, or a level of reliability anyone would ship.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A task time horizon is a crossover, not a capability. It is the length
+          of task, timed on skilled people, at which a model's fitted success
+          curve passes through one half. For Claude 3.7 Sonnet on METR's software
+          tasks that length is 59 minutes, and about 15 minutes if you ask it to
+          succeed four times in five instead. The seven-month doubling of that
+          crossover, measured across six years, is a real and careful result. The
+          calendar of automated work-months laid on top of it is not part of the
+          measurement. It is a straight line extended past the last real point, on
+          a metric its own authors scoped to software and warned carries most of
+          its uncertainty there. When the next horizon figure arrives fastened to
+          a year, you now know which half was measured and which half was drawn
+          in.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.tobyord.com/writing/half-life"
+              >Toby Ord, Is there a Half-Life for the Success Rates of AI
+              Agents?</a
+            >: reworks the same data as a constant failure rate per minute and
+            asks what that implies for longer tasks.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a
+              href="https://metr.org/blog/2025-07-14-how-does-time-horizon-vary-across-domains/"
+              >METR, How Does Time Horizon Vary Across Domains?</a
+            >: the same method on other task suites, where the horizon lands 40 to
+            100 times apart.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2503.14499"
+              >arXiv · Kwa et al., Measuring AI Ability to Complete Long Software
+              Tasks</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/"
+              >METR · Measuring AI Ability to Complete Long Tasks</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2505.05115"
+              >arXiv · Toby Ord, Is there a half-life for the success rates of AI
+              agents?</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://metr.org/blog/2026-1-29-time-horizon-1-1/"
+              >METR · Time Horizon 1.1</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://theaidigest.org/time-horizons"
+              >AI Digest · A new Moore's Law for AI agents</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://metr.org/blog/2025-07-14-how-does-time-horizon-vary-across-domains/"
+              >METR · How Does Time Horizon Vary Across Domains?</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.tobyord.com/writing/half-life"
+              >Toby Ord · Is there a Half-Life for the Success Rates of AI
+              Agents?</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://emptysqua.re/blog/review-measuring-ai-ability-to-complete-long-software-tasks/"
+              >A. Jesse Jiryu Davis · Review: Measuring AI Ability to Complete
+              Long Software Tasks</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
