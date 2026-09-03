@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Give GPT-4 the same options in a new order and it changes its answer · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "option-order-bias",
+        "template": "lesson",
+        "title": "Give GPT-4 the same options in a new order and it changes its answer",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-03",
+        "tags": ["evaluation", "selection-bias", "robustness"],
+        "sources": 9,
+        "words": 2128,
+        "reading_minutes": 9,
+        "dek": "The swing runs from 13 to 75 points across five benchmarks, and the two papers that measured it most carefully split on whether position or the answer letters drive it.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">Give GPT-4 the same options in a new order and it changes its answer</h1>
+        <p class="nb-dekline">
+          The swing runs from 13 to 75 points across five benchmarks, and the two papers that measured it most carefully split on whether position or the answer letters drive it.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-03</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Hand a model a multiple-choice question, then hand it the same question
+          with the answers listed in a different order, and it can pick a different
+          one. The options carry the same information either way, so this is not the
+          model reasoning better or worse. It is the same model, on the same
+          question, reading a different string of characters. That matters because
+          most of the numbers you see about how good a model is come from
+          multiple-choice tests scored exactly this way. A leaderboard that ranks
+          two models can turn on the order the answers happened to be in. The cause
+          turns out to be three things at once, and the people who measured it
+          still disagree about which one matters most.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="prompt-sensitivity.html">One character of formatting decided whether the model got it right</a>:
+            the wider story of how wording and example order move a score, and the grader's part in it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="word-order.html">Self-attention can't tell "dog bites man" from "man bites dog"</a>:
+            why a model has no built-in sense of position and where its sense of order comes from instead.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="instructions-are-data.html">Language models draw no line between instructions and data</a>:
+            why the question and its options reach the model as one undivided stream of tokens.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One reorder, a different answer</h2>
+        <p>
+          Pezeshkpour and Hruschka gave GPT-4 a commonsense question, then posed
+          the same question with its answer choices rearranged. The model's pick
+          changed from one option to another.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Nothing in the question or the options was different. Only their order
+          was, and that was enough to change the answer.
+        </p>
+        <p>
+          The effect is not a single odd case. Across five benchmarks, zero-shot,
+          Pezeshkpour and Hruschka measured the gap between the best ordering and
+          the worst at roughly 13 to 75 accuracy points. Even GPT-4, above 90% on
+          some of those tasks, still moved by
+          13.1.<sup class="nb-cite"><a href="#s1">1</a></sup> Zheng and colleagues
+          came at it from the other side. They moved each question's correct answer
+          to a fixed slot and watched the score follow. On zero-shot MMLU,
+          llama-30B answered 53.1% right on its default ordering, 68.2% when the
+          answer was always at A, and 41.2% when it was always at
+          D.<sup class="nb-cite"><a href="#s2" data-nb-locator="Table 1">2</a></sup>
+          A third group reproduced the behavior independently and analyzed it the
+          same two ways, by option order and by the answer
+          tokens.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">13–75</span
+            ><span class="nb-stat-l">point gap, best vs. worst option order</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">+15.2 / −11.9</span
+            ><span class="nb-stat-l">llama-30B accuracy, answer forced to A vs. D</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">13.1</span
+            ><span class="nb-stat-l">points GPT-4 still swings, above 90% accuracy</span>
+          </div>
+        </div>
+        <p>
+          So the behavior is settled and measured, across several models and
+          groups. What causes it is the harder question, and there the people who
+          measured it do not agree. Three parts of the system each have a hand in
+          the answer: where an option sits in the sequence, the pull the letters
+          exert on their own, and how the answer is read off the model.
+        </p>
+      </section>
+
+      <section data-nb-section="position" id="position">
+        <h2>Where a choice sits in the list</h2>
+        <p>
+          The question and its options reach the model as one sequence of tokens,
+          read from front to back, with
+          <a href="instructions-are-data.html">no divider between the question and
+          the choices</a>. A transformer has
+          <a href="word-order.html">no built-in sense of where a token sits</a>. The
+          position of each one is supplied to it, and it does not weigh every
+          position the same. Liu and colleagues showed this cleanly on a different
+          task, finding a needed fact buried somewhere in a long input. Accuracy
+          was highest when the fact sat at the very start or the very end of the
+          input and sagged in the middle. They named the two edges primacy and
+          recency, after the U-shaped curve the scores traced.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          In multi-document question answering, moving the answer-bearing document
+          from the best position to the worst cost gpt-3.5-turbo more than 20
+          points.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Pezeshkpour and Hruschka argue that this same weighting of position is
+          what drives the option-order effect. Their Conjecture 4.1 puts it as two
+          forces acting together: the model's uncertainty about which of its top
+          choices is correct, and a positional bias that leads it to favor options
+          by where they appear.<sup class="nb-cite"><a href="#s1" data-nb-locator="Conjecture 4.1">1</a></sup>
+          Their checks point the same way. On the questions most sensitive to
+          reordering, the model agreed that more than one choice could be highly
+          probable over 94% of the time. That is the uncertainty the conjecture
+          needs. Freezing only its top two or three options in place, and shuffling
+          the rest, barely changed accuracy, which reads as the model responding to
+          position rather than content. And placing the two strongest options first
+          and last amplified the bias, while setting them next to each other reduced
+          it.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Liu and colleagues own the primacy and recency mechanism, but they
+          measured it on long-context retrieval, not on a short list of answer
+          choices. Pezeshkpour and Hruschka carry it over to
+          options as a conjecture, not a settled decomposition. The position effect
+          is real. That it is the main cause of the option-order swing is a claim,
+          and it has a rival.
+        </p>
+      </section>
+
+      <section data-nb-section="letters" id="letters">
+        <h2>The letters were tokens before they were labels</h2>
+        <p>
+          A, B, C and D are not neutral slots. They are tokens the model saw
+          countless times in training, and it carries a prior over them before it
+          reads a single option. Zhao and colleagues found the general form of this
+          on a different task, few-shot classification. They called it common-token
+          bias: the model's pull toward tokens frequent in its pretraining data, the
+          way an unsure model reaches for "United States" over "Saint
+          Lucia."<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The option letters are among those frequent tokens, and the model leans on
+          them for reasons that owe nothing to what they label.
+        </p>
+        <p>
+          Zheng and colleagues carry the idea to the A/B/C/D case and call it token
+          bias. Their evidence is a pair of ablations. Shuffling the option contents
+          while leaving the letters in place did not obviously change the bias,
+          which argues against position as the main driver. Removing the letters
+          entirely cut their bias metric by 6.4 on average, at a cost of 2.1
+          accuracy points, which argues for the letters.<sup class="nb-cite"><a href="#s2" data-nb-locator="Appendix C">2</a></sup>
+          That metric is the spread across how often the model chooses each letter.
+          With no bias it would land on each about equally often. A wide spread means
+          it is choosing a letter, not an answer. Estimating the letter prior from a
+          small sample and subtracting it back removed much of the spread, and even
+          nudged accuracy up. That is what you would expect if the letters were part
+          of the problem.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Zheng and colleagues state
+          plainly that selection bias "arises less from LLMs' position bias," and
+          name the token prior as the more salient cause. They cite Pezeshkpour and
+          Hruschka's account as the common view they argue
+          against.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <div class="nb-position">
+          <div class="nb-position-top">
+            <span class="nb-position-who">Pezeshkpour and Hruschka</span>
+            <span class="nb-position-pill">Position</span>
+          </div>
+          <p class="nb-position-statement">
+            The main cause is where an option sits: an unsure model favors choices
+            by their position in the list.
+          </p>
+          <p class="nb-position-summary">
+            On sensitive questions the model grants that more than one choice could
+            be highly probable over 94% of the time. Freezing only its top two or three
+            options in place barely moves accuracy, which points at position rather
+            than content.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </p>
+        </div>
+        <div class="nb-position">
+          <div class="nb-position-top">
+            <span class="nb-position-who">Zheng and colleagues</span>
+            <span class="nb-position-pill">Position</span>
+          </div>
+          <p class="nb-position-statement">
+            The stronger cause is a prior on the letters: the model favors certain
+            answer tokens whatever they label.
+          </p>
+          <p class="nb-position-summary">
+            Shuffling the option contents leaves the bias almost unchanged while
+            removing the letters cuts it sharply, so the bias "arises less from
+            LLMs' position bias" than from the token prior.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </p>
+        </div>
+        <div class="nb-note">
+          <span class="nb-note-label">Where the evidence stands</span>
+          <p>
+            No one has a single split between position and the letters that holds
+            across models and setups. The behavior is settled. Its decomposition is
+            not.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </p>
+        </div>
+      </section>
+
+      <section data-nb-section="scoring" id="scoring">
+        <h2>What counts as the model's answer</h2>
+        <p>
+          There is a step before any of this that the model never sees: how the
+          evaluator decides to read its answer. Robinson and
+          colleagues lay out two ways. The cloze way shows the question alone and
+          scores the text of each answer against it. The natural way shows the
+          lettered options and asks the model to emit a symbol, the letter "A." That
+          second way needs the model to bind each option's content to its letter, a
+          skill they call multiple-choice symbol binding that "varies greatly by
+          model."<sup class="nb-cite"><a href="#s6">6</a></sup> The letter-scoring
+          regime, where a prior on A/B/C/D can bite, is one way to pose a
+          multiple-choice question, not the only one.
+        </p>
+        <p>
+          Zheng and colleagues measured the token bias through the first token it
+          would emit, its probability on "A" against "B" against "C" against "D."
+          Two other groups checked that probe against the answer the model actually
+          writes out, and found they often disagree. Wang and colleagues report the
+          first-token pick and the written
+          answer clashing 56.8% of the time on Gemma-7b-Instruct and 51.4% on
+          Llama2-7b-Chat, though only 10.2% on Mistral-7b-Instruct. Where the clash
+          runs above half, the written answer holds up better under reordering than
+          even the debiased first-token score.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          A second group put the overall mismatch above 60%, worst on models most
+          heavily fine-tuned on conversation and safety.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          So some of the measured token bias belongs to the ruler, not the model:
+          read the words the model writes instead of its first-token odds, and part
+          of the effect goes away.
+        </p>
+        <p>
+          The Hugging Face team scored the same MMLU questions three ways and got
+          three different numbers, far enough apart to reorder the leaderboard.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The same MMLU questions on LLaMA-65B, scored three ways: the numbers are
+            "not at all comparable."<sup class="nb-cite"><a href="#s9">9</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Method</th>
+              <th class="txt">What it scores</th>
+              <th>LLaMA-65B</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Original</span></td>
+              <td class="txt">the four letter probabilities</td>
+              <td>0.636</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">HELM</span></td>
+              <td class="txt">text it generates, read as a letter</td>
+              <td>0.637</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Harness</span></td>
+              <td class="txt">the full answer text after the letter</td>
+              <td>0.488</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          None of this overturns Zheng and colleagues' ablations, which stay valid
+          inside their one scoring method. It only qualifies how much of the swing is
+          the model choosing a letter and how much is the ruler used to read it. That
+          a scoring choice alone can swing a score is
+          <a href="prompt-sensitivity.html">its own lesson</a>. The choice sits
+          upstream of everything else, a third thing that can move the number.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When GPT-4 changed its answer after the options were reordered, nothing
+          about its grasp of the question had changed. The model turns the exact
+          token sequence in front of it into a preference over the next token. The
+          question, the options, and their letters, in that order, are that
+          sequence, and no separate, order-free answer sits underneath for the
+          reorder to reveal. Below that, nothing is left to explain: that is the
+          ground. What moved the answer was some mix of three things, and you can
+          now name them. Where an option sits changes how reliably the model
+          reads it. The letters A, B, C and D carry their own pull as tokens. And
+          how the answer is scored, by the first letter's odds or by the words the
+          model writes, can move the number on its own. The effect is settled and
+          large. Which of the three carries most of it is still open. The two teams
+          who looked hardest reached opposite answers, because the answer depends on
+          the model and on how you measured.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2309.03882">Zheng et al., "Large Language Models Are Not Robust Multiple Choice Selectors"</a>:
+            the token-bias case in full, and a cheap fix that estimates the letter prior and subtracts it at inference.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2308.11483">Pezeshkpour & Hruschka, "Large Language Models Sensitivity to The Order of Options"</a>:
+            the positional account, plus the finding that averaging over ten random reorders recovers up to eight points.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2308.11483"
+              >arXiv · Pezeshkpour & Hruschka, Large Language Models Sensitivity to The Order of Options in Multiple-Choice Questions (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2309.03882"
+              >arXiv · Zheng et al., Large Language Models Are Not Robust Multiple Choice Selectors (2024)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.03009"
+              >arXiv · Wei et al., Unveiling Selection Biases: Exploring Order and Token Sensitivity in Large Language Models (2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.03172"
+              >arXiv · Liu et al., Lost in the Middle: How Language Models Use Long Contexts (2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2102.09690"
+              >arXiv · Zhao et al., Calibrate Before Use: Improving Few-Shot Performance of Language Models (2021)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2210.12353"
+              >arXiv · Robinson, Rytting & Wingate, Leveraging Large Language Models for Multiple Choice Question Answering (2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.08382"
+              >arXiv · Wang et al., "Look at the Text": Instruction-Tuned Language Models are More Robust Multiple Choice Selectors than You Think (2024)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2402.14499"
+              >arXiv · My Answer is C: First-Token Probabilities Do Not Match Text Answers in Instruction-Tuned Language Models (2024)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/blog/open-llm-leaderboard-mmlu"
+              >Hugging Face · What's going on with the Open LLM Leaderboard? (2023)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
