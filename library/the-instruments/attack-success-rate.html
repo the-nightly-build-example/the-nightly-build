@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A different attack turns 1% into 88% on the same safety test · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "attack-success-rate",
+        "template": "lesson",
+        "title": "A different attack turns 1% into 88% on the same safety test",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-04",
+        "tags": ["attack-success-rate", "jailbreak-benchmarks", "safety-evaluation", "red-teaming"],
+        "sources": 9,
+        "words": 1977,
+        "reading_minutes": 9,
+        "dek": "A single Cisco score branded DeepSeek R1 unsafe, and it came from 50 requests pushed by one attack.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">A different attack turns 1% into 88% on the same safety test</h1>
+        <p class="nb-dekline">
+          A single Cisco score branded DeepSeek R1 unsafe, and it came from 50 requests pushed by one attack.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-04</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The attack success rate is the number behind almost every public
+          claim that one AI model is safer, or more jailbreak-resistant, than
+          another. A security team reports a rate, trade press repeats it, and a
+          model picks up a reputation. This lesson takes one such number apart:
+          the 100% a Cisco team reported for the model DeepSeek R1 in early
+          2025. It rebuilds the rate from its parts, the list of requests, the
+          attack, the model's answer, and the judge, and then asks what the
+          rebuilt number can actually support. By the end you can say what one
+          attack success rate counts and why two labs can score the same model
+          very differently. You can also say why a model that refuses everything
+          scores a perfect zero, and why a low rate from last year says little
+          about this year's attacks.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../what-could-go-wrong/jailbreaks.html">An optimizer wrote
+            a jailbreak that transferred across five AI models</a>: how the
+            optimizer-found attacks behind these rates are actually built.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/over-refusal.html">A safe prompt gets
+            refused because a trained switch fires on a word</a>: the refusal
+            cost a low attack success rate can hide.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The number that said DeepSeek failed every time</h2>
+        <p>
+          In late January 2025, a security team at Cisco reported that DeepSeek
+          R1, a newly released reasoning model, could be jailbroken 100% of the
+          time.<sup class="nb-cite"><a href="#s1">1</a></sup> Trade press
+          carried the figure straight. DeepSeek "lacks robust guardrails," one
+          outlet repeated, and set the number beside the same test's scores for
+          rival models.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Three words in that report are doing quiet work. A jailbreak is a
+          way of getting a model to produce something it was trained to refuse,
+          usually by rewriting or dressing up the request so its safety training
+          does not fire. A refusal is the opposite outcome: the model declines,
+          which is what that training is meant to produce for a harmful request.
+          The attack success rate, or ASR, is the share of a fixed set of
+          harmful requests that a model can be pushed into answering rather than
+          refusing. The 100% was an ASR.
+        </p>
+        <p>
+          Before deciding a model is unsafe on a number like that, it is worth
+          asking where the number came from. Not which paper to cite it to, but
+          how it was built: what set of requests, pushed by what attack, and
+          judged by whom. Answer those three and the 100% turns out to count
+          something much narrower than the word "unsafe" suggests.
+        </p>
+      </section>
+
+      <section data-nb-section="pipeline" id="pipeline">
+        <h2>Four choices behind the percentage</h2>
+        <p>
+          Every attack success rate is built the same way, in four steps, and
+          each step is a choice someone made. Take HarmBench, one of the
+          benchmarks the DeepSeek test drew its prompts from, and follow a rate
+          from the list of requests to the final percentage.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>A fixed list of forbidden requests</h3>
+            <p>
+              HarmBench fixes 510 harmful behaviors, 200 standard plus copyright,
+              contextual, and multimodal sets, and splits them into 100 for
+              tuning and 410 for the test. The rate is a fraction of this list
+              and of nothing outside it.<sup class="nb-cite"
+                ><a href="#s3">3</a></sup
+              >
+            </p>
+          </li>
+          <li>
+            <h3>An attack applied to each</h3>
+            <p>
+              A red-teaming method turns each behavior into an actual prompt: a
+              fixed template, an optimizer-found suffix, or a plain rewrite.
+              Change the attack and you are measuring resistance to a different
+              thing. How the optimizer-found kind is built is its own subject,
+              covered in the paper's
+              <a href="../what-could-go-wrong/jailbreaks.html">jailbreaks
+              lesson</a>.
+            </p>
+          </li>
+          <li>
+            <h3>The model's answer</h3>
+            <p>
+              The target model generates a response, and HarmBench reads the
+              first 512 tokens of it. That length is itself a knob. The paper
+              notes prior work left it unstandardized, and the choice alone can
+              move a rate by up to 30%.<sup class="nb-cite"
+                ><a href="#s3">3</a></sup
+              >
+            </p>
+          </li>
+          <li>
+            <h3>A judge that rules each answer</h3>
+            <p>
+              Something reads each answer and rules it a success or not.
+              HarmBench uses a classifier, a fine-tuned Llama-2-13B model that
+              agrees with human labelers 93.19% of the time, ahead of a GPT-4
+              grader at 88.37% and an AdvBench refusal classifier at
+              69.93%.<sup
+                class="nb-cite"
+                ><a href="#s3">3</a></sup
+              >
+            </p>
+          </li>
+        </ol>
+        <p>
+          The ASR is the fraction of that 410-request list the judge marks a
+          success, where even a garbled attempt counts. Run HarmBench's
+          classifier over the GCG attack on Llama-2-13B and the rate is
+          30.2%.<sup class="nb-cite"><a href="#s3">3</a></sup> That is a single
+          number resting on one list, one attack, and one judge. Move any of the
+          three and the number moves with it.
+        </p>
+      </section>
+
+      <section data-nb-section="judge" id="judge">
+        <h2>Whoever grades decides the score</h2>
+        <p>
+          The judge is the step that most quietly moves the number, because two
+          reasonable graders can read the same answer and disagree on whether it
+          was a success. StrongREJECT, a second benchmark of 313 forbidden
+          requests, was built around exactly that
+          problem.<sup class="nb-cite"><a href="#s4">4</a></sup> Its authors
+          found that most earlier graders counted any non-refusal as a success:
+          if the model did not say no, the jailbreak
+          worked.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          That bar is easy to clear with nothing. When researchers translated
+          harmful requests into Scots Gaelic, GPT-4 stopped refusing, and a
+          non-refusal grader scored a 43% attack success rate. StrongREJECT's
+          authors read the actual answers and found them vacuous, carrying no
+          usable information.<sup class="nb-cite"><a href="#s5">5</a></sup> The
+          model had not refused, but it had not produced the harmful content
+          either. The high rate measured the absence of a "no," not the presence
+          of a real answer.
+        </p>
+        <p>
+          StrongREJECT's fix is to grade three things at once: whether the model
+          refused, how specific the answer was on a one-to-five scale, and how
+          convincing it was on another. The refusal flag enters as a multiplier,
+          so any answer the model declined scores zero no matter what else it
+          contains.<sup class="nb-cite"><a href="#s5">5</a></sup> That built-in
+          zero is worth pausing on. Because every ASR scores a refusal as a
+          non-success, a model can drive its rate toward zero simply by refusing
+          more, and a model that refuses everything scores a flawless zero. The
+          catch is that a model refusing more also refuses safe requests, and
+          that cost sits on a different axis the ASR never reports. XSTest, a
+          test of 250 safe prompts a well-calibrated model should answer paired
+          with 200 genuinely unsafe ones, measures that
+          axis.<sup class="nb-cite"><a href="#s6">6</a></sup> How a model comes
+          to refuse a safe request is the subject of the paper's
+          <a href="../the-mechanics/over-refusal.html">over-refusal lesson</a>.
+        </p>
+        <p>
+          Graders also disagree with each other by wide margins on the identical
+          answers. Take GPT-4o's responses to a batch of requests rewritten into
+          the past tense and hold them fixed, then swap the judge. A GPT-4 judge
+          scored 88%, a rule-based judge 73%, and a Llama-3-70B judge 65%, a
+          23-point spread over one set of
+          answers.<sup class="nb-cite"><a href="#s7">7</a></sup> StrongREJECT put
+          a number on how far the common graders drift from human judgment by
+          ranking jailbreaks the way people did and asking how closely each
+          automated grader's ranking matched.
+        </p>
+        <table class="nb-table">
+          <caption>
+            How closely each grader's ranking of jailbreaks matched human
+            rankings, where 1 is a perfect match, 0 is chance, and a negative
+            value ranks them backwards.<sup class="nb-cite"
+              ><a href="#s5">5</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Grader</th>
+              <th>Agreement with humans</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">StrongREJECT, fine-tuned</td>
+              <td>0.90</td>
+            </tr>
+            <tr>
+              <td class="txt">StrongREJECT, rubric</td>
+              <td>0.85</td>
+            </tr>
+            <tr>
+              <td class="txt">HarmBench classifier</td>
+              <td>0.82</td>
+            </tr>
+            <tr>
+              <td class="txt">PAIR</td>
+              <td>0.25</td>
+            </tr>
+            <tr>
+              <td class="txt">GPT-4 judge</td>
+              <td>0.16</td>
+            </tr>
+            <tr>
+              <td class="txt">String match</td>
+              <td>-0.39</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          A string match, the crudest grader, sits below zero: it ranked
+          jailbreaks backwards more often than not. A plain GPT-4 judge landed at
+          0.16, closer to chance than to a human.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          > This is why two labs can report very different rates for the same
+          model without either lying. They graded the same answers with
+          different judges, and the judge is half the number.
+        </p>
+      </section>
+
+      <section data-nb-section="expiration" id="expiration">
+        <h2>A low score with an expiration date</h2>
+        <p>
+          The attack is as much a choice as the judge, and it dates faster. Look
+          first at the low scores, the ones that make a model sound safe. In
+          2023, an optimizer called GCG searched for an adversarial suffix on two
+          open models and transferred it to closed ones. Attached to a request,
+          the suffix worked on GPT-3.5 86.6% of the time and on GPT-4 46.9%, but
+          on Claude-2 only 2.1%.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          GCG counted a success as any reasonable non-refusing attempt, checked
+          by hand for the transfer tests, a looser bar than StrongREJECT's. So
+          the 2.1% reads as resistance to that one 2023 attack, not as a general
+          grade for Claude-2.
+        </p>
+        <p>
+          The trouble is that a benchmark is a frozen list of yesterday's
+          attacks. In 2024, two researchers tried the cheapest attack
+          imaginable: rewrite the harmful request in the past tense, turning
+          "how do I make X" into "how did people make X." No optimizer, no
+          suffix, just twenty tries. On 100 requests, GPT-4o went from refusing
+          all but 1% of them to answering 88%, and Claude-3.5 Sonnet went from
+          0% to 53%.<sup class="nb-cite"><a href="#s7">7</a></sup> A general-
+          audience outlet carried the result as evidence that the safety
+          training behind those low scores was
+          shallow.<sup class="nb-cite"><a href="#s9">9</a></sup> A low ASR is a
+          claim with an expiration date, and the date is whenever someone tries
+          an attack the list never held.
+        </p>
+      </section>
+
+      <section data-nb-section="misled-case" id="misled-case">
+        <h2>What the 100 percent actually counted</h2>
+        <p>
+          Now the DeepSeek number reads differently. Cisco's 100% came from 50
+          prompts sampled from HarmBench, not the full 410, each pushed by one
+          automatic jailbreaking algorithm, with refusals detected automatically
+          under some human oversight, at a temperature of
+          zero.<sup class="nb-cite"><a href="#s1">1</a></sup> The 100% means
+          DeepSeek R1 refused none of those 50 prompts. On the same 50 under the
+          same setup, Claude-3.5 Sonnet scored 36% and o1-preview
+          26%.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          What the test showed is that against that one attack, on that sample,
+          judged that way, DeepSeek refused less often than the others did. What
+          it was used for is a flat verdict, "lacks robust guardrails," forwarded
+          in trade coverage with no mention of the 50-prompt sample, the single
+          attack, or the judging behind
+          it.<sup class="nb-cite"><a href="#s2">2</a></sup> The verdict may even
+          be right. But nothing in a single ASR can carry it. Swap the attack, as
+          the past-tense rewrite did to GPT-4o's 1%, and every model on that
+          chart could move. A number that says a model refused none of 50
+          specific prompts is being asked to mean a model is unsafe, and those
+          are two different claims.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          An attack success rate is not a safety grade. It is one measurement:
+          the share of one fixed list of requests, pushed by one attack, that one
+          judge ruled the model answered. Change the judge and the same answers
+          score differently. Change the attack and last year's low number
+          expires. Push a model to refuse more and its rate falls toward zero
+          while a cost it never shows climbs. So when a number says a model
+          failed a safety test 100% of the time, the useful question is the one
+          Cisco's headline skipped: which requests, pushed by which attack, and
+          graded by whom. The rate measures resistance to one attack well enough.
+          It was never measuring the thing the headline said it did.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2402.10260">Souly et al., "A
+            StrongREJECT for Empty Jailbreaks"</a>: why most jailbreak graders
+            overstate success, and the rubric the authors built to fix it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2402.04249">Mazeika et al.,
+            "HarmBench"</a>: the standardized pipeline behind many of the attack
+            success rates now reported in public.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://blogs.cisco.com/security/evaluating-security-risk-in-deepseek-and-other-frontier-reasoning-models"
+              >Cisco · Evaluating Security Risk in DeepSeek and Other Frontier
+              Reasoning Models</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.securityweek.com/deepseek-compared-to-chatgpt-gemini-in-ai-jailbreak-test/"
+              >SecurityWeek · DeepSeek Compared to ChatGPT, Gemini in AI
+              Jailbreak Test</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2402.04249"
+              >Mazeika et al. · HarmBench: A Standardized Evaluation Framework
+              for Automated Red Teaming and Robust Refusal</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/alexandrasouly/strongreject"
+              >Souly et al. · StrongREJECT dataset and code</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2402.10260"
+              >Souly et al. · A StrongREJECT for Empty Jailbreaks</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2308.01263"
+              >Röttger et al. · XSTest: A Test Suite for Identifying Exaggerated
+              Safety Behaviours in Large Language Models</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2407.11969"
+              >Andriushchenko & Flammarion · Does Refusal Training in LLMs
+              Generalize to the Past Tense?</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.15043"
+              >Zou et al. · Universal and Transferable Adversarial Attacks on
+              Aligned Language Models</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://the-decoder.com/researchers-uncover-an-all-too-easy-trick-to-bypass-llm-safeguards/"
+              >The Decoder · Researchers uncover an all-too-easy trick to bypass
+              LLM safeguards</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
