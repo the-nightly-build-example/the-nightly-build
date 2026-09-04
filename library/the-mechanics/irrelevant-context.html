@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rename the people in a word problem and the model does worse · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "irrelevant-context",
+        "template": "lesson",
+        "title": "Rename the people in a word problem and the model does worse",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-04",
+        "tags": ["reasoning", "robustness", "gsm-symbolic", "pattern-matching"],
+        "sources": 8,
+        "words": 2178,
+        "reading_minutes": 9,
+        "dek": "A model loses a little accuracy when a problem's names change and a lot when it gains one true but useless sentence, and whether that proves it cannot reason is the part still in dispute.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">Rename the people in a word problem and the model does worse</h1>
+        <p class="nb-dekline">
+          A model loses a little accuracy when a problem's names change and a lot
+          when it gains one true but useless sentence, and whether that proves it
+          cannot reason is the part still in dispute.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-04</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have probably been told that today's models reason. You have
+          probably also watched one botch something simple. This lesson is about
+          a specific, measured version of that gap. Take a math word problem a
+          model gets right, then change something a person would never think
+          mattered: a name, a number, one extra true sentence. Its accuracy falls,
+          even though the problem is the same problem. By the end you will know
+          what in the model produces that. You will know which part of the story
+          is settled engineering and which part the people who build these systems
+          still argue over. And you will be able to tell when a claim that a model
+          reasons has outrun what the test actually showed.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../transformers-first-principles/tokenization.html">A transformer never reads the letters in strawberry</a>:
+            what a token is and how a model's text gets cut into them.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">An attention head is a weighted average that computes its own weights</a>:
+            how a model weighs every token in the prompt against every other.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A word problem the model solves until you change it</h2>
+        <p>
+          Give a current language model a grade-school word problem and it
+          usually gets the answer right. The problems in GSM8K, the standard set
+          of 8,500 of them, are the kind a careful ten-year-old can do: a few
+          sentences of setup, a short chain of arithmetic, one number at the
+          end.<sup class="nb-cite"><a href="#s1">1</a></sup> This is not the
+          arithmetic itself going wrong. An
+          <a href="../the-mechanics/getting-math-wrong.html">earlier lesson</a>
+          covered that, the model fumbling a large multiplication it has rarely
+          seen. Here the arithmetic is small and the model can do it. What
+          changes is only the wording around it.
+        </p>
+        <p>
+          The cleanest version of the change is to add a sentence. Shi and
+          colleagues at Google took 100 GSM8K problems a model already solved and
+          added one irrelevant sentence to each, the kind of aside a human reader
+          skips without noticing. On the strongest setup they tested, per-problem
+          accuracy fell from 95.0% to 72.4%.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Same problems, same numbers to add up. The only new thing in the prompt
+          was a sentence that changed no quantity the question asked about, and
+          the score dropped more than twenty points.
+        </p>
+        <p>
+          The rest of this lesson works backward from that drop to what produces
+          it. The question it answers is why a change a person would ignore moves
+          a machine that looks like it is reasoning.
+        </p>
+      </section>
+
+      <section data-nb-section="the-spread" id="the-spread">
+        <h2>A single score hides a spread of outcomes</h2>
+        <p>
+          How big is the effect? The honest answer needs two numbers rather than
+          one. Scored problem by problem, the model on the added-sentence set was
+          still right 72.4% of the time. But ask the stricter question, of the
+          problems the model could solve, how many did it solve under every kind
+          of irrelevant sentence, and the figure is 6.0%. No more than 18% of
+          them survived all of them.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          A model that is usually right can be almost never robust, and which
+          number you quote decides which story you tell.
+        </p>
+        <p>
+          The second measurement makes the spread visible. Mirzadeh and colleagues
+          at Apple regenerated GSM8K problems with different names and different
+          numbers, left the structure untouched, and ran about 25 models over many
+          such versions.<sup class="nb-cite"><a href="#s3">3</a></sup> A model does
+          not have one GSM8K score. It has a distribution. The gap between
+          Gemma2-9B's worst and best version was more than 12 points, and
+          Phi-3.5-mini's about 15.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Changing only the names moved the score a little; changing only the
+          numbers moved it more. The plain GSM8K figure most papers report sits
+          near the middle of the changed-names spread but not the changed-numbers
+          one, so for the harder change the widely-cited number is closer to a
+          best case than a typical one.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">72.4%</span
+            ><span class="nb-stat-l">per problem, down from 95.0%</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">6.0%</span
+            ><span class="nb-stat-l">solved under every variant</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">15 pts</span
+            ><span class="nb-stat-l">worst-to-best spread, one model</span>
+          </div>
+        </div>
+      </section>
+
+      <section data-nb-section="what-it-holds" id="what-it-holds">
+        <h2>What the model is holding when it reads the problem</h2>
+        <p>
+          To see why a skipped sentence changes the answer, look at what the
+          model actually has in front of it. The problem does not arrive as a
+          problem. It arrives as a sequence of
+          <a href="../transformers-first-principles/tokenization.html">tokens</a>,
+          the pieces a model's text is cut into before anything else happens, and
+          the model produces its answer by predicting the next token from all the
+          earlier ones at once, through the
+          <a href="../the-mechanics/attention.html">attention</a> mechanism this
+          course has already taken apart.
+        </p>
+        <p>
+          There is no second copy of the problem anywhere in the model. No list
+          of the quantities, no note of which sentence states the question and
+          which is background, no separate workspace where the arithmetic is set
+          up and solved. Everything the model has to go on is those tokens and
+          what its weights do with them. Work on how transformers handle
+          multi-step problems finds them matching a question to computation
+          patterns seen often in training, rather than running a general
+          procedure over it.<sup class="nb-cite"><a href="#s4">4</a></sup> Accuracy
+          falls as a problem needs a path that was rare in the training data. A
+          person reading the
+          word problem builds a small picture of the situation and reasons over
+          that, dropping the exact wording once the meaning is out. The model
+          never leaves the wording. The wording is all it has.
+        </p>
+      </section>
+
+      <section data-nb-section="no-filter" id="no-filter">
+        <h2>Nothing tells the model which words to ignore</h2>
+        <p>
+          Because the wording is all it has, every token in the prompt is a
+          candidate influence on the answer, and there is no separate step that
+          sorts the tokens the question needs from the ones that are only scenery.
+          Change the names and the match to any particular remembered problem
+          gets a little weaker. Change the numbers and it gets weaker still, which
+          is why numbers move the score more than names do: the digits carry more
+          of the work of picking out a familiar
+          pattern.<sup class="nb-cite"><a href="#s3">3</a></sup> A
+          <a href="../the-mechanics/prompt-sensitivity.html">related lesson</a>
+          showed the same underlying fact from the formatting side, a colon in
+          place of a space swinging the score. Here the change is not formatting
+          but content, a different name or an added fact, and the logic is
+          untouched.
+        </p>
+        <p>
+          Add a sentence and the new tokens do not sit quietly to one side. If
+          the sentence is on-topic, mentioning the same objects the problem is
+          about, its tokens look like the kind that usually carry a quantity the
+          answer needs, and the model folds them in. Mirzadeh's team built exactly
+          this test, called GSM-NoOp, adding one true clause to each problem that
+          changes nothing the question asks.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The added clause</span>
+          <p>
+            One problem counts kiwis picked over three days and then reports that
+            five of them "were a bit smaller than average." The size of a kiwi has
+            nothing to do with how many there are. Models subtract the five anyway
+            and return the wrong total.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </p>
+        </div>
+        <p>
+          The effect reaches past math. Nezhurina and colleagues posed a trivial
+          puzzle, Alice has some brothers and some sisters, so how many sisters
+          does one of her brothers have, and varied only the two
+          counts.<sup class="nb-cite"><a href="#s5">5</a></sup> For a single model
+          the rate of correct answers could swing from near 1 down to near 0
+          depending on which small numbers were used, though every version was the
+          same one-step problem. In mid-2024 the strongest models they tested,
+          GPT-4o and Claude 3 Opus among them, answered it correctly only a little
+          more than a third of the time. Wu and colleagues found the same shape
+          across eleven different tasks. Give a task its familiar default form and
+          models do well. Keep the task identical but shift a default assumption,
+          such as doing the arithmetic in a base other than ten, and accuracy
+          degrades substantially and
+          consistently.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="reasoning-question" id="reasoning-question">
+        <h2>Where this leaves the reasoning question</h2>
+        <p>
+          Put the results together and one thing is settled. A model's answer to a
+          word problem is conditioned on the whole surface of the prompt, and the
+          model has no reliable filter separating the tokens the question needs
+          from the ones it does not. Rename it, renumber it, or pad it with a true
+          aside, and the output can move. That much is not in dispute among the
+          people who build these systems. The mechanism-level work explains why: a
+          model tends to match a problem to patterns it saw often in training
+          rather than run a general procedure. A change that makes the surface
+          less familiar can degrade the
+          result.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          What that means for the word reasoning is where it gets contested, and
+          the contest is worth following because the strong reading is easy to
+          overstate. Mirzadeh's team reported that GSM-NoOp's single added clause
+          dropped accuracy by up to 65% across state-of-the-art models, and
+          concluded they found no evidence of formal
+          reasoning.<sup class="nb-cite"><a href="#s3">3</a></sup> That figure
+          became the headline. Coverage carried it as proof that the models cannot
+          reason and cannot be a foundation for reliable
+          agents.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          Two things complicate the strong reading. The first is in the paper's
+          own numbers: the drop is uneven, and it is smallest for the models
+          trained hardest to reason step by step.
+        </p>
+        <table class="nb-table">
+          <caption>
+            One added clause (GSM-NoOp) against the model's own baseline; the
+            spread is across regenerated versions.<sup class="nb-cite"
+              ><a href="#s3" data-nb-locator="Table 1">3</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th>Baseline</th>
+              <th>With clause</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">o1-preview (reasoning-tuned)</td>
+              <td>92.7%</td>
+              <td>77.4%</td>
+            </tr>
+            <tr>
+              <td class="txt">GPT-4o</td>
+              <td>94.9%</td>
+              <td>63.1%</td>
+            </tr>
+            <tr>
+              <td class="txt">Gemma2-9B</td>
+              <td>79.1%</td>
+              <td>22.3%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          o1-preview, tuned to work step by step, lost about 15 points where the
+          general-purpose GPT-4o lost more than 30 and a small open model lost most
+          of its accuracy.<sup class="nb-cite"><a href="#s3">3</a></sup> Whatever
+          the added clause tests, more reasoning-oriented training buys real
+          resistance to it.
+        </p>
+        <p>
+          The second complication is that the added clauses may not be as
+          irrelevant as the test assumed. A 2026 re-analysis had auditors classify
+          all 945 GSM-NoOp clauses and judged only 117 of them, about one in
+          eight, as unambiguously beside the point; the rest could plausibly bear
+          on the answer.<sup class="nb-cite"><a href="#s8">8</a></sup> Re-running on
+          the full set reproduced the original steep drop, but on the 117 clearly
+          irrelevant clauses the accuracy loss for current frontier models was
+          between zero and two points, indistinguishable from no effect at
+          all.<sup class="nb-cite"><a href="#s8">8</a></sup> If that holds, much of
+          what GSM-NoOp measured was how models handle genuinely ambiguous wording,
+          not whether they can ignore a truly irrelevant fact.
+        </p>
+        <p>
+          The settled behavior stands on
+          the cleaner changes, the added-sentence problems, the pure name and
+          number swaps, the Alice puzzle, none of which turn on whether a clause
+          was secretly relevant. The single most-quoted number behind the strong
+          claim, the 65% drop, rests on the one test where that objection bites. A
+          reader can hold both halves at once. Surface form provably moves these
+          models, and the leap from there to they cannot reason at all runs ahead
+          of what the clean tests have shown.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The gap you started with has a mechanism. A model reads a word problem
+          as a string of tokens and answers by matching that whole string against
+          patterns from its training, with no separate step that sets the problem
+          apart from the words it is written in and no filter that marks a token
+          as irrelevant. So a change that leaves the logic alone, a new name, a
+          new number, one more true sentence, can still move the answer. The
+          cleaner the irrelevant change, the more plainly it shows. That much is
+          settled. What stays open is how much genuine step-by-step work sits on
+          top of that matching. The sharpest claim, that these models do not reason
+          at all, leans on the one benchmark whose irrelevant clauses may not have
+          been irrelevant. And the models trained hardest to reason are the ones
+          that shrug those clauses off best. So when you next read that a model
+          reasons, you have the question the clean tests ask. Does the claim
+          survive renaming the people?
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2410.05229">GSM-Symbolic (Mirzadeh et al., 2024)</a>:
+            the Apple benchmark that regenerates the problems and adds the
+            contested clause.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2302.00093">Large Language Models Can Be Easily Distracted by Irrelevant Context (Shi et al., 2023)</a>:
+            the original added-sentence measurement and the fixes that reduce it.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://www.lesswrong.com/posts/Ze4C99Dasj74YKCFh/revisiting-gsm-symbolic-models-seem-to-reason-okay-actually">Revisiting GSM-Symbolic (Sturb, 2026)</a>:
+            the re-audit of the clauses, and the case for the other side.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2110.14168"
+              >OpenAI · GSM8K: Training Verifiers to Solve Math Word Problems</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2302.00093"
+              >Shi et al. · Large Language Models Can Be Easily Distracted by Irrelevant Context</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2410.05229"
+              >Apple · GSM-Symbolic: Understanding the Limitations of Mathematical Reasoning in Large Language Models</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.18654"
+              >Dziri et al. · Faith and Fate: Limits of Transformers on Compositionality</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.02061"
+              >Nezhurina et al. · Alice in Wonderland: Simple Tasks Showing Complete Reasoning Breakdown in State-Of-the-Art Large Language Models</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2024.naacl-long.102/"
+              >Wu et al. · Reasoning or Reciting? Exploring the Capabilities and Limitations of Language Models Through Counterfactual Tasks</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://appleinsider.com/articles/24/10/12/apples-study-proves-that-llm-based-ai-models-are-flawed-because-they-cannot-reason"
+              >AppleInsider · Apple's study proves that LLM-based AI models are flawed because they cannot reason</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.lesswrong.com/posts/Ze4C99Dasj74YKCFh/revisiting-gsm-symbolic-models-seem-to-reason-okay-actually"
+              >LessWrong · Revisiting GSM-Symbolic: Models Seem to Reason Okay, Actually</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
