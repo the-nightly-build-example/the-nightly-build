@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A network's error peaks where it can just fit its training data, then falls again · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "deep-double-descent",
+        "template": "lesson",
+        "title": "A network's error peaks where it can just fit its training data, then falls again",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-04",
+        "tags": ["double-descent", "generalization", "overfitting", "bias-variance"],
+        "sources": 6,
+        "words": 2185,
+        "reading_minutes": 10,
+        "dek": "Feed a network 4.5 times the training data and it can get worse, a limit one of the two 2019 papers behind double descent measured directly.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">A network's error peaks where it can just fit its training data, then falls again</h1>
+        <p class="nb-dekline">
+          Feed a network 4.5 times the training data and it can get worse, a limit one of the two 2019 papers behind double descent measured directly.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-09-04</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You keep hearing that making an AI model bigger makes it better. You
+          also carry an older warning, that a model which learns its training
+          data too well will do badly in the real world. Both cannot be flatly
+          true, and the result that squares them has a name: double descent.
+          It is the reason many practitioners no longer flinch at a model that
+          fits its training data perfectly. This lesson walks through the two
+          2019 papers that drew the effect and measured it. By the end you will
+          know what the old bias-variance rule predicted and what the real curve
+          looks like. You will know where the interpolation threshold sits, why
+          error is worst there, and when more size or data stops helping.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/scaling-laws-kaplan.html">OpenAI's 2020 scaling paper got the curve right and the budget wrong</a>: where the modern belief that bigger models do better comes from, and where it was corrected.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/grokking.html">A small network memorized modular arithmetic, then generalized a million steps later</a>: a different surprise about generalization, this one measured over training time rather than model size.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The sweet spot the textbook drew</h2>
+        <p>
+          Every course on machine learning teaches a warning. A model that is
+          too small cannot capture the pattern in its data and does poorly. A
+          model that is too large learns the training data too well, soaking up
+          its quirks and mistakes, then failing on anything new. That second failure is overfitting: the model has fit
+          its training examples so closely that its accuracy on unseen examples
+          drops. The number that catches it is test error, the fraction of new
+          examples the model gets wrong. Training error is the fraction of the
+          training examples it gets wrong. From here the textbook rule follows.
+          Drive training error to zero and you have almost certainly overfit. Belkin and his coauthors state the corollary
+          a student would recognize: a model with zero training error is expected
+          to generalize poorly.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Between too small and too large lies a sweet spot, and the
+          practitioner's job was to find it and stop there.
+        </p>
+        <p>
+          You have also absorbed a newer slogan, that a bigger model is a better
+          one, from the
+          <a href="../the-evidence/scaling-laws-kaplan.html">scaling laws</a> of
+          the last few years. The two ideas sit badly together. In 2019 a team
+          at Harvard and OpenAI put the discomfort in a title: "Deep double
+          descent: where bigger models and more data hurt."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Their claim is that the textbook curve is only the first half of the
+          picture.
+        </p>
+      </section>
+
+      <section data-nb-section="a-second-fall" id="a-second-fall">
+        <h2>A second fall after the peak</h2>
+        <p>
+          Mikhail Belkin, Daniel Hsu, Siyuan Ma and Soumik Mandal drew the
+          missing half and gave it its name. Their double-descent curve keeps
+          the textbook U on the left and extends it to the right. As a model
+          grows it eventually reaches the point where it is just big enough to
+          fit every training example exactly, driving training error to zero.
+          That point is the interpolation threshold. The classical U says error
+          bottoms out somewhere before the threshold and climbs as you approach
+          it. Belkin's curve agrees up to that point, where test error peaks. Then
+          it adds what the textbook left off. Past the threshold, as the model
+          keeps growing, test error falls a second time, often below the best the
+          old sweet spot could reach.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          They showed the shape on several methods. One was a predictor built
+          from random features of the MNIST handwritten digits, trained on
+          10,000 examples, where the peak landed exactly as the number of
+          features rose to equal that count.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Nakkiran and his coauthors drew the same curve on the networks people
+          actually train. Their headline case is a ResNet18, a standard image
+          classifier, learning CIFAR-10, small color photographs in ten classes.
+          To make the effect stark they added label noise: a set fraction of the
+          training images had their labels swapped for a random wrong class, a
+          cat stamped "truck," fixed for the run. Here that fraction is 15 percent. They then
+          grew the network through a single width setting, k, and recorded its
+          error at each size.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="deep-double-descent/chart-1.png"
+            alt="Two curves against ResNet18 width from 1 to 64. Training error falls smoothly to near zero by width 17. Test error falls to a first minimum near width 4, rises to a peak of about 0.41 near width 10, then descends again to about 0.29 at width 64."
+          />
+          <figcaption>
+            Fig. 1 · Model-wise double descent. A ResNet18 on CIFAR-10 with 15%
+            of its training labels corrupted. As the width k grows, test error
+            falls, climbs to a peak near k = 10 where training error is dropping
+            to zero, then falls a second time to its lowest value at the full
+            width k = 64. Averaged over five training runs.<sup class="nb-cite"><a
+              href="#s2"
+              data-nb-url="https://gitlab.com/harvard-machine-learning/double-descent"
+              data-nb-note="Series computed from the authors' released raw runs (bucket cifar10-resnet18k-p15-adam-reps), final-epoch error averaged over five runs; chart-1.py beside the article carries the exact transform."
+              >2</a
+            ></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Read the curve from the left. At the smallest widths the network is too
+          weak, and test error is high. It falls to a first minimum near k = 4,
+          the classical sweet spot. Then it climbs again, to a peak near k = 10,
+          exactly where training error is plunging toward zero and the network is
+          becoming just able to fit the noisy training set. Past that peak, as k
+          heads for the standard width of 64, test error drops a second time, all
+          the way to its lowest point on the curve, roughly 0.29. The best
+          network on the graph is the biggest one, and it sits well on the far
+          side of the threshold the textbook told you to avoid.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            The rule you were taught describes the left half of that curve.
+            Fitting the training data exactly is dangerous only in a narrow band
+            around the interpolation threshold. Keep making the model bigger and
+            you come out the other side, where it fits the data perfectly and
+            generalizes better than the careful, medium-sized model
+            did.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </p>
+        </div>
+      </section>
+
+      <section data-nb-section="why-the-threshold-is-fragile" id="why-the-threshold-is-fragile">
+        <h2>Why the model at the threshold is the fragile one</h2>
+        <p>
+          Why is test error worst exactly where the model can just fit the data?
+          Nakkiran's team give an argument. At the threshold there is
+          effectively one setting of the network that fits the training set,
+          with no room to spare. Forced to pass through every training
+          point, including the mislabeled ones, it bends itself out of shape to
+          reach them, and that bending is what a test image pays for. Below the
+          threshold the network cannot fit the data at all, so it never chases
+          individual points and picks up only the broad pattern. Above the
+          threshold many different settings fit the training set equally well.
+          The training procedure, ordinary gradient descent, tends to settle on
+          one that reaches the required points smoothly. It folds in the noisy
+          examples without distorting what it predicts elsewhere.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The peak shows up, the paper argues, whenever the true pattern in the
+          data and the model's own assumptions are mismatched.
+        </p>
+        <p>
+          This is a claim about model size, and it is worth keeping apart from a
+          neighbor. A separate surprise called
+          <a href="../the-evidence/grokking.html">grokking</a> tracks a fixed
+          network over training time and finds generalization arriving long after
+          the training error settles. Double descent moves along a different
+          axis. The model changes size, each network is trained to completion,
+          and the quantity on the horizontal is how big the model is, not how
+          long it ran.
+        </p>
+      </section>
+
+      <section data-nb-section="more-data-made-it-worse" id="more-data-made-it-worse">
+        <h2>Where more data made the model worse</h2>
+        <p>
+          If a bigger model wins past the threshold, is more data always a good
+          trade? Not everywhere. The same paper holds the exception. Adding training data pushes the interpolation
+          threshold right: a larger training set takes a larger model to fit
+          exactly. So a network comfortably past the threshold can be dragged
+          back toward the fragile critical region simply by adding data. Nakkiran's team saw this on a
+          Transformer, the standard translation network, learning IWSLT'14
+          German-to-English. Raising the training set by a factor of 4.5, from
+          4,000 to 18,000 sentence pairs, raised its test loss, the translation
+          model's measure of error, across a whole band of model
+          sizes.<sup class="nb-cite"><a href="#s2">2</a></sup> The title was not
+          for effect. More data hurt, at fixed model sizes, in a measured
+          experiment.
+        </p>
+        <p>
+          The sharp peak also owes a great deal to the label noise. Nakkiran's
+          team saw every form of the effect most strongly when noise was
+          present. They swept it from 0 to 5, 10, 15 and 20 percent, and the
+          critical region grew from a gentle plateau into a tall peak as the
+          noise rose.<sup class="nb-cite"><a href="#s2">2</a></sup> Noise is not strictly
+          required. Clean training sets still produced real peaks for these
+          networks on the harder CIFAR-100 images and for the translation
+          Transformer.<sup class="nb-cite"><a href="#s2">2</a></sup> Noise
+          sharpens the peak and moves where it lands, but a clean dataset does
+          not erase it.
+        </p>
+      </section>
+
+      <section data-nb-section="how-much-survived" id="how-much-survived">
+        <h2>How much of this survived</h2>
+        <p>
+          The result is now cited to bury the old fear of overfitting, sometimes
+          as a blanket permit: make the model bigger and generalization takes
+          care of itself. The reframing is genuine. A survey of the field calls
+          the moment a farewell to the bias-variance tradeoff and reports that
+          heavily overparameterized models often beat the best smaller
+          one.<sup class="nb-cite"><a href="#s3">3</a></sup> Popular summaries
+          fold it into the flat line that larger models simply perform
+          better.<sup class="nb-cite"><a href="#s4">4</a></sup> Two lines
+          of later work put fences around that strong reading.
+        </p>
+        <p>
+          The peak is not a law of nature. It is a property of training with
+          little restraint. Nakkiran, Venkat, Kakade and Ma proved that for a
+          simple family of linear models with well-behaved data, an optimally
+          tuned ridge penalty makes test error fall steadily as either the model
+          or the dataset grows, erasing the peak. A ridge penalty is a standard
+          term that discourages large weights. They showed the same tuning eases
+          it for neural nets.<sup class="nb-cite"><a href="#s5">5</a></sup> The
+          second qualification is about counting. Curth, Jeffares and van der
+          Schaar argue that in classical methods such as linear regression, trees
+          and boosting, the raw parameter count hides more than one axis of
+          complexity. Measure effective complexity properly, they find, and the
+          apparent second descent folds back into the textbook U.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Their scope is those classical methods. They do not claim the network
+          curves above are an illusion.
+        </p>
+        <p>
+          None of this was measured on a
+          large language model. The networks here classify small photographs and
+          translate short sentences, on datasets a single lab could run. Reading
+          double descent as the reason today's largest models work extends the
+          curve past anything the papers put on a graph. It also lands in a
+          separate debate, over whether the
+          <a href="../the-evidence/emergent-abilities.html">jumps in large-model
+          benchmarks</a> are real or an artifact of scoring. That debate turns on
+          how ability is measured, a different question from the interpolation
+          peak.
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>The curve reproduces across image classifiers, translation networks, random features, forests and boosting.</li>
+              <li>The peak at the interpolation threshold, and the second descent past it, are real measured effects, not a slogan.</li>
+              <li>The papers refute the strong moral themselves: a wider model can be worse, and more data can hurt.</li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>The sharpest peaks lean on label noise and light regularization; tuned regularization can remove them.</li>
+              <li>In classical methods the second descent may be an artifact of how parameters are counted.</li>
+              <li>These are specific setups at CIFAR scale, not a guarantee that more of anything always helps.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The textbook drew half a curve. Up to the point where a model can just
+          fit its training data, error behaves the way the sweet-spot rule says,
+          and fitting the data exactly is a real danger. Past that point the curve
+          descends a second time, and the model that does best is a big one,
+          comfortably beyond the threshold. That is the finding, and it holds
+          across the image and translation networks the two papers tested. What
+          does not follow is the slogan the result now carries. In a narrow band
+          around the threshold a wider model is worse, and more training data can
+          push a model back into that band. The sharpest version of the effect
+          leans on corrupted labels and light regularization. The curve tells you
+          when memorizing is safe. It does not promise that size alone decides how
+          well a model does.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://gitlab.com/harvard-machine-learning/double-descent">The authors' released code and data</a>: the raw runs behind the curve, with notebooks that redraw it for yourself.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2109.02355">Dar, Muthukumar &amp; Baraniuk, "A Farewell to the Bias-Variance Tradeoff?"</a>: a map of the theory that grew up around interpolating models.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1812.11118"
+              >arXiv · Belkin, Hsu, Ma &amp; Mandal, "Reconciling modern machine learning practice and the bias-variance trade-off" (PNAS, 2019)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1912.02292"
+              >arXiv · Nakkiran, Kaplun, Bansal, Yang, Barak &amp; Sutskever, "Deep Double Descent: Where Bigger Models and More Data Hurt" (2019)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2109.02355"
+              >arXiv · Dar, Muthukumar &amp; Baraniuk, "A Farewell to the Bias-Variance Tradeoff? An Overview of the Theory of Overparameterized Machine Learning" (2021)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://en.wikipedia.org/wiki/Double_descent"
+              >Wikipedia · "Double descent" (accessed 2026-09-04)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2003.01897"
+              >arXiv · Nakkiran, Venkat, Kakade &amp; Ma, "Optimal Regularization Can Mitigate Double Descent" (2020)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2310.18988"
+              >arXiv · Curth, Jeffares &amp; van der Schaar, "A U-turn on Double Descent: Rethinking Parameter Counting in Statistical Learning" (2023)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
