@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ask an image generator for 3:15 and it hands back a clock at 10:10 · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "clock-faces",
+        "template": "lesson",
+        "title": "Ask an image generator for 3:15 and it hands back a clock at 10:10",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-05",
+        "tags": ["diffusion", "image-generation", "vision-language-models", "training-data"],
+        "sources": 9,
+        "words": 1909,
+        "reading_minutes": 8,
+        "dek": "The watches in its training data almost all point at ten and two, and nothing in the generator turns a requested time into an angle.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">Ask an image generator for 3:15 and it hands back a clock at 10:10</h1>
+        <p class="nb-dekline">
+          The watches in its training data almost all point at ten and two, and nothing in the generator turns a requested time into an angle.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-05</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Image generators are in ordinary hands now, and one of the quickest
+          ways to catch one not understanding what it draws is to ask for a
+          specific time. Request a watch at 3:15 and it returns 10:10; ask a
+          model to read the time off a photo of a clock and it often misses
+          too. Both are easy to wave away as the tool being bad at clocks. By
+          the end of this you will be able to say what actually produces the
+          behavior and name the two separate things behind it. You will also be
+          able to use them to predict other places where a model draws the most
+          familiar version of something instead of the one you asked for.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/image-generation.html">An image generator turns a field of static into your picture by removing the noise a little at a time</a>:
+            how a diffusion generator works, the process this behavior sits on top of.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/reading-images.html">A chatbot slices your photo into a few hundred squares and turns each into a word</a>:
+            how a model reads an image it is handed, the reverse task in the last section.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A watch drawn to order still reads 10:10</h2>
+        <p>
+          Ask an image generator for a wristwatch showing 3:15. Almost always,
+          it hands back a watch reading close to 10:10, both hands raised toward
+          the top of the dial, one near the 10 and one near the 2. Ask for 7:20
+          and you get the same face. The pull is strongest for
+          wristwatches and watch-like faces. Wall clocks come out at more varied
+          times.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          A reasonable guess is that the model read the words 3:15, worked out
+          where the hour and minute hands belong, and drew them roughly there.
+          That is not what happens. Nothing inside the generator ever converts
+          3:15 into the position of two hands.
+        </p>
+      </section>
+
+      <section data-nb-section="most-likely-clock" id="most-likely-clock">
+        <h2>The generator renders the most likely clock</h2>
+        <p>
+          A diffusion image generator does not draw a clock the way a person
+          would, by choosing a time and placing each hand to show it. It begins
+          with a field of random static and takes the noise away a little at a
+          time until a picture remains, a process explained in full in
+          <a href="../the-mechanics/image-generation.html">An image generator turns a field of static into your picture</a>.
+          What matters here is the single thing the model was trained to do. Its
+          training rewards one outcome: producing images whose statistics match
+          the images it was shown. The paper that introduced these models
+          describes the goal as a chain trained to produce samples matching the
+          data after a finite number of steps.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Nothing in that objective rewards a rule that applies to a single
+          image, such as make the hands show the requested time. It rewards
+          looking like the data in aggregate.
+        </p>
+        <p>
+          That turns the question of what the model draws into a question about
+          what it saw. A clock it renders will look like the clocks in its
+          training images, in whatever way those clocks tended to look.
+        </p>
+      </section>
+
+      <section data-nb-section="sales-pose" id="sales-pose">
+        <h2>Ten past ten is a sales pose</h2>
+        <p>
+          Clocks and watches in photographs are not posed at random times. Since
+          the 1950s, watch advertisements have set the hands at 10:10, where the
+          decades before favored 8:20.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Two forces hold the convention in place. The raised hands frame the
+          maker's logo, which usually sits just below the 12, so 10:10 keeps the
+          brand name clear.<sup class="nb-cite"><a href="#s4">4</a></sup> And the
+          two lifted hands read as a smiling face. In a controlled study,
+          viewers shown a watch at 10:10 reported more pleasure than the same
+          watch at 11:30 and rated the 10:10 face as resembling a smile. The
+          pose also raised their stated intention to buy, and it did so without
+          their noticing.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          No one has counted the times shown on clocks across a training set the
+          size these models use, so this is an inference rather than a tally.
+          What is documented is the convention and the fact that product and
+          stock photography, which make up the bulk of clock and watch imagery
+          online, follow it.<sup class="nb-cite"><a href="#s1">1</a></sup> The
+          well-supported inference is that the faces the model saw lean heavily
+          toward 10:10, binding the idea of a watch to hands near the 10 and the
+          2. The binding is tightest for watches. In one documented test, a
+          generator asked for watches returned 10:10 almost every time, while
+          the wall clocks it drew came out at scattered times.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="no-angle-rule" id="no-angle-rule">
+        <h2>Nothing turns 3:15 into two hand angles</h2>
+        <p>
+          A text prompt does change what the model draws. The words 3:15 enter
+          the same way the word watch does, as a description the denoising is
+          steered toward. But the model can only make the image look like
+          a watch, and the watches it learned from look like 10:10. It has no
+          separate step that reads 3:15, works out that the minute hand should
+          point straight down and the hour hand a quarter of the way past the 3,
+          and places them there. That computation was never part of what
+          training rewarded, so the model never built it.
+        </p>
+        <p>
+          This is a sharper failure than a model simply being bad at detail.
+          When a generator draws the wrong number of apples, it is missing one
+          count. The same kind of
+          gap turns up in
+          <a href="../the-mechanics/counting-objects-in-images.html">an image generator turning "six apples" into "some apples"</a>
+          and in
+          <a href="../the-mechanics/hands-in-generated-images.html">an image generator never counting the fingers it draws</a>.
+          The clock combines two specific gaps at once: a training set that
+          leans hard toward one arrangement, and the absence of any rule
+          connecting a requested time to an angle. It is the single-mode version
+          of a pattern already seen in text, where
+          <a href="../the-mechanics/random-numbers.html">a chatbot asked for a random number tends to answer 7</a>,
+          drawing from a lopsided distribution it learned rather than from any
+          source of chance. The clock has one dominant answer where the random
+          number had a few.
+        </p>
+        <p>
+          The pull toward 10:10 is strong enough to surface even when a model is
+          asked to read a clock rather than draw one. On a benchmark of
+          instrument reading, one open model answered 10:10 for 72.88% of the
+          real clock photographs it was asked to read, regardless of the time
+          the hands actually showed.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The pose leaks into reading</span>
+          <blockquote>
+            "many models tend to answer '10:10' when reading clock times,
+            regardless of the actual time shown in the image."<sup
+              class="nb-cite"
+              ><a href="#s5">5</a></sup
+            >
+            <span class="nb-note-who">MeasureBench, reading the default as the advertising pose</span>
+          </blockquote>
+        </div>
+        <p>
+          The behavior is not fixed, and it is coming apart model by model. A
+          documented test in August 2026 ran one prompt, a request for wall
+          clocks reading 3:27, through ten image generators.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Several still produced 10:10. One, GPT Image 2, placed every minute
+          hand at :27 and the hour hands within about six minutes of correct.
+          That is a demonstration rather than a measured study, and it cannot
+          say what changed: more clock-specific training images, an added
+          planning or tool step, or a different design would all look the same
+          from the outside. What it shows is that the missing rule is becoming a
+          solved problem in some systems and not others.
+        </p>
+      </section>
+
+      <section data-nb-section="reading-side" id="reading-side">
+        <h2>Reading a clock face hits the same missing step</h2>
+        <p>
+          The reading failure is the same absence seen from the other side. A
+          vision-language model handed a photograph of a clock has to turn two
+          hand angles back into a time, the task laid out in
+          <a href="../the-mechanics/reading-images.html">a chatbot slicing your photo into squares and turning each into a word</a>.
+          It was no more trained to compute angle-to-time than the generator was
+          to compute time-to-angle, so it stumbles on a task most people find
+          trivial. On ClockBench, a set of 720 questions about analog
+          faces, people score 90.7% and the best model shown scores 66.7%.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          At the benchmark's launch in September 2025, the best model managed
+          13.3%, missing by a median of about an hour where people missed by
+          about three minutes.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          That climb from 13.3% to 66.7% in a year is the part still in motion,
+          and some of the movement is deliberate. On a set of 12,483 real-world
+          clock photos, a base model read the full time correctly 1.41% of the
+          time. After training aimed squarely at the habit of swapping the hour
+          and minute hands, the same model reached 46.22%.<sup class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            Two measures of analog-clock reading. Humans score 90.7% on
+            ClockBench; the ClockBench figures are the best model shown at
+            launch and now, and the TickTockVQA pair is one base model before
+            and after targeted tuning.<sup class="nb-cite"
+              ><a href="#s7">7</a></sup
+            ><sup class="nb-cite"><a href="#s8">8</a></sup
+            ><sup class="nb-cite"><a href="#s9">9</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Reading task</th>
+              <th>Worse score</th>
+              <th>Better score</th>
+              <th class="txt">What changed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ClockBench, best model</td>
+              <td>13.3%</td>
+              <td>66.7%</td>
+              <td class="txt">Newer general-purpose models, about a year apart.</td>
+            </tr>
+            <tr>
+              <td>TickTockVQA, one base model</td>
+              <td>1.41%</td>
+              <td>46.22%</td>
+              <td class="txt">Tuning aimed at the hour-and-minute-hand swap.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          That marks the line between what is settled and what is open. Settled:
+          a diffusion model reproduces the statistics of its training images,
+          and clock imagery leans toward one pose. Open: how far targeted data
+          or an added tool closes the gap, and whether models that plan their
+          reading or call a clock-reading tool clear it entirely. A watch coming
+          back at 10:10 is the settled part on display. Whether a model can be
+          made to draw or read the time you actually asked for is the part still
+          being decided, system by system.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          So 10:10 is not the tool being bad at clocks. It is two ordinary
+          things at once. The clocks and watches it learned from almost all
+          point at ten and two, so that is the face it treats as normal. And it
+          was never given a step that turns a requested time into the angle of
+          two hands, so the words 3:15 have nothing to act on. The same missing
+          step, run the other way, is why reading an arbitrary clock is hard.
+          The useful part is that this predicts where else it happens. Wherever
+          the correct answer depends on a rule the training pictures never
+          taught, and a single familiar arrangement crowds the data, a generator
+          will hand back the familiar arrangement and not the one you asked for.
+          The clock is only the cleanest case to see it in.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://clockbench.ai/">ClockBench</a>: the reading
+            benchmark itself, with analog faces you can try against the models'
+            scores.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://ciechanow.ski/mechanical-watch/">Mechanical Watch</a>:
+            an interactive account of how a real watch's gears turn a wound
+            spring into the exact hand angles a generator has no rule for.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.digitalcameraworld.com/tech/artificial-intelligence/why-are-ai-generated-images-of-clocks-always-set-to-10-past-10-i-think-i-know-the-answer"
+              >Digital Camera World · Mike Harris, "Why are AI-generated images of clocks always set to 10 past 10?"</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2006.11239"
+              >arXiv · Ho, Jain &amp; Abbeel, "Denoising Diffusion Probabilistic Models"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.frontiersin.org/articles/10.3389/fpsyg.2017.01410/full"
+              >Frontiers in Psychology · Karim et al., "The Role of Watch Advertisement Time Setting in Consumer Preference"</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://petapixel.com/2022/05/17/the-science-behind-why-watches-are-set-to-1010-in-advertising-photos/"
+              >PetaPixel · Jaron Schneider, "The Science Behind Why Watches Are Set to 10:10 in Advertising Photos"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2510.26865"
+              >arXiv · BAAI FlagEval Team, "MeasureBench: Reading Measurement Instruments"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://polymath07.blogspot.com/2026/08/getting-clocks-right-ai-almost-there.html"
+              >Polymath07 · "Getting Clocks Right: AI Almost There"</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://clockbench.ai/"
+              >ClockBench · Alek Safar, analog-clock reading benchmark</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://the-decoder.com/even-the-best-ai-models-cant-reliably-read-the-clock/"
+              >The Decoder · Jonathan Kemper, "Even the best AI models can't reliably read the clock"</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2603.08011"
+              >arXiv · Choi, Lee, You &amp; Lee, "TickTockVQA and Swap-DPO"</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
