@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LiveCodeBench scores a model only on problems released after it was trained · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "livecodebench",
+        "template": "lesson",
+        "title": "LiveCodeBench scores a model only on problems released after it was trained",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-05",
+        "tags": ["benchmarks", "contamination", "code", "livecodebench"],
+        "sources": 8,
+        "words": 2028,
+        "reading_minutes": 9,
+        "dek": "That date rule caught an early DeepSeek model scoring about 60 on old LeetCode problems and near zero on ones released after its cutoff. It is also why two numbers both called 'LiveCodeBench' rarely cover the same problems.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">LiveCodeBench scores a model only on problems released after it was trained</h1>
+        <p class="nb-dekline">
+          That date rule caught an early DeepSeek model scoring about 60 on old LeetCode problems and near zero on ones released after its cutoff. It is also why two numbers both called 'LiveCodeBench' rarely cover the same problems.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-05</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          AI labs advertise how well their models write code, and LiveCodeBench
+          is one of the numbers they reach for. It looks like a fact about the
+          model, the way a batting average looks like a fact about a hitter. It
+          is really a fact about a model measured on a particular set of dated
+          problems. This lesson takes one apart: where the problems come from,
+          why every one carries a release date, and how that date exposes a
+          model that had already seen the answer. It also shows why two scores
+          both called LiveCodeBench often cannot be compared. By the end you
+          will know what to ask before trusting one: which problems, from which
+          months, in which version of the test.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/humaneval-pass-at-k.html"
+              >Hand-writing HumanEval's 164 problems solved contamination in
+              2021 and caused it by 2024</a
+            >: the fixed coding test this one was built to replace, and how
+            publishing its problems leaked them into training data.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/swe-bench.html"
+              >Change which SWE-bench tasks are counted and GPT-4o's score
+              doubles</a
+            >: a coding instrument that grades a change across a whole
+            repository instead of one problem's solution.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Every problem carries the date it was released</h2>
+        <p>
+          LiveCodeBench is a coding test for language models, built by a team at
+          Berkeley, MIT, and Cornell and first released in 2024.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          It collects programming puzzles from three online contest sites,
+          LeetCode, AtCoder, and Codeforces, and does one thing the older coding
+          tests did not: it records the date each problem was published. The
+          version described in the paper holds 511 problems, and every one is
+          tagged with the day its contest ran.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          A model is graded one problem at a time. Hand it a single puzzle from
+          a contest, and it writes one program. The benchmark runs that program
+          against the problem's hidden tests, about seventeen of them on
+          average, the same kind of checks a contest uses to accept or reject a
+          human entrant.<sup class="nb-cite"><a href="#s1">1</a></sup> Pass every
+          test and the problem counts as solved; miss one and it does not. The
+          score, called pass@1, is the share of the whole set the model solved
+          this way, on one try each.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The
+          <a href="../the-instruments/humaneval-pass-at-k.html"
+            >HumanEval score this course covered earlier</a
+          >
+          averages many tries per problem into the same kind of fraction, and
+          that arithmetic carries over here unchanged.
+        </p>
+        <p>
+          The paper defines four jobs it scores separately, which it calls
+          scenarios.<sup class="nb-cite"><a href="#s1">1</a></sup> The one people
+          quote, and the one this lesson follows, is code generation: the model
+          writes a program from a description. The other three are self-repair,
+          fixing a program that failed its tests; code execution, predicting what
+          a program prints for a given input; and test output prediction,
+          predicting a test's expected output from the problem alone.
+        </p>
+        <p>
+          That already sets LiveCodeBench apart from two instruments the course
+          has taken apart. A
+          <a href="../the-instruments/codeforces-rating.html"
+            >Codeforces rating</a
+          >
+          is an Elo estimate fit to contests the model never actually entered;
+          LiveCodeBench scores the model's real submissions to real contest
+          problems. And where
+          <a href="../the-instruments/swe-bench.html">SWE-bench</a> grades a
+          change spread across a whole software project, LiveCodeBench grades a
+          single self-contained problem's solution. What makes it its own
+          instrument is neither of those. It is the date on every problem.
+        </p>
+      </section>
+
+      <section data-nb-section="deepseek-cutoff" id="deepseek-cutoff">
+        <h2>Where DeepSeek stopped training, its score fell</h2>
+        <p>
+          A coding test has a built-in weakness. Models train on enormous
+          scrapes of the public internet, which already contain worked solutions
+          to famous programming problems. A model that read a problem's answer
+          while training can reproduce it without solving anything, so its score
+          measures what it memorized. This is contamination. HumanEval, the fixed
+          coding test released in 2021, fought it by hand-writing all 164 of its
+          problems, precisely because its authors knew their models were trained
+          on a large fraction of GitHub, which already held solutions from many
+          sources.<sup class="nb-cite"><a href="#s2">2</a></sup> But a fixed set,
+          once published so anyone can check a score, ends up in the next models'
+          training data, and that is how the test lost its guard. LiveCodeBench
+          fights the same contamination a different way.
+        </p>
+        <p>
+          The release dates are its answer. Every problem carries the day it was
+          published, and every model has a training cutoff, the date its training
+          data stops. So the benchmark scores a model on only the problems
+          published after that cutoff, and a problem that did not exist when the
+          model finished training could not have been in its training
+          data.<sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The cutoff it uses is the one the model's maker publishes, or, when the
+          maker publishes none, the model's release date.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          The paper reports the sharpest single case for an early
+          DeepSeek coding model, released around September 2023. On LeetCode
+          problems from May 2023, months before its release, it solved about 60
+          percent on the first try. On LeetCode problems from that September,
+          right at its release, the same model solved close to none.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Nothing about the model changed between those two batches. What changed
+          is that the May problems were old enough to sit in its training data
+          and the September problems were not.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="livecodebench/asset-1.png"
+            alt="Line chart titled Code Generation Live Evaluation, first-try pass rate on the vertical axis against LeetCode problem release month from May to February on the horizontal axis. Four model lines run higher on the left and lower toward the right. An instruction-tuned DeepSeek model is marked at its September release and GPT-4-O at its November cutoff, with the pre-cutoff region shaded and the post-cutoff region shaded differently."
+          />
+          <figcaption>
+            Fig. 1 · First-try pass rate on LeetCode code-generation problems by
+            release month, for four models. Each scores higher on problems dated
+            before its training cutoff. Two cutoffs are marked: an
+            instruction-tuned DeepSeek model's September release and GPT-4-O's
+            November cutoff.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Fig. 1, p. 2"
+                data-nb-url="https://arxiv.org/pdf/2403.07974#page=2"
+                data-nb-note="The contamination signal as a picture: pass@1 by LeetCode release month steps down around each marked model's cutoff."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          The paper's chart plots the same date effect for several models.
+          GPT-4-O, whose cutoff is later, scores well on problems released before
+          November 2023, its stated cutoff, and lower on the ones released
+          after.<sup class="nb-cite"><a href="#s1">1</a></sup> Each model stopped
+          training at a different time, so the window of fair problems slides
+          forward with each one. That is what a moving cutoff means, and it is
+          why no two models are necessarily judged on the same problems.
+        </p>
+      </section>
+
+      <section data-nb-section="cutoff-limits" id="cutoff-limits">
+        <h2>What the date rule still lets through</h2>
+        <p>
+          The date rule reduces contamination. It does not remove it, and three
+          gaps are worth keeping in view.
+        </p>
+        <p>
+          First, the cutoff is a date the model's maker supplies. The benchmark
+          trusts the training cutoff a lab publishes, and substitutes the model's
+          release date when the lab publishes none.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The defense against contamination therefore rests on a number reported
+          by the same party whose score it protects.
+        </p>
+        <p>
+          Second, a problem released after a cutoff can be contaminated later. An
+          independent survey of contamination-resistant benchmarks notes that
+          contest problems are likely to be reused in future competitions, whose
+          solutions then reach the internet.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          A problem that was genuinely unseen when a model trained can become a
+          leak for the next model, and the release date it carries cannot see
+          that.
+        </p>
+        <p>
+          Third, the fix was uneven across the contest sites. The collapse the
+          paper found was, in its own words, primarily on the LeetCode problems;
+          performance on AtCoder problems stayed relatively smooth across the same
+          months.<sup class="nb-cite"><a href="#s1">1</a></sup> A window that is
+          clean on one source need not be clean on another.
+        </p>
+        <p>
+          None of this sinks the method. A score on post-cutoff problems is more
+          trustworthy than a score on a fixed public set. But more trustworthy is
+          not clean, and how clean it is depends on which problems, from which
+          site, dated by whom.
+        </p>
+      </section>
+
+      <section data-nb-section="window-comparability" id="window-comparability">
+        <h2>No LiveCodeBench score travels without its window</h2>
+        <p>
+          Because the benchmark grows and every score is measured on some window
+          of it, a LiveCodeBench score is never a single number. It is a number
+          plus the slice of problems it was measured on. Strip the slice away and
+          two scores cannot be compared at all.
+        </p>
+        <p>
+          The benchmark is published in dated versions, each a wider window than
+          the last.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Six releases, all named LiveCodeBench, each adding months of new
+            problems to the same May 2023 start.<sup class="nb-cite"
+              ><a href="#s5">5</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Version</th>
+              <th class="txt">Release window</th>
+              <th>Problems</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">v1</span></td>
+              <td class="txt">May 2023 – Mar 2024</td>
+              <td>400</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">v2</span></td>
+              <td class="txt">May 2023 – May 2024</td>
+              <td>511</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">v3</span></td>
+              <td class="txt">May 2023 – Jul 2024</td>
+              <td>612</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">v4</span></td>
+              <td class="txt">May 2023 – Sep 2024</td>
+              <td>713</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">v5</span></td>
+              <td class="txt">May 2023 – Jan 2025</td>
+              <td>880</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">v6</span></td>
+              <td class="txt">May 2023 – Apr 2025</td>
+              <td>1,055</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          All six are called LiveCodeBench. A score on v6's 1,055 problems and a
+          score on v2's 511 are measured on different tests that happen to share
+          a name and a starting month.
+        </p>
+        <p>
+          Two labs reporting a LiveCodeBench number for their models picked
+          different windows to do it. In its December 2024 technical report,
+          DeepSeek gave its base model a LiveCodeBench figure of 19.4. The row it
+          sits in states its conditions in full: problems released between 1
+          August and 1 November 2024, scored pass@1, with three worked examples
+          shown to the model first.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The window sits just after DeepSeek's own data collection, chosen so
+          the problems post-date its training.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Base-model LiveCodeBench scores from DeepSeek's report, every one on
+            problems released 1 Aug – 1 Nov 2024, pass@1, with three examples
+            shown first.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model (base)</th>
+              <th>Pass@1</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">DeepSeek-V3</td>
+              <td>19.4</td>
+            </tr>
+            <tr>
+              <td class="txt">Llama-3.1 405B</td>
+              <td>15.5</td>
+            </tr>
+            <tr>
+              <td class="txt">Qwen2.5 72B</td>
+              <td>12.9</td>
+            </tr>
+            <tr>
+              <td class="txt">DeepSeek-V2</td>
+              <td>11.6</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Alibaba's Qwen team reported its own LiveCodeBench figures a month
+          earlier, and chose a different window: problems from July to November
+          2024, which it called the latest published questions that could not
+          have leaked into its training set.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Both windows are honest. Each lab picked problems its own model
+          finished training before, exactly as the benchmark intends. But
+          DeepSeek's August-to-November slice and Qwen's July-to-November slice
+          are not the same problems, and the dataset versions beneath them differ
+          too. Set DeepSeek's 19.4 beside a Qwen number and you are comparing
+          results on two different tests.
+        </p>
+        <p>
+          So two LiveCodeBench numbers compare only when everything behind them
+          matches: the problems, the span of months, the dataset version, the
+          scenario, and the count of examples shown first. Usually something does
+          not match, and by design it will not. Because the problems are dated,
+          anyone can re-score the models on one shared window instead of each
+          lab's chosen one, and that shared window is the only footing on which
+          two of these numbers can be compared.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A LiveCodeBench score is a model's first-try pass rate on
+          programming-contest problems, and the one thing that sets it apart from
+          an ordinary coding test is that every problem is stamped with the date
+          it was published. That date does real work. Score a model on only the
+          problems released after it finished training, and a high score can no
+          longer be memory. That is how the benchmark caught an early DeepSeek
+          model scoring about 60 on old LeetCode problems and near zero on new
+          ones. The same date stamp is why the number resists comparison. The
+          test grows month by month, six versions so far, and each lab reports
+          its model on a window of its own choosing, so two figures called
+          LiveCodeBench usually sit on different problems. The date rule is no
+          perfect decontaminant either: the cutoff comes from the model's own
+          maker, tomorrow's contests can reuse today's problems, and the leak the
+          paper found was on LeetCode and not AtCoder. So when the next
+          LiveCodeBench number appears, do not ask only how high it is. Ask which
+          months of problems it covers, which version of the dataset, and whose
+          cutoff decided what counted.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://livecodebench.github.io/"
+              >The project site and live leaderboard</a
+            >: select a time window and re-score every model on the same months.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://huggingface.co/blog/leaderboard-livecodebench"
+              >The team's writeup of the hosted leaderboard</a
+            >: how the scrolling-over-time control works and why the cutoff rule
+            drives it.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2403.07974"
+              >arXiv · Jain et al., “LiveCodeBench: Holistic and Contamination
+              Free Evaluation of Large Language Models for Code”</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2107.03374"
+              >arXiv · Chen et al., “Evaluating Large Language Models Trained on
+              Code” (HumanEval)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://livecodebench.github.io/"
+              >LiveCodeBench · project site, contamination and scenarios</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2502.17521"
+              >arXiv · “Recent Advances in Large Language Model Benchmarks
+              against Data Contamination: From Static to Dynamic Evaluation”</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/livecodebench/livecodebench"
+              >GitHub · livecodebench/livecodebench, dataset versions</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2412.19437"
+              >arXiv · DeepSeek-AI, “DeepSeek-V3 Technical Report”</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://qwenlm.github.io/blog/qwen2.5-coder-family/"
+              >Qwen · “Qwen2.5-Coder: Family of Code Models”</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/blog/leaderboard-livecodebench"
+              >Hugging Face · “Introducing the LiveCodeBench Leaderboard”</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
