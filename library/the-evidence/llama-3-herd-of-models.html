@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Meta's own Llama report can't certify four of its top scores · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "llama-3-herd-of-models",
+        "template": "lesson",
+        "title": "Meta's own Llama report can't certify four of its top scores",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-05",
+        "tags": ["llama", "meta", "benchmarks", "open-weights", "contamination"],
+        "sources": 7,
+        "words": 2113,
+        "reading_minutes": 9,
+        "dek": "Meta scored its 405B model against GPT-4 and Claude itself, and the report's own contamination check leaves MMLU, HumanEval, and two more headline benchmarks blank.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Meta's own Llama report can't certify four of its top scores</h1>
+        <p class="nb-dekline">
+          Meta scored its 405B model against GPT-4 and Claude itself, and the report's own contamination check leaves MMLU, HumanEval, and two more headline benchmarks blank.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-05</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Almost every week brings a leaderboard where one model beats another,
+          and almost none of them come with a way to check the score. Meta's
+          Llama 3.1 report is a rare chance to look under one. It is among the
+          most detailed public accounts of how a frontier-scale model was built,
+          and it doubles as the launch that first claimed an openly available
+          model had caught up to GPT-4. By the end you will know what the report
+          genuinely established about the 405-billion-parameter model, what
+          "open" does and does not grant when you download it, and why the
+          report's own contamination check means Meta cannot fully vouch for the
+          benchmark scores that made it famous.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.normaltech.ai/p/gpt-4-and-professional-benchmarks">AI Snake Oil, "GPT-4 and professional benchmarks"</a>:
+            why an exam-style benchmark can overstate real-world skill.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://opensource.org/blog/metas-llama-license-is-still-not-open-source">Open Source Initiative on the Llama license</a>:
+            the case that these terms do not meet the definition of open source.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The report grades its own product</h2>
+        <p>
+          In July 2024 Meta released a long technical report and, in the same
+          week, the weights of the largest model it describes.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The report is titled "The Llama 3 Herd of Models." A line in its first
+          table corrects the title before the reader gets far: "All results in
+          this paper are for the Llama 3.1 models." The flagship is a dense
+          Transformer with 405 billion parameters and a context window of up to
+          128,000 tokens, and it ships as Llama 3.1 405B.<sup class="nb-cite"><a href="#s2" data-nb-locator="Table 1">2</a></sup>
+          The 8-billion and 70-billion models arrived in April as Llama 3; the
+          multilingual, long-context, tool-using versions and the 405B are the
+          July release the paper actually measures.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Two things run through the document at once. It is an unusually
+          detailed engineering record: it names the model's size, the compute
+          spent to train it, and the broad shape of its training data. It is also
+          a launch, and the abstract states that Llama 3 "delivers comparable
+          quality to leading language models such as GPT-4 on a plethora of
+          tasks."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The report is candid about the system it built and confident about how
+          that system ranks against its rivals. Meta measured the first directly.
+          It largely scored the second itself.
+        </p>
+      </section>
+
+      <section data-nb-section="scale" id="scale">
+        <h2>What the 405B took to build</h2>
+        <p>
+          Start with what the report states plainly, because these are numbers
+          only Meta could publish. Llama 3.1 is a family of three dense
+          Transformers, at 8 billion, 70 billion, and 405 billion
+          parameters.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          A parameter is one of the adjustable numbers a network learns during
+          training. "Dense" means every parameter is used on every token, unlike
+          a mixture-of-experts design that routes each token through only a
+          fraction of the network. Meta chose the dense design on purpose, to
+          "maximize training stability" at this scale.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The 405B was pre-trained on 15.6 trillion tokens of text, with a
+          knowledge cutoff at the end of 2023.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          A token is a chunk of text a few characters long; Llama 3's tokenizer
+          packs English into about 3.94 characters per token, up from 3.17 for
+          the Llama 2 tokenizer.<sup class="nb-cite"><a href="#s2" data-nb-locator="§3.2">2</a></sup>
+          The stated training budget was 3.8 &#215; 10<sup>25</sup> floating-point
+          operations, run on up to 16,000 H100 GPUs.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">405B</span><span class="nb-stat-l">parameters, largest model</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">15.6T</span><span class="nb-stat-l">pretraining tokens</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">3.8&#8202;&#215;&#8202;10<sup>25</sup></span><span class="nb-stat-l">FLOP training budget</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">30.84M</span><span class="nb-stat-l">H100 GPU-hours, 405B</span>
+          </div>
+        </div>
+        <p>
+          Those figures are hard to hold. The model card restates the compute in
+          a unit that is easier to feel: 30.84 million GPU-hours on H100-80GB
+          cards to train the 405B alone, and 39.3 million across the whole
+          family.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Each card draws 700 watts. Meta reports the training emitted 11,390
+          tons of CO&#8322;-equivalent on a location-based measure, and zero on a
+          market-based one after matching the load with renewable energy.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The report also gives the shape of the training data without naming a
+          single source inside it. The final mix is roughly 50% general-knowledge
+          tokens, 25% math and reasoning, 17% code, and 8%
+          multilingual.<sup class="nb-cite"><a href="#s2" data-nb-locator="§3.1.2">2</a></sup>
+          That four-way split is the most the paper says about the corpus. Meta
+          removed personal information and adult-content domains, but lists no
+          sites, no datasets, and no named proportions.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The weights are public. The data that made them is described only in
+          outline.
+        </p>
+      </section>
+
+      <section data-nb-section="open-license" id="open-license">
+        <h2>What Meta's "open" license actually grants</h2>
+        <p>
+          "Open" is the word carrying the most weight in the launch. What Meta released is the weights and
+          several kinds of code: model code, inference code, and training and
+          fine-tuning code.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          It did not release the training data, and the four-way mix above is as
+          close as a downloader gets to it.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The accurate description is open weights under a conditional community
+          license.
+        </p>
+        <p>
+          The conditions are real but bounded. A user must display "Built with
+          Llama" and keep Meta's copyright notice.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Any model trained on Llama or its outputs must put "Llama" at the start
+          of its name.<sup class="nb-cite"><a href="#s4" data-nb-locator="§1.b.i">4</a></sup>
+          And a company with more than 700 million monthly active users on the
+          release date cannot simply download it. It "must request a license from
+          Meta," grantable at Meta's "sole discretion."<sup class="nb-cite"><a href="#s4" data-nb-locator="§2">4</a></sup>
+          That clause is aimed at Meta's largest rivals.
+        </p>
+        <p>
+          One restriction people carry over from Llama 2 is gone. Llama 2's
+          license forbade using a model's outputs to improve any other large
+          language model. The Llama 3.1 license drops that ban and asks only for
+          the renaming.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Training a competitor on Llama's outputs is allowed, so long as the
+          competitor's name begins with "Llama."
+        </p>
+        <p>
+          Meta calls the 405B "the first frontier-level open source AI
+          model."<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The Open Source Initiative, which authors the definition of that term,
+          disagrees.
+        </p>
+        <div class="nb-position">
+          <div class="nb-position-top">
+            <span class="nb-position-who">Open Source Initiative</span>
+            <span class="nb-position-pill">Position</span>
+          </div>
+          <p class="nb-position-statement">The Llama 3.1 license is not open source.</p>
+          <p class="nb-position-summary">
+            The OSI stewards the Open Source Definition and argues the license
+            fails it on three points: it does not permit use for any purpose, it
+            discriminates against groups, and it restricts fields of use. It
+            calls the labeling "open washing."<sup class="nb-cite"><a href="#s6">6</a></sup>
+          </p>
+        </div>
+        <p>
+          Both sides are reading the same license text, and the text settles the
+          substance even where it does not settle the word. A downloader gets far
+          more than any closed API allows: the actual weights, and the right to
+          run and fine-tune them commercially.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          A downloader does not get the training data, an unconditional grant, or
+          the OSI's blessing on the phrase "open source." Open weights under
+          conditions is the description that survives both the launch blog and
+          the rebuttal.
+        </p>
+      </section>
+
+      <section data-nb-section="self-scored" id="self-scored">
+        <h2>The comparison Meta scored itself</h2>
+        <p>
+          The claim that put the report on every timeline is the one in its
+          abstract: comparable to GPT-4.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The evidence offered for it is Table 2, where the 405B is lined up
+          against GPT-4, GPT-4o, and Claude 3.5 Sonnet across sixteen
+          benchmarks.<sup class="nb-cite"><a href="#s2" data-nb-locator="Table 2">2</a></sup>
+          Two facts about how that table was built matter before reading a single
+          number. Meta "evaluate[d] the performance of other models ourselves and
+          compare[d] the results with the reported numbers, selecting the best
+          score" for each competitor.<sup class="nb-cite"><a href="#s2" data-nb-locator="§5.2">2</a></sup>
+          The comparison is Meta's own run of its rivals. And the winners are not
+          the ones the parity claim implies.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Selected rows from Table 2, accuracy in percent. Meta ran the
+            competitor evaluations itself and kept each one's best score for each
+            model.<sup class="nb-cite"><a href="#s2" data-nb-locator="Table 2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Benchmark</th>
+              <th>405B</th>
+              <th>GPT-4 (0125)</th>
+              <th>GPT-4o</th>
+              <th>Claude 3.5 Sonnet</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">MMLU (5-shot)</td>
+              <td>87.3</td><td>85.1</td><td>89.1</td><td>89.9</td>
+            </tr>
+            <tr>
+              <td class="txt">MMLU-Pro (5-shot, CoT)</td>
+              <td>73.3</td><td>64.8</td><td>74.0</td><td>77.0</td>
+            </tr>
+            <tr>
+              <td class="txt">HumanEval (code)</td>
+              <td>89.0</td><td>86.6</td><td>90.2</td><td>92.0</td>
+            </tr>
+            <tr>
+              <td class="txt">MATH (0-shot, CoT)</td>
+              <td>73.8</td><td>64.5</td><td>76.6</td><td>71.1</td>
+            </tr>
+            <tr>
+              <td class="txt">GPQA (reasoning)</td>
+              <td>51.1</td><td>41.4</td><td>53.6</td><td>59.4</td>
+            </tr>
+            <tr>
+              <td class="txt">GSM8K (8-shot, CoT)</td>
+              <td>96.8</td><td>94.2</td><td>96.1</td><td>96.4</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          On the general, code, and reasoning rows, the best score usually
+          belongs to GPT-4o or Claude 3.5 Sonnet, not the 405B.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The 405B leads on some rows, GSM8K among them, and beats the older
+          GPT-4 (0125) almost everywhere. Against the newer closed models it lands
+          at parity or a step behind, and the report itself concedes the 405B
+          "trails Claude 3.5 Sonnet in capabilities such as coding and
+          reasoning."<sup class="nb-cite"><a href="#s2" data-nb-locator="§5.3">2</a></sup>
+        </p>
+        <p>
+          Two checks beyond the benchmark table point the same way. Meta's
+          human-preference evaluation placed the 405B roughly on par with GPT-4
+          and mixed against GPT-4o and Claude 3.5 Sonnet.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          LMArena, which ranks models by blind human preference rather than
+          benchmark accuracy, put the 405B at rank 3 on its hard-prompts board
+          after correcting for answer length and formatting, behind GPT-4o and a
+          top-tied Claude 3.5 Sonnet.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Preference is not accuracy, so that ranking gives the table context
+          rather than overturning it.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          Put together, the reading the numbers support is narrow and defensible.
+          The 405B was the strongest openly available model at its release,
+          competitive with the closed frontier and behind it on the hardest
+          tasks. The stronger reading, that the table shows Llama beating GPT-4o
+          and Claude, rests on Meta's own scoring of its own rivals, and the
+          numbers in it do not carry that far.
+        </p>
+      </section>
+
+      <section data-nb-section="contamination" id="contamination">
+        <h2>The four scores the report leaves blank</h2>
+        <p>
+          The report's most useful admission sits in a table most readers never
+          reach. Contamination is when test questions, or near-copies of them,
+          have leaked into the training data, so a high score can mean the model
+          saw the answers rather than learned the skill. Meta checked for it. The
+          method scores each benchmark example by how far its text overlaps, in
+          runs of eight tokens, with the pretraining corpus, and Table 15 reports
+          the share of each test that looks contaminated and the points that
+          contamination is estimated to have added.<sup class="nb-cite"><a href="#s2" data-nb-locator="§5.1.4, Table 15">2</a></sup>
+        </p>
+        <p>
+          For several benchmarks the table returns a clean-looking answer.
+          HellaSwag shows heavy overlap and an estimated 14.3-point gain for the
+          405B. GSM8K shows 41% of the test flagged but almost no gain. SQuAD
+          shows nothing.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          For four of the benchmarks in the flagship comparison, the report gives
+          no estimate at all.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Selected rows from Table 15: the estimated points that contamination
+            added to the 405B's score. For four headline benchmarks the report
+            prints a dash, because 8-gram overlap runs so high that the method
+            cannot isolate a gain.<sup class="nb-cite"><a href="#s2" data-nb-locator="Table 15">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Benchmark</th>
+              <th>Flagged</th>
+              <th>Est. gain, 405B</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">HellaSwag</td><td>85%</td><td>14.3</td>
+            </tr>
+            <tr>
+              <td class="txt">GSM8K</td><td>41%</td><td>1.3</td>
+            </tr>
+            <tr>
+              <td class="txt">SQuAD</td><td>0%</td><td>0.0</td>
+            </tr>
+            <tr>
+              <td class="txt">MMLU</td><td class="txt">no estimate</td><td class="txt">no estimate</td>
+            </tr>
+            <tr>
+              <td class="txt">MMLU-Pro</td><td class="txt">no estimate</td><td class="txt">no estimate</td>
+            </tr>
+            <tr>
+              <td class="txt">HumanEval</td><td class="txt">no estimate</td><td class="txt">no estimate</td>
+            </tr>
+            <tr>
+              <td class="txt">MBPP</td><td class="txt">no estimate</td><td class="txt">no estimate</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The report says why, in its own words: for those four, "even with
+          higher thresholds, 8-gram overlap gives such high contamination scores
+          that it is impossible to get a good performance gain
+          estimate."<sup class="nb-cite"><a href="#s2" data-nb-locator="§5.1.4">2</a></sup>
+          So much of each test appears to overlap the training data that the
+          method cannot separate memorized answers from learned skill.
+        </p>
+        <p>
+          MMLU, HumanEval, and MBPP are among the headline general and code
+          benchmarks in Table 2, the same table that carries the comparison to
+          GPT-4.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Meta ran an honest check on whether contamination inflated those
+          scores, and the check could not return an answer. On its own most
+          famous numbers, the report cannot vouch for what it published, and it
+          says so plainly.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The Llama 3.1 report is worth trusting as an engineering record and
+          worth reading skeptically as a scorecard. It tells you, in real figures,
+          how big the 405B is and what it cost: 405 billion parameters, 15.6
+          trillion training tokens, 3.8 &#215; 10<sup>25</sup> operations of
+          compute. It tells you exactly what a download grants: open weights and
+          code under conditions, not the training data, and not the definition of
+          open source that the OSI defends. And it is candid enough to show, in
+          its own contamination table, that it cannot say whether the benchmark
+          scores that made it famous were inflated by test questions sitting in
+          the training data. The 405B was the strongest openly available model of
+          its moment. Whether it matched GPT-4o and Claude is a claim Meta scored
+          itself, and the report hands you the reasons to hold that part loosely.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://simonwillison.net/2024/Dec/31/llms-in-2024/">Simon Willison, "Things we learned about LLMs in 2024"</a>:
+            how models of this quality became cheap enough to run on a laptop.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.interconnects.ai/p/evaluating-open-llms">Nathan Lambert, "Evaluating open LLMs"</a>:
+            a practitioner on what leaderboards do and do not measure.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2407.21783"
+              >Meta AI · The Llama 3 Herd of Models (arXiv abstract)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/html/2407.21783v3"
+              >Meta AI · The Llama 3 Herd of Models (full report)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/MODEL_CARD.md"
+              >Meta · Llama 3.1 model card</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/LICENSE"
+              >Meta · Llama 3.1 Community License</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://ai.meta.com/blog/meta-llama-3-1/"
+              >Meta · Introducing Llama 3.1</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://opensource.org/blog/metas-llama-license-is-still-not-open-source"
+              >Open Source Initiative · Meta's Llama license is still not Open Source</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.lmsys.org/blog/2024-08-28-style-control/"
+              >LMSYS · Does style matter? Style control on the Arena leaderboard</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
