@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A reasoning model spends 901 tokens to answer 2 plus 3 · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "overthinking",
+        "template": "lesson",
+        "title": "A reasoning model spends 901 tokens to answer 2 plus 3",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-06",
+        "tags": ["reasoning-models", "test-time-compute", "overthinking", "inverse-scaling", "reinforcement-learning"],
+        "sources": 8,
+        "words": 2159,
+        "reading_minutes": 9,
+        "dek": "Reinforcement learning taught it to run long without a gauge for when a question is easy, so on simple inputs the extra thinking mostly burns compute and leaves the answer alone.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A reasoning model spends 901 tokens to answer 2 plus 3</h1>
+        <p class="nb-dekline">
+          Reinforcement learning taught it to run long without a gauge for when a
+          question is easy, so on simple inputs the extra thinking mostly burns
+          compute and leaves the answer alone.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-06</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          If you use a reasoning model, one from the o1 and o3 family,
+          DeepSeek-R1, or the thinking modes in Claude and Gemini, you have
+          watched it spend several seconds visibly working through a request
+          that needed none of it. You have probably also met the claim that
+          letting these models think longer makes them smarter, and the newer
+          counter-claim that thinking longer makes them worse. This lesson
+          explains what actually produces the long think on an easy question. It
+          shows when more reasoning genuinely helps and when it hurts. And it
+          separates the part of the story that is settled engineering from the
+          part its own researchers are still arguing over. By the end you should
+          be able to hear "more thinking means a better answer" and know which
+          cases it holds for and which it does not.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/thinking-out-loud.html">A transformer can only compute more by writing more</a>:
+            why writing intermediate steps is the only way a fixed network
+            spends more computation on a problem.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2501.12948">DeepSeek-R1</a>: the
+            training run that produced a model which lengthens its own reasoning
+            without being told to.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Thirteen solutions to a two-second question</h2>
+        <p>
+          Ask a recent reasoning model a question with an instant answer and
+          watch it think anyway. Chen and colleagues put the plainest possible
+          version to QwQ-32B-Preview: what is the answer of 2 plus 3? The model
+          produced 901 tokens of reasoning, spread across thirteen separate
+          solution attempts, before it gave the five that a person reaches in
+          two seconds. A conventional model answered in about
+          thirty-nine.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          One could reasonably assume that all of that visible deliberation is
+          buying a surer answer. An earlier lesson,
+          <a href="../the-mechanics/thinking-out-loud.html">a transformer can only compute more by writing more</a>,
+          showed why writing intermediate steps is the only way a fixed network
+          spends more computation on a problem. That spent computation is the
+          model's test-time compute, the work it does to answer one prompt. For
+          these models it rises directly with the number of tokens generated.
+        </p>
+        <p>
+          Which is what makes the thirteen attempts strange. The answer to 2
+          plus 3 was never in question, and the model spent a hard problem's
+          worth of computation confirming it. That is one half of the behavior.
+          The other half sounds like its opposite: on certain tasks, letting a
+          model reason longer makes its answer worse. Both start from the same
+          place, a model trained to reason at length.
+        </p>
+      </section>
+
+      <section data-nb-section="chain-grew" id="chain-grew">
+        <h2>The chain grew longer on its own during training</h2>
+        <p>
+          A reasoning model is not told how long to think. DeepSeek trained its
+          R1-Zero model by pure reinforcement learning. The model was rewarded
+          only for reaching the correct final answer on problems with checkable
+          solutions, and it saw no human-written reasoning to imitate.
+          Reinforcement learning here means exactly that and nothing more. Get
+          the answer right, get a positive signal.
+        </p>
+        <p>
+          Two things happened over that training. Accuracy on hard math climbed
+          steeply: on AIME 2024, a demanding high-school competition, the
+          model's first-try success rate rose from 15.6% to 71.0% across the
+          run.<sup class="nb-cite"><a href="#s2">2</a></sup> And the chains grew.
+          Without anyone setting a target length, the average answer stretched
+          from hundreds of tokens to thousands as training went on.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The length was learned</span>
+          <blockquote>
+            "DeepSeek-R1-Zero naturally learns to solve reasoning tasks with
+            more thinking time."<sup class="nb-cite"><a href="#s2">2</a></sup>
+            <span class="nb-note-who">DeepSeek-AI, Figure 3 caption</span>
+          </blockquote>
+        </div>
+        <p>
+          The reward was a correct
+          final answer. What reached correct answers on hard problems was longer
+          deliberation, so longer deliberation is what the training selected.
+          The result is a policy that, by default, thinks at length before it
+          commits. Nobody wrote a rule that said deliberate for 900 tokens. The
+          rule the model learned was reach the answer, and on the problems that
+          shaped it, reaching the answer took a long chain.
+        </p>
+      </section>
+
+      <section data-nb-section="no-gauge" id="no-gauge">
+        <h2>No gauge tells it the question was easy</h2>
+        <p>
+          That policy is now fixed in the model, and it carries no reliable sense
+          of how hard the current question is. There is no step where the model
+          sizes up 2 plus 3, judges it easy, and shortens its chain accordingly.
+          It runs the deliberation it learned, and the deliberation it learned is
+          long.
+        </p>
+        <p>
+          Here the natural assumption is that the extra tokens are at least
+          earning their keep, making sure of an answer the model might otherwise
+          fumble. They are not. In more than 92% of cases the first solution
+          round already holds the correct answer. The
+          rounds after it add little. By the fourth attempt, the share of
+          genuinely new reasoning has fallen below 30%.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The model reaches the right answer early and then keeps restating it.
+        </p>
+        <p>
+          So the everyday behavior is an efficiency cost, not a wrong answer. The
+          same study shows how much slack there is. A self-training fix cut the
+          tokens used on the MATH500 benchmark from 2,407.9 to 1,330.7, a 48.6%
+          reduction, and accuracy moved only from 92.8% to 93.2%.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          You can remove almost half the thinking and the answer barely notices.
+        </p>
+        <p>
+          For this half of the behavior, the reinforcement-learning story holds
+          up well. The chains grew because training rewarded correct answers and
+          long chains delivered them, and the learned policy over-deliberates
+          whenever nothing tells it to stop. That is the settled account of why a
+          reasoning model burns compute on trivial input.
+        </p>
+      </section>
+
+      <section data-nb-section="built-traps" id="built-traps">
+        <h2>The built traps where longer reasoning loses accuracy</h2>
+        <p>
+          The second half is where the behavior turns genuinely costly, and where
+          the claim is easiest to overstate. It is true that more reasoning can
+          lower accuracy. It is not true in general.
+        </p>
+        <p>
+          Gema and colleagues, working with Anthropic, built tasks designed to
+          punish extra reasoning. Some padded a counting question with irrelevant
+          distractors or let a spurious feature correlate with the answer. Others
+          stacked long chains of constraints for the model to track. On these,
+          extending a model's reasoning drove its accuracy down. On one counting task whose answer was always two, Claude
+          Opus 4 fell from near 100% to roughly 85-90% as its chain lengthened.
+          DeepSeek R1 dropped harder, from about 70% to about 30% once five
+          distractors were present. OpenAI's o3 held steadier, partly because it
+          wrote shorter chains to begin with.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The result reached a general audience under the headline "why thinking
+          longer makes models dumber."<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          But the same paper draws the boundary that headline erases. On standard
+          arithmetic benchmarks, the ordinary word problems these models are
+          usually measured on, accuracy is maintained as reasoning grows.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The collapse is not a property of thinking longer. It appears when the
+          task contains something a longer chain can grab onto: a distractor to
+          follow, a spurious pattern to trust, a constraint to lose. The paper's
+          own reading puts that drop on a different cause than the wasted compute
+          of the last section. There, extended reasoning amplifies these flawed
+          shortcuts. The extra thinking is not idle. It is actively steering the
+          model wrong.
+        </p>
+        <p>
+          There is a third direction, and it runs the opposite way. On genuinely
+          hard problems the same models underthink. Wang and colleagues found
+          that on AIME, incorrect answers used 225% more tokens than correct ones
+          and switched between distinct lines of reasoning 418% more often. More
+          than 70% of those wrong responses contained a correct thought the model
+          had reached and then abandoned.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          A separate group found the matching pattern. For a given question,
+          correct solutions are on average shorter than incorrect ones. And
+          letting a weaker model revise its own answer flips a right answer to a
+          wrong one more often than it rescues one.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <p>
+          So a long chain is not one failure with one fix. On easy inputs it is
+          wasteful repetition. On built traps it is amplified error. On hard
+          problems it is a model wandering away from an answer it already found.
+        </p>
+        <table class="nb-table">
+          <caption>
+            What extended reasoning does to the answer, by kind of
+            problem.<sup class="nb-cite"><a href="#s1">1</a></sup
+            ><sup class="nb-cite"><a href="#s3">3</a></sup
+            ><sup class="nb-cite"><a href="#s5">5</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Kind of problem</th>
+              <th class="txt">What the extra tokens do</th>
+              <th class="txt">Effect on the answer</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Trivial input, like 2 plus 3</td>
+              <td class="txt">
+                901 tokens over 13 tries where a plain model uses about 39; the
+                first try is already right
+              </td>
+              <td class="txt">Wasted compute; accuracy barely moves</td>
+            </tr>
+            <tr>
+              <td class="txt">Standard math benchmark</td>
+              <td class="txt">A longer chain that works the problem through</td>
+              <td class="txt">
+                Accuracy is maintained as the chain grows
+              </td>
+            </tr>
+            <tr>
+              <td class="txt">
+                A built trap: distractors, spurious features, long constraint
+                chains
+              </td>
+              <td class="txt">The chain latches onto the misleading feature</td>
+              <td class="txt">
+                Accuracy falls (Opus 4 about 100% to 85-90%; R1 about 70% to
+                30%)
+              </td>
+            </tr>
+            <tr>
+              <td class="txt">A hard competition problem</td>
+              <td class="txt">
+                It abandons a promising line and switches thoughts
+              </td>
+              <td class="txt">
+                It can drop a correct answer (wrong tries switch 418% more)
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section data-nb-section="hits-ground" id="hits-ground">
+        <h2>Solid engineering under an unsettled cause</h2>
+        <p>
+          Work the behavior down to the layer where nothing beneath it would
+          change the answer, and two things are solid. Test-time compute scales
+          with the number of tokens a model generates, for the reason the earlier
+          lesson gave. And reinforcement learning that rewarded correct answers
+          lengthened the chains, because on hard problems long chains were what
+          reached the answer.<sup class="nb-cite"><a href="#s2">2</a></sup> Those
+          are settled engineering.
+        </p>
+        <p>
+          What is not settled is how to frame the overthinking itself. Three
+          accounts are live at once. It may be a training artifact, the length
+          reward pulling chains longer than a task needs. It may be a missing
+          difficulty estimate, the model having no gauge to size the problem and
+          set its effort. Or it may be an inference-budget problem, the absence
+          of any rule that allocates a fixed compute budget across a question.
+          The papers do not agree. The overthinking work treats it as an
+          efficiency artifact of a model with no difficulty gauge.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The inverse-scaling work puts the accuracy drops on reasoning that
+          amplifies flawed heuristics, a cause separate from the length
+          reward.<sup class="nb-cite"><a href="#s3">3</a></sup> The revisiting
+          work frames it as weak sequential scaling and unreliable
+          self-revision.<sup class="nb-cite"><a href="#s6">6</a></sup> None of
+          them claims a single proven cause.
+        </p>
+        <p>
+          The fixes that exist are engineering responses to the symptom, not
+          answers to that question. Budget forcing caps the chain by cutting it
+          off, or extends it by appending the word "Wait" when the model tries to
+          stop, which nudges it to recheck and sometimes correct a step. On AIME
+          2024 that lifted one model from 50% to 57%.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Length-controlled training goes further: the user names a token budget
+          in the prompt, making test-time compute something an operator
+          allocates. A 1.5-billion-parameter model trained this way surpassed
+          GPT-4o at equal reasoning lengths.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          Both give a dial for length. Neither settles why the model needs one.
+        </p>
+        <p>
+          That is the honest bottom of it. Every fix so far is a length control
+          that a person sets, from a token budget in the prompt to a forced
+          "Wait," because the model still cannot tell on its own that 2 plus 3
+          did not need 901 tokens.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A reasoning model runs long because reinforcement learning rewarded
+          reaching the right answer and, on the hard problems that trained it,
+          long chains were what got there. It kept no gauge of difficulty, so it
+          deliberates the same way on 2 plus 3, and on an easy question that
+          extra deliberation is wasted compute rather than a wrong answer. More
+          reasoning does lower accuracy, but chiefly on tasks built to mislead
+          it, while ordinary benchmarks hold steady. On the hardest problems the
+          failure inverts, and the model drops a correct line it had already
+          found. What is settled is that test-time compute scales
+          with tokens and that training lengthened the chains. What is open is
+          which of three accounts best explains the overthinking, and for now
+          every fix is a length control someone sets by hand. The next time you
+          meet "more thinking means a smarter answer," treat it as a claim with
+          conditions, not a law.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2507.14417">Inverse Scaling in Test-Time Compute</a>:
+            the constructed tasks where extra reasoning lowers accuracy, and the
+            standard benchmarks where it does not.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2412.21187">Do NOT Think That Much for 2+2?</a>:
+            the token counts and efficiency metrics behind the wasted-compute
+            half.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Figure 1; Sections 3 and 5"
+              href="https://arxiv.org/abs/2412.21187"
+              >arXiv · Do NOT Think That Much for 2+2? On the Overthinking of o1-Like LLMs (Chen et al., 2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Section 2.2.4; Figures 2–3; Table 4"
+              href="https://arxiv.org/abs/2501.12948"
+              >DeepSeek-AI · DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning (2025)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; Section 4; Table 1; Figure 3"
+              href="https://arxiv.org/abs/2507.14417"
+              >arXiv · Inverse Scaling in Test-Time Compute (Gema et al., 2025)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://venturebeat.com/ai/anthropic-researchers-discover-the-weird-ai-problem-why-thinking-longer-makes-models-dumber"
+              >VentureBeat · Anthropic researchers discover the weird AI problem: why thinking longer makes models dumber (Nunez, 2025)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; AIME analysis"
+              href="https://arxiv.org/abs/2501.18585"
+              >arXiv · Thoughts Are All Over the Place: On the Underthinking of o1-Like LLMs (Wang et al., 2025)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; length-vs-correctness and self-revision analyses"
+              href="https://arxiv.org/abs/2502.12215"
+              >arXiv · Revisiting the Test-Time Scaling of o1-like Models (Zeng et al., 2025)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; budget-forcing section"
+              href="https://arxiv.org/abs/2501.19393"
+              >arXiv · s1: Simple Test-Time Scaling (Muennighoff et al., 2025)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; LCPO method and results"
+              href="https://arxiv.org/abs/2503.04697"
+              >arXiv · L1: Controlling How Long A Reasoning Model Thinks With Reinforcement Learning (Aggarwal &amp; Welleck, 2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
