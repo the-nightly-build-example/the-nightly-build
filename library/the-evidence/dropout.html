@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dropout · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "dropout",
+        "template": "lesson",
+        "title": "The biggest models now train with dropout turned down or off",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-06",
+        "tags": ["dropout", "regularization", "overfitting", "srivastava", "hinton", "neural-networks"],
+        "sources": 7,
+        "words": 1864,
+        "reading_minutes": 8,
+        "dek": "Srivastava and Hinton's 2014 paper cut CIFAR-10 error to 12.61% and led the small benchmarks of its day, then showed in its own experiments why models trained on far more data need it less.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">The biggest models now train with dropout turned down or off</h1>
+        <p class="nb-dekline">
+          Srivastava and Hinton's 2014 paper cut CIFAR-10 error to 12.61% and led the small benchmarks of its day, then showed in its own experiments why models trained on far more data need it less.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-06</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          If you have read anything about how neural networks avoid memorizing
+          their training data, you have met dropout. It is one of the most cited
+          techniques in the field, and for most of the 2010s it was in almost
+          every network. It is also routinely misdescribed as a general cure for
+          overfitting. This lesson reads the paper that introduced it. By the end
+          you can say what dropout does to a network, why its authors thought it
+          worked, what it measured, and why the largest models now often turn it
+          down or switch it off. That last part is the correction worth carrying:
+          the same paper people cite to call dropout indispensable also measured
+          the conditions under which it stops helping.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/batch-normalization.html">Batch normalization</a>: the
+            normalization layer that later crowded dropout out of vision networks.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/deep-double-descent.html">Deep double descent</a>: how a
+            model's error can fall, rise, and fall again as its capacity grows past its data.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Half the network vanishes on every training pass</h2>
+        <p>
+          Dropout is usually explained as a switch that stops a network from
+          overfitting. What Nitish Srivastava, Geoffrey Hinton, and three
+          colleagues actually described in 2014 is narrower and stranger. During
+          training, each unit in the network is kept with a fixed probability
+          <em>p</em> and otherwise set to zero. The choice is made independently
+          for every unit on every training case, so no single training pass ever
+          runs on the whole network.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          What is dropped is whole units, not individual weights: a dropped unit
+          is removed for that pass along with all of its incoming and outgoing
+          connections. The dropping is also random and temporary, so a unit that is
+          gone on one case is likely back on the next. The paper keeps hidden units
+          with probability 0.5 and input units with probability 0.8, values chosen
+          on a held-out set.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Training on a different random slice of the network each pass would be
+          useless if the finished network could not then be used as a whole. The
+          paper's answer is a scaling rule. At test time the complete network runs
+          once, with every unit present, but each unit's outgoing weights are
+          multiplied by <em>p</em>. A unit kept half the time during training sent,
+          on average, half its signal downstream. Halving its weights at test time
+          keeps that average the same, so the downstream units see the input they
+          were trained on.<sup class="nb-cite"><a href="#s1">1</a></sup> The
+          paper has been cited more than 44,000 times.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="ensemble" id="ensemble">
+        <h2>Training many networks by training one</h2>
+        <p>
+          The idea first appeared two years earlier, in a 2012 report whose title
+          states the reason its authors believed in it: preventing the
+          co-adaptation of feature detectors.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Their worry was that a unit which can always count on a particular
+          partner being present will learn to lean on it, becoming useful only
+          inside that fixed arrangement. Remove partners at random and a unit can
+          no longer depend on any one of them, so it has to learn something that
+          helps across many different combinations.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The 2014 paper gives that intuition a second, sharper form. Choosing
+          which units to keep carves a smaller network out of the full one, and a
+          network with <em>n</em> units contains 2ⁿ such thinned networks. Dropout
+          trains a different one of them on nearly every pass, and because they all
+          draw from the same pool of weights, no thinned network needs its own copy.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            Dropout trains an ensemble of 2ⁿ smaller networks that share one set of
+            weights, then folds them back into a single network at test time. The
+            weight scaling is what does the folding.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </p>
+        </div>
+        <p>
+          The test-time scaling is an approximate way of averaging the 2ⁿ networks, not
+          an exact one. To check it, they also averaged the predictions of many
+          thinned networks sampled at random, and found that the single scaled
+          network matches that Monte-Carlo average once about 50 samples are
+          drawn.<sup class="nb-cite"><a href="#s1">1</a></sup> So the ensemble story
+          is an intuition backed by an approximation that holds up well in practice,
+          not a theorem about what the network computes.
+        </p>
+      </section>
+
+      <section data-nb-section="results" id="results">
+        <h2>How far it moved the error rates of 2012</h2>
+        <p>
+          The 2012 report had already claimed records on speech and object
+          recognition.<sup class="nb-cite"><a href="#s3">3</a></sup> The 2014 paper
+          ran dropout across the standard benchmarks of the moment and reported a
+          consistent drop in error on every one of them. These were the datasets
+          the field measured itself against at the time: handwritten digits, house
+          numbers, small object photos, phone recognition in speech, and topic
+          classification in text.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Test error the 2014 paper reports on each benchmark, comparing its
+            dropout networks with the best result available without dropout. The
+            ImageNet row is top-5 error, against the best classical result of the
+            time.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Benchmark</th>
+              <th>No dropout</th>
+              <th>With dropout</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">MNIST digits</td>
+              <td>1.60%</td>
+              <td>1.06%</td>
+            </tr>
+            <tr>
+              <td class="txt">SVHN house numbers</td>
+              <td>3.95%</td>
+              <td>2.55%</td>
+            </tr>
+            <tr>
+              <td class="txt">CIFAR-10 objects</td>
+              <td>14.98%</td>
+              <td>12.61%</td>
+            </tr>
+            <tr>
+              <td class="txt">CIFAR-100 objects</td>
+              <td>43.48%</td>
+              <td>37.20%</td>
+            </tr>
+            <tr>
+              <td class="txt">ImageNet 2012 (top-5)</td>
+              <td>≈26%</td>
+              <td>16.4%</td>
+            </tr>
+            <tr>
+              <td class="txt">TIMIT speech</td>
+              <td>23.4%</td>
+              <td>21.8%</td>
+            </tr>
+            <tr>
+              <td class="txt">Reuters topics</td>
+              <td>31.05%</td>
+              <td>29.62%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The gains are real and, in vision, large: dropout took the winning
+          ImageNet 2012 network to a top-5 error of 16.4% when the best classical
+          methods sat near 26%.<sup class="nb-cite"><a href="#s1">1</a></sup> They
+          are also uneven. On Reuters text the error moved only from 31.05% to
+          29.62%, an improvement the paper calls much smaller than the ones it saw
+          on images and speech.<sup class="nb-cite"><a href="#s1">1</a></sup> The
+          method was not free either. Dropout raised training time roughly two to
+          three times, the paper reports, because its updates are noisy: each
+          training pass fits a different thinned network, so the gradients do not
+          point at the full one used at test time.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="data-size" id="data-size">
+        <h2>The gain shrinks as the data grows</h2>
+        <p>
+          The uneven benchmark gains were not noise, and the paper measured why.
+          The authors trained the
+          same MNIST network on subsets of the data ranging from 100 examples up to
+          50,000, with dropout and without, and watched the gap between the two.
+          <sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          At the smallest sizes, 100 and 500 examples, dropout gave no improvement
+          at all. A network this large overfits so small a training set even with
+          the noise dropout adds, so there is no gain left for the regularization to
+          win. As the training set grew, dropout's advantage rose to a
+          peak. Then, as the set grew larger still, the advantage narrowed again,
+          because a network with enough data overfits less on its own.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Dropout's value is not a fixed property of the technique. It depends on the ratio between how much
+          a network can memorize and how much data it is shown, and the paper
+          measured a regime on each side where the technique buys little. The
+          benchmarks of 2012 sat in the middle of that range, where models were
+          large relative to the data available, which is exactly where dropout pays.
+        </p>
+      </section>
+
+      <section data-nb-section="today" id="today">
+        <h2>Where the largest models leave it off</h2>
+        <p>
+          The same curve, extended toward far larger datasets, describes how dropout
+          is used now. The 2017 <a href="../the-evidence/attention-is-all-you-need.html">Transformer</a>, the architecture behind
+          today's language models, kept dropout but cut the rate to 0.1 for its base
+          model, reserving 0.3 for one large translation model. Its own ablation
+          still calls dropout very helpful in avoiding overfitting.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The technique carried forward into modern networks, at a fifth of the
+          original rate.
+        </p>
+        <p>
+          It also ran into a rival. Once
+          <a href="../the-evidence/batch-normalization.html">batch normalization</a>
+          became standard in vision networks, the two were found to interfere. A 2018
+          analysis showed a DenseNet on CIFAR-100 falling from 77.42% accuracy to
+          68.55% when dropout at rate 0.5 was added inside each block. The cause was a
+          mismatch between the variance dropout produces at training time and the
+          variance the normalization layer expects at test time. A small dose
+          of dropout, 0.1 to 0.2, applied only after the normalization layers,
+          restored consistent small gains.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          The clearest break comes at the largest scale. PaLM, a 540-billion-parameter
+          language model trained on 780 billion tokens, was trained with no dropout
+          during pretraining at all, using a rate of 0.1 only when it was later
+          finetuned.<sup class="nb-cite"><a href="#s6">6</a></sup> A 2025 study tested
+          this directly and found that removing dropout improves single-epoch language-model
+          pretraining across language modeling, syntax, question answering, and
+          inference benchmarks, and notes that LLaMA reports no dropout use.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The reason lines up with the paper's own curve. A model that sees each of a
+          near-endless supply of examples only once barely overfits. That is the far
+          end of the data axis, where dropout's measured benefit had already gone flat.
+        </p>
+        <p>
+          It is not that dropout was abandoned. It is still set to 0.1 in the
+          Transformer, still used to finetune PaLM, and still helpful in small doses
+          after normalization layers in vision. Its role narrowed to those regimes
+          rather than ending. And the picture of dropout being switched off at scale
+          rests on the few labs that publish a setting: PaLM states it, LLaMA omits
+          it, the 2025 study tests it.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Frontier proprietary models do not disclose theirs, so this reads from a
+          handful of disclosed reports rather than a survey of the field.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Dropout drops units at random during training, keeping each with
+          probability <em>p</em>, and scales the surviving weights by <em>p</em> at
+          test time so the whole network can stand in for the many thinned ones it
+          trained. Its authors justified it two ways, both worth stating as theirs:
+          it stops units from co-adapting, and it approximates an average over 2ⁿ
+          weight-sharing networks. On the small benchmarks of 2012 it produced real
+          gains, largest on images and smallest on text. The one experiment to
+          remember is the one about dataset size: dropout helps most when a model is
+          large relative to its data, and its own measurements showed the benefit
+          fading as data grows. That is why the largest models, trained on far more
+          data than anything in the original paper, now turn the rate down or leave
+          it off. If someone tells you dropout is a universal necessity, the correction
+          is in the paper they are citing.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://jmlr.org/papers/volume15/srivastava14a/srivastava14a.pdf">Srivastava
+            et al., "Dropout" (JMLR 2014)</a>: the full paper, including the per-dataset
+            tables and the dataset-size figure this lesson samples.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2505.24788">"Drop Dropout on Single-Epoch Language
+            Model Pretraining" (2025)</a>: the recent experiment testing dropout's removal
+            in modern pretraining.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://jmlr.org/papers/v15/srivastava14a.html"
+              data-nb-note="The paper that owns the mechanism, the co-adaptation and ensemble justification, the test-time scaling rule, the benchmark error rates, and the dataset-size experiment."
+              >JMLR · Srivastava, Hinton, Krizhevsky, Sutskever, Salakhutdinov, "Dropout: A Simple Way to Prevent Neural Networks from Overfitting" (2014)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.semanticscholar.org/paper/34f25a8704614163c4095b3ee2fc969b60de4698"
+              data-nb-note="Citation index reporting the paper's citation count (44,200, retrieved 2026-09-06); a live figure, treated as a floor."
+              >Semantic Scholar · citation record for "Dropout: A Simple Way to Prevent Neural Networks from Overfitting"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1207.0580"
+              data-nb-note="The 2012 tech report where dropout first appeared, framed as preventing the co-adaptation of feature detectors, with its first benchmark records."
+              >arXiv · Hinton, Srivastava, Krizhevsky, Sutskever, Salakhutdinov, "Improving neural networks by preventing co-adaptation of feature detectors" (2012)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.03762"
+              data-nb-locator="Sec. 5.4 and Table 3"
+              data-nb-note="Owns the Transformer's dropout setting: P_drop = 0.1 for the base model, 0.3 for the large EN-DE model, called very helpful in an ablation."
+              >arXiv · Vaswani et al., "Attention Is All You Need" (2017)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1801.05134"
+              data-nb-note="Documents the dropout and batch-normalization interference: the DenseNet CIFAR-100 accuracy drop, the variance-shift mechanism, and the small-dose fix after normalization layers."
+              >arXiv · Li, Chen, Hu, Yang, "Understanding the Disharmony between Dropout and Batch Normalization by Variance Shift" (2018)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2204.02311"
+              data-nb-note="The PaLM report: a 540-billion-parameter model trained without dropout in pretraining, using 0.1 for finetuning."
+              >arXiv · Chowdhery et al., "PaLM: Scaling Language Modeling with Pathways" (2022)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2505.24788"
+              data-nb-note="Finds removing dropout improves single-epoch language-model pretraining across several benchmarks, and records that LLaMA reports no dropout use."
+              >arXiv · Liu, Bauer, Manning, "Drop Dropout on Single-Epoch Language Model Pretraining" (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
