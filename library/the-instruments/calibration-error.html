@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A model that only guesses the base rate scores zero calibration error · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "calibration-error",
+        "template": "lesson",
+        "title": "A model that only guesses the base rate scores zero calibration error",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-06",
+        "tags": ["calibration", "expected-calibration-error", "reliability-diagram", "overconfidence", "rlhf"],
+        "sources": 8,
+        "words": 2193,
+        "reading_minutes": 10,
+        "dek": "Expected calibration error checks whether a model's stated confidence matches how often it is right, and a coarse enough set of bins can hide most of the miscalibration it is meant to catch.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">A model that only guesses the base rate scores zero calibration error</h1>
+        <p class="nb-dekline">
+          Expected calibration error checks whether a model's stated confidence
+          matches how often it is right, and a coarse enough set of bins can hide
+          most of the miscalibration it is meant to catch.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-09-06</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every leaderboard that ranks AI models by accuracy answers one
+          question: how often is the model right. A second question matters just as
+          much: when the model is unsure, does it know it is unsure. Expected
+          calibration error is the standard number for that second question, read
+          wherever a model's confidence is trusted, from a medical classifier to a
+          language model choosing a multiple-choice answer. By the end of this lesson you can compute it
+          from a small table and read the reliability diagram it summarizes. You
+          will also see why a low score can sit atop a badly miscalibrated model,
+          including the case where post-training left GPT-4's confidence
+          worse than it began.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/false-confidence.html">Post-training makes a model less able to tell when it's wrong</a>:
+            what a chatbot's typed confidence is, and why it is not a reading of
+            the model's own probabilities.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/hallucination-rate.html">A faithful summary of a false passage passes the hallucination test</a>:
+            a companion Instruments lesson on a percentage read, too readily, as a
+            verdict on whether a model can be trusted.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A calibrated model is right as often as it says it is</h2>
+        <p>
+          A weather forecaster who says there is a 70 percent chance of rain is
+          not making a promise about tomorrow. It is a claim about the whole run
+          of days he says it: across many such days, it should rain on about 70
+          percent of them. If it rains on 40 percent, his 70 was inflated.
+          Calibration is that same test turned on any system that attaches a
+          probability to a prediction, and a machine learning classifier attaches
+          one every time it labels an image or picks a multiple-choice answer.
+        </p>
+        <p>
+          The probability a classifier reports for the answer it picks is its
+          confidence. Guo and colleagues state the standard exactly: a model
+          is perfectly calibrated when, across every case where it reports
+          confidence <em>p</em>, it turns out correct a fraction <em>p</em> of
+          the time.<sup class="nb-cite"><a href="#s1">1</a></sup> The number that
+          measures how far it falls short of that is expected calibration error.
+        </p>
+      </section>
+
+      <section data-nb-section="reliability-diagram" id="reliability-diagram">
+        <h2>Bins turn single guesses into checkable rates</h2>
+        <p>
+          You cannot tell whether one 70 percent prediction was calibrated. The
+          event either happened or it did not, so a single prediction is right or
+          wrong, never 70 percent right. Calibration shows up only across many
+          predictions, so group them first. Sort every
+          prediction by its confidence and drop it into a bin: one bin for
+          confidences from 0 to 0.2, the next from 0.2 to 0.4, and so on up to 1.
+          Inside a bin, two numbers can finally be compared: the average
+          confidence the model reported, and the fraction of those predictions
+          that turned out correct. The first is what the model claimed, the
+          second what happened.
+        </p>
+        <p>
+          Plot the two against each other, confidence along the bottom and
+          accuracy up the side, and you have a reliability diagram. A perfectly
+          calibrated model lands every bin on the 45-degree line, where accuracy
+          equals confidence.<sup class="nb-cite"><a href="#s1">1</a></sup> A bar
+          below the line is a bin where the model was more confident than it had
+          earned. The diagram leaves out how many predictions sit in each bin.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Here is the picture for a made-up classifier: a hundred predictions in
+          five bins. The numbers are invented, kept small
+          enough to check by hand, but the shape is real: the overconfidence Guo
+          and colleagues found in deep networks, every bar under the
+          line.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="calibration-error/chart-1.png"
+            alt="A reliability diagram of five confidence bins: four accuracy bars rise from left to right, while the lowest-confidence bin has zero accuracy and shows no bar. Each bar falls short of the dashed 45-degree perfect-calibration line, so the model is overconfident in every bin."
+          />
+          <figcaption>
+            Fig. 1 · A reliability diagram for the constructed classifier. Every
+            bin's accuracy falls below the confidence the model stated, and the
+            distance to the diagonal is the miscalibration.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="§2, Fig. 1"
+                data-nb-note="Illustrative series constructed by the author to demonstrate the reliability diagram; not data measured from this source."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+      </section>
+
+      <section data-nb-section="computing-ece" id="computing-ece">
+        <h2>Bigger bins count more toward the ECE</h2>
+        <p>
+          Expected calibration error, ECE, collapses the whole diagram into a
+          single figure: the average gap between confidence and accuracy, with
+          each bin weighted by how many predictions fall in it. Two papers are
+          worth naming: Naeini and colleagues introduced the binned estimator in
+          2015,<sup class="nb-cite"><a href="#s2">2</a></sup> and Guo and
+          colleagues gave it the form now standard in deep learning, comparing each
+          bin's accuracy to its mean confidence.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          That is the form used here.
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \mathrm{ECE} = \sum_{m=1}^{M} \frac{\htmlClass{nb-mc1}{\lvert B_m
+            \rvert}}{n} \,\bigl\lvert\, \htmlClass{nb-mc2}{\mathrm{acc}(B_m)} -
+            \htmlClass{nb-mc3}{\mathrm{conf}(B_m)} \,\bigr\rvert
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">\lvert B_m \rvert</span
+              ><span
+                >how many predictions land in bin <em>m</em>; divided by
+                <em>n</em>, the total, it becomes that bin's weight.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">\mathrm{acc}(B_m)</span
+              ><span>the fraction of predictions in the bin that were correct.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">\mathrm{conf}(B_m)</span
+              ><span>the average confidence the model reported in the bin.</span>
+            </li>
+          </ul>
+          <figcaption>
+            Guo et al.'s binned estimator: take the accuracy-confidence gap in
+            each of the <em>M</em> equal-width bins, weight each gap by the bin's
+            share of the predictions, and sum.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="§2, Eq. 3">1</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Run it on the made-up classifier. Each row is a bin: how many
+          predictions landed there, the average confidence, the fraction correct,
+          the gap, and that gap weighted by the bin's share of the hundred.
+        </p>
+        <table class="nb-table">
+          <caption>
+            An ECE calculation for the constructed 100-prediction classifier; the
+            weighted gaps sum to 0.120.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="§2, Eq. 3"
+                data-nb-note="Illustrative figures constructed by the author to demonstrate the estimator; not data measured from this source."
+                >1</a
+              ></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Bin</th>
+              <th>Predictions</th>
+              <th>Confidence</th>
+              <th>Accuracy</th>
+              <th>Gap</th>
+              <th>Weighted gap</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">0.0–0.2</span></td>
+              <td>5</td>
+              <td>0.10</td>
+              <td>0.00</td>
+              <td>0.10</td>
+              <td>0.005</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">0.2–0.4</span></td>
+              <td>10</td>
+              <td>0.30</td>
+              <td>0.20</td>
+              <td>0.10</td>
+              <td>0.010</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">0.4–0.6</span></td>
+              <td>15</td>
+              <td>0.50</td>
+              <td>0.40</td>
+              <td>0.10</td>
+              <td>0.015</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">0.6–0.8</span></td>
+              <td>30</td>
+              <td>0.70</td>
+              <td>0.60</td>
+              <td>0.10</td>
+              <td>0.030</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">0.8–1.0</span></td>
+              <td>40</td>
+              <td>0.95</td>
+              <td>0.80</td>
+              <td>0.15</td>
+              <td>0.060</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The weights sum to one, since every prediction lands in one
+          bin. The five weighted gaps add to 0.120, so this classifier's ECE is
+          12.0 percent: on average, its stated confidence overshoots its accuracy
+          by about twelve points.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          ECE is an average, so one bad bin can be diluted by calmer ones. Here the
+          top bin misses by fifteen points while the headline reads twelve, an
+          early sign that one figure can smooth over the cases that matter most.
+        </p>
+      </section>
+
+      <section data-nb-section="binning-and-blindness" id="binning-and-blindness">
+        <h2>Two ways a low ECE hides real miscalibration</h2>
+        <p>
+          The number has a soft spot: the binning. Widen the bins and gaps that
+          point in opposite directions begin to cancel. Take fifty
+          predictions the model called 55 percent that were right 75 percent of the
+          time, and fifty it called 65 percent that were right 45 percent of the
+          time. Split them at 0.6 and each bin misses by twenty points, for
+          an ECE of 20 percent. Merge them into one bin from 0.5 to 1.0 and the
+          averages collapse together: mean confidence 60 percent, mean accuracy 60
+          percent, gap zero. The same predictions and the same outcomes now read
+          as perfectly calibrated.<sup class="nb-cite"><a href="#s3">3</a></sup
+          ><sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Kumar and colleagues proved that binning can
+          only ever understate the true calibration error, because averaging
+          inside a bin lets its internal disagreements cancel.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          On ImageNet they read a model at roughly 0.02 with the fifteen bins Guo
+          used, while the real error was at least twice that.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="§3.1, Fig. 2">3</a></sup
+          >
+          Nixon and colleagues went further and constructed a predictor with an
+          ECE of exactly zero that was badly miscalibrated, its opposite errors
+          buried inside single bins.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="§3.4">4</a></sup
+          >
+          They also showed why equal-width bins fit poorly: a confident network
+          piles most predictions near 1, so one or two bins carry the weight while
+          the rest sit empty.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The repair is to let the bins follow the data. Adaptive binning sets the
+          edges so each bin holds the same number of predictions, putting
+          resolution where the predictions are.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Report the bin count next to any ECE, because the number moves with it.
+        </p>
+        <p>
+          There is a deeper limit, and it survives any choice of bins. Calibration
+          says nothing about whether the model knows anything. Suppose a model
+          ignores its input and reports 30 percent on all hundred cases, of which
+          thirty are positive. Every prediction lands in one bin, where confidence
+          is 30 percent and accuracy is 30 percent, so the gap is zero. By the
+          definition, this do-nothing model is perfectly
+          calibrated.<sup class="nb-cite"><a href="#s1">1</a></sup> It is also
+          useless: it cannot tell a positive case from a negative one.
+        </p>
+        <p>
+          The Brier score notices the difference. It grades each prediction on the
+          squared distance between the probability and what happened, then
+          averages. Brier proved in 1950 that this kind of score, a proper scoring
+          rule, cannot be beaten by bluffing: a forecaster does best by stating the
+          probabilities he actually believes.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          In the binary form common in machine learning today it runs from 0 for a
+          flawless forecaster to 1 for the worst.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          The do-nothing 30 percent model scores 0.21, a model that genuinely
+          sorted the cases would score lower, and a perfect one would score
+          zero.<sup class="nb-cite"><a href="#s6">6</a></sup> ECE calls the
+          do-nothing model and the perfect one both flawless. Brier tells them
+          apart. Brier's original 1950 score summed over both outcomes and ran to
+          2, doubling every figure, so any Brier number has to say which
+          convention it uses.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="training-overconfidence" id="training-overconfidence">
+        <h2>How post-training left GPT-4 more confident than correct</h2>
+        <p>
+          None of this would bite if models were naturally honest about their
+          uncertainty, and older ones were. A 2005 study found neural networks
+          among the best-calibrated learners, needing no
+          correction.<sup class="nb-cite"><a href="#s7">7</a></sup> Then
+          the networks got deep. Guo and colleagues showed that a 110-layer
+          network on CIFAR-100 was far more confident than accurate, where a
+          shallow five-layer network from the earlier era had stayed close to the
+          line.<sup class="nb-cite"><a href="#s1">1</a></sup> Depth, width, and
+          batch normalization all pushed calibration the wrong way. The driver was
+          the training itself. Once a network fits its training data, it can keep
+          lowering its loss only by making its correct answers more
+          confident.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Their fix was almost embarrassingly small. Temperature scaling divides
+          the model's outputs by a single learned number before they become
+          probabilities. That softens the overconfident ones without changing which
+          answer the model picks, so it costs no accuracy.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          On that same 110-layer network it cut ECE from 16.5 percent to 1.3
+          percent.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The same pattern turned up in a model people actually depend on.
+          OpenAI's GPT-4 technical report gives calibration curves for two versions
+          of the model on a slice of a multiple-choice exam. The pretrained model,
+          before any tuning for helpfulness, was highly calibrated, with an ECE of
+          0.007. After post-training with reinforcement
+          learning from human feedback, the same model's ECE rose to 0.074,
+          roughly ten times worse.<sup class="nb-cite"
+            ><a href="#s8" data-nb-locator="§3, Fig. 8">8</a></sup
+          >
+          The confidence being measured there is the probability the model
+          assigned across the choices A, B, C, and D, not a percentage the chatbot
+          types out in words.<sup class="nb-cite"
+            ><a href="#s8" data-nb-locator="§3, Fig. 8">8</a></sup
+          >
+          The report does not state how many bins it used, so those two figures
+          carry the same bin-dependence as any other ECE.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+        <p>
+          Two failures are easy to run together here, and they are not the same.
+          A metric that a coarse binning can flatter is one problem. A model whose
+          confidence genuinely decayed is another. OpenAI's numbers are the second
+          kind: an honest self-report of a real change, measured with the
+          company's own consistent binning, not a bin chosen to flatter it.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          Post-training did not fool the metric. It made the model worse at knowing
+          what it knew. Where the confidence a chatbot types in words actually
+          comes from, and why it was never a reading of these internal
+          probabilities, is
+          <a href="../the-mechanics/false-confidence.html">a separate lesson</a>.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Calibration and accuracy are two different virtues, and expected
+          calibration error measures only the first. Computing it is
+          straightforward: bin the predictions by confidence, find the gap between
+          confidence and accuracy in each bin, and average those gaps by bin size.
+          The reliability diagram is that same comparison drawn as a picture.
+          Coarse bins let opposite errors cancel, so the score you report depends
+          on how you drew the bins. And because
+          calibration ignores accuracy, a model that only ever guesses the base
+          rate scores a perfect zero while knowing nothing. When GPT-4's
+          calibration decayed after post-training, its own makers could see it in
+          this number, but only because they read it honestly. A low ECE
+          certifies one thing: that on some binned test set, the model's stated
+          confidence matched how often it was right. It does not certify that the
+          model knows anything, nor that a finer set of bins would agree.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://proceedings.mlr.press/v70/guo17a.html">Guo et al., On Calibration of Modern Neural Networks</a>:
+            the paper that made ECE standard and diagnosed deep-network
+            overconfidence, with temperature scaling as the fix.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1904.01685">Nixon et al., Measuring Calibration in Deep Learning</a>:
+            a catalogue of ECE's failure modes and the case for adaptive binning.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://proceedings.mlr.press/v70/guo17a.html"
+              >PMLR · Guo, Pleiss, Sun &amp; Weinberger, On Calibration of Modern Neural Networks (ICML 2017)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://ojs.aaai.org/index.php/AAAI/article/view/9602"
+              >AAAI · Naeini, Cooper &amp; Hauskrecht, Obtaining Well-Calibrated Probabilities Using Bayesian Binning (2015)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://proceedings.neurips.cc/paper/2019/hash/f8c0c968632845cd133308b1a494967f-Abstract.html"
+              >NeurIPS · Kumar, Liang &amp; Ma, Verified Uncertainty Calibration (2019)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1904.01685"
+              >arXiv · Nixon, Dusenberry, Zhang, Jerfel &amp; Tran, Measuring Calibration in Deep Learning (2019)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://journals.ametsoc.org/view/journals/mwre/78/1/1520-0493_1950_078_0001_vofeit_2_0_co_2.xml"
+              >Monthly Weather Review · Brier, Verification of Forecasts Expressed in Terms of Probability (1950)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2308.01222"
+              >arXiv · Wang, Calibration in Deep Learning: A Survey of the State-of-the-Art (2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf"
+              >ICML · Niculescu-Mizil &amp; Caruana, Predicting Good Probabilities with Supervised Learning (2005)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2303.08774"
+              >arXiv · OpenAI, GPT-4 Technical Report (2023)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
