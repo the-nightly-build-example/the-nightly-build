@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenAI carved out MATH-500 because 4,500 of the 5,000 test problems were in its training data · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "math-benchmark",
+        "template": "lesson",
+        "title": "OpenAI carved out MATH-500 because 4,500 of the 5,000 test problems were in its training data",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-07",
+        "tags": ["benchmarks", "mathematics", "contamination", "grading"],
+        "sources": 8,
+        "words": 1666,
+        "reading_minutes": 7,
+        "dek": "A MATH score is one boxed answer matched against a key, and the numbers labs now compare under that single name run on different problem sets and different metrics.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">OpenAI carved out MATH-500 because 4,500 of the 5,000 test problems were in its training data</h1>
+        <p class="nb-dekline">
+          A MATH score is one boxed answer matched against a key, and the numbers labs now compare under that single name run on different problem sets and different metrics.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-09-07</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When a lab says its model is good at math, the number behind that
+          claim is usually a MATH score. Frontier models now report about 97% on
+          it, up from under 7% when the test appeared in 2021, and the figure
+          gets quoted as if it settled the question. This lesson shows how that
+          number is made, from the single answer the grader reads to the choice
+          of which problems it runs on. By the end you will see why a 97% and a
+          6.9% score can wear the same name and still not compare, and what the
+          number leaves out even when it is reported honestly.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/gsm8k.html">A passing contamination check on GSM8K would not catch a renamed problem</a>: how competition and school problems leak into training, and why the usual checks miss it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/chain-of-thought.html">Eight worked examples more than tripled a large model's math score</a>: the prompting move behind the few-shot setups these scores are measured in.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-instruments/livecodebench.html">LiveCodeBench scores a model only on problems released after it was trained</a>: one benchmark's way of dodging the leakage MATH cannot.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What the grader actually reads</h2>
+        <p>
+          A MATH problem is a competition question paired with a full worked
+          solution, and the model is asked to place its final answer inside a
+          LaTeX <code>\boxed{}</code> command. The grader reads only what sits
+          between those braces. It takes that string, compares it to the answer
+          key, and marks the problem right when the two match exactly. The
+          reported score is the fraction of the test set that matched. It says
+          nothing about the steps that produced the answer.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          MATH is 12,500 competition problems, split into 7,500 for training and
+          5,000 for testing, drawn from contests such as the AMC and the AIME
+          and sorted into five difficulty levels.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          When the dataset was released in 2021, the best model its authors
+          tested got 6.9% of the test set right, and a few-shot GPT-3 with 175
+          billion parameters got 5.2%. Their conclusion was that scaling model
+          size alone would not solve it.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="human-ceiling" id="human-ceiling">
+        <h2>A three-time IMO medalist scored 90% on the same test</h2>
+        <p>
+          The score did not stay at 6.9%. In 2022, Google's Minerva model
+          reached 33.6% on the full test set on a single attempt, and 50.3% when
+          it answered each problem sixty-four times and kept the most common
+          answer, a method called majority voting.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          By 2024 a math-specialized open model, Qwen2.5-Math, reported
+          85.9%.<sup class="nb-cite"><a href="#s3">3</a></sup> In 2025
+          DeepSeek-R1 reported 97.3%.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          Some of that climb is real. When the MATH authors gave the test to
+          people, a computer-science PhD student got about 40%, and a three-time
+          International Math Olympiad gold medalist got 90%, missing only on
+          small arithmetic slips.<sup class="nb-cite"><a href="#s1">1</a></sup> A
+          score in the nineties is not past a strong human reasoner, so a model
+          reaching one is not by itself proof that the test is broken.
+        </p>
+      </section>
+
+      <section data-nb-section="grading-both-ways" id="grading-both-ways">
+        <h2>The same answer, graded right and graded wrong</h2>
+        <p>
+          Exact string-matching is strict, and it errs in both directions. In
+          one direction it fails correct answers. The value 1/&#8730;3 and the
+          value &#8730;3/3 are the same number written two ways, but as strings
+          they do not match, so a model that writes its answer in the wrong form
+          loses a point it earned. Minerva's team addressed this by grading with
+          SymPy, a symbolic-math checker that decides whether two expressions
+          are equal rather than whether two strings are identical. That change
+          recovered about one percent.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          In the other direction, string-matching passes wrong work. A model can
+          reach the correct final answer through invalid steps: a sign error
+          that cancels another sign error, or a guess that happens to land. The
+          grader never reads the steps, so it counts the problem solved. When
+          Minerva's team checked its own marked-correct solutions by hand, about
+          8% of them rested on flawed reasoning, and at Level 5, the hardest
+          problems, that share rose to about 30%.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">~1%</span
+            ><span class="nb-stat-l">recovered by grading meaning, not spelling</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">~30%</span
+            ><span class="nb-stat-l">wrong reasoning, right answer, at Level 5</span>
+          </div>
+        </div>
+        <p>
+          So the score is not a count of problems a model solved. It is a count
+          of final answers that matched the key, which runs a little low on
+          formatting and a little high on the hardest problems, where wrong
+          reasoning most often reaches a right number.
+        </p>
+      </section>
+
+      <section data-nb-section="two-names" id="two-names">
+        <h2>Why "MATH" and "MATH-500" are not one number</h2>
+        <p>
+          In 2023, OpenAI researchers ran into a problem of their own making.
+          Building a system that grades reasoning step by step, they had put
+          4,500 of the 5,000 MATH test problems into its training data, a set
+          they call PRM800K.<sup class="nb-cite"><a href="#s5">5</a></sup> A
+          model that has seen the test during training can recite answers
+          instead of working them out, which is called
+          <a href="../the-instruments/livecodebench.html">contamination</a>, and it made
+          an honest MATH score impossible for them to report. Their fix was to
+          evaluate on the 500 test problems they had not trained on, chosen at
+          random, and they showed those 500 match the full test set's spread of
+          subjects and difficulty. They named the subset MATH-500.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          MATH-500 is now the number the leading labs report. DeepSeek-R1's
+          97.3%, and the 96.4% it lists for OpenAI's o1, are both MATH-500 on a
+          single attempt, a metric written Pass@1.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The original 6.9% and Minerva's 33.6% are the full 5,000. Qwen2.5-Math's
+          85.9% is labeled only "MATH," measured with four worked examples placed
+          in the prompt, and the page does not say whether it ran on the 500 or
+          the 5,000.<sup class="nb-cite"><a href="#s3">3</a></sup> The name on all
+          of them is the same.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Five scores published under the name MATH: the problem set and the
+            counting method both change underneath it.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            ><sup class="nb-cite"><a href="#s2">2</a></sup
+            ><sup class="nb-cite"><a href="#s3">3</a></sup
+            ><sup class="nb-cite"><a href="#s4">4</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model (year)</th>
+              <th class="txt">Reported as</th>
+              <th>Problems</th>
+              <th class="txt">Counting rule</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">GPT-2 + AMPS (2021)</td>
+              <td><span class="nb-table-token">MATH</span></td>
+              <td>5 000</td>
+              <td class="txt">single attempt</td>
+              <td>6.9%</td>
+            </tr>
+            <tr>
+              <td class="txt">Minerva 540B (2022)</td>
+              <td><span class="nb-table-token">MATH</span></td>
+              <td>5 000</td>
+              <td class="txt">single attempt</td>
+              <td>33.6%</td>
+            </tr>
+            <tr>
+              <td class="txt">Minerva 540B (2022)</td>
+              <td><span class="nb-table-token">MATH</span></td>
+              <td>5 000</td>
+              <td class="txt">majority of 64</td>
+              <td>50.3%</td>
+            </tr>
+            <tr>
+              <td class="txt">Qwen2.5-Math-72B (2024)</td>
+              <td><span class="nb-table-token">MATH</span></td>
+              <td class="txt">not stated</td>
+              <td class="txt">single attempt, 4-shot</td>
+              <td>85.9%</td>
+            </tr>
+            <tr>
+              <td class="txt">DeepSeek-R1 (2025)</td>
+              <td><span class="nb-table-token">MATH-500</span></td>
+              <td>500</td>
+              <td class="txt">single attempt (Pass@1)</td>
+              <td>97.3%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The same model on the same 5,000 problems scores 33.6% or 50.3%
+          depending only on how many attempts it gets. The 85.9% does not say
+          which set it ran on. The 97.3% ran on a tenth of the problems the 6.9%
+          did. Lined up as a single "MATH" column, these numbers read as one
+          rising measurement. They are not.
+        </p>
+        <p>
+          That the MATH problems leak at all is not a surprise: they are
+          copyrighted competition questions, mirrored across the web for years,
+          which is exactly the text models train on. The most-used copy of the
+          dataset, on Hugging Face, now returns a single line where the data
+          used to be. It was pulled under a copyright takedown.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <p>
+          Sometimes the source of a MATH number vanishes altogether. A GPT-4
+          MATH score is quoted often, but OpenAI's GPT-4 technical report lists a
+          GSM8K score and no MATH score at all, so any "GPT-4 on MATH" figure in
+          circulation comes from some other evaluation, not from that
+          report.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="never-shows" id="never-shows">
+        <h2>The one thing the boxed answer never shows</h2>
+        <p>
+          Every one of these numbers comes down to one string between two
+          braces. That is the score's strength: it is cheap, automatic, and
+          repeatable across thousands of problems, which is why it became the
+          standard math number in the first place. It is also the whole of what
+          the score can see. A competition grader reading a paper by hand gives
+          partial credit for a sound method with an arithmetic slip, and no
+          credit for a right answer with no valid work behind it. The MATH score
+          does the reverse of each: it fails the first on formatting and passes
+          the second, because the only thing it reads is the final
+          answer.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Epoch AI, which tracks how hard benchmarks stay for frontier models,
+          now treats even MATH's hardest level as saturated and has moved its
+          frontier testing to harder, freshly written problems.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          A score that began at 6.9% and sits near 97% has little room left to
+          measure anything. What it measured all along was whether a final boxed
+          answer matched a key, never whether the reasoning that reached it was
+          sound.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A MATH score is one boxed answer matched against a key, counted across
+          a set of problems, and the single name hides three questions. Which
+          problems: the original 5,000, or the 500 that OpenAI kept back as
+          MATH-500 after the rest went into its training data. How they are
+          counted: one attempt, or the best of many. And what the match can
+          miss: correct work failed for its formatting, and wrong work passed
+          when a bad method lands on the right number. Some of the climb from
+          under 7% to 97% is real, and a strong human scores 90% on the same
+          problems. But two numbers that both say "MATH" only compare once you
+          know which problem set, which counting rule, and that the answer, not
+          the reasoning, is all the grader ever read.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://github.com/hendrycks/math">The MATH dataset and its evaluation code</a>: the problems, the answer keys, and the parser that reads the boxed string.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2505.23281">MathArena</a>: evaluating models on freshly released competitions to route around the contamination this lesson describes.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2103.03874"
+              >arXiv · Measuring Mathematical Problem Solving With the MATH Dataset</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2206.14858"
+              >arXiv · Solving Quantitative Reasoning Problems with Language Models</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2409.12122"
+              >arXiv · Qwen2.5-Math Technical Report</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2501.12948"
+              >arXiv · DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.20050"
+              >arXiv · Let's Verify Step by Step</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/datasets/hendrycks/competition_math"
+              >Hugging Face · hendrycks/competition_math dataset card</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2303.08774"
+              >arXiv · GPT-4 Technical Report</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://epoch.ai/benchmarks/about"
+              >Epoch AI · About the benchmarking dashboard</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
