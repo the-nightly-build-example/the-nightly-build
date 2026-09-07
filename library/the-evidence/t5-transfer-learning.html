@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>T5 recast every language task as text in, text out, and lost at translation · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "t5-transfer-learning",
+        "template": "lesson",
+        "title": "T5 recast every language task as text in, text out, and lost at translation",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-07",
+        "tags": ["t5", "text-to-text", "transfer-learning", "c4", "transformers"],
+        "sources": 7,
+        "words": 2148,
+        "reading_minutes": 9,
+        "dek": "Google's controlled bake-off, run on 750 gigabytes of web text the team cleaned itself, crowned the encoder-decoder architecture that large language models would soon move past.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">T5 recast every language task as text in, text out, and lost at translation</h1>
+        <p class="nb-dekline">
+          Google's controlled bake-off, run on 750 gigabytes of web text the team cleaned itself, crowned the encoder-decoder architecture that large language models would soon move past.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-07</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When you ask a model to translate a sentence, grade a piece of grammar,
+          or shorten a news story, it is doing three jobs that used to need three
+          different systems. T5 is the paper that argued they are one job: read
+          some text, write some text. Its authors turned that argument into a
+          single model, a huge cleaned corpus to train it on, and a patient
+          comparison of the choices behind it. By the end
+          you will know what "text-to-text" actually means and how big the study
+          really was. And why a paper still cited as the winning recipe describes
+          one the field mostly stopped using.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">Attention</a>: what a
+            Transformer is and how it reads a sentence all at once.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/bert.html">BERT</a>: the masked-word model
+            T5 puts in its comparison, trained to fill in blanks rather than
+            predict the next word.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-evidence/gpt-3-few-shot.html">Few-shot GPT-3</a>: the
+            decoder-only direction the field took instead.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One model for every language job</h2>
+        <p>
+          In October 2019 nine researchers at Google posted a preprint titled
+          "Exploring the Limits of Transfer Learning with a Unified Text-to-Text
+          Transformer."<sup
+            class="nb-cite"
+            ><a
+              href="#s1"
+              data-nb-locator="arXiv 1910.10683, submitted 23 Oct 2019"
+              >2</a
+            ></sup
+          >
+          The 67-page paper was published in the Journal of Machine Learning
+          Research the following year.<sup
+            class="nb-cite"
+            ><a href="#s2" data-nb-locator="JMLR v21, art. 140">1</a></sup
+          >
+          The model it introduced, T5, has a plain name once you unpack it: the
+          Text-to-Text Transfer Transformer. Transfer learning was the standard
+          approach by then. Train one model on an enormous pile of generic text
+          so it picks up the shape of the language, then adapt that same model to
+          each specific task you care about. The pretraining is the expensive
+          part you do once. The adapting, called fine-tuning, is cheap and you do
+          it per task.
+        </p>
+        <p>
+          T5's contribution was to make the "each specific task" part uniform.
+          Every task becomes the same kind of problem: text goes in, text comes
+          out. Casting the field's benchmarks this way and combining the best
+          training choices with scale, the model reached the best published
+          result of its time on 18 of the 24 task scores the authors
+          measured.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 3.7; Table 14">1</a></sup
+          >
+          That number is why the paper became a reference. What it is cited to
+          have settled is a larger claim.
+        </p>
+      </section>
+
+      <section data-nb-section="text-to-text" id="text-to-text">
+        <h2>Text in, text out, even when the answer is a number</h2>
+        <p>
+          Translation is the easy case. You feed the model the
+          sentence with a short instruction glued to the front,
+          <code>translate English to German:</code>, and it produces the German.
+          Nothing surprising there. Translation was always text in, text out.
+          The move T5 makes is to force every other task into that same mold, by
+          changing only the words in front.
+        </p>
+        <p>
+          Ask it to judge whether a sentence is grammatical, and the input is
+          <code>cola sentence:</code> followed by the sentence. The output is
+          the literal word <code>acceptable</code> or <code>not acceptable</code>,
+          not a 1 or a 0. Ask it to summarize, and the prefix is
+          <code>summarize:</code> and the output is the shorter text. The paper
+          puts all four in the diagram on its first page.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Fig. 1 · Sec. 2.4">1</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            The four tasks from the paper's opening figure, each the same model
+            with a different prefix.<sup class="nb-cite"
+              ><a href="#s2" data-nb-locator="Fig. 1 · Sec. 2.4">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Input (text in)</th>
+              <th class="txt">Output (text out)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">translate English to German: That is good.</td>
+              <td class="txt">Das ist gut.</td>
+            </tr>
+            <tr>
+              <td class="txt">cola sentence: The course is jumping well.</td>
+              <td class="txt">not acceptable</td>
+            </tr>
+            <tr>
+              <td class="txt">
+                stsb sentence1: The rhino grazed on the grass. sentence2: A rhino
+                is grazing in a field.
+              </td>
+              <td class="txt">3.8</td>
+            </tr>
+            <tr>
+              <td class="txt">
+                summarize: state authorities dispatched emergency crews tuesday
+                to survey the damage after an onslaught of severe weather in
+                mississippi&hellip;
+              </td>
+              <td class="txt">
+                six people hospitalized after a storm in attala county.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The third row is the odd one out. That task, STS-B,
+          scores how similar two sentences are on a scale from 1 to 5, so the
+          right answer is a number like 3.8, not a category and not a sentence.
+          A model that only ever emits text cannot hand back a number the way a
+          calculator would. T5's answer is to treat the number as text too. It
+          rounds the target to the nearest 0.2 and prints the digits as a string,
+          so a score of 2.57 is trained as the characters
+          <code>2.6</code>.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 2.4">1</a></sup
+          >
+          Even the task that fits the interface least is made to fit, at the cost
+          of a little accuracy.
+        </p>
+        <p>
+          The payoff of one interface is that one loss and one decoding procedure
+          train and run all of it. There is no per-task output layer to design,
+          no bespoke head bolted on for classification and another for
+          regression. When you
+          load T5 from a modern library today, you still address it by writing
+          the same task prefixes in front of your text.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="the-corpus" id="the-corpus">
+        <h2>The 750 gigabytes T5 read to learn English</h2>
+        <p>
+          A model that learns language from generic text needs a great deal of
+          it, and it needs that text readable rather than raw web sludge.
+          The authors built their own corpus for the job and called it C4, which
+          the released dataset card describes as "a colossal, cleaned version of
+          Common Crawl's web crawl corpus."<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Common Crawl is a public scrape of the web that produces about 20
+          terabytes of text a month. Almost all of it is unusable as training
+          data: menus, error messages, boilerplate, and code.<sup
+            class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 1">1</a></sup
+          >
+        </p>
+        <p>
+          What made C4 usable was a short list of blunt filters. Keep only lines
+          that end in a real sentence-ending mark. Throw away any page with fewer
+          than five sentences. Drop any page that contains a curly bracket, which
+          cheaply removes most code. Drop pages with "lorem ipsum" placeholder
+          text. Remove any three-sentence span that appears more than once, which
+          strips repeated boilerplate. Keep only pages a language detector calls
+          English with at least 99 percent confidence.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 2.2">1</a></sup
+          >
+          The cleaning is severe: it discards roughly seven-eighths of the raw
+          crawl.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          Here the paper and the download part ways. The paper reports its C4 at
+          about 750 gigabytes.<sup
+            class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 2.2">1</a></sup
+          >
+          The version you can fetch today was regenerated later. It measures
+          806.87 gibibytes of cleaned English, about 365 million training
+          examples, cut down from 6.21 tebibytes of uncleaned crawl.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Same recipe, different run. A figure attached to T5 belongs either to
+          the paper's original run or to an artifact released later, and the two
+          do not always match.
+        </p>
+      </section>
+
+      <section data-nb-section="the-bake-off" id="the-bake-off">
+        <h2>A bake-off, then scale poured on the winner</h2>
+        <p>
+          The core of the paper is not the final model but the method that
+          produced it. The authors fixed a baseline, then changed one ingredient
+          at a time, holding everything else constant, and measured what each
+          change did. Which training objective works best. Which architecture.
+          How much data. Because only one thing moves at a time, a change in the
+          score can be pinned to that one thing, not to a lucky combination. This
+          is a controlled experiment.<sup class="nb-cite"
+            ><a href="#s2">1</a></sup
+          >
+        </p>
+        <p>
+          One of those comparisons is the architecture question, and its answer
+          is the one T5 still gets cited to settle. The original encoder-decoder form, the
+          shape with a stack to read the input and a separate stack to write the
+          output, worked best inside their text-to-text framework. It uses about
+          twice the parameters of an encoder-only model like
+          <a href="../the-evidence/bert.html">BERT</a> or a decoder-only
+          language model, but at similar computational cost, and it won.<sup
+            class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 4, Takeaways">1</a></sup
+          >
+        </p>
+        <p>
+          Then the winning choices were combined and scaled. The paper does not
+          report a single headline compute figure in the flops-and-days form
+          sometimes quoted, so the scale is given in tokens instead, the
+          word-and-word-piece chunks a model reads. The baseline was
+          pretrained on about 34 billion tokens. For comparison, BERT had seen
+          roughly 137 billion and RoBERTa about 2.2 trillion. The final T5 models
+          were trained on about a trillion tokens, roughly 32 times the
+          baseline's diet.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 3.1.2; Sec. 3.7">1</a></sup
+          >
+          How many tokens a model of a given size should be fed is a question
+          <a href="../the-evidence/scaling-laws-kaplan.html">later scaling work</a>
+          took up directly. T5's number is simply the budget these authors chose.
+        </p>
+        <p>
+          Size was also scaled, across five models from about 60 million
+          parameters up to 11 billion. The largest has an unusual shape. Its
+          internal width is a modest 1,024, but its feed-forward layer is widened
+          to 65,536, with 128 attention heads. Very wide layers run efficiently
+          on the accelerators used to train it, and the released 11B
+          configuration carries exactly those numbers.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          One caution on the checkpoints. The paper's original models and the
+          improved t5.1.1 checkpoints
+          released later are not numerically identical. The smallest released
+          model reports a slightly different parameter count than the paper's
+          does.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="what-it-showed" id="what-it-showed">
+        <h2>What it showed, and what it is asked to have settled</h2>
+        <p>
+          T5's 18-of-24 result is real. On GLUE,
+          a suite of language-understanding tests, the 11B model scored 90.3
+          against a previous best of 89.4. On the harder SuperGLUE it reached
+          88.9 against 84.6, and on the SQuAD reading test its F1 was 96.22
+          against 95.5.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Table 14 · pp. 38-40">1</a></sup
+          >
+          But the same table records where it lost, and it lost on every task of
+          one kind.
+        </p>
+        <table class="nb-table">
+          <caption>
+            T5-11B against the previous best result as of 24 October 2019. It won
+            the first three rows and trailed on all three translation tasks.<sup
+              class="nb-cite"
+              ><a href="#s2" data-nb-locator="Table 14 · pp. 38-40">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Task</th>
+              <th>Previous best</th>
+              <th>T5-11B</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">GLUE</span></td>
+              <td>89.4</td>
+              <td>90.3</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">SuperGLUE</span></td>
+              <td>84.6</td>
+              <td>88.9</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">SQuAD</span> F1</td>
+              <td>95.5</td>
+              <td>96.22</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">WMT</span> En&ndash;De</td>
+              <td>33.8</td>
+              <td>32.1</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">WMT</span> En&ndash;Fr</td>
+              <td>43.8</td>
+              <td>43.4</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">WMT</span> En&ndash;Ro</td>
+              <td>38.5</td>
+              <td>28.1</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The WMT rows are the three translation tasks, scored in BLEU, a measure
+          of how closely the output matches a reference translation. T5 came in
+          below the previous best on all three, and by a wide margin on the
+          low-resource English-to-Romanian task, 28.1 against 38.5.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The paper's own caveat</span>
+          <blockquote>
+            "We did not achieve state-of-the-art performance on any of the WMT
+            translation tasks."<sup class="nb-cite"
+              ><a href="#s2" data-nb-locator="p. 39">1</a></sup
+            >
+            <span class="nb-note-who">Raffel et al., Sec. 3.7</span>
+          </blockquote>
+        </div>
+        <p>
+          The authors trace the shortfall to their own setup. They pretrained on
+          English only, while the translation systems they were up against used
+          backtranslation, a technique that manufactures extra training pairs. A
+          model that framed the whole field as text-to-text was weakest at the
+          one task that is most literally text in, text out, because that task
+          rewards choices T5 did not make.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="p. 39">1</a></sup
+          >
+        </p>
+        <p>
+          Two more things have aged. The scores are frozen to their moment. Every
+          "previous best" in the table is dated as of 24 October 2019, and T5's
+          own numbers have since been passed. On some reading tests the paper
+          already scores above the human baselines it cites.<sup
+            class="nb-cite"
+            ><a href="#s2" data-nb-locator="pp. 38-39">1</a></sup
+          >
+          The encoder-decoder finding held only at the matched, modest scale the
+          bake-off ran at. The mainstream of large language models since has
+          consolidated on the decoder-only design that comparison passed over,
+          the
+          <a href="../the-evidence/gpt-3-few-shot.html">GPT-3 direction</a>. The
+          paper's controlled comparison did not settle the architecture question
+          for the far larger scale the field went on to reach.
+        </p>
+        <p>
+          Even the way T5 is used moved past the paper. As shipped in 2020, it
+          was fine-tuned per task. A 2022 line of work added instruction
+          fine-tuning on top of the T5 family, producing the released Flan-T5
+          checkpoints, which their authors report reach strong few-shot performance
+          against much larger models. That is a capability the original paper did
+          not study.<sup class="nb-cite"
+            ><a href="#s7" data-nb-locator="arXiv 2210.11416, abstract">7</a></sup
+          >
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          T5's real contribution is two things people tend to merge into one. The
+          first is the text-to-text interface. It casts translation, grammar
+          judgment, similarity scoring, and summarizing as one problem, text in
+          and text out, down to printing a similarity score of 2.57 as the
+          characters 2.6. That idea held. It is how you still address the model
+          today. The second is a narrower empirical claim: that the
+          encoder-decoder is the architecture to build. It won a careful bake-off
+          at modest scale, but it did not survive the field's move to larger,
+          decoder-only models. So when someone cites T5 as proof of the winning
+          recipe, ask which of the two they mean. It reached the best result of
+          its time on 18 of 24 tasks and none of the three translation tasks. It
+          earns its place for the discipline of its comparison, not for a
+          leaderboard long since turned over.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1910.10683">The T5 paper</a>: the full
+            67-page study, with every ablation the bake-off ran.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2210.11416">Scaling Instruction-Finetuned Language Models</a>:
+            the later work that produced Flan-T5 on top of the T5 family.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://www.tensorflow.org/datasets/catalog/c4">The C4 dataset card</a>:
+            the released corpus, its splits, and its measured size.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1910.10683"
+              >arXiv · "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer," preprint 1910.10683</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.jmlr.org/papers/v21/20-074.html"
+              >JMLR · Raffel et al., "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer" (2020)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/docs/transformers/en/model_doc/t5"
+              >Hugging Face · T5 model documentation</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.tensorflow.org/datasets/catalog/c4"
+              >TensorFlow Datasets · C4 dataset catalog (c4/en)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/google-t5/t5-11b/blob/main/config.json"
+              >Hugging Face · google-t5/t5-11b config.json</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/google-research/text-to-text-transfer-transformer"
+              >GitHub · google-research/text-to-text-transfer-transformer</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2210.11416"
+              >arXiv · Chung et al., "Scaling Instruction-Finetuned Language Models" (2022)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
