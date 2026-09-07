@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>gpt-3.5-turbo-instruct plays legal chess; the chatbots don't · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "illegal-chess-moves",
+        "template": "lesson",
+        "title": "gpt-3.5-turbo-instruct plays legal chess; the chatbots don't",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-07",
+        "tags": ["chess", "world-models", "next-token-prediction", "evaluation"],
+        "sources": 14,
+        "words": 2157,
+        "reading_minutes": 9,
+        "dek": "No board is ever put in front of the model: it predicts the next move as text, and whether that text is legal rides on statistics one model learned well and the others mostly didn't.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">gpt-3.5-turbo-instruct plays legal chess; the chatbots don't</h1>
+        <p class="nb-dekline">
+          No board is ever put in front of the model: it predicts the next move
+          as text, and whether that text is legal rides on statistics one model
+          learned well and the others mostly didn't.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-07</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A chatbot that plays an impossible chess move is one of the clearest
+          windows into how these systems work. It looks like a program that knows
+          the rules and slipped. In fact it was never given the rules or a board,
+          only millions of games written as text, and it does nothing but predict
+          what the next move should look like. This lesson works
+          backward from a single illegal move to the part responsible for it, and
+          marks the one place where the honest answer is that no one has measured
+          it yet. By the end you will be able to say why the illegal move happens,
+          why one older model almost never makes it while the chatbots do, and
+          what the research can and cannot claim about the model you used.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html">Autoregressive generation</a>:
+            how a model produces text one token at a time, all it is doing with
+            the moves here.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/false-confidence.html">False confidence</a>:
+            why a model states a wrong move in the same fluent tone as a right
+            one.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/tool-use.html">Tool use</a>: the related
+            gap where a model that calls a tool never runs it, as this one
+            announcing a move never touches a board.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A confident move the board doesn't allow</h2>
+        <p>
+          Play chess against a chatbot by typing the moves, and a few turns in it
+          often does something no chess player would: it names a move the
+          position does not allow. It slides a bishop straight through one of its
+          own pawns, or captures a piece that left the board ten moves ago, or
+          castles while in check. It does this in the same fluent tone as a legal
+          move.
+        </p>
+        <p>
+          That is the reputation, and it is only half true. Dynomight, who ran
+          fifty games each against a range of models, reported that "no other LLM
+          is remotely close" to one exception.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The exception is gpt-3.5-turbo-instruct, an older completion model from
+          OpenAI that plays a full game at club strength and almost never offers an
+          illegal move. One evaluation counted five or fewer illegal moves across
+          8,205 moves against the engine Stockfish.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          A player rated 1900 at blitz lost a ten-game blitz match to it, nine to
+          one.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          gpt-4, meanwhile, mostly loses by attempting an illegal
+          move.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">&le;5 of 8,205</span
+            ><span class="nb-stat-l">illegal moves for gpt-3.5-turbo-instruct vs Stockfish</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">9&ndash;1</span
+            ><span class="nb-stat-l">its margin over a player rated 1900 at blitz, in a 10-game match</span>
+          </div>
+        </div>
+        <p>
+          So the behavior is real but not universal, which rules out the two
+          explanations that come first. You might guess the model looked up the
+          rules and slipped, or that it fails by guessing at random. Neither fits.
+          There is no rulebook in the loop for it to consult, and a model guessing
+          at random could not play a legal game at club strength. The real
+          question is narrower: what produces the illegal move, and why does it
+          nearly vanish for one model and not the others?
+        </p>
+      </section>
+
+      <section data-nb-section="no-board" id="no-board">
+        <h2>There is no board, only the moves as text</h2>
+        <p>
+          The model is not shown a chessboard. It
+          receives the game as text in the notation players use to record games,
+          PGN: <code>1.e4 e5 2.Nf3
+          Nc6</code> and on down the line, one move after another.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Its whole task is the one it performs on any text, taught in
+          <a href="../the-mechanics/autoregressive-generation.html">autoregressive generation</a>:
+          predict what comes next, one token at a time. The next move is just the
+          next stretch of that text.
+        </p>
+        <p>
+          The model has no separate
+          board it sets the position up on and checks a move against. Nowhere in
+          the process is a move tested for legality before it is written. Whatever
+          the model knows about where the pieces are, it holds inside the same
+          statistics it uses to pick the next token. A move is legal to it only in
+          the sense that legal-looking continuations are the ones its training made
+          likely, and its play is exactly as reliable as those statistics.
+        </p>
+        <p>
+          This much is settled engineering, and it answers the first guess
+          directly: the model is not consulting the rules and failing, because the
+          rules are written down nowhere. It reconstructs legal play, when it
+          does, from the shape of millions of games.
+        </p>
+      </section>
+
+      <section data-nb-section="internal-board" id="internal-board">
+        <h2>Small models trained on transcripts build a board anyway</h2>
+        <p>
+          "No board" is easy to overread. It does not mean the model has no sense
+          of where the pieces are. For small models built to study this, the
+          opposite is true. Train a modest network on nothing but game
+          transcripts, with no rules and no diagram, and it builds an internal
+          picture of the board that a researcher can read out of its activations.
+        </p>
+        <p>
+          The clearest demonstration used Othello, a simpler game. Li and
+          colleagues trained a network only to predict legal Othello moves, then
+          probed its activations for the board. A straight linear read stalled
+          above 20% error, while a two-layer probe recovered the board with 1.7%
+          error, which they called an emergent nonlinear representation.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Nanda and colleagues showed it was simpler than "nonlinear" suggested:
+          encode each square as mine-or-yours relative to whoever is to move, and
+          a linear probe reads the board with about 99.6% accuracy.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          The network plays both colors, so it tracks "one of my pieces," not "a
+          black piece."<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Edit that board along the probe's directions and the model's next move
+          changes to match, which shows the representation is used, not
+          decorative.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          Chess is the case that matters here, and Adam Karvonen ran it. A
+          50-million-parameter network trained character by character on about 16
+          million online games plays legal chess more than 99.6% of the time and
+          wins most games against a weak Stockfish.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          A linear probe reads 99.2% of squares correctly across 10,000 games,
+          and every game is unique by move ten, so the model generalizes rather
+          than replaying memorized lines.<sup class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+          A later study recovered the board from seven networks without training a
+          probe at all, answering the worry that the probe invents the structure
+          it finds.<sup class="nb-cite"><a href="#s10">10</a></sup>
+          For these small, purpose-built models, the internal board is settled.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Open question</span>
+          <p>
+            Every one of those results comes from a small network trained on
+            nothing but game moves.<sup class="nb-cite"><a href="#s8">8</a></sup>
+            None has been run on GPT-4, Claude, or any general chat assistant, the
+            models people actually play against. Whether a large chat
+            model builds a comparable board is untested, and it is the biggest gap
+            in the evidence. "Small models
+            keep a readable board" and "the chat model people actually use keeps one" are
+            different claims, and only the first has been measured.
+          </p>
+        </div>
+      </section>
+
+      <section data-nb-section="compounding" id="compounding">
+        <h2>The late-game collapse belongs to the weak models</h2>
+        <p>
+          A tidy story explains when the illegal moves appear. A game starts in well-trodden opening lines the training
+          data covers densely, then wanders into rarer and rarer positions, and
+          the guesses get worse as the examples thin out. For weak and chat-tuned
+          models, that is roughly what happens. Adam Yedidia found that
+          ChatGPT-3.5, without a careful prompt, could not make a legal move by
+          about move fourteen; fed the running game score, it lasted to around
+          move twenty or thirty before slipping.<sup class="nb-cite"
+            ><a href="#s11">11</a></sup
+          >
+        </p>
+        <p>
+          The strong model refuses to follow the pattern. Mathieu Acher measured gpt-3.5-turbo-instruct's
+          illegal-move rate across hundreds of games and found it roughly constant
+          over the game's length rather than climbing as the game grew long.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Dynomight watched the same model play legal moves deep into the late
+          game, and in positions that never occurred in any recorded game in
+          history.<sup class="nb-cite"><a href="#s12">14</a></sup>
+          Errors compounding as the game leaves the opening is the failure mode
+          of a weak model, not a law of how these systems play chess. When the
+          statistics are good enough, novelty and length stop mattering much.
+        </p>
+        <p>
+          The models sort into a gradient, and one adversarial game set shows how
+          wide it is.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Four OpenAI models against Stockfish: the share of games that
+            contained at least one illegal move, with estimated playing strength
+            where it could be measured.<sup class="nb-cite"
+              ><a href="#s4">4</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th>Games</th>
+              <th>Illegal-move games</th>
+              <th>Est. Elo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt"><span class="nb-table-token">gpt-3.5-turbo-instruct</span></td>
+              <td>573</td>
+              <td>16%</td>
+              <td>~1750</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">gpt-4</span></td>
+              <td>179</td>
+              <td>32%</td>
+              <td>~1305&ndash;1371</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">gpt-3.5-turbo</span> (chat)</td>
+              <td>53</td>
+              <td>93%</td>
+              <td>&mdash;</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">text-davinci-003</span></td>
+              <td>73</td>
+              <td>99%</td>
+              <td>&mdash;</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          These rates are not properties of the model alone. The same instruct
+          model touched an illegal move in 16% of Acher's games but made five or
+          fewer across 8,205 moves in Karvonen's evaluation.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The two harnesses prompt the model differently and allow different
+          numbers of retries, and the human who lost to it allowed five before
+          counting a forfeit.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Legality is a property of prompt and model together, so a figure has to
+          carry the setup that produced it.
+        </p>
+        <p>
+          Why one model sits so far ahead is not settled. Dynomight lists several
+          candidates and rules none out: the chat interface and its instruction
+          tuning degrading play, how much chess sat in each model's training data,
+          and OpenAI's own data choices.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          One widely repeated explanation, not confirmed against any primary
+          OpenAI document here, is that only games between players rated 1800 or
+          higher were kept for pretraining.<sup class="nb-cite"
+            ><a href="#s13">12</a></sup
+          >
+          Prompting closes much of the gap: with three example games and a trick
+          that makes the model rewrite the full move list first, Dynomight lifted
+          gpt-4o to about 1540 Elo, still short of the instruct model's roughly
+          1750.<sup class="nb-cite"><a href="#s12">14</a></sup>
+          The measurements are solid. The cause of the gap is an open question.
+        </p>
+      </section>
+
+      <section data-nb-section="engine-contrast" id="engine-contrast">
+        <h2>The engine can only make legal moves</h2>
+        <p>
+          A chess engine like Stockfish, or AlphaZero, is built
+          the opposite way: it is given the rules and an explicit representation of
+          the position, and it chooses a move by searching among the moves the
+          rules allow.<sup class="nb-cite"><a href="#s14">13</a></sup>
+          An illegal move is not something it usually avoids. It cannot express
+          one, because the only moves it ever considers are legal. AlphaZero
+          reached world-class play "given no domain knowledge except the game
+          rules," and those rules were part of its world, not something inferred
+          from text.<sup class="nb-cite"><a href="#s14">13</a></sup>
+        </p>
+        <p>
+          The chatbot was given
+          neither the board nor the rules, only a stream of move text, and it plays
+          legal chess only to the extent that predicting that text well produces
+          legal moves. For one model the statistics are good enough that legality
+          comes almost for free. For the others they are not, and a bishop slides
+          through a pawn.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          An illegal move from a chatbot is not a rules-check that failed, and it
+          is not a random guess. The model was handed the game as a line of text
+          and did what it does with any text: it predicted the next move, with no
+          board in the loop to test that move against. How often the prediction
+          is legal depends on how good those statistics are, and they vary
+          enormously. gpt-3.5-turbo-instruct plays a legal, club-strength game
+          deep into positions no one has ever seen; the chat models fall apart as
+          the game grows long. Small networks trained only on transcripts really
+          do build a board you can read out of them, so "it has no idea where the
+          pieces are" is too strong. But whether the chat model you used holds
+          such a board has never been measured, and that is the line between what
+          is known and what is guessed. When someone says an AI does or does not
+          understand chess, you can now say which part is settled and which part
+          no one has checked.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://dynomight.net/chess/">Something weird is happening with LLMs and chess</a>
+            (Dynomight): the head-to-head runs and the competing theories for the
+            gap.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://adamkarvonen.github.io/machine_learning/2024/01/03/chess-world-models.html">Chess-GPT's internal world model</a>
+            (Adam Karvonen): the board-probe work behind the internal-board
+            claim, with visualizations.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://www.neelnanda.io/mechanistic-interpretability/othello">Othello-GPT has a linear emergent world representation</a>
+            (Neel Nanda): the mine-or-yours reframing explained in plain
+            language.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Main post (per-model results, theories); follow-up at /more-chess/"
+              href="https://dynomight.net/chess/"
+              >Dynomight · Something weird is happening with LLMs and chess (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Results table; gpt-4 notes"
+              href="https://github.com/adamkarvonen/chess_gpt_eval/blob/master/README.md"
+              >Adam Karvonen · chess_gpt_eval (evaluation harness README)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Match-result tables; personal blitz section; methods (retries)"
+              href="https://pappubahry.substack.com/p/gpt-versus-one-node-leela"
+              >David Barry · GPT versus one-node Leela</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Per-model results tables; section on game length and illegal-move timing"
+              href="https://blog.mathieuacher.com/GPTsChessEloRatingLegalMoves/"
+              >Mathieu Acher · Debunking the Chessboard: GPTs, chess Elo, and legal moves</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; probing section and error-rate table; intervention section"
+              href="https://arxiv.org/abs/2210.13382"
+              >Li, Hopkins, Bau, Viégas, Pfister &amp; Wattenberg · Emergent World Representations (Othello-GPT), ICLR 2023</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; linear-probe accuracy table; intervention results"
+              href="https://arxiv.org/abs/2309.00941"
+              >Nanda, Lee &amp; Wattenberg · Emergent Linear Representations in World Models of Self-Supervised Sequence Models, BlackboxNLP 2023</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="&quot;My color not their color&quot; section; intervention section"
+              href="https://www.neelnanda.io/mechanistic-interpretability/othello"
+              >Neel Nanda · Actually, Othello-GPT has a linear emergent world representation</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; board-probe and win-rate sections; intervention results"
+              href="https://arxiv.org/abs/2403.15498"
+              >Adam Karvonen · Emergent World Models and Latent Variable Estimation in Chess-Playing Language Models, COLM 2024</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="&quot;How well does it play&quot; and linear-probe sections"
+              href="https://adamkarvonen.github.io/machine_learning/2024/01/03/chess-world-models.html"
+              >Adam Karvonen · Chess-GPT's internal world model</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; unsupervised-grounding results; alignment-similarity table"
+              href="https://arxiv.org/abs/2503.04421"
+              >Yuan &amp; Søgaard · Revisiting the Othello World Model Hypothesis (2025)</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Body (chat-model games, &quot;magic prompt&quot;); edit note at top"
+              href="https://www.lesswrong.com/posts/F6vH6fr8ngo7csDdf/chess-as-a-case-study-in-hidden-capabilities-in-chatgpt"
+              >Adam Yedidia · Chess as a case study in hidden capabilities in ChatGPT (2023)</a
+            >
+          </li>
+          <li id="s12">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Late-game and novel-position play; gpt-4o with in-context examples and move-list regurgitation"
+              href="https://dynomight.net/more-chess/"
+              >Dynomight · OK, I can partly explain the LLM chess weirdness now (2024)</a
+            >
+          </li>
+          <li id="s13">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Full post"
+              href="https://simonwillison.net/2024/Nov/21/llm-chess/"
+              >Simon Willison · LLMs and chess (2024)</a
+            >
+          </li>
+          <li id="s14">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/1712.01815"
+              >Silver et al. · Mastering Chess and Shogi by Self-Play (AlphaZero), 2017</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
