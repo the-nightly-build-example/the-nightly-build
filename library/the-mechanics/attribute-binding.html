@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image generators put a prompt's colors on the wrong objects · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "attribute-binding",
+        "template": "lesson",
+        "title": "Image generators put a prompt's colors on the wrong objects",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-08",
+        "tags": [],
+        "sources": 8,
+        "words": 1697,
+        "reading_minutes": 7,
+        "dek": "On the standard benchmark, Stable Diffusion binds a color to the right object at 0.38 out of 1, because the prompt is encoded with no record of which adjective belongs to which noun.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">Image generators put a prompt's colors on the wrong objects</h1>
+        <p class="nb-dekline">
+          On the standard benchmark, Stable Diffusion binds a color to the right
+          object at 0.38 out of 1, because the prompt is encoded with no record
+          of which adjective belongs to which noun.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-09-08</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Text-to-image tools are now on most phones, and the failure you meet
+          on the second serious prompt is almost always this one. The model gets
+          the objects and the mood right, then puts the wrong color, texture, or
+          position on the wrong thing. This lesson works backward from that
+          wrong picture to what causes it, one part of the system at a time, and
+          marks the places where the people who build these systems still
+          disagree. By the end you should be able to say why the color lands on
+          the wrong object, and to hear when someone's explanation skips the step
+          where it actually goes wrong.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">An attention head is a weighted average that computes its own weights</a>:
+            the operation cross-attention is built from.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/denoising-diffusion.html">The diffusion paper behind today's image generators</a>:
+            how a model turns noise into a picture.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/counting-objects-in-images.html">Six apples come out as some apples</a>:
+            a neighboring failure in the same pipeline.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The bench comes out yellow</h2>
+        <p>
+          A text-to-image model takes a line of text and returns a picture meant
+          to match it. Give it one object with one attribute, a red apple or a
+          wooden chair, and it usually obliges. Give it two objects that each
+          carry their own attributes, and it starts to slip.
+        </p>
+        <p>
+          When researchers testing Stable Diffusion asked it for
+          <em>a yellow bow and a brown bench</em>, it drew the bow yellow and
+          then painted the bench yellow too, dropping the brown the prompt had
+          assigned to it.<sup class="nb-cite"><a href="#s1">1</a></sup> Both
+          objects arrived. The color meant for one of them landed on both.
+        </p>
+
+        <figure class="nb-figure">
+          <img
+            src="attribute-binding/asset-1.png"
+            alt="Four generated images for the prompt 'A yellow bow and a brown bench'. In the top pair the bench itself is yellow; in the bottom pair the bench is brown and only the bow is yellow."
+          />
+          <figcaption>
+            Fig. 1 &middot; Stable Diffusion given &ldquo;A yellow bow and a
+            brown bench&rdquo; (top row) paints the bench with the bow's yellow;
+            steering cross-attention with Attend-and-Excite (bottom row) restores
+            the brown bench.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Fig. 2"
+                data-nb-note="The incorrect-attribute-binding column: baseline Stable Diffusion outputs and the corrected outputs beside them."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+
+        <p>
+          One prompt is an anecdote. The same slip shows up wherever binding is
+          measured at scale. On T2I-CompBench, a benchmark of thousands of
+          compositional prompts, Stable Diffusion v1.4 scores 0.38 out of 1 at
+          putting the named color on the named object, and only 0.12 at getting
+          spatial relations like &ldquo;on top of&rdquo;
+          right.<sup class="nb-cite"><a href="#s2">2</a></sup> A separate study
+          generated 1,350 DALL-E 2 images from basic relation prompts and asked
+          169 people to judge them; about 22% matched the relation
+          requested.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">0.38</span
+            ><span class="nb-stat-l">Color binding, SD v1.4 (0&ndash;1)</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">0.12</span
+            ><span class="nb-stat-l">Spatial relations, SD v1.4 (0&ndash;1)</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">22%</span
+            ><span class="nb-stat-l">DALL-E 2 images matching a relation</span>
+          </div>
+        </div>
+
+        <p>
+          The colors and the objects are all there. Only the pairing between
+          them is wrong. To see why, follow the prompt through the two steps that
+          stand between the words and the picture.
+        </p>
+      </section>
+
+      <section data-nb-section="pipeline" id="pipeline">
+        <h2>The path from words to image</h2>
+        <p>
+          The picture is not drawn from the prompt directly. First the words are
+          handed to a text encoder, a network that reads the prompt and turns it
+          into a list of vectors, one for each word or word-piece. Most image
+          systems use a CLIP-style encoder, trained by matching whole captions to
+          whole images across 400 million
+          pairs.<sup class="nb-cite"><a href="#s4">4</a></sup> That training is
+          the point to hold on to, and this course covers CLIP itself in
+          <a href="../the-evidence/clip.html">its own lesson</a>.
+        </p>
+        <p>
+          Those vectors are what the image model consults while it works. A
+          generator like Stable Diffusion builds the picture by denoising: it
+          starts from a field of noise and refines it step by step, the subject
+          of <a href="../the-evidence/denoising-diffusion.html">an earlier
+          lesson</a>. At each step it reads the text vectors through
+          cross-attention, the operation that lets one set of things attend to
+          another. Here each region of the emerging image attends to the words
+          and pulls in the ones that describe
+          it.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          <a href="../the-mechanics/attention.html">Attention</a> has its own
+          lesson; what matters for binding is that cross-attention is the only
+          channel through which the prompt reaches the canvas.
+        </p>
+        <p>
+          Two places, then, can bend the pairing: the encoder that writes the
+          vectors, and the cross-attention that reads them.
+        </p>
+      </section>
+
+      <section data-nb-section="where-it-breaks" id="where-it-breaks">
+        <h2>Where the binding comes loose</h2>
+        <p>
+          The tidy story blames the encoder. CLIP's text encoder reads left to
+          right behind a causal mask, so each word's vector is blended with the
+          words before it; by the time &ldquo;bench&rdquo; is encoded it carries
+          traces of &ldquo;yellow,&rdquo; &ldquo;bow,&rdquo; and
+          &ldquo;brown&rdquo; alike.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          And CLIP was never trained to keep an adjective attached to its noun.
+          Its objective rewards a single pooled sense of the whole caption,
+          matched against the whole image, with no signal that
+          &ldquo;yellow&rdquo; modifies &ldquo;bow&rdquo; and not
+          &ldquo;bench.&rdquo;<sup class="nb-cite"><a href="#s4">4</a></sup> On
+          this account the encoder hands the image model a loose bundle of
+          concepts, and the pairing is already lost in the text, before the image
+          model runs at all.
+        </p>
+        <p>
+          That story is too tidy. If the encoder held all the blame, repairing
+          the encoding would repair the picture. StructureDiffusion tries exactly
+          that. It parses the prompt and feeds structured noun-phrase encodings
+          into the image model, and the payoff is small, lifting two-object color
+          accuracy from 19.2% to
+          22.7%.<sup class="nb-cite"><a href="#s6">6</a></sup> Attend-and-Excite
+          leaves the encoder untouched and works only on the cross-attention,
+          pushing each object's word to claim a region of the image, and it
+          recovers far more.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The gap it closes points at the same place. When Stable Diffusion draws
+          a two-object prompt, the whole prompt matches the image reasonably
+          well, around 0.83 on a CLIP similarity score. The worse-served object
+          matches at only 0.60 to 0.63: one object is rendered while the other is
+          dropped or mis-colored. Steering the cross-attention raises
+          that second object to 0.69 to
+          0.72.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+
+        <table class="nb-table">
+          <caption>
+            Two training-free fixes, and where each reaches into the pipeline.
+            Each measures a different quantity on a different prompt set, so the
+            gains cannot be lined up against each
+            other.<sup class="nb-cite"><a href="#s1">1</a></sup
+            ><sup class="nb-cite"><a href="#s6">6</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Fix</th>
+              <th class="txt">Intervenes on</th>
+              <th class="txt">Reported result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">StructureDiffusion</span></td>
+              <td class="txt">the text encoding</td>
+              <td class="txt">two-object color 19.2% &rarr; 22.7%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Attend-and-Excite</span></td>
+              <td class="txt">the cross-attention</td>
+              <td class="txt">worse-served object 0.60&ndash;0.63 &rarr; 0.69&ndash;0.72</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          This does not settle where the fault lives. Each method reports gains
+          on its own prompts and metrics, and each favors the part it chose to
+          touch, so the numbers cannot be compared
+          directly.<sup class="nb-cite"><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s6">6</a></sup> What they agree on is
+          narrower and firmer: reach into the text side or the attention side and
+          binding improves, which locates the fault in those two parts and not
+          somewhere else.
+        </p>
+        <p>
+          The failure is not particular to one encoder either. A separate study
+          of DALL-E 2, which uses a different text encoder, catalogs the same
+          behavior: one attribute word modifying two objects, a single word
+          playing two roles, a property leaking from one object to its
+          neighbor.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="settled-and-open" id="settled-and-open">
+        <h2>How far the explanation reaches</h2>
+        <p>
+          Two things are settled. The failure is systematic, not occasional: it
+          is measured on Stable Diffusion by T2I-CompBench, on DALL-E 2 by the
+          relation study, and reproduced by every fix paper that first had to
+          document the problem it set out to
+          solve.<sup class="nb-cite"><a href="#s2">2</a></sup
+          ><sup class="nb-cite"><a href="#s3">3</a></sup
+          ><sup class="nb-cite"><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s6">6</a></sup> And the cause lives in
+          the text conditioning and the cross-attention, the two parts that carry
+          the words into the image, because that is where every working fix
+          reaches in.<sup class="nb-cite"><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          Two things are open. The first is how the blame divides. The fixes
+          disagree about how much of the problem sits in the encoding and how
+          much in the attention, and their evidence is competing methods rather
+          than a clean split.<sup class="nb-cite"><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s6">6</a></sup> The second is whether
+          any of this generalizes. The fixes move the numbers, but the ceiling
+          stays low; even after correction, two-object color is right about 22.7%
+          of the time.<sup class="nb-cite"><a href="#s6">6</a></sup> A 2025 review
+          argues the shortfall is architectural, that continuous attention is
+          ill-suited to the discrete job of keeping each attribute on its own
+          object, and that incremental fixes will not close the
+          gap.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          Under all of it sits one plain fact, and it is where the explanation
+          reaches bottom: the model was never handed the sentence's structure.
+          Nothing about which adjective governs which noun survives into the
+          vectors the picture is drawn from, so nothing downstream can reliably
+          put it back. That is the step below which no further part of the system
+          would change the answer.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The wrong-colored object is not a rendering glitch. It is what happens
+          when a sentence is turned into a set of vectors that no longer records
+          which word described which thing. That set is then handed to a model
+          whose only link to the prompt is an attention step, and the step can
+          send a color to the wrong region. The objects survive that trip. The pairing between them
+          does not. What is firm is that the failure is real, measured, and
+          reproduces across different systems, and that its cause sits in those
+          two parts. What is still argued is how the blame divides between them,
+          and whether the fixes will ever hold. So when someone tells you a
+          bigger model will simply learn to follow the prompt, the question to
+          ask is where, in those two steps, the sentence's structure is supposed
+          to come back.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2307.06350">T2I-CompBench</a>: the
+            benchmark and its full per-category scores.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2301.13826">Attend-and-Excite</a>: the
+            cross-attention fix, with more failure examples.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2511.10136">Right Looks, Wrong Reasons</a>:
+            the case that the fix has to be architectural.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2301.13826"
+              >arXiv &middot; Chefer et al., &ldquo;Attend-and-Excite: Attention-Based Semantic Guidance for Text-to-Image Diffusion Models&rdquo; (2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.06350"
+              >arXiv &middot; Huang et al., &ldquo;T2I-CompBench: A Comprehensive Benchmark for Open-world Compositional Text-to-image Generation&rdquo;</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2208.00005"
+              >arXiv &middot; Conwell &amp; Ullman, &ldquo;Testing Relational Understanding in Text-Guided Image Generation&rdquo; (2022)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2103.00020"
+              >arXiv &middot; Radford et al., &ldquo;Learning Transferable Visual Models From Natural Language Supervision&rdquo; (CLIP, 2021)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2112.10752"
+              >arXiv &middot; Rombach et al., &ldquo;High-Resolution Image Synthesis with Latent Diffusion Models&rdquo; (2022)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2212.05032"
+              >arXiv &middot; Feng et al., &ldquo;Training-Free Structured Diffusion Guidance for Compositional Text-to-Image Synthesis&rdquo; (2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2210.10606"
+              >arXiv &middot; Rassin et al., &ldquo;DALLE-2 is Seeing Double: Flaws in Word-to-Concept Mapping in Text2Image Models&rdquo; (2022)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2511.10136"
+              >arXiv &middot; Vatsa, Bharati &amp; Singh, &ldquo;Right Looks, Wrong Reasons: Compositional Fidelity in Text-to-Image Generation&rdquo; (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
