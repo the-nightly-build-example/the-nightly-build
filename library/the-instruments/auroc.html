@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A sepsis model scoring 0.63 AUROC caught one case in three at the threshold hospitals used · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "auroc",
+        "template": "lesson",
+        "title": "A sepsis model scoring 0.63 AUROC caught one case in three at the threshold hospitals used",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-08",
+        "tags": ["auroc", "roc-curve", "ranking", "class-imbalance", "epic-sepsis-model", "positive-predictive-value"],
+        "sources": 8,
+        "words": 2084,
+        "reading_minutes": 9,
+        "dek": "The area under the ROC curve scores how often a model ranks a sick patient above a well one, a measure that stays silent on the threshold a hospital sets and on how rare the disease is.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">A sepsis model scoring 0.63 AUROC caught one case in three at the threshold hospitals used</h1>
+        <p class="nb-dekline">
+          The area under the ROC curve scores how often a model ranks a sick
+          patient above a well one, a measure that stays silent on the threshold
+          a hospital sets and on how rare the disease is.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-08</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When a model is called accurate, the number behind the word is usually
+          AUROC. It is the single figure between 0.5 and 1.0 that a system earns
+          for sorting cases into two piles: sick or well, fraud or not, sepsis or
+          not. It reaches the public as a grade, and hospitals, banks, and regulators
+          buy tools on the strength of it. This lesson shows what the figure
+          actually counts. It shows why a high one can sit beside a tool that
+          misses most of what it hunts, and how to read the number the next time a
+          model arrives with one.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/calibration-error.html">A model that only guesses the base rate scores zero calibration error</a>:
+            the companion lesson on whether a model's stated probabilities are
+            true, which AUROC deliberately ignores.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../when-ai-breaks/epic-sepsis-model.html">Epic's sepsis alarm missed two-thirds of the patients it was built to catch</a>:
+            the full deployment story behind the figures this lesson borrows to
+            teach the measurement.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What the 0.83 was hiding</h2>
+        <p>
+          Epic Systems sold a sepsis prediction model to hundreds of American
+          hospitals with a reported area under the curve as high as 0.83, a figure
+          the vendor's own reporting produced.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          When a team at Michigan Medicine ran the same model against 38,455
+          hospital stays and checked its scores against who actually developed
+          sepsis, the area came out at 0.63.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The area under the curve, written AUROC or AUC or the c-statistic, is the
+          default way to say a classifier works. It is also read as a report card
+          on the whole tool, and it is nothing of the kind. It answers one narrow
+          question, and it answers it well. What it cannot tell you is whether the
+          model's stated probabilities mean anything, how the model behaves at the
+          one alarm setting a hospital actually uses, and what happens when the
+          disease it hunts is rare. Those three gaps are where the 0.83 hid a tool
+          that did not work.
+        </p>
+      </section>
+
+      <section data-nb-section="score-to-decision" id="score-to-decision">
+        <h2>Turning a score into a decision</h2>
+        <p>
+          A binary classifier does not hand back a yes or a no. It hands back a
+          number, a score for how strongly it believes a case belongs to the class
+          it is looking for: this patient will develop sepsis, this transaction is
+          fraud. To act on the score, someone picks a cutoff. A score above the
+          line sounds the alarm. A score below it passes unremarked. Epic's model
+          runs from a low floor to a high ceiling, and the hospitals in the
+          Michigan study set the alarm at a score of 6.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Where that line falls decides two rates at once. Sensitivity is the share
+          of real cases the alarm catches: of everyone who truly had sepsis, how
+          many scored above the cutoff. Specificity is the share of non-cases it
+          correctly leaves alone: of everyone who was fine, how many stayed
+          below.<sup class="nb-cite"><a href="#s2">2</a></sup> The two work against
+          each other. Lower the cutoff to catch more real cases and the alarm also
+          fires on more healthy people. Raise it to spare the healthy and more real
+          cases slip through untouched. A model does not have one sensitivity and
+          one specificity. It has a different pair at every cutoff it could be set
+          to.
+        </p>
+      </section>
+
+      <section data-nb-section="ranking-bet" id="ranking-bet">
+        <h2>The area is a bet on a random pair</h2>
+        <p>
+          Sweep the cutoff from its highest setting down to its lowest and plot
+          each sensitivity-and-specificity pair as a point. The horizontal axis is
+          the false-positive rate, the share of healthy people wrongly flagged,
+          which is just one minus specificity. The vertical axis is
+          sensitivity.<sup class="nb-cite"><a href="#s2">2</a></sup> The line those
+          points trace as the threshold moves is the receiver operating
+          characteristic curve, the ROC curve. It runs from the bottom left, where
+          the cutoff is so high that nothing is flagged, up to the top right, where
+          it is so low that everything is.
+        </p>
+        <p>
+          The area under that curve is AUROC, and it measures exactly one thing.
+          Take one patient who truly developed sepsis and one who did not, both
+          drawn at random. The area is the probability that the model gave the sick
+          one the higher score.<sup class="nb-cite"><a href="#s3">3</a></sup> Hanley
+          and McNeil showed in 1982 that this ranking probability is the same
+          quantity as the Wilcoxon rank-sum statistic, which is why the two are
+          names for one number.<sup class="nb-cite"><a href="#s3">3</a></sup> A model
+          that ranks the pair correctly every time scores 1.0. A model that does no
+          better than a coin toss scores 0.5.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            AUROC is one bet. Hand the model a random sick patient and a random
+            well one, and the score is the chance it rates the sick one higher.<sup
+              class="nb-cite"><a href="#s3">3</a></sup> It grades the order of two
+            cases. It says nothing about whether the alarm was right about any
+            single patient.
+          </p>
+        </div>
+      </section>
+
+      <section data-nb-section="what-ranking-misses" id="what-ranking-misses">
+        <h2>Same ranking, different world</h2>
+        <p>
+          Because AUROC cares only about the order of scores, three of its blind
+          spots follow directly.
+        </p>
+        <p>
+          The first is calibration: whether a model's stated probabilities are
+          true, so that cases it calls 70 percent likely happen about 70 percent of
+          the time. Ranking ignores this. Multiply every score by a constant and
+          the order is untouched, so the area holds steady even as the numbers
+          drift away from real frequencies. Calibration is a subject of its own,
+          taught in
+          <a href="../the-instruments/calibration-error.html">calibration error</a>.
+          A strong AUROC promises nothing about it.
+        </p>
+        <p>
+          The second is the threshold. The area averages over every possible
+          cutoff, including ones no hospital would ever choose. The single point a
+          deployment runs at can sit low on the curve while the average across all
+          points stays respectable. AUROC scores the whole curve. A ward lives at
+          one point on it.
+        </p>
+        <p>
+          The third is how rare the target is, and it is the one that catches
+          people, because the number really does hold still while the world beneath
+          it changes. Saito and Rehmsmeier took one classifier's identical outputs
+          and scored them on a balanced dataset and on an imbalanced one. The ROC
+          curve and its area did not move between the two.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          But precision, the share of alarms that turn out to be real cases, fell
+          from 0.60 to 0.33 as the healthy came to outnumber the
+          sick.<sup class="nb-cite"><a href="#s2">2</a></sup> Precision counts true
+          alarms against all alarms, so as negatives pile up, more of the alarms
+          are false and the fraction sinks, even though the model ranks exactly as
+          well as before. The baseline of a precision-recall curve is the positive
+          rate itself, the count of positives over positives plus negatives, which
+          is why that curve moves with prevalence when the ROC curve will
+          not.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The lesson people draw from this is often stronger than the evidence. It
+          is tempting to say that under imbalance you should always prefer the area
+          under the precision-recall curve, and for skewed data a precision-recall
+          view does give a more informative picture of a
+          classifier.<sup class="nb-cite"><a href="#s4">4</a></sup> But a 2024
+          result shows the blanket rule is wrong.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Preferring that area can favor groups with more frequent positives and
+          widen the gaps between them, and it does not follow automatically from the
+          imbalance.
+          The durable fact is narrower and is not in dispute. AUROC does not move
+          with prevalence. Precision does. A high area can therefore sit right
+          beside a low share of true alarms, which is precisely what a rare disease
+          arranges.
+        </p>
+      </section>
+
+      <section data-nb-section="alarm-at-six" id="alarm-at-six">
+        <h2>The alarm at score six</h2>
+        <p>
+          Put the three blind spots together and Epic's two numbers stop being a
+          contradiction. The external area of 0.63 sat below the 0.76 to 0.83 the
+          vendor reported,<sup class="nb-cite"><a href="#s1">1</a></sup> a range Epic
+          and University of Colorado Health had put out
+          together.<sup class="nb-cite"><a href="#s6">6</a></sup> But the area was
+          never the thing a patient felt. At the score of 6 the hospitals actually
+          set, the model's sensitivity was 33
+          percent.<sup class="nb-cite"><a href="#s1">1</a></sup> It missed 1,709 of
+          the 2,552 patients who developed sepsis, close to two in
+          three.<sup class="nb-cite"><a href="#s1">1</a></sup> Of the cases it
+          missed, 1,030 received timely antibiotics anyway, which bounds how much
+          the alarm was adding on its own.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="auroc/chart-1.png"
+            alt="A square ROC plot from zero to one on both axes with a dashed diagonal chance line. A single marked point sits at false-positive rate 0.17 and sensitivity 0.33, just above the diagonal. No curve is drawn through it."
+          />
+          <figcaption>
+            Fig. 1 &middot; The Epic Sepsis Model's one deployed operating point,
+            the alarm at score 6: 33 percent sensitivity against a 17 percent
+            false-positive rate, plotted against the chance diagonal. The summary
+            AUROC of 0.63 stands for a whole curve; a hospital runs at a single
+            point on it. Wong et al. publish this point, not the curve's
+            coordinates.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Results; Figure 1"
+                data-nb-note="Sensitivity 33% and specificity 83% at the deployed threshold give the plotted point (FPR 0.17, TPR 0.33)."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          The false alarms were the other half of the cost. Sepsis was rare in the
+          cohort, about 7 percent of stays, and at a rare positive rate a decent
+          specificity still leaves a flood of false
+          positives.<sup class="nb-cite"><a href="#s1">1</a></sup> This is the
+          imbalance effect, now with a bedside price. The
+          model's positive predictive value, the share of its alarms that were real
+          sepsis, was 12 percent.<sup class="nb-cite"><a href="#s1">1</a></sup> To
+          find one true case, clinicians would have had to work up 8 patients if the
+          alarm sounded once per stay, and 109 if it re-fired each time the score
+          crossed 6 over a four-hour window.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The alarm went off on 18 percent of all
+          hospitalizations.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Why would a model that ranks so unremarkably in the field have looked
+          strong in the vendor's own testing? Reporting by STAT News found that the
+          model's inputs included whether a clinician had already ordered
+          antibiotics, an input Epic had not publicly
+          disclosed.<sup class="nb-cite"><a href="#s7">7</a></sup> On retrospective
+          data, knowing that a doctor already suspected sepsis makes the sick easy
+          to rank above the well, and the area rises. At the bedside, where the
+          point is to warn the doctor before the suspicion forms, that signal
+          arrives too late to help, which fits the finding that most of the missed
+          cases were already being treated.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A second validation, across 145,885 emergency-department encounters at two
+          Texas county hospitals in 2023, measured a sensitivity of 14.7 percent and
+          a median alert lead time of zero minutes, worse than Michigan's and in the
+          same direction.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          AUROC answers one question: how well a model ranks a real case above a
+          non-case. Ask it whether the deployed tool works and it answers something
+          else. It says nothing about whether the model's probabilities are honest,
+          nothing about how the tool behaves at the single threshold someone sets,
+          and nothing about how many alarms are false when the target is rare. That
+          independence from prevalence and threshold is also the reason to keep the
+          number around: it lets you compare two models across hospitals with
+          different sepsis rates without the difference in rates swamping the
+          comparison. The number did its job. The mistake was reading a ranking
+          score as a verdict on a working alarm. Epic's 0.63 was a fair ranking and
+          a poor alarm, and a reader who holds the two apart will not be caught by
+          the next headline that reports only the first.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://doi.org/10.1016/j.patrec.2005.10.010">Fawcett, An introduction to ROC analysis</a>:
+            the standard primer on how ROC curves are drawn and what their area
+            means, with the geometry this lesson only sketched.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://developers.google.com/machine-learning/crash-course/classification/roc-and-auc">Google's machine-learning crash course on ROC and AUC</a>:
+            a hands-on walkthrough where you drag a threshold across a curve and
+            watch sensitivity and the false-positive rate trade off.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/2781307"
+              >JAMA Internal Medicine · Wong et al., External Validation of a Widely Implemented Proprietary Sepsis Prediction Model in Hospitalized Patients (2021)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0118432"
+              >PLOS ONE · Saito &amp; Rehmsmeier, The Precision-Recall Plot Is More Informative than the ROC Plot When Evaluating Binary Classifiers on Imbalanced Datasets (2015)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://jhanley.biostat.mcgill.ca/software/Hanley_McNeil_Radiology_82.pdf"
+              >Radiology · Hanley &amp; McNeil, The Meaning and Use of the Area under a Receiver Operating Characteristic (ROC) Curve (1982)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://mlanthology.org/icml/2006/davis2006icml-relationship/"
+              >ICML · Davis &amp; Goadrich, The Relationship Between Precision-Recall and ROC Curves (2006)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2401.06091"
+              >NeurIPS · McDermott et al., A Closer Look at AUROC and AUPRC under Class Imbalance (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://jamanetwork.com/journals/jamainternalmedicine/fullarticle/2781313"
+              >JAMA Internal Medicine · Habib, Lin &amp; Grant, The Epic Sepsis Model Falls Short—The Importance of External Validation (2021)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.statnews.com/2021/09/27/epic-sepsis-algorithm-antibiotics-model/"
+              >STAT News · Ross, Epic's sepsis algorithm is going off the rails in the real world (2021)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11560849/"
+              >JAMIA Open · Ostermayer et al., External validation of the Epic sepsis predictive model in 2 county emergency departments (2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
