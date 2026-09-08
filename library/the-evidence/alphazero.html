@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AlphaZero beat Stockfish twice, under different rules each time · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "alphazero",
+        "template": "lesson",
+        "title": "AlphaZero beat Stockfish twice, under different rules each time",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-08",
+        "tags": [],
+        "sources": 9,
+        "words": 1730,
+        "reading_minutes": 8,
+        "dek": "Everyone quotes the one-minute-per-move match from the 2017 preprint, not the peer-reviewed 1000-game rematch that gave Stockfish tournament time and still ended 155 to 6.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">AlphaZero beat Stockfish twice, under different rules each time</h1>
+        <p class="nb-dekline">
+          Everyone quotes the one-minute-per-move match from the 2017 preprint, not the peer-reviewed 1000-game rematch that gave Stockfish tournament time and still ended 155 to 6.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-08</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          AlphaZero is the paper people reach for when they say an AI taught
+          itself a hard skill from nothing but the rules, and it stands behind
+          the same claim now made about systems that learn to reason. It is worth
+          knowing what that self-teaching actually did, and what the result that
+          made it famous rested on. This lesson walks through what AlphaZero
+          learned and how, the exact conditions of the chess match it is quoted
+          for, and which parts of the story have held up in the years since.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/alphago.html">AlphaGo's Nature paper never mentions Lee Sedol</a>: the predecessor that learned Go from human games before AlphaZero dropped them.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/the-bitter-lesson.html">Rich Sutton's essay has four examples and zero citations</a>: the argument that search and learning beat hand-built knowledge, which AlphaZero is cited to support.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One network, no human games</h2>
+        <p>
+          In December 2018, a team at DeepMind reported in <em>Science</em> that
+          a single program had taught itself chess, shogi and Go and reached a
+          level above the strongest existing programs in each, starting from
+          nothing but the rules.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The program was AlphaZero. It was given the legal moves and the win,
+          loss and draw conditions of a game, and nothing more. It had no
+          database of human games and no library of studied openings. It had no
+          evaluation function either, the hand-written scoring of a position that
+          chess engines had always used. It improved by playing millions of games against copies of
+          itself, a method called self-play reinforcement learning, in which the
+          only teacher is the final result of each game, fed back to adjust the
+          network that picks the moves.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          One neural network estimated, for any position, both which moves looked
+          worth considering and who was likely to win. A general search
+          procedure, Monte Carlo tree search, then read a short way down the most
+          promising lines before the program committed to a move. This is the
+          step past
+          <a href="../the-evidence/alphago.html">AlphaGo</a>, the earlier
+          DeepMind system that first learned Go from recorded human games and
+          only then improved by self-play. AlphaZero dropped the human data
+          altogether.
+        </p>
+      </section>
+
+      <section data-nb-section="what-it-measured" id="what-it-measured">
+        <h2>Nine hours of chess, thirteen days of Go</h2>
+        <p>
+          Training was quick in wall-clock time and heavy in hardware. Full
+          training ran about nine hours for chess, twelve for shogi and thirteen
+          days for Go, each over 700,000 update steps on batches of 4,096
+          positions.<sup class="nb-cite"><a href="#s1">1</a></sup> AlphaZero
+          first climbed past Stockfish's level in chess after four hours, and
+          past the shogi engine Elmo after two.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The compute behind those hours was large: 5,000 first-generation tensor
+          processing units, Google's custom chips for this kind of work,
+          generated the self-play games, and 16 second-generation TPUs trained the network.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">4 h</span><span class="nb-stat-l">TO PASS STOCKFISH</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">13 days</span><span class="nb-stat-l">TRAINING FOR GO</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">700,000</span><span class="nb-stat-l">TRAINING STEPS</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">5,000</span><span class="nb-stat-l">TPUS, SELF-PLAY</span>
+          </div>
+        </div>
+        <p>
+          The results were one-sided. Over 1000 games of chess it beat Stockfish,
+          winning 155, losing 6 and drawing 839.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          In shogi it scored 91.2% against Elmo, and in Go it won 61% of its
+          games against an earlier version of AlphaGo Zero.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The chess figure is more lopsided as a headline than as a contest.
+          Almost all of AlphaZero's wins came with the white pieces, which move
+          first. Playing black, it won 2% of its games and drew 97%.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          It also reached this while searching far less than its opponent.
+          Stockfish examined about 60 million positions a second; AlphaZero
+          examined about 60,000, roughly a thousandth as many, and chose among
+          them with the network rather than by raw count.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="two-matches" id="two-matches">
+        <h2>The two Stockfish matches</h2>
+        <p>
+          The chess result is the one that travels, and it is usually quoted with
+          the wrong conditions attached. There are two AlphaZero papers, and they
+          describe two different chess matches.<sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The conditions people repeat come from the first paper, a preprint
+          posted in December 2017.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          That match was 100 games at a fixed one minute per move, against
+          Stockfish 8 running on 64 threads with a one-gigabyte hash table and no
+          opening book, while AlphaZero ran on four TPUs. AlphaZero won 28, drew
+          72 and lost none.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Strong players and Stockfish's own authors said those conditions made
+          the score hard to read. Tord Romstad, one of Stockfish's original
+          authors, called it a "rather strange choice of time controls", noting
+          that the one-minute limit denied the engine the time-management it
+          normally uses and that the version tested was a year old.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          He summed the mismatch up as "apples to orangutans".<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The grandmasters Hikaru Nakamura and Larry Kaufman objected most to
+          Stockfish playing without its opening book, the stored library of
+          studied first moves that a top engine leans on.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          The peer-reviewed paper, published in <em>Science</em> a year later and
+          the version the field treats as the record, ran a different and harder
+          match. It was 1000 games at three hours each plus 15 seconds a move,
+          against Stockfish in its 44-core tournament configuration.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The authors added separate matches against the newest Stockfish
+          development build available in January 2018 and against a Stockfish
+          given a strong opening book, and AlphaZero won those too. It still won
+          when handed a tenth of Stockfish's thinking time.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Reporting at the time judged that the realistic time control had
+          removed one of the biggest objections to the 2017 match.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            The two AlphaZero chess matches. The widely quoted conditions belong to the 2017 preprint.<sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Condition</th>
+              <th>2017 preprint</th>
+              <th>2018 Science</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Games</td>
+              <td>100</td>
+              <td>1 000</td>
+            </tr>
+            <tr>
+              <td class="txt">Time control</td>
+              <td>1 min / move</td>
+              <td>3 h + 15 s / move</td>
+            </tr>
+            <tr>
+              <td class="txt">Stockfish setup</td>
+              <td>v8, 64 threads, 1 GB hash</td>
+              <td>v8, 44 CPU cores</td>
+            </tr>
+            <tr>
+              <td class="txt">Opening book</td>
+              <td>none</td>
+              <td>none, plus a separate book match</td>
+            </tr>
+            <tr>
+              <td class="txt">Result (W / D / L)</td>
+              <td>28 / 72 / 0</td>
+              <td>155 / 839 / 6</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Answering the 2017 objections did not make the match neutral. The
+          Science account leaves two things standing. The hardware was never put
+          on equal terms. AlphaZero ran on four first-generation TPUs alongside
+          44 CPU cores, Stockfish on 44 CPU cores alone. DeepMind itself
+          describes a TPU as "roughly similar" in speed to an NVIDIA Titan V
+          graphics card, while adding that the two architectures are "not
+          directly comparable".<sup class="nb-cite"><a href="#s6">6</a></sup> And
+          the opponent was still Stockfish 8, in a match DeepMind ran in-house
+          rather than in an independent tournament.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Not stated in either paper</span>
+          <p>
+            Neither paper's main text says whether Stockfish was given its
+            endgame tablebases, the precomputed tables of perfect play for
+            positions with only a few pieces left that a top engine usually
+            consults. Every other condition is spelled out, so this one is read
+            from silence rather than reported either way.<sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s2">2</a></sup>
+          </p>
+        </div>
+      </section>
+
+      <section data-nb-section="what-held-up" id="what-held-up">
+        <h2>The method reproduced, then Stockfish caught up</h2>
+        <p>
+          Two claims come out of AlphaZero, and they have aged differently. The
+          first is that one algorithm, unchanged, learned three very different
+          games to a top level from their rules alone.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          That claim was never seriously contested, and it is why AlphaZero is
+          cited well beyond chess, as evidence that a general learning method
+          paired with search can stand in for hand-built expertise.
+        </p>
+        <p>
+          The second claim, that AlphaZero was simply the stronger chess player
+          than Stockfish, rested on a disputed match that DeepMind ran itself.
+          Confirmation from outside DeepMind came later. Leela Chess Zero is an
+          open-source project that rebuilt the AlphaZero method, learning chess
+          from self-play with a neural network.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          In May 2019 it beat Stockfish in the Season 15 superfinal of the Top
+          Chess Engine Championship, scoring 14 wins to 7 with 79 draws under
+          standard tournament conditions.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The method reproduced.
+        </p>
+        <p>
+          What lasted is a change in method rather than a ranking. In 2020
+          Stockfish added a trained network of its own to its evaluation, called
+          NNUE, which made it at least 80 Elo stronger than the hand-written
+          version, and it went on to retake the top of the same championship.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          Scoring a position with a trained network, guided by search, beat the
+          old hand-tuned approach so plainly that the strongest hand-tuned engine
+          adopted a network too.
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>One algorithm learned chess, shogi and Go from the rules alone, with no human games and no hand-written evaluation.</li>
+              <li>The self-play method reproduced outside DeepMind: an open-source engine built on it beat Stockfish in an independent tournament.</li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>The famous strength margin came from DeepMind's own match, on hardware the comparison never equalised, against a since-superseded Stockfish.</li>
+              <li>The ranking did not last. Stockfish adopted a trained evaluation of its own and retook the top.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          AlphaZero's real achievement is the general one. The same program,
+          given only the rules, reached the top of three different games by
+          playing itself, with no human games and no hand-written scoring. The
+          chess win over Stockfish that made headlines is true but conditional.
+          The most-quoted conditions, one minute a move and no opening book,
+          belong to the 2017 preprint. The peer-reviewed match gave Stockfish
+          tournament time and still won, though on unequal hardware and against a
+          version soon overtaken. When someone cites AlphaZero as proof that it
+          beat the best chess engine for good, that is the part to check. The
+          method spread; the ranking did not stay.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1712.01815">The AlphaZero preprint (Silver et al., 2017)</a>: the first-published version, with the one-minute-per-move match in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://deepmind.google/discover/blog/alphazero-shedding-new-light-on-chess-shogi-and-go/">DeepMind's own write-up</a>: the results and the hardware note explained for a general reader.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.science.org/doi/10.1126/science.aar6404"
+              >Science · Silver et al., A general reinforcement-learning algorithm that masters chess, shogi and Go through self-play (2018)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1712.01815"
+              >arXiv · Silver et al., Mastering Chess and Shogi by Self-Play with a General Reinforcement Learning Algorithm (2017)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://lichess.org/forum/general-chess-discussion/reaction-from-stockfish-author-statement"
+              >Lichess forum · Tord Romstad (Stockfish author), statement on the 2017 match, reposted verbatim</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.chess.com/news/view/google-s-alphazero-destroys-stockfish-in-100-game-match"
+              >Chess.com · Mike Klein, Google's AlphaZero Destroys Stockfish In 100-Game Match (2017)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.chess.com/news/view/updated-alphazero-crushes-stockfish-in-new-1-000-game-match"
+              >Chess.com · Updated AlphaZero Crushes Stockfish In New 1,000-Game Match (2019)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://deepmind.google/discover/blog/alphazero-shedding-new-light-on-chess-shogi-and-go/"
+              >DeepMind · AlphaZero: Shedding new light on chess, shogi, and Go</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://lczero.org/"
+              >Leela Chess Zero · Project description</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.chessprogramming.org/Leela_Chess_Zero"
+              >Chess Programming Wiki · Leela Chess Zero, TCEC Season 15 superfinal record</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.chessprogramming.org/Stockfish_NNUE"
+              >Chess Programming Wiki · Stockfish NNUE</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
