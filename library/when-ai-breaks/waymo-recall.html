@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Two Waymo cars hit the same towed truck minutes apart · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "waymo-recall",
+        "template": "lesson",
+        "title": "Two Waymo cars hit the same towed truck minutes apart",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-08",
+        "tags": ["waymo", "self-driving", "recall", "prediction", "distribution-shift"],
+        "sources": 8,
+        "words": 1699,
+        "reading_minutes": 7,
+        "dek": "A pickup towed backwards and angled across a turn lane was too rare a shape for the step that predicts where other vehicles will go next.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">Two Waymo cars hit the same towed truck minutes apart</h1>
+        <p class="nb-dekline">
+          A pickup towed backwards and angled across a turn lane was too rare a shape for the step that predicts where other vehicles will go next.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-09-08</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Waymo is the driverless service people point to as the one that works,
+          the careful counterexample to Cruise and to the fatal Uber test. In
+          December 2023 two of its cars in Phoenix hit the same truck within
+          minutes of each other, and Waymo filed the first software recall in its
+          history. This lesson walks that collision through the parts of a
+          driverless system that had to work, to find which one failed. The car
+          saw the truck. What broke was the next step, the one that guesses where
+          a seen object will go. By the end you will know the difference between perception and
+          prediction. You will know why a system trained on ordinary traffic
+          misreads a rare shape, and what a software recall means when the
+          manufacturer owns every car it is recalling.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../ai-foundations/distribution-shift.html">Move a tumor detector to a new hospital and it loses twenty-three points</a>: why a model fails once it runs on data unlike its training.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../when-ai-breaks/cruise-robotaxi.html">A Cruise robotaxi stopped after hitting a woman, then dragged her 20 feet</a>: another driverless failure and the regulatory reckoning that followed.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Two collisions with the same towed pickup</h2>
+        <p>
+          On December 11, 2023, a Waymo robotaxi driving itself through Phoenix
+          came up behind a pickup truck under tow. The pickup was being hauled
+          backwards and angled across a shared center turn lane, so it did not
+          track in line behind the tow truck the way a trailer would. The Waymo's
+          front left struck it. The tow truck did not stop. A few minutes later a
+          second Waymo, driving the same stretch, made contact with the same
+          off-angle pickup, still strung across more than one lane. Both were
+          low-speed, same-direction contacts, and neither hurt anyone.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Waymo's own account, published February 13, 2024, called the pickup
+          "improperly towed" and "persistently angled across a center turn lane,"
+          and named the cause in plain words: the car "incorrectly predicted the
+          future motion of the towed vehicle."<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The company treated the filing as voluntary and pushed a software
+          update to its fleet, finished by mid-January. It reported the
+          collisions to the National Highway Traffic Safety Administration as
+          recall 24E-013, covering 444 vehicles.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          It was the first recall in Waymo's history, and the wire press carried
+          it: Reuters reported the same count and the same cause, an inaccurate
+          prediction of where the towed truck would move.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <ol class="nb-timeline">
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">Dec 11, 2023</span>
+            <h3>
+              Two Waymo cars contact the towed pickup<sup class="nb-cite"
+                ><a href="#s1">1</a></sup
+              >
+            </h3>
+            <p>
+              In Phoenix, minutes apart, two driverless Waymos strike the same
+              backwards, angled pickup. No injuries.
+            </p>
+          </li>
+          <li class="nb-tl-event">
+            <span class="nb-tl-date">Dec 20, 2023</span>
+            <h3>Software update begins deploying</h3>
+            <p>Waymo starts pushing the corrected release across the affected fleet.</p>
+          </li>
+          <li class="nb-tl-event">
+            <span class="nb-tl-date">Jan 12, 2024</span>
+            <h3>Update finished on all affected vehicles</h3>
+            <p>The fix is in the field a month before the paperwork is filed.</p>
+          </li>
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">Feb 13, 2024</span>
+            <h3>
+              Recall 24E-013 filed with NHTSA, 444 vehicles<sup class="nb-cite"
+                ><a href="#s1">1</a></sup
+              >
+            </h3>
+            <p>The crash was in December. The recall came two months later, in February.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section data-nb-section="perception-prediction" id="perception-prediction">
+        <h2>Perception, then prediction</h2>
+        <p>
+          A self-driving car does three jobs in sequence before it commits to a
+          move. It perceives the scene, detecting and tracking the objects around
+          it. It predicts where each moving object will go next. Then it plans
+          its own path around those predictions. In the research literature these
+          are separate modules, built and tuned on their own, with the output of
+          one handed forward to the next.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            Perception answers "what is there, and where is it right now."
+            Prediction answers "where will it be in the next few seconds." A
+            survey of the field states it directly: the perception module
+            perceives the environment, static and dynamic objects alike, while
+            the prediction module forecasts the future behavior of those
+            objects.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          </p>
+        </div>
+        <p>
+          The order matters, because an error in an early step travels forward: a
+          wrong prediction hands the planner a future that never happens.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          At the towed pickup, perception was not the problem. The car detected a
+          vehicle, and the filing does not fault what its sensors returned. The
+          next step broke. The system predicted where a truck would go, and the
+          truck it was watching did not move like a truck. Hauled backwards and
+          angled, it sat where the model expected motion and moved where the
+          model expected stillness, so the predicted path and the real one came
+          apart.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="rare-shapes" id="rare-shapes">
+        <h2>Why a rare shape breaks a learned guess</h2>
+        <p>
+          A prediction model learns from examples. It is shown enormous numbers
+          of real scenes and the paths the objects in them actually took. From
+          those it absorbs the regularities: a car in a lane keeps going down the
+          lane, a vehicle under tow tracks in line behind the one pulling it. What it
+          learns is the distribution of situations it was shown. Give it a
+          situation far outside that distribution and its guess is only as good
+          as the nearest thing it saw in training, which may be nothing like the
+          thing in front of it. That failure has a name, and this paper's lesson
+          on
+          <a href="../ai-foundations/distribution-shift.html">distribution shift</a>
+          covers why it is the normal condition of a deployed model rather than a
+          rare edge case.
+        </p>
+        <p>
+          In autonomous driving it is unavoidable. The "Shifts" benchmark, built
+          partly on real self-driving fleet data, states that distributional
+          shift is ubiquitous in the domain. It frames motion prediction as
+          exactly the task that broke here: predicting the distribution over the
+          possible future states of the agents around the car.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          A pickup towed backwards across a turn lane sits far out on the tail of
+          that distribution. Waymo's cars had surely handled unusual vehicles
+          before without trouble, but those clean passes were never proof that
+          this particular configuration was safe. The December collisions showed
+          it was not, and showed it twice, the same way, within minutes.
+        </p>
+      </section>
+
+      <section data-nb-section="second-recall" id="second-recall">
+        <h2>The pole was a different failure</h2>
+        <p>
+          A recall is the mechanism by which a manufacturer both fixes a defect
+          and puts it on the public record. For an ordinary car it ends with
+          letters to owners and a trip to the dealer. Waymo's ended differently:
+          the company owns every vehicle in its fleet and has never sold one, so
+          there was no owner to notify, and the remedy was a software release
+          already deployed before the report was filed.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          The second recall, 24E-049, filed on June 10, 2024, is the useful
+          counterpart to the first. On May 21, 2024, a Waymo in Phoenix collided
+          with a wooden utility pole in an alley while pulling over at low speed.
+          No one was aboard and no one was hurt; the car was damaged.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          The filing covered 672 vehicles and named two fixes rather than one, a
+          software update and a map update.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          TechCrunch, reporting the recall, identified the cars as Jaguar I-Pace
+          robotaxis and put the collision speed at about 8 miles per hour, a
+          figure the filing itself does not give.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          The pole was not a repeat of the towed-truck bug. This time the failure
+          sat one step earlier, in perception and mapping. The filing says
+          the system assigned the pole a low damage score, and the map lacked a
+          hard road edge between the pole and the drivable surface. Nothing marked
+          the pole as a fixed object to steer well clear of.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Same class of problem, different broken part. The towed truck defeated
+          the step that guesses motion; the pole defeated the step that judges
+          what an object is and where the road ends. Read side by side, the two
+          recalls are a clean picture of a pipeline. Two different stages, each
+          failing on a configuration the training and the map did not cover.
+        </p>
+        <p>
+          Where does the weakness live now? NHTSA opened a preliminary evaluation
+          of Waymo's fifth-generation driving system in May 2024, logging 22
+          incidents at the outset, single-party crashes and apparent
+          traffic-law violations across the same fleet.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          The two specific bugs were patched. The general weakness behind them
+          belongs to every deployed self-driving system. Each one carries a
+          residual of road situations too rare to have appeared in its training,
+          and a recall is what happens when one of them surfaces as a crash.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The towed pickup did not fool Waymo's cars into failing to see it. It
+          fooled the step that predicts where a seen object will go, because a
+          truck towed backwards and angled across a lane moves unlike the
+          ordinary traffic the prediction model was built on. The pole recall
+          broke a different step, perception and mapping instead of prediction,
+          on the same kind of rare configuration. A driverless system is a chain
+          of learned steps, each strong on the traffic it was shown and each able
+          to fail on the traffic it was not. A software recall is the visible
+          moment when one of those failures gets named and corrected. Neither
+          Phoenix collision hurt anyone, and the two of them together show the
+          same system failing at two different steps, each on a road situation
+          too rare for the step that met it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2412.14088">Joint Perception and Prediction for Autonomous Driving: A Survey</a>: how the perceive, predict, and plan pipeline is actually built and where its errors propagate.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2107.07455">Shifts: A Dataset of Real Distributional Shift</a>: a benchmark, with a self-driving motion-prediction task, for models meeting data unlike their training.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://static.nhtsa.gov/odi/rcl/2024/RCLRPT-24E013-4528.PDF"
+              >NHTSA · Part 573 Safety Recall Report 24E-013 (Waymo LLC)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://waymo.com/blog/2024/02/voluntary-recall-of-our-previous-software/"
+              >Waymo · Voluntary recall of our previous software</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.insurancejournal.com/news/national/2024/02/16/761144.htm"
+              >Insurance Journal (Reuters, David Shepardson) · Waymo recalls 444 vehicles after Phoenix collisions</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2412.14088"
+              >Dal'Col, Oliveira &amp; Santos · Joint Perception and Prediction for Autonomous Driving: A Survey</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2107.07455"
+              >Malinin et al. · Shifts: A Dataset of Real Distributional Shift Across Multiple Large-Scale Tasks</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://static.nhtsa.gov/odi/rcl/2024/RCLRPT-24E049-1733.PDF"
+              >NHTSA · Part 573 Safety Recall Report 24E-049 (Waymo LLC)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://techcrunch.com/2024/06/12/waymo-second-robotaxi-recall-autonomous-vehicle/"
+              >TechCrunch · Waymo issues second robotaxi recall after a Phoenix pole collision</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://static.nhtsa.gov/odi/inv/2024/INOA-PE24016-12382.pdf"
+              >NHTSA ODI · Preliminary Evaluation PE24016, opening resume</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
