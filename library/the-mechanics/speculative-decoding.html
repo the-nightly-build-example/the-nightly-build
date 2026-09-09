@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speculative decoding · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "speculative-decoding",
+        "template": "lesson",
+        "title": "The same open model returns identical text two to three times faster on one service",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-09",
+        "tags": [],
+        "sources": 8,
+        "words": 1694,
+        "reading_minutes": 7,
+        "dek": "A small draft model guesses the next few tokens and the big model checks them all in a single pass, so the words that would have come one at a time arrive in bursts.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">The same open model returns identical text two to three times faster on one service</h1>
+        <p class="nb-dekline">
+          A small draft model guesses the next few tokens and the big model checks them all in a single pass, so the words that would have come one at a time arrive in bursts.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-09-09</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You can take an open model, whose weights anyone can download, and run it
+          on two different hosting services. Give both the same prompt and the same
+          settings, and the reply can come back word-for-word identical, yet one
+          service produces it two to three times faster than the other. The fast one
+          often delivers the text in little bursts rather than a steady stream. This
+          lesson explains what the fast service is doing. It is a trick called
+          speculative decoding. By the end you will be able to say why it speeds
+          the model up, why it cannot change a single word of what the model says,
+          and why the speedup is larger on some prompts than others.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/prefill-and-decode.html">A chatbot reads your whole prompt at once but writes its reply one word at a time</a>: why writing the reply is the slow phase, one token at a time.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/first-token-latency.html">The wait before a chatbot's first word barely tracks the prompt's length</a>: what a forward pass over the model costs, and where the time goes.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One model, one token per pass, is the speed the fast service beats</h2>
+        <p>
+          A hosting service that puts an
+          open model behind an interface can serve the same weights, on the same kind
+          of hardware, at very different speeds, and the difference reaches two to
+          three times.<sup class="nb-cite"><a href="#s1">1</a></sup> To see how one
+          service pulls ahead without changing the answer, you need two plain terms.
+          A <strong>token</strong> is the small chunk of text a model reads and
+          writes, usually a word or a piece of one. A <strong>forward pass</strong> is
+          one sweep of the whole network over the text so far, and it is the step that
+          produces the next token.
+        </p>
+        <p>
+          A model normally runs one forward pass for every token it writes. Each pass
+          is slow, and a long reply needs hundreds of them in a row.<sup
+            class="nb-cite"><a href="#s2">2</a></sup> The pass is slow for a reason
+          worth holding onto: most of its time goes to hauling the model's billions of
+          weights out of memory and into the chip, not to the arithmetic once they
+          arrive.<sup class="nb-cite"><a href="#s2">2</a></sup> That fact sets an
+          apparent ceiling. One big-model pass per token looks like the fastest the
+          model can go, and the fast service is somehow beating it.
+        </p>
+      </section>
+
+      <section data-nb-section="draft-and-verify" id="draft-and-verify">
+        <h2>A small model guesses ahead, and the big model checks every guess in one pass</h2>
+        <p>
+          The trick uses two models. Alongside the big one, the <strong>target</strong>,
+          the service keeps a small, cheap <strong>draft</strong> model. The draft
+          runs a few quick forward passes and proposes the next several tokens. Then
+          the target runs once over all of those proposed positions at the same time.
+          A transformer can score a whole stretch of positions in a single forward
+          pass, so checking several guesses costs the target about one pass, the same
+          as producing one token used to.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The target now compares each guessed token against the token it would have
+          chosen there itself. It keeps the guesses that match, in order, and the
+          moment it hits a guess it disagrees with, it throws that guess and every
+          guess after it away.<sup class="nb-cite"><a href="#s2">2</a></sup> At the
+          first disagreement the target supplies its own token instead, so even a
+          run that ends in a rejection still moves at least one token forward.<sup
+            class="nb-cite"><a href="#s3">3</a></sup> This is exactly the loop a
+          serving framework runs: the draft proposes, the target verifies the batch,
+          the accepted tokens are committed, and a rejection triggers a fresh
+          proposal from where the agreement stopped.<sup class="nb-cite"><a
+            href="#s4">4</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            A worked example of one target pass over five guesses for the prefix "Water boils at 100": three match and are kept, the fourth is corrected to the target's own token, and the fifth is discarded. Four tokens land for the cost of one big-model pass.<sup class="nb-cite"><a href="#s3">3</a></sup> The token values are illustrative, chosen to show the accept-and-reject rule rather than measured from a run.
+          </caption>
+          <thead>
+            <tr>
+              <th>POS</th>
+              <th class="txt">Draft's guess</th>
+              <th class="txt">Target's own token</th>
+              <th class="txt">Outcome</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td class="txt">degrees</td>
+              <td class="txt">degrees</td>
+              <td class="txt">matches, kept</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td class="txt">Celsius</td>
+              <td class="txt">Celsius</td>
+              <td class="txt">matches, kept</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td class="txt">at</td>
+              <td class="txt">at</td>
+              <td class="txt">matches, kept</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td class="txt">standard</td>
+              <td class="txt">sea</td>
+              <td class="txt">rejected, target writes "sea"</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td class="txt">level</td>
+              <td class="txt">not checked</td>
+              <td class="txt">discarded</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          When the draft guesses well, several tokens are committed from one target
+          pass, and the reader sees a burst. When it guesses badly, the target spends
+          a pass to move one token and the stream briefly stalls. That alternation is
+          the burstiness you notice on the faster service.
+        </p>
+      </section>
+
+      <section data-nb-section="same-output" id="same-output">
+        <h2>The checked text is the target's own, word for word</h2>
+        <p>
+          The reason quality cannot slip is that the target only ever keeps a token it
+          would have written anyway. When the model is decoding greedily, always
+          taking its single most likely token, a guess is kept only if it equals that
+          most likely token, so the accepted text is identical to what the target
+          alone would have produced.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Sampling, where the model draws a token at random from its probability
+          distribution rather than always taking the top one, needs more care. The
+          target keeps a guess with probability
+          equal to its own probability for that token divided by the draft's, capped
+          at one. When it rejects, it draws the replacement from an adjusted
+          distribution, the target's probabilities with the draft's already-covered
+          share subtracted off.<sup class="nb-cite"><a href="#s3">3</a></sup> The
+          original paper proves this correction returns exactly the target's own
+          distribution, and the DeepMind team's version states the same guarantee: the
+          scheme preserves the distribution of the target model.<sup class="nb-cite"><a
+            href="#s5">5</a></sup> An engineering write-up puts the upshot plainly:
+          the overall output is identical to that of ordinary decoding.<sup
+            class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In plain language</span>
+          <p>
+            Speculative decoding is a way to compute the target's own next tokens
+            sooner, not a way to substitute the draft's. The draft only ever offers
+            guesses. Nothing it proposes is kept unless the target would have chosen
+            it, so a claim that the trick changes what a model says is simply
+            wrong.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          </p>
+        </div>
+      </section>
+
+      <section data-nb-section="what-sets-the-speedup" id="what-sets-the-speedup">
+        <h2>How much faster rides on how often the guess is right</h2>
+        <p>
+          The size of the speedup comes down to one number: the acceptance rate, the
+          chance that any single guess survives the target's check. Write it as α, and
+          write the number of tokens the draft proposes each round as γ. The expected
+          count of tokens the target commits per pass is a short formula.<sup
+            class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \mathbb{E}[\text{tokens per target pass}] = \frac{1 - \alpha^{\gamma+1}}{1 - \alpha}
+          </div>
+        </figure>
+        <p>
+          Read it through its two ends. When α is near zero the draft is almost always
+          wrong, the sum collapses toward one token per pass, and you are back to
+          plain decoding with a wasted draft. When α is near one the draft is almost
+          always right and the count climbs toward the full γ+1, the whole batch plus
+          one. Everything useful happens in between, and where a workload lands is a
+          property of the text. Predictable, repetitive text like source code is easy
+          to guess, so it accepts more and speeds up more. Framework documentation
+          reports the same shape: two to three times faster in general, and more than
+          that on code.<sup class="nb-cite"><a href="#s1">1</a></sup> An IBM
+          production team found the same split, tuning three to four guesses per round
+          for prose and six to eight for code.<sup class="nb-cite"><a href="#s6"
+            >6</a></sup>
+        </p>
+        <p>
+          So separate the settled part from the part that varies. Settled: the output
+          is the target's own, and a transformer verifies a batch of positions for
+          about the cost of generating one, which is what makes the whole thing pay.
+          What varies is the acceptance rate, set by the workload, and the deployment,
+          set by the provider. A service turns speculative decoding on where it helps,
+          which is the memory-bound, moderate-traffic regime, and picks how many
+          tokens to guess.<sup class="nb-cite"><a href="#s4">4</a></sup> That is why
+          two services running identical weights hand you the identical answer at
+          different speeds. Newer variants keep pushing the ceiling by replacing the
+          separate draft model with extra prediction heads bolted onto the target
+          itself. Medusa reports 2.3 to 3.6 times.<sup class="nb-cite"><a href="#s7"
+            >7</a></sup> EAGLE reports 2.7 to 3.5 times on a 70-billion-parameter
+          chat model while still holding the generated text's distribution
+          fixed.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A fast service is not running a smaller or a cheaper model. It is running
+          the same one with a helper. A small draft model guesses the next few tokens.
+          The big target model checks the whole batch of guesses in a single pass. It
+          keeps only the run of guesses that match the tokens it would have chosen
+          itself, corrects the first miss, and drops the rest. Because a kept token is
+          always the target's own, the answer is word-for-word what you would have
+          gotten without the trick. What you gain is speed. How much you gain depends
+          on how often the guess is right. That is why code flies and ordinary prose
+          gains less, and it is why the speedup is a choice the provider makes, not a
+          property of the model. If someone tells you speculative decoding makes a
+          model faster by making it dumber, you now know why that is exactly backward.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2211.17192">Leviathan, Kalman & Matias, "Fast Inference from Transformers via Speculative Decoding"</a>: the original method, the acceptance rule, and the proof that the output distribution is unchanged.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://huggingface.co/blog/assisted-generation">Hugging Face, "Assisted Generation"</a>: a walk through the same idea in code, with the greedy match rule and measured speedups.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/docs/text-generation-inference/conceptual/speculation"
+              >Hugging Face Text Generation Inference · Speculation (documentation)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/blog/assisted-generation"
+              >Hugging Face · Assisted Generation (Joao Gante, 2023)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2211.17192"
+              >arXiv (Leviathan, Kalman, Matias / Google) · Fast Inference from Transformers via Speculative Decoding</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://docs.vllm.ai/en/latest/features/speculative_decoding/"
+              >vLLM · Speculative Decoding (documentation)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2302.01318"
+              >arXiv (Chen et al. / DeepMind) · Accelerating Large Language Model Decoding with Speculative Sampling</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://pytorch.org/blog/hitchhikers-guide-speculative-decoding/"
+              >PyTorch (IBM) · A Hitchhiker's Guide to Speculative Decoding</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2401.10774"
+              >arXiv (Cai et al.) · Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2401.15077"
+              >arXiv (Li et al.) · EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
