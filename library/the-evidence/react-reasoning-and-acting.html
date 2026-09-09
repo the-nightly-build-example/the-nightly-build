@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ReAct searched Wikipedia between thoughts and still trailed chain-of-thought on HotpotQA · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "react-reasoning-and-acting",
+        "template": "lesson",
+        "title": "ReAct searched Wikipedia between thoughts and still trailed chain-of-thought on HotpotQA",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-09",
+        "tags": [],
+        "sources": 6,
+        "words": 1716,
+        "reading_minutes": 7,
+        "dek": "Yao's team prompted PaLM-540B with one or two examples, and reading a real Wikipedia line before each thought erased the invented facts that were chain-of-thought's most common failure mode.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">ReAct searched Wikipedia between thoughts and still trailed chain-of-thought on HotpotQA</h1>
+        <p class="nb-dekline">
+          Yao's team prompted PaLM-540B with one or two examples, and reading a real Wikipedia line before each thought erased the invented facts that were chain-of-thought's most common failure mode.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-09-09</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have heard that AI agents started with a paper called ReAct. An
+          agent here means a language model put in a loop where it can take
+          actions in the world and read the results back, instead of answering
+          in one shot. ReAct is the 2022 paper that gave that loop its shape.
+          This lesson reads what the paper actually did: the recipe it proposed,
+          the four tests it ran, and the scores it got. That includes the one
+          score where its own method came in behind the simpler technique it is
+          usually said to beat. By the end you will be able to say what ReAct
+          showed, on what, and how far today's agents have moved from it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/chain-of-thought.html">Chain-of-thought prompting</a>:
+            the reasoning-in-words technique ReAct is measured against here.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/tool-use.html">Tool use</a>: how a model's
+            request to call a tool actually runs, which ReAct wraps in a loop.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A thought, an action, and a look at what came back</h2>
+        <p>
+          In 2022, Shunyu Yao and six coauthors at Princeton and Google
+          published a simple recipe for getting more out of a large language
+          model, a model trained to predict the next word across most of the
+          web. Call the model in a loop. Let it write a
+          <em>thought</em>, a sentence of plain reasoning about what to do next.
+          Let it emit an <em>action</em>, a short command such as a search
+          query. Feed it back the <em>observation</em>, the text the outside
+          world returns. Then let it think again. The authors named the method
+          ReAct, for reasoning and acting, and ran it on PaLM-540B, a
+          540-billion-parameter language model from Google.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The model was not retrained for any of this. ReAct runs by few-shot
+          prompting: you paste one or two worked examples into the prompt and the
+          model imitates the pattern, its weights untouched. For the
+          question-answering tests, the only tool it could reach was a Wikipedia
+          interface with three commands, written as
+          <code>search[entity]</code>, <code>lookup[string]</code>, and
+          <code>finish[answer]</code>.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">A HotpotQA trace</span>
+          <p>
+            Question: Aside from the Apple Remote, what other device can control
+            the program the Apple Remote was originally designed to interact
+            with?
+          </p>
+          <p>
+            <strong>Thought 1</strong> I need to search Apple Remote and find the
+            program it was designed to interact with.<br />
+            <strong>Act 1</strong> <code>Search[Apple Remote]</code><br />
+            <strong>Obs 1</strong> The Apple Remote is a remote control
+            introduced in October 2005, originally designed to control the Front
+            Row media center program.<br />
+            <strong>Thought 2</strong> I need to search Front Row next and find
+            what other device can control it.<br />
+            <strong>Act 2</strong> <code>Search[Front Row]</code><br />
+            <strong>Obs 2</strong> Could not find [Front Row]. Similar: Front Row
+            Seat to Earth, Front Row Motorsports, Front Row (software).<br />
+            <strong>Thought 3</strong> I need to search Front Row (software).<br />
+            <strong>Act 3</strong> <code>Search[Front Row software]</code><br />
+            <strong>Obs 3</strong> Front Row is a discontinued media center
+            software.<br />
+            <strong>Thought 4</strong> Front Row software is controlled by an
+            Apple Remote or the keyboard function keys. So the answer is keyboard
+            function keys.<br />
+            <strong>Act 4</strong> <code>Finish[keyboard function keys]</code>
+            <sup class="nb-cite"><a href="#s1">1</a></sup>
+          </p>
+        </div>
+        <p>
+          Nothing in that run is special engine work. The model wrote the words
+          Thought, Act, and Obs; a wrapper program read the
+          <code>Search[...]</code> line, actually queried Wikipedia, and pasted
+          the result back as the next Obs line. How a model's tool call runs is
+          <a href="../the-mechanics/tool-use.html">its own lesson</a>. What ReAct
+          added on top was the interleaving. A thought before each action, so the
+          model plans, and an observation after it, so the next thought answers to
+          something real rather than to the model's memory.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="hotpotqa-result" id="hotpotqa-result">
+        <h2>The search loop scored under chain-of-thought on HotpotQA</h2>
+        <p>
+          The obvious question is whether the loop helps. The paper's headline
+          reasoning test was HotpotQA, a set of trivia questions that each need
+          facts from more than one Wikipedia article. Its scoring is exact match:
+          the model's answer string has to match the gold answer exactly, so the
+          scores run low.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          On HotpotQA, ReAct scored 27.4% exact match. Plain
+          <a href="../the-evidence/chain-of-thought.html">chain-of-thought</a>,
+          the same model prompted to reason step by step in words with no search
+          and no observations, scored 29.4%. Standard prompting, with no reasoning
+          shown at all, scored 28.7%. On the benchmark it is most associated with,
+          the reasoning-and-search loop the paper is built around came in last of
+          the three.<sup class="nb-cite"><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            ReAct against its baselines on the two knowledge tasks, few-shot with
+            PaLM-540B. HotpotQA is scored by exact match, FEVER by
+            accuracy.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Method</th>
+              <th>HotpotQA (EM)</th>
+              <th>FEVER (Acc)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Standard prompting</td>
+              <td>28.7</td>
+              <td>57.1</td>
+            </tr>
+            <tr>
+              <td class="txt">Chain-of-thought</td>
+              <td>29.4</td>
+              <td>56.3</td>
+            </tr>
+            <tr>
+              <td class="txt">ReAct</td>
+              <td>27.4</td>
+              <td>60.9</td>
+            </tr>
+            <tr>
+              <td class="txt">ReAct, then chain-of-thought fallback</td>
+              <td>35.1</td>
+              <td>62.0</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          FEVER, a fact-checking test where the model labels a claim supported or
+          refuted, went the other way. ReAct scored 60.9% there against
+          chain-of-thought's 56.3%. The paper states the split plainly, writing
+          that ReAct "outperforms CoT on Fever (60.9 vs. 56.3) and slightly lags
+          behind CoT on HotpotQA (27.4 vs. 29.4)." The paper's strongest HotpotQA
+          mark, 35.1%, came from a hybrid that ran ReAct and let the model fall
+          back to plain reasoning when search stalled. For scale, a model
+          trained directly on HotpotQA scored 67.5%. Few-shot ReAct was nowhere
+          near it.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="grounding" id="grounding">
+        <h2>Grounding every step drove invented facts to zero</h2>
+        <p>
+          So why did the paper matter, if its own loop lost at trivia? Because of
+          what the loop did to hallucination, a model stating a fact that is
+          simply false. The authors hand-labeled 50 correct and 50 incorrect runs
+          each from ReAct and from chain-of-thought on HotpotQA, 200 in total, and
+          sorted where the failures came from.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Chain-of-thought's single largest failure mode was hallucination: 56% of
+          its wrong answers came from the model inventing a fact mid-reasoning. For
+          ReAct that figure was 0%. Among the answers each method got right,
+          chain-of-thought reached 14% of them through reasoning that held a
+          made-up fact but landed on the right answer anyway. For ReAct that share
+          was 6%. Reading a real Wikipedia line before the next thought kept the
+          model honest.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Grounding cost something, and the paper says so. ReAct's own largest
+          failure mode was reasoning error at 47%, well above chain-of-thought's
+          16%, often the model repeating the same thought and action without
+          breaking out of the loop. Another 23% of its failures were search
+          returning nothing useful, which left the model stuck. The loop trades
+          some of the model's freedom to reason for a tether to the
+          record.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="interactive-gains" id="interactive-gains">
+        <h2>The headline gains came on chores and a shopping site</h2>
+        <p>
+          The numbers the paper is quoted for are the two interactive tests, not
+          the question-answering scores. On these the model does not answer a
+          question. It takes a sequence of actions toward a goal.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          ALFWorld is a text game of household tasks: the model reads a room
+          description and issues commands to find and move objects, like putting a
+          pepper shaker on a drawer. ReAct's best run there succeeded on 71% of
+          tasks. The same loop with the thoughts stripped out, actions and
+          observations only, managed 45%, and the previous published agent,
+          BUTLER, managed 37%. Even ReAct's worst run beat both. WebShop is a
+          simulated shopping site where the model has to buy an item matching a
+          written request. ReAct succeeded 40%
+          of the time against 30% for the best prior method, though expert humans
+          hit about 60%. Those two gaps, 34 points on ALFWorld and 10 on WebShop,
+          are the "34% and 10%" the abstract advertises, and they are what "ReAct
+          started agents" points at.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="modern-loops" id="modern-loops">
+        <h2>Today's agents call tools in JSON, not hand-written prose</h2>
+        <p>
+          The blueprint stuck. The exact method did not. ReAct's loop lives on in
+          every AI agent that thinks, calls a tool, reads the result, and thinks
+          again. But the paper made the model produce that loop by hand, writing
+          the literal words Thought, Act, and Obs in a text format copied from the
+          one or two examples, and a wrapper parsed those strings.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Today's models are trained to emit tool calls as structured data. When a
+          current model calls a function, it returns a typed
+          <code>tool_use</code> block naming the tool and its arguments. The
+          application runs the tool and sends the answer back in a
+          <code>tool_result</code> block, and the model continues.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          OpenAI documents the same round trip as a five-step loop.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          The thought, action, and observation pattern now lives inside the model
+          and the API instead of being prompted in as text.
+        </p>
+        <p>
+          The name drifted with the method. "ReAct" today is used for almost any
+          agent that mixes reasoning with tool calls, a general pattern rather than
+          the paper's specific prompted format.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          What carried forward is the plainest part of what the paper tested:
+          reason before you act, and let what you observe shape the next
+          thought.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          ReAct's idea is small and it holds up: let a model reason a step, act,
+          read what comes back, and reason again, so its next thought answers to
+          something real. On the tasks where acting mattered, that loop beat the
+          previous best by 34 points on the simulated household game and 10 on the
+          shopping site. On grounding it was decisive, taking chain-of-thought's
+          most common failure, an invented fact, from more than half of its wrong
+          answers to none of ReAct's. On the trivia benchmark it is most cited for,
+          it slightly lost to plain step-by-step reasoning. Today's agents trace
+          back to this paper, and its measured result is narrower than that
+          reputation.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2210.03629">Yao et al., "ReAct" (arXiv)</a>:
+            the original paper, with the full traces and the appendix results.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview">Anthropic, "Tool use with Claude"</a>:
+            the structured tool-call loop that replaced the paper's prompted format.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2210.03629"
+              >arXiv · Yao et al., "ReAct: Synergizing Reasoning and Acting in Language Models" (2022; ICLR 2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2204.02311"
+              >arXiv · Chowdhery et al., "PaLM: Scaling Language Modeling with Pathways"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2201.11903"
+              >arXiv · Wei et al., "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models"</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview"
+              >Anthropic · "Tool use with Claude"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://developers.openai.com/api/docs/guides/function-calling"
+              >OpenAI · "Function calling"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.ibm.com/think/topics/react-agent"
+              >IBM Think · "What is a ReAct Agent?"</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
