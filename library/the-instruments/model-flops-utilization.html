@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Model FLOPs utilization · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "model-flops-utilization",
+        "template": "lesson",
+        "title": "PaLM's training ran at 46 percent efficiency, or 58, depending on which FLOPs you count",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-09",
+        "tags": [],
+        "sources": 8,
+        "words": 1797,
+        "reading_minutes": 8,
+        "dek": "A lab reports it to show a training run used its chips well, and precision plus a sparsity footnote can swing the peak underneath it fourfold on a single card.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">PaLM's training ran at 46 percent efficiency, or 58, depending on which FLOPs you count</h1>
+        <p class="nb-dekline">
+          A lab reports it to show a training run used its chips well, and precision plus a sparsity footnote can swing the peak underneath it fourfold on a single card.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-09</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When a lab says it trained a model efficiently, the number it usually
+          means is model FLOPs utilization: the share of its expensive chips'
+          theoretical top speed that the training run actually used. It appears
+          in nearly every large model's technical report, it decides whether a
+          cluster costing hundreds of millions of dollars is earning its
+          electricity, and it is the figure a systems team is paid to push
+          upward. It is also a ratio you can work out by hand, and one that two
+          labs can report on the same hardware while meaning different things by
+          it. By the end of this lesson you will be able to compute an MFU from a
+          model's size and its speed, see why the reported 46 percent for PaLM
+          falls out of six plain numbers, and catch the spec-sheet choice that
+          lets one chip advertise a peak four times its plainest one.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/parameter-count.html">What a parameter count really counts</a>: the N in this lesson, and what it does and does not measure.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/training-compute.html">Training compute</a>: the same six-FLOPs-per-parameter estimate, applied to a whole run rather than a single second.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-instruments/tokens-per-second.html">Tokens per second</a>: the throughput number that sits on top of this fraction, measured for inference rather than training.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A fraction with a measured top and a spec-sheet floor</h2>
+        <p>
+          Model FLOPs utilization, MFU, is a fraction. The top is the arithmetic
+          a model actually had to do in a second of training. The bottom is the
+          most arithmetic the chips could have done in that same second. A FLOP
+          is one floating-point operation, a single multiply or add on the
+          decimal numbers a neural network is built from. Peak FLOPs is the
+          largest number of those operations a chip's spec sheet claims it can
+          run per second, a ceiling the hardware reaches only under laboratory
+          conditions.
+        </p>
+        <p>
+          When Google trained PaLM, its 540-billion-parameter language model, on
+          6,144 of Google's TPU v4 chips, it reported that the run reached 46.2
+          percent MFU.<sup class="nb-cite"><a href="#s1">1</a></sup> Read
+          plainly, the model's necessary math ran at a little under half the rate
+          the silicon could in principle sustain. The same paper reported a
+          second number for the identical run, 57.8 percent, under a different
+          name, hardware FLOPs utilization.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Both are honest, and the distance between them is the first clue that
+          "efficiency" here depends entirely on what you agree to count.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">46.2%</span><span class="nb-stat-l">PaLM 540B model FLOPs utilization</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">238.3K</span><span class="nb-stat-l">tokens per second</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">6,144</span><span class="nb-stat-l">TPU v4 chips</span>
+          </div>
+        </div>
+      </section>
+
+      <section data-nb-section="counting-flops" id="counting-flops">
+        <h2>Six FLOPs per parameter, per token</h2>
+        <p>
+          Start with the top of the fraction, because it is the honest part. To
+          fill it you have to count the FLOPs a model must do, and there is a
+          standard way. Take a dense model with N
+          <a href="../the-instruments/parameter-count.html">parameters</a>.
+          Running one token forward through the network costs about 2N FLOPs,
+          because each parameter multiplies an activation and the products are
+          summed.<sup class="nb-cite"><a href="#s2">2</a></sup> Training also runs
+          the token backward to compute gradients, which costs roughly twice the
+          forward pass, so the round trip lands at about 6N FLOPs for every
+          token.<sup class="nb-cite"><a href="#s2">2</a></sup> Kaplan's
+          scaling-laws paper wrote it as
+          <span class="nb-math-in">C \approx 6N</span> per training token.
+          DeepMind's Chinchilla work used the same 6ND for a whole run and
+          checked the shortcut against a detailed operation-by-operation count,
+          finding it accurate to within about ten percent across model
+          sizes.<sup class="nb-cite"><a href="#s3">3</a></sup> It is the same
+          six-per-parameter figure a
+          <a href="../the-instruments/training-compute.html">companion lesson</a>
+          used to rebuild a run's total training compute.
+        </p>
+        <p>
+          Now the worked number. PaLM has N of 540 billion, so each token costs
+          about 6N, which is 3.24 trillion FLOPs. The run pushed 238,300 tokens
+          every second.<sup class="nb-cite"><a href="#s1">1</a></sup> Multiply the
+          two and the model's own math ran at roughly 7.7 times ten to the
+          seventeenth FLOPs per second. For the denominator, each TPU v4 chip
+          peaks at 275 trillion bf16 FLOPs per second, and there were 6,144 of
+          them, for about 1.69 times ten to the eighteenth FLOPs per second of
+          peak.<sup class="nb-cite"><a href="#s4">4</a></sup> Divide the first by
+          the second and you get 0.46. The bare 6N estimate reproduces the
+          reported 46.2 percent almost exactly; PaLM's own count adds a small
+          attention term on top of 6N, which is what carries it the last few
+          tenths of a point.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \mathrm{MFU} = \dfrac{6N \times (\text{tokens per second})}{(\text{number of chips}) \times (\text{peak FLOPs per chip})}
+          </div>
+          <figcaption>
+            The whole measurement in one line: a counted numerator over a
+            spec-sheet denominator.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </figcaption>
+        </figure>
+      </section>
+
+      <section data-nb-section="the-denominator" id="the-denominator">
+        <h2>The denominator the chipmaker defines</h2>
+        <p>
+          The numerator is grounded. 6N is arithmetic, checked against detailed
+          counts.<sup class="nb-cite"><a href="#s3">3</a></sup> The denominator is
+          where MFU turns soft, because "peak FLOPs" is not a single number. A
+          chip has a different peak for every numeric precision it supports, and
+          the headline a vendor prints often assumes a hardware trick called
+          structured sparsity, which skips half the multiplications when half the
+          weights are forced to zero. The precision choice matters because
+          training in a coarser number format lets each core do more operations
+          per second, so the same chip is faster in fp8 than in bf16, and faster
+          in bf16 than in the older fp32.
+        </p>
+        <p>
+          Take NVIDIA's H100, the chip most current models train on. Its spec
+          sheet lists 989 teraFLOPS at TF32, 1,979 at bf16, and 3,958 at
+          fp8.<sup class="nb-cite"><a href="#s5">5</a></sup> Every one of those
+          numbers is marked "with sparsity," and the fine print states that the
+          dense figure, without the trick, is exactly half.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          So a single H100 has a bf16 dense peak near 990 teraFLOPS and an
+          fp8-with-sparsity headline of 3,958, four times larger, with two more
+          peaks in between.
+        </p>
+        <table class="nb-table">
+          <caption>
+            One H100, one card, six peak numbers across three precisions. The
+            dense column is the datasheet's stated half of the sparse
+            headline.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Precision</th>
+              <th>Dense</th>
+              <th>With sparsity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">TF32</span></td>
+              <td>495</td>
+              <td>989</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">bf16</span></td>
+              <td>990</td>
+              <td>1 979</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">fp8</span></td>
+              <td>1 979</td>
+              <td>3 958</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Here is the trap that follows. A lab trains in bf16 and honestly
+          divides its achieved FLOPs by the dense bf16 peak near 990, reporting,
+          say, 47 percent MFU. A reader who grabs the datasheet's biggest number,
+          3,958, and treats it as "the H100's peak" divides the same achieved
+          FLOPs by four times as much and gets about 12 percent. Same chip, same
+          run, the very same arithmetic on top, and the efficiency reads 47
+          percent or 12 percent purely by which line of the spec sheet went
+          underneath.<sup class="nb-cite"><a href="#s5">5</a></sup> Two MFU
+          figures are comparable only when both name the precision and say
+          whether sparsity was assumed. Absent that, the number is a fraction
+          with an undisclosed bottom, and it can be inflated or deflated to taste
+          without anyone touching a transistor.
+        </p>
+      </section>
+
+      <section data-nb-section="the-limits" id="the-limits">
+        <h2>What a utilization number cannot see</h2>
+        <p>
+          Used honestly, the fraction is worth having, because it bounds
+          headroom. At 46 percent, PaLM's run could at most a bit more than
+          double its throughput on the same chips before it hit the peak, and no
+          rewrite of the code can push past that ceiling.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          That makes MFU a concrete target for the engineers whose job is to
+          close the gap, and a fair yardstick between two runs on the same chips
+          at the same precision. The Megatron work that carried a 530-billion-parameter
+          model to 56 percent MFU on 2,240 A100 GPUs was measuring exactly that
+          kind of progress.<sup class="nb-cite"><a href="#s6">6</a></sup> The
+          ceiling is never actually touched: open-source training of GPT-NeoX
+          reached about 150 of an A100's roughly 312 teraFLOPS, near half of
+          peak, which is ordinary for a well-tuned run.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          What the fraction cannot see is whether the FLOPs were worth doing. MFU
+          counts the model's arithmetic against the clock and says nothing about
+          whether that arithmetic trained a good model, converged at all, or ran
+          on well-chosen data. A diverging run and a healthy one can post the
+          same MFU. The measure is blind to a second kind of waste as well. PaLM's
+          hardware utilization of 57.8 percent runs higher than its model
+          utilization of 46.2 percent because the run recomputed some
+          activations to save memory, real work the chips performed that the
+          model did not strictly require.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          MFU leaves that recompute out by design, which is what makes it the
+          honest figure for the model's own efficiency rather than the chips'
+          busyness.
+        </p>
+        <p>
+          Comparisons across setups fail for the same reason the H100's peaks
+          spread out. Megatron's 56 percent was divided by an A100's 312
+          teraFLOPS and PaLM's 46 percent by a TPU v4's 275, while a run on an
+          H100 divides by something near 990.<sup class="nb-cite"><a href="#s6">6</a></sup><sup class="nb-cite"><a href="#s4">4</a></sup><sup class="nb-cite"><a href="#s5">5</a></sup>
+          A lower MFU on the faster chip can reflect only its bigger denominator.
+          Epoch AI, surveying real training runs, tells its readers to assume
+          about 30 percent for a large language model and treats anything from a
+          third to three-quarters of peak as unremarkable.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          MFU is a fraction: the FLOPs a model had to do, over the FLOPs its
+          chips could have done in the same time. The top is honest arithmetic,
+          about six operations per parameter for every token, and you saw it
+          reproduce PaLM's reported 46 percent from six plain numbers. The bottom
+          is a spec-sheet figure the chipmaker chose, and it moves with numeric
+          precision and with whether a sparsity trick is assumed, so one H100 can
+          claim a peak of 990 or 3,958. That is why a single PaLM run can be
+          reported at 46 percent or 58, and why two MFU figures mean nothing side
+          by side unless both say which peak they divided by. A high MFU tells
+          you how much faster a run could get on the same chips. It cannot tell
+          you the run was training anything worth the electricity.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2204.02311">PaLM: Scaling Language Modeling with Pathways</a>: the paper that coined MFU, with the full definition and the 540B run's numbers.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2205.05198">Reducing Activation Recomputation in Large Transformer Models</a>: where the MFU and HFU distinction is worked out, with model-FLOPs formulas.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://blog.eleuther.ai/transformer-math/">Transformer Math 101</a>: a hands-on walkthrough of the six-FLOPs count and why real runs fall short of peak.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2204.02311"
+              >Google Research · PaLM: Scaling Language Modeling with Pathways (Chowdhery et al., 2022)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2001.08361"
+              >OpenAI · Scaling Laws for Neural Language Models (Kaplan et al., 2020)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.15556"
+              >DeepMind · Training Compute-Optimal Large Language Models (Hoffmann et al., 2022)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://docs.cloud.google.com/tpu/docs/v4"
+              >Google Cloud · TPU v4 system architecture</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nvidia.com/en-us/data-center/h100/"
+              >NVIDIA · H100 Tensor Core GPU, product specifications</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2205.05198"
+              >NVIDIA · Reducing Activation Recomputation in Large Transformer Models (Korthikanti et al., 2022)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://blog.eleuther.ai/transformer-math/"
+              >EleutherAI · Transformer Math 101</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://epoch.ai/blog/estimating-training-compute"
+              >Epoch AI · Estimating training compute of Deep Learning models</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
