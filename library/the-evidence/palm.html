@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PaLM was trained on a fourteenth of the data its size called for · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "palm",
+        "template": "lesson",
+        "title": "PaLM was trained on a fourteenth of the data its size called for",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-10",
+        "tags": ["palm", "scaling-laws", "chinchilla", "emergent-abilities"],
+        "sources": 7,
+        "words": 2004,
+        "reading_minutes": 9,
+        "dek": "A scaling result DeepMind posted a week before PaLM says Google built its biggest language model far too large for the 780 billion tokens it saw.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">PaLM was trained on a fourteenth of the data its size called for</h1>
+        <p class="nb-dekline">
+          A scaling result DeepMind posted a week before PaLM says Google built its biggest language model far too large for the 780 billion tokens it saw.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-10</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You keep meeting PaLM. It is the model the
+          <a href="../the-evidence/react-reasoning-and-acting.html">ReAct agents</a>
+          ran on, the one whose efficiency figure
+          <a href="../the-instruments/model-flops-utilization.html">The Instruments</a>
+          took apart, and the name that turns up whenever someone argues that
+          making a model bigger suddenly switches on new skills. This lesson
+          reads the 2022 paper that introduced it. You will see how big PaLM
+          was, how much text it was trained on, and why a result published a
+          week earlier says that combination was badly proportioned. You will
+          see which of its famous scores stand on their own and which lean on a
+          footnote. By the end you will be able to say what the PaLM paper
+          actually showed, and where its name now gets used to claim more than
+          that.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/chinchilla.html">Chinchilla beat a model four times its size</a>:
+            the compute-optimal result this lesson measures PaLM against.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/scaling-laws-kaplan.html">OpenAI's 2020 scaling paper</a>:
+            the earlier scaling laws Chinchilla revised.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-evidence/emergent-abilities.html">The sudden jump in AI benchmarks was mostly in the scoring</a>:
+            the emergence debate this lesson only touches.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The biggest dense model of 2022</h2>
+        <p>
+          In April 2022, Google Research published PaLM, short for Pathways
+          Language Model. It was a single neural network with 540.35 billion
+          parameters, the adjustable numbers a model sets during training.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+          It was <em>densely activated</em>, meaning the whole network runs on
+          every token it reads. And it was <em>autoregressive</em>: trained to
+          do one thing, predict the next token in a sequence, and nothing
+          else.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Google trained it on 780 billion tokens of text, a token being
+          roughly a word or piece of a word, on 6,144 TPU v4 chips, Google's own
+          machine-learning processors, spread across two connected pods. Two
+          smaller versions, at 8.63 and 62.50 billion parameters, were trained
+          on the same 780 billion tokens, which lets the paper watch what
+          changes as the model grows.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">540.35B</span
+            ><span class="nb-stat-l">parameters</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">780B</span
+            ><span class="nb-stat-l">training tokens</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">6,144</span
+            ><span class="nb-stat-l">TPU v4 chips</span>
+          </div>
+        </div>
+        <p>
+          The paper's engineering headline was efficiency. On those chips PaLM
+          reached a model-FLOPs utilization of 46.2%, a measure of how much of
+          the hardware's arithmetic capacity a training run actually used,
+          against 21.3% for GPT-3 and 32.5% for DeepMind's Gopher.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+          How that number is built and where it can mislead is
+          <a href="../the-instruments/model-flops-utilization.html">its own lesson</a>.
+          What matters here is the plain fact of the scale: PaLM was the largest
+          densely activated language model anyone had published. By a scaling
+          result that appeared a week before it, that size was more than its
+          training data could justify.
+        </p>
+      </section>
+
+      <section data-nb-section="token-budget" id="token-budget">
+        <h2>The token budget Chinchilla says it should have had</h2>
+        <p>
+          The result comes from a DeepMind paper the field calls Chinchilla,
+          posted to arXiv on 29 March 2022, seven days before PaLM.<sup
+            class="nb-cite"><a href="#s2">2</a></sup>
+          Hoffmann and coauthors trained more than 400 models and found that,
+          for a fixed compute budget, model size and the number of training
+          tokens should grow together in equal proportion. They put it plainly:
+          "the model size and the number of training tokens should be scaled
+          equally."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The rough guide their numbers produce is about 20 training tokens for
+          every parameter, revising
+          <a href="../the-evidence/scaling-laws-kaplan.html">an earlier set of scaling laws</a>
+          that had leaned toward spending compute on size. The finding has
+          <a href="../the-evidence/chinchilla.html">its own lesson</a>; here it
+          is a ruler.
+        </p>
+        <p>
+          <em>Compute-optimal</em> is worth catching as it goes past. It does
+          not mean the best model you could build. It means the best model for a
+          fixed amount of arithmetic: given so many chip-hours, how should you
+          divide them between a bigger model and more data.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup>
+          Hold PaLM against that ruler. PaLM has 540.35 billion parameters and
+          saw 780 billion tokens, which works out to 1.44 tokens per
+          parameter.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Chinchilla's own model reached 20 to 1: 70 billion parameters trained
+          on 1.4 trillion tokens. Chinchilla's Table 3 estimates that a model
+          near PaLM's size, 520 billion parameters, should see 11.0 trillion
+          tokens to be compute-optimal.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          PaLM saw 780 billion. That is about one-fourteenth of what the rule
+          prescribes for its size.
+        </p>
+        <table class="nb-table">
+          <caption>
+            What PaLM was trained on, and what the compute-optimal rule would
+            have prescribed for its size.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            ><sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th>Parameters</th>
+              <th>Training tokens</th>
+              <th>Tokens per parameter</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">PaLM 540B, as trained</td>
+              <td>540.35 B</td>
+              <td>780 B</td>
+              <td>1.44</td>
+            </tr>
+            <tr>
+              <td class="txt">Chinchilla 70B, compute-optimal</td>
+              <td>70 B</td>
+              <td>1.4 T</td>
+              <td>20</td>
+            </tr>
+            <tr>
+              <td class="txt">Compute-optimal for a 520B model</td>
+              <td>520 B</td>
+              <td>11.0 T</td>
+              <td>~20</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Two things keep that shortfall from being a verdict on the team.
+          First, PaLM's authors were not ignoring Chinchilla. They could not
+          have used it. The two papers landed a week apart, and PaLM's training
+          was long finished by the time Chinchilla appeared, so the
+          undertrained reading is one applied afterward, with a ruler that did
+          not exist when the model was built.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s2">2</a></sup>
+          Second, undertrained is a claim about efficiency, not strength. On
+          downstream tasks PaLM 540B beat the much smaller Chinchilla, because
+          it spent far more compute overall.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup>
+          Chinchilla's point is narrower and sharper: the same compute, spent on
+          a smaller model and more data, would have gone further. Chinchilla's
+          own paper had already said as much about the models of its day,
+          calling them "considerably over-sized." PaLM, built in the same
+          months, was the largest of them.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="big-bench" id="big-bench">
+        <h2>A jump on BIG-bench that later work called a mirage</h2>
+        <p>
+          BIG-bench is a community benchmark built to test language models on
+          tasks they were not trained for. PaLM's paper reports scores on 150 of
+          its tasks, and on the 58 of them that earlier models had also been
+          measured on. PaLM 540B, given five worked examples in the prompt, a
+          setup the field calls
+          <a href="../the-mechanics/in-context-learning.html">in-context learning</a>,
+          beat the previous best score on 44 of those 58. On the aggregate it
+          scored above the average person asked to do the same tasks, though the
+          average person still beat PaLM on 35% of the individual tasks.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The paper's more striking claim was about how the scores arrived.
+          Across the 150 tasks, going from the 62-billion model to the
+          540-billion one, 25% improved by more than 10 percentage points and
+          15% by more than 20, a sharper rise than the step from 8 billion to 62
+          billion had produced.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A related paper that year, by Wei and coauthors, named this pattern an
+          emergent ability and defined it precisely.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The claim, defined</span>
+          <blockquote>
+            "We consider an ability to be emergent if it is not present in
+            smaller models but is present in larger models."<sup class="nb-cite"
+              ><a href="#s3">3</a></sup>
+            <span class="nb-note-who">Wei et al., "Emergent Abilities of Large Language Models"</span>
+          </blockquote>
+        </div>
+        <p>
+          The claim is that scale switches some capabilities on suddenly, in a
+          way you could not have predicted from the smaller models. That claim
+          has been contested at its root. In 2023 Schaeffer, Miranda, and Koyejo
+          argued the suddenness is largely a product of how the tasks are
+          scored.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Many of them use exact-match accuracy: a model gets no credit until
+          its answer is exactly right, so one that is steadily getting closer
+          shows nothing on the graph until it crosses the line, then appears to
+          leap. Measured on a metric that gives partial credit, they report, the
+          same models improve smoothly.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Their examples center on the GPT-3 family, but PaLM's jumps rest on
+          the same style of scoring, so the challenge reaches them. The
+          <a href="../the-evidence/emergent-abilities.html">emergence debate is its own lesson</a>.
+          PaLM's graph is one exhibit in it, not a settled finding.
+        </p>
+      </section>
+
+      <section data-nb-section="gsm8k" id="gsm8k">
+        <h2>The chain-of-thought score that needed a calculator</h2>
+        <p>
+          PaLM's most-cited single result is on GSM8K, a set of grade-school
+          math word problems. The number people remember is 58%. It comes with
+          an asterisk the paper is open about.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup>
+          That 58% is what PaLM scored when it was allowed to call an external
+          calculator to do the arithmetic. Prompted instead to reason step by
+          step in words, a technique called
+          <a href="../the-evidence/chain-of-thought.html">chain-of-thought</a>,
+          with no calculator, PaLM 540B scored 54%. The prior record it is often
+          said to have beaten was 55%, set the year before by a fine-tuned
+          system from Cobbe and coauthors.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup>
+          Plain chain-of-thought came in just under it. A citation crediting
+          PaLM with beating the GSM8K record through reasoning alone is
+          crediting the calculator for part of the work.
+        </p>
+      </section>
+
+      <section data-nb-section="successors" id="successors">
+        <h2>PaLM's successors stopped naming their size</h2>
+        <p>
+          Google announced PaLM as a "breakthrough," claiming breakthrough
+          performance and breakthrough capabilities on reasoning tasks, and
+          reported that it beat prior models on 28 of 29 English NLP
+          tasks.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The paper reports the discontinuous jumps on BIG-bench. The
+          announcement, describing the same model, calls its scaling "log-linear
+          behavior similar to prior models" and never uses the word
+          discontinuous.<sup class="nb-cite"><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s5">5</a></sup>
+          The two framings sit inside Google's own materials.
+        </p>
+        <p>
+          PaLM's size, the thing this lesson has measured it by, is also the
+          last size Google published for a flagship model. The PaLM 2 technical
+          report, in 2023, gives no parameter count for any PaLM 2 model. It says
+          data and model size should now be scaled in roughly equal proportion,
+          which is Chinchilla's rule. And it states that its largest model, PaLM
+          2-L, is significantly smaller than the largest PaLM while using more
+          training compute.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The Gemini report that followed discloses parameter counts only for
+          its two smallest on-device models, at 1.8 and 3.25 billion, and none
+          for its Ultra and Pro models.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          So the paper reads, now, in two directions at once. Its scaling
+          numbers were corrected within a week of publication, and Google's own
+          successor adopted the correction. Its emergence result is one
+          contested exhibit rather than a law. What it plainly showed is still
+          large: 540 billion parameters trained coherently across 6,144 chips,
+          at higher hardware efficiency than any comparable run had reported,
+          ahead of prior models on 28 of 29 English tasks.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup>
+          Cited today as proof that size alone switches on new abilities, PaLM
+          is being asked to carry more than its paper claimed.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          PaLM was the largest densely activated language model of its moment,
+          and the paper backs the scale up: 540 billion parameters, trained on
+          780 billion tokens across 6,144 chips, ahead of the field on most
+          standard English tasks. Read against Chinchilla, published a week
+          before it, that same size was trained on roughly a fourteenth of the
+          data the compute-optimal rule prescribes. Undertrained is a verdict on
+          efficiency. PaLM was inefficient by that rule and still strong in
+          absolute terms, beating the smaller, better-proportioned Chinchilla by
+          spending more compute. Its two headline claims come with conditions
+          the paper states and later citations tend to drop. The famous GSM8K
+          number needed a calculator. Without one, chain-of-thought scored below
+          the prior record. The sudden jumps on BIG-bench are contested as an
+          effect of exact-match scoring rather than a new ability switching on.
+          Google's own successors stopped publishing their parameter counts and
+          took up Chinchilla's proportions. The paper showed something real and
+          large. Cited today as proof that size alone produces new abilities, it
+          is asked to prove more than it did.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2204.02311">PaLM: Scaling Language Modeling with Pathways</a>:
+            the paper this lesson reads, method, data, and results in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2304.15004">Are Emergent Abilities of Large Language Models a Mirage?</a>:
+            the rebuttal that PaLM's jumps are an artifact of the scoring.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2204.02311"
+              >arXiv · Chowdhery et al., "PaLM: Scaling Language Modeling with Pathways" (2022; JMLR 2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.15556"
+              >arXiv · Hoffmann et al., "Training Compute-Optimal Large Language Models" (2022)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2206.07682"
+              >arXiv · Wei et al., "Emergent Abilities of Large Language Models" (2022)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2304.15004"
+              >arXiv · Schaeffer, Miranda & Koyejo, "Are Emergent Abilities of Large Language Models a Mirage?" (2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://research.google/blog/pathways-language-model-palm-scaling-to-540-billion-parameters-for-breakthrough-performance/"
+              >Google Research · "Pathways Language Model (PaLM): Scaling to 540 Billion Parameters for Breakthrough Performance" (2022)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.10403"
+              >arXiv · Google, "PaLM 2 Technical Report" (2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2312.11805"
+              >arXiv · Gemini Team, Google, "Gemini: A Family of Highly Capable Multimodal Models" (2023)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
