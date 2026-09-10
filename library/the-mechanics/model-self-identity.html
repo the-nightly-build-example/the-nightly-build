@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ask DeepSeek's model who made it and it says OpenAI · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "model-self-identity",
+        "template": "lesson",
+        "title": "Ask DeepSeek's model who made it and it says OpenAI",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-10",
+        "tags": ["model-identity", "system-prompt", "distillation", "training-data", "self-knowledge"],
+        "sources": 8,
+        "words": 1821,
+        "reading_minutes": 8,
+        "dek": "A model has no way to look inward and check what it is, so unless its maker writes the answer in, it fills the gap from a web full of ChatGPT.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">Ask DeepSeek's model who made it and it says OpenAI</h1>
+        <p class="nb-dekline">
+          A model has no way to look inward and check what it is, so unless its maker writes the answer in, it fills the gap from a web full of ChatGPT.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-10</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have probably asked a chatbot which model it is, or seen a
+          screenshot of one naming the wrong company. It looks like a small
+          glitch. But people cite these answers as proof of something bigger:
+          that one company copied another, or that a service is quietly
+          reselling a rival's model under a new name. This lesson explains, step
+          by step, why a chatbot can state its maker with full confidence and
+          still be wrong, and why the answer is not evidence either way. By the
+          end you will know where a correct name comes from, why a wrong one
+          comes out instead, and when to trust neither.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/instructions-are-data.html">Language models draw no line between instructions and data</a>: the system prompt is input the model cannot tell apart from your text, and the identity line rides on it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/knowledge-cutoff.html">A model's weights freeze the moment its training run ends</a>: why a model trained before its own launch has no text about itself.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>DeepSeek's model said it was ChatGPT, five times out of eight</h2>
+        <p>
+          On December 27, 2024, TechCrunch reported that the newly released
+          DeepSeek V3 kept identifying itself as ChatGPT. The counted result was
+          a reproduction Lucas Beyer had posted to X and TechCrunch quoted: put
+          the same question eight times, and the model answered
+          <strong>ChatGPT</strong> five times, DeepSeek three. TechCrunch's own
+          tests found the same behavior, and its reporting added that the model
+          called itself a version of OpenAI's GPT-4 from 2023, and that asked how
+          to use DeepSeek's own interface it returned instructions for OpenAI's
+          instead.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The natural thing to think is that the model has this wrong on purpose,
+          or that something inside it is broken, because surely a model knows its
+          own name. An ordinary program can tell you which program it is. To take
+          that read apart we need two plain terms. A large language model writes
+          text by predicting the next <strong>token</strong>, the small chunk of
+          text that is usually a word or a piece of one, and it does this one
+          token at a time from patterns in the text it was trained on. Its
+          <strong>weights</strong> are the billions of numbers that training left
+          behind, and they do not change once the run ends.
+        </p>
+      </section>
+
+      <section data-nb-section="no-introspection" id="no-introspection">
+        <h2>A model has no way to look inward at what it is</h2>
+        <p>
+          The model produces the most likely next token given the text so far.
+          Nothing in that process reaches into the weights and reports back what
+          they are. The weights shape every answer, but the model cannot read
+          them and tell you their contents any more than you can recite the
+          firing pattern of your own neurons.
+        </p>
+        <p>
+          Anthropic tested close to this directly. Researchers injected known
+          concepts into a model's internal activations and checked whether it
+          could notice its own altered state. The most capable models sometimes
+          could, but the paper is blunt about how weak the effect is: the
+          abilities are "highly unreliable" and "failures of introspection remain
+          the norm," and models routinely add self-descriptive detail the authors
+          cannot verify.<sup class="nb-cite"><a href="#s2">2</a></sup> A model
+          cannot recover what it is by looking inward. This is the floor of the
+          descent: nothing below a model's inability to inspect itself would
+          change the answer it gives. So every time a chatbot correctly says it
+          is Claude, made by Anthropic, that right answer had to arrive from
+          somewhere other than the weights knowing themselves.
+        </p>
+      </section>
+
+      <section data-nb-section="identity-from-outside" id="identity-from-outside">
+        <h2>The name has to be written in from outside</h2>
+        <p>
+          It arrives as text at the start of the conversation. Anthropic
+          publishes the system prompt it ships with Claude, and the prompt opens
+          by stating the identity outright.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The line that sets the identity</span>
+          <blockquote>
+            The assistant is Claude, created by Anthropic. The current date is
+            {{currentDateTime}}.<sup class="nb-cite"><a href="#s3">3</a></sup>
+            <span class="nb-note-who">Anthropic's published Claude Opus 4.1 system prompt, August 5, 2025</span>
+          </blockquote>
+        </div>
+        <p>
+          The double braces are a placeholder the software replaces at runtime.
+          The name and the date are supplied as literal text, not drawn from
+          anything the model already held. The same prompt tells the model it
+          "does not know any other details about Claude models."<sup
+            class="nb-cite"><a href="#s3">3</a></sup> OpenAI's Model Spec, the
+          document that governs how its own models should behave, states the rule
+          from the other side: a model's identity is among the facts carried in
+          its system and developer messages. A worked example in the spec hands a
+          model the instruction that it is a bot named Fred, fine-tuned on GPT-4,
+          and told that if a user asks whether it is based on GPT-4 it should say
+          it does not know. The reply the spec marks as correct is "I'm not sure,
+          I'm just a bot named Fred."<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The model follows the identity it was given and has no separate
+          knowledge of its own base. Because the system prompt is
+          <a href="../the-mechanics/instructions-are-data.html">just input</a>,
+          the identity line is only as reliable as whoever wrote it. Take it
+          away, and there is nothing left to state the name. So what does a model
+          say when no one writes it in?
+        </p>
+      </section>
+
+      <section data-nb-section="training-data-answers" id="training-data-answers">
+        <h2>With nothing written in, the training data answers</h2>
+        <p>
+          It falls back to the most likely completion, and what is likely is set
+          by what it read in training. The public web is thick with text about
+          ChatGPT and OpenAI. To a model completing the sentence "I am a language
+          model made by," one filling appears far more often than any other. The
+          model writes the likeliest one, so "ChatGPT" and "OpenAI" come out. It
+          is guessing its own name from the same statistical habit that guesses
+          the next word in any sentence.
+        </p>
+        <p>
+          There is a second route to the same answer. Some models are trained
+          partly on other models' outputs. A 2023 Berkeley study fine-tuned open
+          models on ChatGPT's own text and found they absorbed its manner far
+          more than its knowledge, calling them "adept at mimicking ChatGPT's
+          style but not its factuality."<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The part of another model that transfers most easily is exactly the way
+          it talks about itself. Whether a given model's slip came from the open
+          web or from training on another model's outputs usually cannot be told
+          from the outside. That much is an open question. The mechanism above is
+          not: an identity nobody supplied gets filled by the likeliest text, and
+          the likeliest text names ChatGPT.
+        </p>
+        <p>
+          Two real cases show the same behavior arriving from those two different
+          roots.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The same self-identification failure, and the two accounts its makers gave of the cause. One was attributed to web text, one accused of training on the rival's output. The behavior is identical either way.<sup class="nb-cite"><a href="#s6">6</a></sup><sup class="nb-cite"><a href="#s7">7</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>MODEL</th>
+              <th>WHEN</th>
+              <th class="txt">What it produced</th>
+              <th class="txt">The maker's account</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Grok</span></td>
+              <td>Dec 2023</td>
+              <td class="txt">Refused a request by citing "OpenAI's use case policy."</td>
+              <td class="txt">xAI said Grok was trained on web data full of ChatGPT outputs and picked up the phrasing, and that it "was not trained using any OpenAI code."</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">DeepSeek V3</span></td>
+              <td>Dec 2024</td>
+              <td class="txt">Said it was ChatGPT and a version of GPT-4.</td>
+              <td class="txt">OpenAI said it was reviewing indications DeepSeek "may have inappropriately distilled our models," an accusation, not a proven cause of the slip.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          <strong>Distillation</strong> is training a smaller student model on a
+          larger teacher model's outputs, which needs only the outputs, not the
+          teacher's internals.<sup class="nb-cite"><a href="#s7">7</a></sup> Web
+          contamination and distillation are different acts, but they leave the
+          same residue in the training text, so they produce the same wrong name.
+        </p>
+        <p>
+          The knowledge cutoff makes the gap certain. A model finishes training
+          before it is released, so the training text holds nothing about the
+          model under its own name, for the plain reason that no such text existed
+          yet.<sup class="nb-cite"><a href="#s3">3</a></sup> The one name the data
+          cannot supply is the model's own, which leaves the likeliest rival name
+          to fill it. Why a model's weights hold no text past its cutoff is its
+          own lesson, on
+          <a href="../the-mechanics/knowledge-cutoff.html">when the weights freeze</a>.
+        </p>
+      </section>
+
+      <section data-nb-section="not-proof-of-provenance" id="not-proof-of-provenance">
+        <h2>A self-report is no proof of who built it</h2>
+        <p>
+          In both cases there was, as it happens, independent evidence the maker
+          had touched the other company's output. OpenAI accused DeepSeek of
+          distillation. Musk later testified under oath, on April 30, 2026, in
+          his lawsuit against OpenAI, that xAI had "partly" trained Grok on
+          OpenAI models.<sup class="nb-cite"><a href="#s8">8</a></sup> One could
+          read each "I'm ChatGPT" as the model reporting its origins correctly.
+        </p>
+        <p>
+          The earlier Grok case breaks that reading. xAI's own co-founder pinned
+          the identical behavior on web contamination and denied any training on
+          OpenAI data at the time.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Both routes end in the same self-report, so the self-report cannot tell
+          them apart, and it cannot stand as proof of either. The two xAI
+          statements belong to different moments and possibly different versions
+          of Grok, and the 2026 testimony settles nothing about what caused the
+          2023 refusal. Reading the later admission back onto the earlier
+          incident treats a statistical guess as a confession.
+        </p>
+        <p>
+          This is not the generic
+          <a href="../the-mechanics/hallucination.html">invented fact</a> a
+          chatbot produces when it has nothing to say. It is a specific,
+          traceable case: the likeliest completion, produced the same way as
+          every other token, filling a blank that the model had no way to fill
+          from itself.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A chatbot's statement about what it is and who made it is not evidence
+          of either. When it is right, the name was written into the system
+          prompt at the start of the conversation. When it is wrong, no name was
+          written in, and the training data, full of ChatGPT, supplied the
+          likeliest one instead. The model never had a way to check, because it
+          cannot look inward at its own weights. Read a self-identification as a
+          report of what the training made likely, not as a fact about where the
+          model came from.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://model-spec.openai.com/2025-09-12.html">OpenAI, Model Spec</a>: the document itself, including the Fred example and the rule on which identity facts a model may share.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2305.15717">The False Promise of Imitating Proprietary LLMs</a>: the study on what does and does not transfer when you train one model on another's output.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://techcrunch.com/2024/12/27/why-deepseeks-new-ai-model-thinks-its-chatgpt/"
+              >TechCrunch · Why DeepSeek's new AI model thinks it's ChatGPT</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://transformer-circuits.pub/2025/introspection/index.html"
+              >Anthropic (Jack Lindsey) · Emergent Introspective Awareness in Large Language Models</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://platform.claude.com/docs/en/release-notes/system-prompts/claude-opus-4-1"
+              >Anthropic · Claude Opus 4.1 system prompt (August 5, 2025)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://model-spec.openai.com/2025-09-12.html"
+              >OpenAI · Model Spec (2025-09-12)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.15717"
+              >arXiv (Gudibande, Wallace et al. / UC Berkeley) · The False Promise of Imitating Proprietary LLMs</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.theweek.in/news/biz-tech/2023/12/10/elon-musk-claps-back-at-chatgpt-amid-claims-of-grok-using-openai-code.html"
+              >The Week · Elon Musk claps back at ChatGPT amid claims of Grok using OpenAI code</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://theconversation.com/openai-says-deepseek-inappropriately-copied-chatgpt-but-its-facing-copyright-claims-too-248863"
+              >The Conversation (Frermann and Cohney / University of Melbourne) · OpenAI says DeepSeek inappropriately copied ChatGPT</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://techcrunch.com/2026/04/30/elon-musk-testifies-that-xai-trained-grok-on-openai-models/"
+              >TechCrunch (Tim Fernholz) · Elon Musk testifies that xAI trained Grok on OpenAI models</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
