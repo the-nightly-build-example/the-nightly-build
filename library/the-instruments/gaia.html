@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenAI's state-of-the-art GAIA score came from the set whose answers are public · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "gaia",
+        "template": "lesson",
+        "title": "OpenAI's state-of-the-art GAIA score came from the set whose answers are public",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-10",
+        "tags": ["benchmarks", "ai-agents", "gaia", "leaderboard", "evaluation"],
+        "sources": 9,
+        "words": 1844,
+        "reading_minutes": 8,
+        "dek": "GAIA scores a general assistant on 466 real-world tasks, most of them withheld because the public ones leak too reliably to rank on.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">OpenAI's state-of-the-art GAIA score came from the set whose answers are public</h1>
+        <p class="nb-dekline">
+          GAIA scores a general assistant on 466 real-world tasks, most of them withheld because the public ones leak too reliably to rank on.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-10</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When a company says its assistant reached "a new state of the art on
+          GAIA," it is claiming something about general competence. The system
+          can plan a multi-step task, browse the web, open a file, and come back
+          with the one right answer, the way a capable person with a laptop
+          would. GAIA is the benchmark those claims lean on, and it is
+          the one behind headlines that an AI assistant now matches or beats
+          people at real work. This lesson takes one such claim apart. By the
+          end you will know how a GAIA score is produced, why the same benchmark
+          reports two numbers a headline can quietly swap, and exactly what a
+          high score does and does not tell you about an assistant.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/livecodebench.html">LiveCodeBench scores a model only on problems released after it was trained</a>:
+            how one benchmark fights answer contamination by dating every problem.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/tau-bench.html">GPT-4o clears 61% of &tau;-bench tasks once and under 25% of them eight times in a row</a>:
+            a neighboring agent number, scored on a single tool-using script.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>OpenAI reported a score that looked like it was catching up to people</h2>
+        <p>
+          On 2 February 2025, OpenAI announced its Deep Research agent and said
+          it had reached a new state of the art on GAIA.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The figure was 67.36 percent.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          GAIA is a benchmark for general AI assistants: real-world questions a
+          person can answer but a machine mostly cannot. The humans who wrote
+          and checked those questions answered 92 percent of
+          them.<sup class="nb-cite"><a href="#s3">3</a></sup> A machine at 67
+          where people sit at 92 reads like a system most of the way to human
+          performance on real tasks.
+        </p>
+        <p>
+          Two things complicate that reading. The 92 percent is not a casual
+          human with no help. It is the benchmark's own annotators, working with
+          web access and tools and taking six to seventeen minutes a
+          question.<sup class="nb-cite"><a href="#s3">3</a></sup> And the 67.36
+          percent was measured on GAIA's public set, whose questions and answers
+          are posted online, while the leaderboard that actually ranks
+          assistants runs on a separate set of questions whose answers are
+          withheld.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          GAIA is not the only agent number the course has met.
+          <a href="../the-instruments/swe-bench.html">SWE-bench</a> scores an
+          agent on fixing real repository bugs,
+          <a href="../the-instruments/tau-bench.html">&tau;-bench</a> on holding
+          to a single customer-service script through a tool-using conversation,
+          and METR's
+          <a href="../the-instruments/task-time-horizon.html">task-time-horizon</a>
+          on how long a task an agent can finish before it fails. GAIA's claim
+          is broader than any of them: general assistance, any everyday task
+          with a checkable answer. Because the tasks are so varied, a high GAIA
+          score is easy to hear as competence at real work in general.
+        </p>
+      </section>
+
+      <section data-nb-section="how-a-score-is-made" id="how-a-score-is-made">
+        <h2>A GAIA score starts with 466 questions and one reference answer</h2>
+        <p>
+          The benchmark was built by a team led by Gr&eacute;goire Mialon, with
+          co-authors including Cl&eacute;mentine Fourrier, Thomas Wolf, and Yann
+          LeCun, and published in 2023.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          They wrote 466 questions, each with a single correct answer they had
+          verified.<sup class="nb-cite"><a href="#s3">3</a></sup> Hugging Face
+          hosts the data and runs the public leaderboard.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          Every question is built to be easy for a person and hard for a
+          machine. Not a trivia lookup, but a chain of steps that may require
+          reading a document,
+          <a href="../the-mechanics/tool-use.html">calling a tool</a>, or
+          handling an image or spreadsheet along the way. The questions come in
+          three difficulty levels, set by how many steps and tools each one
+          needs.
+        </p>
+        <table class="nb-table">
+          <caption>
+            GAIA's three levels, by the work each question demands and how many
+            questions sit at each.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Level</th>
+              <th>Questions</th>
+              <th class="txt">What it takes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Level 1</span></td>
+              <td>146</td>
+              <td class="txt">No tool, or one, in up to about five steps.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Level 2</span></td>
+              <td>245</td>
+              <td class="txt">Several tools combined, roughly five to ten steps.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Level 3</span></td>
+              <td>75</td>
+              <td class="txt">Any number of tools in an arbitrarily long chain.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Grading is mechanical. A model's answer is compared to the one
+          reference answer by quasi-exact match: the two strings must agree
+          after a light normalization that depends on the answer's type, so that
+          8 and eight, or a differently spaced list, can still count as
+          equal.<sup class="nb-cite"><a href="#s3">3</a></sup> For that to work
+          the benchmark has to tell the model exactly how to shape its reply.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Quasi-exact match</span>
+          <p>
+            The grader does not read for meaning. It normalizes both strings by
+            answer type and checks whether they match, which is why GAIA
+            instructs every model that
+            <code>YOUR FINAL ANSWER should be a number OR as few words as possible OR a comma separated list of numbers and/or strings</code>.<sup
+              class="nb-cite"
+              ><a href="#s3">3</a></sup
+            >
+            A right answer in the wrong shape can be marked wrong, and a lucky
+            wrong one can slip through.
+          </p>
+        </div>
+        <p>
+          At release the gap looked like this. The annotators scored 92 percent
+          aggregated across all three levels. GPT-4 equipped with plugins scored
+          15 percent overall, and on the Level 3 chains it solved
+          none.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">92%</span
+            ><span class="nb-stat-l">human annotators, at release</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">15%</span
+            ><span class="nb-stat-l">GPT-4 with plugins, at release</span>
+          </div>
+        </div>
+      </section>
+
+      <section data-nb-section="public-versus-withheld" id="public-versus-withheld">
+        <h2>The public questions and the withheld questions are not the same test</h2>
+        <p>
+          Of the 466 questions, 166 were released with their answers as a
+          developer set, and the answers to the other 300 were withheld to power
+          the leaderboard.<sup class="nb-cite"><a href="#s3">3</a></sup> The
+          public 166 are the validation set. The withheld 300 are the test set.
+        </p>
+        <p>
+          Why keep the answers secret? Because a public answer stops testing
+          anything once a model can read it. Hugging Face gates the data and
+          makes every user agree not to reshare it outside a private repository,
+          to keep the questions out of the text models train on.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          The validation set has already lost that protection. One explainer
+          notes that its questions and answers are widely available online, so a
+          model "might have 'memorized' them during their training rather than
+          deriving solutions from genuine reasoning."<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          That is contamination, the same failure an earlier lesson traced
+          through
+          <a href="../the-instruments/livecodebench.html">LiveCodeBench</a>,
+          where the fix was to score models only on problems released after they
+          were trained.
+        </p>
+        <p>
+          That is why the leaderboard changed. The public validation leaderboard
+          was closed, and the ranking Hugging Face maintains now scores the
+          withheld test set only, reporting each system's percentage of correct
+          answers on that split.<sup class="nb-cite"><a href="#s4">4</a></sup> A
+          validation score and a test score are two different measurements, and
+          only one of them is the ranked result.
+        </p>
+      </section>
+
+      <section data-nb-section="the-misleading-case" id="the-misleading-case">
+        <h2>The 67 percent got read as a leaderboard win it never was</h2>
+        <p>
+          Return to OpenAI's claim. Deep Research's 67.36 percent was a
+          validation-set figure. Hugging Face's own engineering team, which
+          includes GAIA co-author Cl&eacute;mentine Fourrier, reported it as
+          near 67 percent correct on average and 47.6 percent on the hardest
+          Level 3 questions, all on the validation set.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Framed the way OpenAI framed it, as "a new state of the art on
+          GAIA,"<sup class="nb-cite"><a href="#s1">1</a></sup> the number
+          traveled as though it were a rank on the leaderboard. It was not. The
+          leaderboard runs on the test set, and this figure was never on it.
+        </p>
+        <p>
+          The cost showed up when the number got compared. On 17 March 2025,
+          H2O.ai reported its own agent at 75 percent, claimed the top spot, and
+          placed itself "ahead of OpenAI's Deep Research."<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          H2O.ai said plainly what the comparison rested on. Its 75 percent came
+          from the test set, "a more rigorous and extensive evaluation involving
+          nearly double the number of questions with no known data leaks."
+          Deep Research and the newcomer Manus, it noted, "were evaluated on
+          validation data."<sup class="nb-cite"><a href="#s7">7</a></sup> A 75 on
+          the test set and a 67 on the validation set do not rank one system
+          above the other. They are scores from two different exams.
+        </p>
+        <p>
+          How far apart are those exams? One report shows it on a single system.
+          JD's JoyAgent-JDGenie scored 75.2 on the validation set and 67.1 on
+          the test set: the same system, eight points lower once the questions
+          shift from public to withheld.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          A headline that stacks one lab's validation figure against another's
+          test figure is reading across that gap without seeing it.
+        </p>
+        <p>
+          None of this means GAIA measures nothing. The public set's exposure is
+          a reason to distrust a validation number read as a ranking, not a
+          reason to distrust the benchmark. A recent independent survey of agent
+          evaluations, the Holistic Agent Leaderboard, uses GAIA as a routine
+          web-search-and-reasoning benchmark and raises no contamination flag
+          against it.<sup class="nb-cite"><a href="#s9">9</a></sup> The problem
+          is narrow and repeatable: comparing a number from the leaky public set
+          with a number from the clean withheld one.
+        </p>
+      </section>
+
+      <section data-nb-section="what-it-licenses" id="what-it-licenses">
+        <h2>A high GAIA score licenses less than the headline says</h2>
+        <p>
+          So what does a GAIA number actually support? Take it on the test set,
+          where the answers are clean. A high score says the system can carry a
+          multi-step task with a single checkable answer through to completion,
+          using tools and the web, and land the exact string the grader wants,
+          more often than the systems below it on the same split.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          That is a real and difficult thing to do.
+        </p>
+        <p>
+          It does not support the rest of what the headlines say. It does not
+          show the system beats people: the human 92 percent is an annotator
+          with tools and time, and the highest verified test-set score in this
+          record is H2O.ai's 75 percent, well under it.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The validation figures that feed "assistants beat humans" sit on the
+          set a model can memorize.<sup class="nb-cite"><a href="#s6">6</a></sup> And a GAIA
+          score says nothing about tasks with no single checkable answer, which
+          is most of what a person actually hands an assistant.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You now have the two numbers the opener set, side by side. A GAIA
+          score is the percentage of real-world, multi-step questions a system
+          answered exactly right, graded by string match against one reference.
+          Ask one thing of any GAIA number before you trust it: was it measured
+          on the public validation set, whose answers a model can look up, or on
+          the withheld test set the leaderboard actually ranks? OpenAI's 67.36
+          percent was the first kind. The 92 percent it seemed to be chasing
+          belongs to annotators with tools and time, not a casual human, and no
+          system in this record has caught it on the set that counts.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://huggingface.co/spaces/gaia-benchmark/leaderboard">The GAIA leaderboard</a>:
+            the current ranking, scored on the withheld test set.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://huggingface.co/blog/open-deep-research">Hugging Face, Open-source DeepResearch</a>:
+            an open attempt to reproduce Deep Research on GAIA, with its validation-set numbers.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://openai.com/index/introducing-deep-research/"
+              >OpenAI · Introducing deep research (2 February 2025)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/blog/open-deep-research"
+              >Hugging Face · Open-source DeepResearch (Roucher, Wolf, Fourrier et al.)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2311.12983"
+              >arXiv · GAIA: A Benchmark for General AI Assistants (Mialon et al., 2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/spaces/gaia-benchmark/leaderboard"
+              >Hugging Face · GAIA leaderboard</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/datasets/gaia-benchmark/GAIA"
+              >Hugging Face · GAIA dataset card</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://towardsdatascience.com/gaia-the-llm-agent-benchmark-everyones-talking-about/"
+              >Towards Data Science · GAIA: The LLM Agent Benchmark Everyone's Talking About (Shuai Guo)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://h2o.ai/blog/2025/h2o-ai-tops-the-general-ai-assistant-test/"
+              >H2O.ai · H2O.ai tops the General AI Assistant test (17 March 2025)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2510.00510"
+              >arXiv · JoyAgent-JDGenie technical report (Liu, Xu et al.)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2510.11977"
+              >arXiv · Holistic Agent Leaderboard (Kapoor, Narayanan et al.)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
