@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A coding assistant invents the same fake package run after run · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "hallucinated-packages",
+        "template": "lesson",
+        "title": "A coding assistant invents the same fake package run after run",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-11",
+        "tags": [],
+        "sources": 9,
+        "words": 2188,
+        "reading_minutes": 10,
+        "dek": "Because the same invented name recurs, an attacker can register it first, so a developer who pastes the assistant's import installs code the attacker wrote.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A coding assistant invents the same fake package run after run</h1>
+        <p class="nb-dekline">
+          Because the same invented name recurs, an attacker can register it
+          first, so a developer who pastes the assistant's import installs code
+          the attacker wrote.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-09-11</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Ask an AI coding assistant how to do something and it will often hand
+          back working code that begins by installing a package that does not
+          exist. Anyone who has coded with one has seen it. The easy reading is
+          that the model slipped and the next try will be fine. It is not that
+          simple. The invented name is not random. The same fake package tends to
+          come back, run after run and even across different models. That
+          predictability is what lets someone register the name and wait for your
+          install. By the end you can say why the assistant invents a package, why
+          the same invention returns, how that turns a nuisance into a
+          supply-chain risk, and what actually reduces it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/hallucination.html">A model builds a fake citation the same way it builds a true one</a>:
+            the base mechanism, why a model invents a fact with no lookup and no truth check.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/tool-use.html">A model that calls a tool never runs it</a>:
+            how a model is given a way to reach outside itself at answer time.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/retrieval.html">A chatbot quotes your PDF without learning a word of it</a>:
+            how a live lookup into an outside store is bolted onto a model's guessing.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The package it told you to install was never published</h2>
+        <p>
+          Ask several AI assistants how to use a popular machine-learning service
+          from the command line and they would tell you to install a tool called
+          <code>huggingface-cli</code>. No such package exists. The real tool
+          ships inside another one and installs under a different name,
+          <code>pip install -U "huggingface_hub[cli]"</code>. The invented name
+          was plausible, confidently given, and wrong. A security researcher, Bar
+          Lanyado, found four different models recommending
+          it.<sup class="nb-cite"><a href="#s1" data-nb-note="Models repeatedly recommended the nonexistent huggingface-cli; the real CLI installs via huggingface_hub[cli].">1</a></sup>
+        </p>
+        <p>
+          Two words here need their plain meanings. A package is a bundle of
+          reusable code a developer installs rather than writes. A registry is the
+          public index it installs from, PyPI for Python and npm for JavaScript,
+          and an install command or an <code>import</code> line names a package by
+          a string. When the assistant writes a name that is not in the registry,
+          it has hallucinated a package.
+        </p>
+        <p>
+          This is not a lookup that fetched the wrong entry. A plain assistant has
+          no index inside it to consult. When it answers, it predicts the next
+          piece of text from patterns fixed in its weights, with no step that
+          checks a registry. The lesson on
+          <a href="../the-mechanics/hallucination.html">why a model invents a fact it never stored</a>
+          covers that, and the lessons on
+          <a href="../the-mechanics/tool-use.html">calling a tool</a> and
+          <a href="../the-mechanics/retrieval.html">looking something up at answer time</a>
+          cover the steps that would let it check. The point here is narrower. If
+          the assistant only predicts plausible text, you would expect a fresh
+          piece of nonsense each time, a different wrong name on every run. That is
+          not what happens. Ask again and the same invented name comes back. This
+          lesson answers why a package that was never real keeps returning, and
+          what that repetition makes possible.
+        </p>
+      </section>
+
+      <section data-nb-section="recurrence" id="recurrence">
+        <h2>Re-run the prompt and the same invented name returns</h2>
+        <p>
+          A study presented at USENIX Security in 2025 measured this directly. Its
+          detection test is blunt: take every package name a model writes in
+          generated code and compare it against a master list of real names from
+          PyPI and npm. A name not on the list counts as a
+          hallucination.<sup class="nb-cite"><a href="#s2" data-nb-locator="Detection method, experimental setup">2</a></sup>
+          Across 16 models and 576,000 code samples, 19.7% of the roughly 2.23
+          million package names the models recommended did not exist, 205,474
+          distinct names in all.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The figure the thesis needs is about repetition, not the overall rate.
+          The authors took 500 prompts that had each produced at least one
+          hallucination and re-ran every one ten times. In 58% of cases the same
+          invented package came back in more than one of the ten runs, and 43%
+          came back in all ten. A separate 39% never recurred. Those three figures
+          are separate readings of the same rerun set, not shares that sum to a
+          whole.<sup class="nb-cite"><a href="#s2" data-nb-locator="Repetition / persistence (RQ3)">2</a></sup>
+          They point the same way: for most invented names, recurrence is the
+          rule. Each model tends to reproduce its own set of fake names rather than
+          spray fresh ones.
+        </p>
+        <p>
+          The repetition does not stop at one model. Lanyado's earlier study found
+          215 hallucinated names shared by more than one of the four models he
+          tested.<sup class="nb-cite"><a href="#s1">1</a></sup> A 2026
+          re-evaluation of current frontier models found 127 names that all five
+          models invented
+          identically.<sup class="nb-cite"><a href="#s3" data-nb-locator="Abstract">3</a></sup>
+          The invention is stable within a model, across models, and across two
+          generations of them.
+        </p>
+        <p>
+          Why would a name pointing at nothing be a stable guess? Because the draw
+          that picks each next word is not a uniform roll over every string the
+          model could write. The model ranks the possible continuations by
+          probability and mostly takes from near the top. For a given run of code,
+          one plausible-looking name can sit far above the rest, the most probable
+          way to continue whether or not it names a real package. Run the prompt
+          again and the same top-ranked name tends to win. The study found a
+          matching effect: the hallucination rate rose with sampling temperature,
+          the <a href="../the-mechanics/sampling-temperature.html">setting that makes the draw more random</a>
+          by flattening the ranking.<sup class="nb-cite"><a href="#s2" data-nb-locator="Mitigation / temperature">2</a></sup>
+          Turn the randomness up and the model is likelier to wander off its
+          favorite.
+        </p>
+        <p>
+          That the same names recur is measured and firm. Why one particular
+          invented string becomes a model's stable favorite, token by token, is not
+          something the study settles. It rests on how the model's probabilities
+          happen to be shaped, reasoning built on the base mechanism rather than a
+          demonstrated fact of its own. Treat the recurrence as established and the
+          deeper why-this-exact-name as open.
+        </p>
+      </section>
+
+      <section data-nb-section="slopsquatting" id="slopsquatting">
+        <h2>A predictable name is one an attacker can register before you do</h2>
+        <p>
+          Security researchers gave the resulting risk a name: slopsquatting,
+          registering a package name that an assistant is known to hallucinate so
+          that a developer following the assistant installs the attacker's package
+          believing it is
+          real.<sup class="nb-cite"><a href="#s4" data-nb-locator="Definition, top of post">4</a></sup>
+          The term is credited to Seth Larson of the Python Software Foundation and
+          was popularized by Andrew Nesbitt, according to the security
+          reporting.<sup class="nb-cite"><a href="#s4">4</a></sup><sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          The attack runs in four steps. The assistant writes a plausible fake
+          name inside otherwise working code. The developer trusts it and runs the
+          install. An attacker who has catalogued the names assistants commonly
+          hallucinate has already claimed one on the registry. The install now
+          pulls the attacker's code instead of a missing-package
+          error.<sup class="nb-cite"><a href="#s4">4</a></sup> The recurrence is the
+          hinge. A name that appeared once and never again would be worthless to
+          register; a name that comes back reliably is a fixed address. As Lanyado
+          put it, persistence, the repetition of the fake name, is what turns the
+          behavior into a functional
+          attack.<sup class="nb-cite"><a href="#s6" data-nb-locator="Body quote">6</a></sup>
+        </p>
+        <p>
+          The researchers treat the name list as dangerous themselves. The study's
+          authors released their code and data but withheld the master list of the
+          205,474 names and the per-prompt results, citing supply-chain risk, and
+          gate access behind researcher
+          verification.<sup class="nb-cite"><a href="#s7" data-nb-locator="README">7</a></sup>
+          The people who measured the names will not hand them out.
+        </p>
+        <p>
+          How much of this has actually happened? As of these sources, no malicious
+          slopsquatting attack has been documented in the
+          wild.<sup class="nb-cite"><a href="#s5" data-nb-note="Neither the Socket analysis nor the research paper cited any in-the-wild instance.">5</a></sup>
+          The one hallucinated name known to have been registered was Lanyado's own
+          proof of concept. He uploaded an empty, harmless package as
+          <code>huggingface-cli</code>, and it drew more than 30,000 downloads in
+          three months, even appearing in the published install instructions of a
+          real project.<sup class="nb-cite"><a href="#s1" data-nb-note="Lanyado/Lasso figure; an earlier report gives 15,000, a timing difference.">1</a></sup>
+          His summary is the honest one: "I have yet to identify an exploit of this
+          attack technique by malicious
+          actors."<sup class="nb-cite"><a href="#s6">6</a></sup> Every ingredient is
+          present and the install step is proven on a harmless package. A malicious
+          campaign is plausible, not observed.
+        </p>
+      </section>
+
+      <section data-nb-section="the-rate" id="the-rate">
+        <h2>The scary rate is an average from older open models</h2>
+        <p>
+          One figure from the study gets quoted on its own: about one in five
+          recommended packages was hallucinated. That 19.7% is an average, and the
+          spread under it matters more. Commercial models, the GPT series,
+          hallucinated 5.2% of the time; open-source models averaged 21.7%, about
+          four times as
+          often.<sup class="nb-cite"><a href="#s2" data-nb-locator="Main results, commercial vs open-source">2</a></sup>
+          The average sits near the open-source figure because 13 of the 16 models
+          tested were open source. The round number most likely to be repeated is
+          pulled up by models most readers are not using.
+        </p>
+        <p>
+          It is also falling. A 2026 re-evaluation of current frontier models put
+          their rates between 4.62% and
+          6.10%.<sup class="nb-cite"><a href="#s3" data-nb-locator="Abstract">3</a></sup>
+          Treat any single rate as a reading for a particular model at a particular
+          time.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Share of recommended packages that did not exist, by model group.<sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s3">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model group</th>
+              <th>Year</th>
+              <th>Hallucinated</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Commercial (GPT series)</td>
+              <td>2024</td>
+              <td>5.2%</td>
+            </tr>
+            <tr>
+              <td class="txt">Open source (13 models)</td>
+              <td>2024</td>
+              <td>21.7%</td>
+            </tr>
+            <tr>
+              <td class="txt">All 16 models</td>
+              <td>2024</td>
+              <td>19.7%</td>
+            </tr>
+            <tr>
+              <td class="txt">Frontier cohort (5 models)</td>
+              <td>2026</td>
+              <td>4.6–6.1%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The threat does not shrink at the rate's pace. That same 2026 group still
+          produced 127 names all five models invented, and 53 were still
+          registrable after the registries' existing
+          defenses.<sup class="nb-cite"><a href="#s3">3</a></sup> A lower rate with
+          stable, registrable names is still a fixed address an attacker can sit on.
+        </p>
+      </section>
+
+      <section data-nb-section="what-fixes-it" id="what-fixes-it">
+        <h2>The fix is to let the assistant check the registry</h2>
+        <p>
+          The cause is a missing check, so the fix is to supply one. Ground the
+          assistant in the real registry and let it confirm each name against what
+          exists, through the <a href="../the-mechanics/tool-use.html">tool call</a>
+          and <a href="../the-mechanics/retrieval.html">live-lookup</a> steps the
+          earlier lessons cover. The study's tested mitigations did roughly this.
+          Retrieval-augmented generation cut one open model's rate from 16.14% to
+          12.24%, and fine-tuning it against its own past hallucinations cut it to
+          2.66%, about an 85%
+          reduction.<sup class="nb-cite"><a href="#s2" data-nb-locator="Mitigation section">2</a></sup>
+          Asked directly, models can also flag their own inventions: GPT-4 Turbo
+          caught its hallucinated names with 89% precision and recall, GPT-3.5
+          around 82%, lower for the open-source
+          models.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          A plain registry check is not the end of it. Some invented names are
+          registrable, and once an attacker has registered one, the name passes a
+          yes-or-no lookup. Recent work scores how likely a name is to be fake,
+          rather than returning a yes-or-no answer, from registry signals such as a
+          package's age and release history.<sup class="nb-cite"><a href="#s8" data-nb-locator="Abstract">8</a></sup>
+          A strict lookup waves through a name that is suspicious but registered,
+          and the probability score is meant to flag it.
+          How far the base rate can fall is still moving: the study found Python
+          hallucinated less than JavaScript, 15.8% against 21.3%, and the frontier
+          figures are a point in time, not a
+          floor.<sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s3">3</a></sup>
+          What is settled is why the assistant invents a name and that the same
+          name recurs. What is open is how low the rate can go and why a particular
+          fake name becomes the favorite. The reader's defense does not wait on any
+          of that: confirm that a recommended package exists and is what it claims
+          before you install
+          it.<sup class="nb-cite"><a href="#s9" data-nb-locator="Recommendations for developers">9</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A coding assistant does not look a package up before it recommends one.
+          It predicts the next piece of text, and a plausible install line is
+          likely text whether or not the package is real. What is worth keeping is
+          what comes after: the invented name is not a fresh accident each time.
+          The same fake package comes back across runs and across models, because
+          the model keeps landing on its most probable guess. That stability is
+          what a nuisance and an attack have in common. A name that reliably
+          returns is a name someone can register ahead of you, so your next install
+          pulls their code. It has been proven on a harmless test package and not
+          yet seen used for harm. When you read that hallucination rates are
+          falling, that is true and incomplete. The rate drops while the same
+          predictable names survive, and the thing to do has not changed. Confirm
+          the package before you trust the import.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2406.10279">We Have a Package for You! A Comprehensive Analysis of Package Hallucinations</a>:
+            the full study behind the rates and the repetition finding.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://socket.dev/blog/slopsquatting-how-ai-hallucinations-are-fueling-a-new-class-of-supply-chain-attacks">Slopsquatting, explained by a security firm</a>:
+            the threat model and the developer-side defenses, in full.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.lasso.security/blog/ai-package-hallucinations"
+              >Lasso Security (Bar Lanyado) · Diving Deeper into AI Package Hallucinations (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.10279"
+              >Spracklen et al. · We Have a Package for You! A Comprehensive Analysis of Package Hallucinations (USENIX Security 2025)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2605.17062"
+              >Churilov · The Range Shrinks, the Threat Remains: Re-evaluating LLM Package Hallucinations on the 2026 Frontier-Model Cohort (2026)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://socket.dev/blog/slopsquatting-how-ai-hallucinations-are-fueling-a-new-class-of-supply-chain-attacks"
+              >Socket (Sarah Gooding) · The Rise of Slopsquatting: How AI Hallucinations Are Fueling a New Class of Supply Chain Attacks (2025)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.csoonline.com/article/3961304/ai-hallucinations-lead-to-new-cyber-threat-slopsquatting.html"
+              >CSO Online · AI hallucinations lead to a new cyber threat: Slopsquatting (2025)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.theregister.com/2024/03/28/ai_bots_hallucinate_software_packages/"
+              >The Register · AI hallucinates software packages and devs download them (2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/Spracks/PackageHallucination"
+              >Spracklen et al. · PackageHallucination code and data repository</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2606.13918"
+              >Hillah et al. · Bayesian-Calibrated Detection of Hallucinated Package Imports in AI-Assisted Code (2026)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.helpnetsecurity.com/2025/04/14/package-hallucination-slopsquatting-malicious-code/"
+              >Help Net Security · Package hallucination: LLMs may deliver malicious code to careless devs (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
