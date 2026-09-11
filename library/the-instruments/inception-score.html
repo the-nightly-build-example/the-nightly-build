@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Barratt and Sharma drove the Inception Score to 900 of 1000 with one image per class · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "inception-score",
+        "template": "lesson",
+        "title": "Barratt and Sharma drove the Inception Score to 900 of 1000 with one image per class",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-11",
+        "tags": ["inception-score", "image-generation", "gan-evaluation"],
+        "sources": 8,
+        "words": 1921,
+        "reading_minutes": 8,
+        "dek": "The Inception Score grades a generator by passing its pictures through a frozen ImageNet classifier, never once comparing them to a real photograph.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">Barratt and Sharma drove the Inception Score to 900 of 1000 with one image per class</h1>
+        <p class="nb-dekline">
+          The Inception Score grades a generator by passing its pictures through a frozen ImageNet classifier, never once comparing them to a real photograph.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-11</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          For a few years, the answer to "is this image generator any good?"
+          was a single number: the Inception Score. It is worth understanding
+          for itself, and for a wider trap it makes visible. The progress of AI
+          systems is still reported mostly in single scores, and a score that
+          measures the wrong thing can be climbed without the system behind it
+          getting any better. By the end you will know exactly how the Inception
+          Score is built, what a high one does and does not prove about a
+          generator, and the one case where two researchers pushed it almost to
+          its ceiling with a generator you would not call good.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/gans.html">The GAN paper credited with deepfakes generated blurry thumbnails</a>: what a generative adversarial network is, the kind of generator the Inception Score was built to rank.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/fid.html">FID tied two face generators that a second yardstick and human eyes told apart</a>: the metric that replaced the Inception Score, and the blind spot it was designed to close.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A classifier's verdict became the field's scoreboard</h2>
+        <p>
+          When a lab trained a
+          <a href="../the-evidence/gans.html">generative adversarial network</a>
+          to make images, it proved the network had improved by reporting one
+          number. That number was the Inception Score, introduced in 2016 by Tim
+          Salimans, Ian Goodfellow, and their colleagues at OpenAI.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          It stuck. Two years later, when BigGAN set a new mark for generating
+          ImageNet pictures, its headline result was an Inception Score of
+          166.5, up from a previous best of 52.52.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Higher was read as better pictures.
+        </p>
+        <p>
+          The Inception Score reads only the generator's own output. A real
+          photograph never enters the calculation at all.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="construction" id="construction">
+        <h2>What the classifier is asked about each picture</h2>
+        <p>
+          The score runs every generated image through one frozen classifier:
+          the specific Inception network trained on ImageNet, a collection of
+          1.2 million photographs sorted into 1000 categories.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          For each image, the classifier returns a label guess, a probability
+          spread across those 1000 categories: this much goldfish, this much
+          tabby cat, this much minivan. Call that guess for a single image
+          <span class="nb-math-in">p(y \mid x)</span>. Average the guesses over
+          every image the generator makes and you get
+          <span class="nb-math-in">p(y)</span>, the generator's label spread
+          across its whole output.
+        </p>
+        <p>
+          A high score rewards two things at once, and they line up only when the
+          generator is good. Each single image should look like one clear thing,
+          so the classifier is confident and piles
+          <span class="nb-math-in">p(y \mid x)</span> onto a single category.
+          Across all the images, the generator should cover many categories, so
+          <span class="nb-math-in">p(y)</span> is spread out rather than stuck on
+          one. The score measures the gap between those two distributions for
+          each image, averages it, and then exponentiates the result, which the
+          authors did only "so the values are easier to compare."<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          The gap itself is a KL divergence, a standard measure of how far one
+          probability distribution sits from another: zero when the two match,
+          larger the more they differ. A confident guess that is far from the
+          overall average is exactly what a sharp, varied generator produces.
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \mathrm{IS}(G) = \exp\!\Big( \mathbb{E}_{x}\, D_{\mathrm{KL}}\big( \htmlClass{nb-mc1}{p(y \mid x)} \,\|\, \htmlClass{nb-mc2}{p(y)} \big) \Big)
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">p(y \mid x)</span
+              ><span>the classifier's label guess for one generated image <span class="nb-math-in">x</span>: how much it looks like each of the 1000 categories.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">p(y)</span
+              ><span>that guess averaged over every image the generator makes: its overall spread across the categories.</span>
+            </li>
+          </ul>
+          <figcaption>
+            The Inception Score as its authors wrote it: for each image, the gap
+            between its own label guess and the average guess, averaged over all
+            images and exponentiated.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Section 4">1</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Because the classifier can output 1000 categories, the score runs from
+          1 to 1000.<sup class="nb-cite"><a href="#s3">3</a></sup> That ceiling
+          is worth holding onto: a score of 900 means 900 out of a possible
+          1000, most of the way to the top.
+        </p>
+      </section>
+
+      <section data-nb-section="validation" id="validation">
+        <h2>The test that earned the number its trust</h2>
+        <p>
+          The score was not pulled from nowhere. Salimans and colleagues checked
+          it against people. They showed Mechanical Turk workers a mix of real
+          and generated CIFAR-10 images and asked which were real. The workers
+          were right 78.7 percent of the time. When the generated samples were
+          filtered down to the top one percent by Inception Score, the workers'
+          accuracy dropped to 71.4 percent. The better the score, the harder the
+          images were to tell from real photographs.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          In the table that introduced the number, the real CIFAR-10 images
+          scored highest of all, 11.24, above every generator the paper
+          tested.<sup class="nb-cite"><a href="#s1">1</a></sup> Within that
+          setting, generators trained on their own objective and judged on a
+          dataset the classifier understood, the Inception Score tracked what
+          human eyes saw. Barratt and Sharma, who would later take the number
+          apart, did not dispute that it worked there.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="gaming" id="gaming">
+        <h2>The generator that scored 900 and made one picture per class</h2>
+        <p>
+          The reading most people reach for is that a higher Inception Score
+          means better images. In 2018, Shane Barratt and Rishi Sharma, then at
+          Stanford, showed it need not. They ran an optimization straight against
+          the Inception network, nudging pixels until the classifier grew more
+          confident and its category spread widened, cycling through all 1000
+          target categories so the result was one tuned image per category.
+          Starting from random noise, the images reached an Inception Score of
+          986.10, a hair under the maximum of 1000, while looking like colored
+          static.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The authors' own caveat</span>
+          <blockquote>
+            "directly optimizing Inception score will lead to the generation of
+            adversarial examples."<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Section 4, p. 7">1</a></sup
+            >
+            <span class="nb-note-who">Salimans et al., the paper that proposed the score</span>
+          </blockquote>
+        </div>
+        <p>
+          That first result a defender can set aside. The score's own authors had
+          warned of it, and had said plainly that the number was only ever a
+          rough guide for models trained on a separate objective.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Nobody ships optimized static.
+        </p>
+        <p>
+          The second result is harder to wave away. Starting instead from the
+          output of a GAN trained on CIFAR-10, the same procedure reached about
+          900, with images the authors described as realistic-looking.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          A generator making recognizable pictures, one per category, sat within
+          a tenth of a perfect grade.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Inception Scores from Barratt and Sharma's optimization run directly
+            against the classifier, set beside the metric's ceiling. The GAN
+            figure is 900.15 in the paper's figure and 900.10 in its appendix.<sup
+              class="nb-cite"
+              ><a href="#s3">3</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">What was scored</th>
+              <th>Score</th>
+              <th class="txt">The images</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Maximum possible</td>
+              <td>1 000</td>
+              <td class="txt">The number of ImageNet categories the classifier can output.</td>
+            </tr>
+            <tr>
+              <td class="txt">CIFAR-10 GAN, then optimized</td>
+              <td>900.15</td>
+              <td class="txt">Realistic-looking, one tuned image per category.</td>
+            </tr>
+            <tr>
+              <td class="txt">Random noise, then optimized</td>
+              <td>986.10</td>
+              <td class="txt">Colored static, the case the score's authors had warned about.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          One picture per category is all the score asks for. It is satisfied
+          when <span class="nb-math-in">p(y)</span> spreads across the 1000
+          categories and each image is classified confidently, and a single
+          strong image per category does both. Whether the generator can produce
+          a thousand different goldfish or only ever the same one goldfish makes
+          no difference to the number, because the spread is measured across
+          categories and never within them.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          A generator that had collapsed to one fixed image per category, the
+          narrowest output imaginable, would still post a near-perfect score.
+          Mode collapse, the failure where a generator keeps emitting the same
+          few images instead of the variety in its training data, is the thing
+          GAN researchers most wanted a number to catch. The Inception Score
+          could not see it.
+        </p>
+        <p>
+          The number also moved for reasons that had nothing to do with the
+          pictures. Three implementations of the Inception classifier with nearly
+          equal ImageNet accuracy scored the exact same CIFAR images 11.5 percent
+          apart, and a routine batching setting shifted a score by close to a
+          point.<sup class="nb-cite"><a href="#s3">3</a></sup> Point the
+          classifier at a dataset it was not trained on and it misreads
+          everything: on CIFAR-10, the categories it most often assigned were
+          labels like Moving Van, Sorrel, and Threshing Machine, none of which
+          CIFAR contains.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="retirement" id="retirement">
+        <h2>Why the field stopped ranking on a single number</h2>
+        <p>
+          The cost was years of reported progress resting on a number that could
+          be gamed and could not see the failure researchers cared about most. A
+          later large study drove the point home from the other side: with enough
+          hyperparameter search and random restarts, competing GAN algorithms
+          reached similar scores, so a reported gain could reflect tuning and
+          compute rather than a better model.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          The deeper problem is not special to this score. A single number cannot
+          separate two different failures. Sajjadi and colleagues argued that a
+          one-dimensional score cannot tell a generator that makes poor images
+          apart from one that covers only part of the target, because sample
+          quality and coverage are distinct things to measure.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Theis and colleagues had shown, even before the Inception Score
+          existed, that doing well on one evaluation criterion need not mean doing
+          well on another, so no single score stands in for overall quality.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          By 2018 there was no agreement on which measure to trust. One review
+          counted more than two dozen.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          The number that took its place closed the specific hole. The
+          <a href="../the-instruments/fid.html">Fréchet Inception Distance</a>
+          compares the statistics of generated images against those of real
+          images, the comparison the Inception Score never makes. When
+          researchers degraded images step by step, FID climbed steadily with the
+          damage while the Inception Score stayed flat or even fell.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          FID is not free of the one-number problem, since it too returns a single
+          scalar. But it looks at the real images, which the Inception Score
+          never did.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A high Inception Score proves two things and no more: the classifier was
+          confident about each picture, and the pictures spread across its
+          categories. It does not prove the images resemble real photographs,
+          because the score never sees one. It does not prove there is any variety
+          within a category, because one picture per category scores as well as a
+          thousand. And it can be driven almost to its ceiling on purpose. That is
+          the habit worth keeping past this one number: when a single score stands
+          in for something as rich as image quality, ask what it actually compares
+          the generator against, and what it never looks at.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1801.01973">Barratt &amp; Sharma, "A Note on the Inception Score" (2018)</a>: the full set of demonstrations behind this lesson, including the attack and the bound.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1806.00035">Sajjadi et al., "Assessing Generative Models via Precision and Recall" (2018)</a>: measuring image quality and coverage as two separate axes instead of one.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Section 4, Assessment of image quality; Table 3 (p. 7)"
+              href="https://arxiv.org/abs/1606.03498"
+              >Salimans, Goodfellow, Zaremba, Cheung, Radford &amp; Chen · Improved Techniques for Training GANs (NeurIPS 2016)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/1809.11096"
+              >Brock, Donahue &amp; Simonyan · Large Scale GAN Training for High Fidelity Natural Image Synthesis (ICLR 2019)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Sections 3.2-4.2, Tables 1-3, Figure 1, and Appendix (Achieving High Inception Scores)"
+              href="https://arxiv.org/abs/1801.01973"
+              >Barratt &amp; Sharma · A Note on the Inception Score (ICML 2018 Workshop)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/1711.10337"
+              >Lucic, Kurach, Michalski, Gelly &amp; Bousquet · Are GANs Created Equal? A Large-Scale Study (NeurIPS 2018)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/1806.00035"
+              >Sajjadi, Bachem, Lucic, Bousquet &amp; Gelly · Assessing Generative Models via Precision and Recall (NeurIPS 2018)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/1511.01844"
+              >Theis, van den Oord &amp; Bethge · A note on the evaluation of generative models (ICLR 2016)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/1802.03446"
+              >Borji · Pros and Cons of GAN Evaluation Measures (2018)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Appendix A1, Fréchet Inception Distance; Figure A8"
+              href="https://arxiv.org/abs/1706.08500"
+              >Heusel, Ramsauer, Unterthiner, Nessler &amp; Hochreiter · GANs Trained by a Two Time-Scale Update Rule Converge to a Local Nash Equilibrium (NeurIPS 2017)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
