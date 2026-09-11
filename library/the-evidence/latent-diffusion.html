@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stable Diffusion does its denoising on a compressed grid, not the full image · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "latent-diffusion",
+        "template": "lesson",
+        "title": "Stable Diffusion does its denoising on a compressed grid, not the full image",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-11",
+        "tags": ["latent-diffusion", "stable-diffusion", "autoencoder", "image-generation", "diffusion"],
+        "sources": 7,
+        "words": 2135,
+        "reading_minutes": 9,
+        "dek": "Robin Rombach's CompVis team published the method behind Stable Diffusion in 2022, the design its successors were built on.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Stable Diffusion does its denoising on a compressed grid, not the full image</h1>
+        <p class="nb-dekline">
+          Robin Rombach's CompVis team published the method behind Stable Diffusion in 2022, the design its successors were built on.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-11</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Image generators turn a typed sentence into a picture, and many of the
+          ones released since 2022 work the same way on the inside. The method comes
+          from a single paper out of a Munich research group, the paper whose weights,
+          once made public, became Stable Diffusion. Its one idea is easy to state: instead of building the picture pixel by pixel,
+          compress the image first and do the slow work on the small version. This
+          lesson reads what the paper actually did, and how much compute and data its
+          models really used. It also takes up why the copyright suits and dataset
+          findings that trail Stable Diffusion belong to the product built from the
+          paper, not to the paper itself. By the end you should be able to explain why
+          generating in a compressed space costs so much less, and to tell the
+          academic result apart from the public release it is so often confused with.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/denoising-diffusion.html">The diffusion paper behind today's image generators could not take a prompt</a>:
+            the step-by-step denoising this paper runs, which it moves into a smaller
+            space.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/attention-is-all-you-need.html">The paper credited with starting the LLM era never trained a language model</a>:
+            the attention mechanism the prompt travels through to reach the image.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-evidence/gans.html">The GAN paper credited with deepfakes generated blurry thumbnails</a>:
+            the earlier family of image generators, the baseline latent diffusion is
+            compared against.
+          </dd>
+          <dt>04</dt>
+          <dd>
+            <a href="../the-evidence/clip.html">Prompt engineering lifted CLIP's zero-shot ImageNet score by nearly five points</a>:
+            the text encoder that turns a written prompt into the vectors
+            cross-attention reads.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Every denoising step ran over every pixel</h2>
+        <p>
+          &ldquo;High-Resolution Image Synthesis with Latent Diffusion Models&rdquo;
+          is a paper by Robin Rombach, Andreas Blattmann, Dominik Lorenz, Patrick
+          Esser, and Bj&ouml;rn Ommer, from the CompVis group at LMU Munich. It was
+          posted to arXiv in December 2021 and presented at the CVPR 2022
+          conference.<sup class="nb-cite"><a href="#s1" data-nb-locator="Abstract; Sec. 1">1</a></sup>
+          It starts from a method this course has already covered:
+          <a href="../the-evidence/denoising-diffusion.html">diffusion</a>, which
+          builds a picture by starting from pure noise and removing a little at a
+          time, over many steps, until an image is left.
+        </p>
+        <p>
+          The trouble the paper names is what that costs. Each denoising step runs a
+          full pass of a neural network, and the diffusion models before this one ran
+          every pass over every pixel. A 512-pixel-square color image is already more
+          than 780,000 numbers, three color values at each of its 262,144 pixels, and
+          one image takes many steps. The authors put the bill plainly: training the
+          strongest such models &ldquo;often takes hundreds of GPU
+          days.&rdquo;<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec. 1">1</a></sup>
+          Raising the resolution makes every step more expensive, which is what kept
+          high-resolution diffusion on large clusters.
+        </p>
+      </section>
+
+      <section data-nb-section="compression" id="compression">
+        <h2>An autoencoder shrinks the image to a grid</h2>
+        <p>
+          The paper's move is to stop running diffusion on the picture at all. It
+          splits image generation into two stages. The first is a separate network
+          called an autoencoder. Its encoder learns to write an image down as a much
+          smaller grid of numbers, and its decoder learns to rebuild the full image
+          from that
+          grid.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec. 3.1">1</a></sup>
+          The two halves are trained together so the round trip loses as little as the
+          eye will notice. The result is a compact stand-in for the image, its latent,
+          small enough to work on directly.
+        </p>
+        <p>
+          How much smaller is set by one number the paper calls the downsampling
+          factor, f, the factor by which each side of the image
+          shrinks.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec. 3.1">1</a></sup>
+          At f = 8, each side of the grid is one eighth the side of the image, so the
+          grid has sixty-four times fewer positions to process than the picture does.
+          And the autoencoder is trained once and then reused across many different
+          diffusion models, so the cost of learning to compress is paid a single
+          time.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec. 1">1</a></sup>
+        </p>
+        <p>
+          The factor cannot be pushed without limit. The authors test f from 1 up to
+          32 and find the useful range in the middle, at factors of roughly four
+          through sixteen.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec. 4.1">1</a></sup>
+          At f = 1 there is no compression at all, which is ordinary pixel-space
+          diffusion. Past the useful range, too much compression throws away detail
+          the decoder cannot put back, and image quality stalls after only a few
+          training steps.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec. 4.1">1</a></sup>
+          The reason to move off the pixels shows up directly in the scores. The
+          paper measures quality with Fr&eacute;chet Inception Distance, a standard
+          number for how close a batch of generated images is to real ones, where
+          lower is better.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec. 4.1">1</a></sup>
+          Hold the diffusion network's budget fixed, and the pixel-space model at
+          f = 1 trails the latent model at f = 8 by about thirty-eight points of that
+          distance after two million training
+          steps.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec. 4.1">1</a></sup>
+        </p>
+        <p>
+          The compression is not free, and the authors say so. Rebuilding an image
+          from its latent can become a bottleneck where pixel-level accuracy matters,
+          and generating an image step by step is still slower than the single pass a
+          <a href="../the-evidence/gans.html">GAN</a>
+          takes.<sup class="nb-cite"><a href="#s1" data-nb-locator="Limitations">1</a></sup>
+          Moving into the latent space is a favorable trade, not a free win.
+        </p>
+      </section>
+
+      <section data-nb-section="conditioning" id="conditioning">
+        <h2>How the prompt reaches the picture</h2>
+        <p>
+          Generation then happens entirely on the latent. The model starts from a grid
+          of random noise the size of a latent, runs the familiar denoising steps to
+          turn it into the latent of a plausible image, and only at the very end passes
+          that single latent through the decoder to produce
+          pixels.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec. 3.2">1</a></sup>
+          The expensive inner loop never touches a full-resolution image.
+        </p>
+        <p>
+          A bare version of this draws a picture from nothing in particular. To make it
+          follow a typed prompt, the paper adds
+          <a href="../the-evidence/attention-is-all-you-need.html">cross-attention</a>
+          layers inside the denoising network. These use the same attention mechanism
+          an earlier lesson covers, here letting each denoising step read an encoded
+          form of the prompt while it
+          works.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec. 3.3">1</a></sup>
+          The words have to become numbers first. Stable Diffusion does that with
+          <a href="../the-evidence/clip.html">CLIP</a>, a text encoder trained
+          beforehand that turns a sentence into a list of
+          vectors.<sup class="nb-cite"><a href="#s2" data-nb-locator="Model Details">2</a></sup>
+          Cross-attention is the channel through which those numbers steer which image
+          the noise becomes.
+        </p>
+      </section>
+
+      <section data-nb-section="paper-vs-product" id="paper-vs-product">
+        <h2>The model people ran was a bigger, separate training</h2>
+        <p>
+          That is the method. The paper also built models with it, and their scale is
+          worth seeing plainly. The text-to-image model the paper reports is a
+          1.45-billion-parameter latent diffusion model trained on LAION-400M, a public
+          set of 400 million captioned
+          images.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec. 4.3.1">1</a></sup>
+          Across standard benchmarks its scores are competitive with the best of the
+          day.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Fr&eacute;chet Inception Distance for the paper's models on four
+            benchmarks, where lower is better. The MS-COCO and ImageNet rows use
+            classifier-free guidance, a setting that trades some variety for closer
+            adherence to the conditioning. Without it, the same two models score 23.31
+            and 10.56.<sup class="nb-cite"><a href="#s1" data-nb-locator="Tables 1-3">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Benchmark</th>
+              <th class="txt">What it generates</th>
+              <th>FID</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt"><span class="nb-table-token">MS-COCO 256</span></td>
+              <td class="txt">An image from a written caption.</td>
+              <td>12.63</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">ImageNet 256</span></td>
+              <td class="txt">An image from one of a thousand class labels.</td>
+              <td>3.60</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">FFHQ 256</span></td>
+              <td class="txt">A human face, with no prompt.</td>
+              <td>4.98</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">LSUN Bedrooms</span></td>
+              <td class="txt">A bedroom scene, with no prompt.</td>
+              <td>2.95</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Those are the paper's own results. The model that made the method famous was
+          a different, larger build. In August 2022, CompVis, Stability AI, and their
+          collaborators released Stable Diffusion: weights, code, and a model card,
+          published openly on Hugging Face under a license that permitted commercial
+          use.<sup class="nb-cite"><a href="#s3" data-nb-locator="Announcement">3</a></sup>
+          The model card records a separate training run. Stable Diffusion version 1.4
+          used the same downsampling factor of 8 and the CLIP text encoder above. It
+          was trained on 256 A100 GPUs, over 225,000 steps at 512-pixel resolution, on
+          subsets of the far larger LAION-5B collection, filtered for aesthetics and
+          against watermarks.<sup class="nb-cite"><a href="#s2" data-nb-locator="Training">2</a></sup>
+          For the 512-pixel images it trained on, the latent the diffusion network
+          actually worked on was a 64-by-64
+          grid.<sup class="nb-cite"><a href="#s2" data-nb-locator="Model Details">2</a></sup>
+        </p>
+        <p>
+          This is the distinction the paper-versus-product confusion erases. The
+          academic result and the public product share an architecture and one of their
+          authors, but they are separate trainings, on different data, at different
+          scale. The paper's efficiency claim is real and specific. For a given level
+          of quality, working in the latent space costs far less than working in
+          pixels, and the compressor is trained only
+          once.<sup class="nb-cite"><a href="#s1" data-nb-locator="Sec. 1">1</a></sup>
+          It is not a claim that image generation became cheap in absolute terms. The
+          product that used the method still took 256 of the most capable GPUs of its
+          day to train.<sup class="nb-cite"><a href="#s2" data-nb-locator="Training">2</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="open-release" id="open-release">
+        <h2>What the open weights set loose</h2>
+        <p>
+          Releasing the weights openly is what set Stable Diffusion apart from the
+          image models before it, which ran behind company services. Anyone could
+          download the model, run it, inspect it, and retrain
+          it.<sup class="nb-cite"><a href="#s3" data-nb-locator="Announcement">3</a></sup>
+          That openness also meant the training data was now the public's to examine,
+          and two findings followed.
+        </p>
+        <p>
+          First, the data. In December 2023, the Stanford Internet Observatory reported
+          that LAION-5B, the collection Stable Diffusion was trained from, contained
+          known child sexual abuse material. Using established detection methods, the
+          authors identified 3,226 entries of suspected such material, much of it
+          confirmed by third
+          parties.<sup class="nb-cite"><a href="#s4" data-nb-locator="Sec. 4">4</a></sup>
+          The report named Stable Diffusion 1.5 specifically and recommended that
+          models based on it without added safety measures be withdrawn; LAION took the
+          dataset down.<sup class="nb-cite"><a href="#s4" data-nb-locator="Sec. 1.3, Sec. 5.1">4</a></sup>
+          This finding attaches to the product's training set, the billions-strong
+          LAION-5B, not to the 400-million-image subset the CVPR paper's own
+          experiments used.
+        </p>
+        <p>
+          Second, copyright. Getty Images sued Stability AI in the United States in
+          2023, alleging that more than 12 million of its photographs were copied
+          through the LAION data used to train the
+          model.<sup class="nb-cite"><a href="#s5" data-nb-locator="Nature of Action">5</a></sup>
+          That is an allegation by one party, and the first court to reach a judgment
+          did not accept its central theory. In November 2025 the England and Wales
+          High Court rejected Getty's secondary-infringement claim, finding, as
+          reported, that the model weights do not themselves store the training images,
+          after Getty had already dropped its primary copyright claim at
+          trial.<sup class="nb-cite"><a href="#s6" data-nb-note="quoting judgment para. 600, as reported">6</a></sup>
+        </p>
+        <p>
+          The paper's own claims hold up. The method works, and the efficiency it
+          reported is real and has lasted. Its two-stage design is now the default for
+          image generation, and Stability's own follow-up, SDXL, released the next
+          year, is built on the same move with a larger
+          network.<sup class="nb-cite"><a href="#s7" data-nb-locator="Abstract">7</a></sup>
+          The trouble that trails Stable Diffusion, the abuse material found in its
+          dataset and the copyright fights over it, comes from the data the product was
+          trained on, not from the paper's way of making pictures.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Diffusion makes an image by removing noise a little
+          at a time, and the expensive part was that every step worked on the full
+          picture. Rombach and his coauthors put a step in front of it: an autoencoder
+          compresses the image to a small grid, the denoising runs on that grid, and
+          the picture is rebuilt only at the end. That reaches the same quality for
+          far less compute than working in pixels. The compressor is trained once and
+          reused, and that is the saving that made high-resolution generation
+          practical. It is a relative saving, not free generation. The product that used it, Stable
+          Diffusion, still trained on 256 high-end GPUs. Keep two things apart. The
+          paper is a method, and the method holds up, now the standard way image models
+          are built. Stable Diffusion is a product built on that method with far more
+          data, and the abuse material found in that data, and the copyright fights
+          over it, are the product's story. Almost every muddled claim about this
+          paper, that it made image generation free, or that it is what the copyright
+          fights are really about, comes from mixing the method up with the product.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2112.10752">Rombach et al., &ldquo;High-Resolution Image Synthesis with Latent Diffusion Models&rdquo;</a>:
+            the paper itself, with the autoencoder variants and every benchmark table.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2307.01952">Podell et al., &ldquo;SDXL&rdquo;</a>:
+            how the same design was scaled up a year later, with a larger network and a
+            second text encoder.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://purl.stanford.edu/kh752sm9123">Thiel, Stanford Internet Observatory, CSAM in generative training data</a>:
+            the dataset finding in full, including the detection methods and the counts.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2112.10752"
+              >arXiv &middot; Rombach, Blattmann, Lorenz, Esser &amp; Ommer, &ldquo;High-Resolution Image Synthesis with Latent Diffusion Models&rdquo; (2021/2022)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://huggingface.co/CompVis/stable-diffusion-v1-4"
+              >Hugging Face &middot; CompVis, Stable Diffusion v1-4 model card</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://stability.ai/news-updates/stable-diffusion-public-release"
+              >Stability AI &middot; Stable Diffusion public release announcement (2022)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://purl.stanford.edu/kh752sm9123"
+              >Stanford Internet Observatory &middot; Thiel, &ldquo;Identifying and Eliminating CSAM in Generative ML Training Data and Models&rdquo; (2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://copyrightalliance.org/wp-content/uploads/2023/02/Getty-Images-v.-Stability-AI-Complaint.pdf"
+              >U.S. District Court, D. Del. &middot; Getty Images (US) v. Stability AI, complaint (2023)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.lw.com/en/insights/getty-images-v-stability-ai-english-high-court-rejects-secondary-copyright-claim"
+              >Latham &amp; Watkins &middot; analysis of the England and Wales High Court judgment, Getty Images v Stability AI (2025)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.01952"
+              >arXiv &middot; Podell et al., &ldquo;SDXL: Improving Latent Diffusion Models for High-Resolution Image Synthesis&rdquo; (2023)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
