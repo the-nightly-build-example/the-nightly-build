@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A model's accuracy traces a U as the answer moves through a long prompt · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "lost-in-the-middle",
+        "template": "lesson",
+        "title": "A model's accuracy traces a U as the answer moves through a long prompt",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-12",
+        "tags": ["long-context", "attention", "positional-encoding", "retrieval"],
+        "sources": 9,
+        "words": 2193,
+        "reading_minutes": 10,
+        "dek": "A Stanford-led group buried one answer among nineteen distractors and moved only where it sat, and GPT-3.5-Turbo lost more than twenty points in the middle while a longer context window bought nothing.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A model's accuracy traces a U as the answer moves through a long prompt</h1>
+        <p class="nb-dekline">
+          A Stanford-led group buried one answer among nineteen distractors and moved only where it sat, and GPT-3.5-Turbo lost more than twenty points in the middle while a longer context window bought nothing.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-09-12</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have probably done this: pasted a long email thread or a contract
+          into a chatbot and asked about one line inside it.
+          Whether the model uses that line well depends partly on where it sits,
+          and the middle is the worst place for it. This lesson shows the behavior
+          with the numbers a Stanford-led group measured in 2023, then works
+          backward through how a model takes in a long input to find what produces
+          it. By the end you will be able to say why position changes whether a
+          fact gets used, why a bigger context window does not fix it, and where to
+          put the sentence that matters.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">An attention head is a weighted average that computes its own weights</a>:
+            what attention computes at each step, and why a longer input costs
+            what it does.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/irrelevant-context.html">Rename the people in a word problem and the model does worse</a>:
+            a related but separate effect, where adding a true but useless
+            sentence lowers accuracy.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The same fact, moved to the middle of a long prompt</h2>
+        <p>
+          Give a model a long document and ask a question it answers. Whether the
+          model gets it right depends on something that should not matter: where in
+          the document the answer sits. Nelson Liu and coauthors at Stanford,
+          Berkeley, and Samaya AI measured this in
+          2023.<sup class="nb-cite"><a href="#s1">1</a></sup> They placed the one
+          paragraph that answered each question among nineteen that were on topic
+          but wrong, then moved only the answer paragraph from the front of the
+          input to the back, one position at a time.
+        </p>
+        <p>
+          GPT-3.5-Turbo answered 75.8% correctly when the answer sat first. When
+          the same paragraph sat tenth, in the middle, accuracy
+          fell to 53.8%. At the very end it recovered to 63.2%. Plot accuracy
+          against position and the line traces a U: high at both ends, low across
+          the middle.<sup class="nb-cite"><a href="#s1" data-nb-locator="Appendix G, Table 6">1</a></sup>
+        </p>
+
+        <figure class="nb-figure">
+          <img
+            src="lost-in-the-middle/chart-1.png"
+            alt="Line chart of accuracy versus the position of the answer document among twenty. The GPT-3.5-Turbo line starts near 76 percent at the first position, drops to about 54 percent in the middle, and rises to about 63 percent at the last. The Claude-1.3 line stays between about 56 and 60 percent across all positions."
+          />
+          <figcaption>
+            Fig. 1 · Multi-document question-answering accuracy by the position of
+            the single answer document among twenty. GPT-3.5-Turbo traces a U;
+            Claude-1.3 stays nearly flat.<sup class="nb-cite"><a href="#s1" data-nb-locator="Appendix G, Table 6">1</a></sup>
+          </figcaption>
+        </figure>
+
+        <p>
+          The dip is not small: GPT-3.5-Turbo's worst position cost more than
+          twenty points against its best. And it is not a quirk of reading
+          comprehension. The same U appears in a second test with no ordinary
+          language, a list of random key-value pairs where the model returns one
+          value, and no meaning is there to make the middle harder to
+          read.<sup class="nb-cite"><a href="#s1" data-nb-locator="§3, Figure 7">1</a></sup>
+        </p>
+        <p>
+          Compare the middle to answering closed book. With no documents at all,
+          GPT-3.5-Turbo scores 56.1%. In the twenty- and thirty-document settings,
+          its buried middle fell below that: the model did worse with the right
+          answer in its input than with
+          none.<sup class="nb-cite"><a href="#s1" data-nb-locator="Table 1; Appendix G, Table 6">1</a></sup>
+        </p>
+
+        <table class="nb-table">
+          <caption>
+            GPT-3.5-Turbo on the same multi-document questions, three ways.<sup class="nb-cite"><a href="#s1" data-nb-locator="Table 1; Appendix G, Table 6">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Accuracy</th>
+              <th class="txt">What it means</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">No documents</span></td>
+              <td>56.1%</td>
+              <td class="txt">Closed book: the model answers from what it already learned in training.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Answer in the middle</span></td>
+              <td>53.8%</td>
+              <td class="txt">The right paragraph is in the input, tenth of twenty, and the model does worse than with none.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Answer only</span></td>
+              <td>88.3%</td>
+              <td class="txt">Oracle: given just the correct paragraph, the model nearly always answers.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          This behavior is not the needle-in-a-haystack
+          test, where the model hunts for one odd sentence in unrelated filler and
+          current models pass easily. Here every paragraph is on topic and only
+          one is right. It is also not the effect where adding a distractor lowers
+          accuracy, which this paper's lesson on
+          <a href="../the-mechanics/irrelevant-context.html">irrelevant context</a>
+          covers. Here nothing is added. The answer only moves.
+        </p>
+        <p>
+          The effect is not uniform. Run the same twenty-document test on
+          Claude-1.3 and the curve barely bends: 59.9% at the front, 56.8% in the
+          middle, 60.1% at the end, a dip of about four points where GPT-3.5-Turbo
+          lost twenty.<sup class="nb-cite"><a href="#s1" data-nb-locator="Appendix G, Table 6">1</a></sup>
+          The flat cases make the slogan "models are lost in the middle" too
+          strong. What holds across every version of the test is narrower: where a
+          fact sits can change whether a model uses it, and for some models that
+          swing is large.
+        </p>
+      </section>
+
+      <section data-nb-section="position-injected" id="position-injected">
+        <h2>A transformer is not told word order for free</h2>
+        <p>
+          To find why position matters, start with how a transformer reads. On
+          its own it has no sense of order. The
+          <a href="../the-mechanics/attention.html">attention</a> step at the
+          core of the model, which this paper covers on its own, treats the input
+          as a bag of tokens: without help, shuffling the words gives back the
+          same numbers. The team that introduced the transformer in 2017 wrote
+          that the model "contains no recurrence and no convolution," so to use
+          word order at all it must have order fed in. Their fix added a position
+          vector to each token, built from sine and cosine
+          waves.<sup class="nb-cite"><a href="#s2" data-nb-locator="§3.5">2</a></sup>
+          Position is not something the model knows. It is a signal added to the
+          input, and a model can read it well or badly like any other.
+        </p>
+        <p>
+          The transformers behind current chat models use a later scheme, rotary
+          position embedding, or RoPE. It rotates each token's query and key
+          vectors by an angle that grows with position, so the attention score
+          between two tokens comes to depend on how far apart they
+          sit.<sup class="nb-cite"><a href="#s3" data-nb-locator="§3.3">3</a></sup>
+          RoPE has a property its authors call long-term decay: as two tokens grow
+          farther apart, the dependency between them
+          weakens.<sup class="nb-cite"><a href="#s3" data-nb-locator="§3.4.3">3</a></sup>
+          It is tempting to stop here and say the middle is lost because the
+          encoding fades with distance. But decay with distance predicts that
+          far-apart tokens matter less, which pulls a model toward whatever is
+          nearest the question, usually the most recent tokens. It explains a
+          preference for the end, not why the very start of a long input is used
+          well or why accuracy climbs back there. Liu's group found the U in models
+          built on different position schemes, including ALiBi, which is not RoPE at
+          all.<sup class="nb-cite"><a href="#s1" data-nb-locator="§4">1</a></sup>
+          So the encoding is part of the story, and not the whole cause.
+        </p>
+      </section>
+
+      <section data-nb-section="attention-bias" id="attention-bias">
+        <h2>Attention leans toward the two ends</h2>
+        <p>
+          If the position signal alone does not produce the U, look at what
+          attention does. Two firsthand measurements point at the ends.
+        </p>
+        <p>
+          The first is about the start. Guangxuan Xiao and coauthors, at MIT and
+          Meta, found that models pour a large share of attention onto the first
+          few tokens whatever those tokens
+          say.<sup class="nb-cite"><a href="#s4" data-nb-locator="§3">4</a></sup>
+          The reason they give is structural. Attention weights pass through a
+          softmax, which forces them to add up to one across the tokens a position
+          can see. When nothing is a strong match, the model still must put that
+          weight somewhere. Because a model reads left to right, the earliest tokens
+          are the only ones every later token can see, the natural place to send the
+          surplus. They named this an attention
+          sink.<sup class="nb-cite"><a href="#s4" data-nb-locator="§3, Figure 2">4</a></sup>
+          It accounts for the primacy half of the U: the start draws attention by
+          construction, whatever sits there.
+        </p>
+        <p>
+          The second is about the whole curve. Cheng-Yu Hsieh and coauthors at MIT
+          and Google measured how much attention a model gives each document by its
+          slot. The attention itself is U-shaped: the start and end draw more, the
+          middle less.<sup class="nb-cite"><a href="#s5" data-nb-locator="§3, Figure 4">5</a></sup>
+          Then they shuffled the documents into a random order and measured again.
+          The U held. Each position kept its advantage whichever document landed
+          there, so the bias is fixed to position and does not depend on what the
+          document says.<sup class="nb-cite"><a href="#s5" data-nb-locator="§3">5</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="settled-and-open" id="settled-and-open">
+        <h2>Three candidate causes, one settled behavior</h2>
+        <p>
+          Put the pieces together and the cause is not settled. Three explanations
+          name different layers of one system. The position encoding pulls toward
+          the end. Attention favors the start by
+          construction and both ends in practice. And the training data may teach
+          the habit: important content in human writing clusters at the beginning
+          and end of a passage, and a model trained on that text could learn to
+          weight those places. That third candidate is still open. Instruction
+          tuning, though, is not the source: MPT-30B, a base model never tuned to
+          follow instructions, already shows the
+          U.<sup class="nb-cite"><a href="#s1" data-nb-locator="§4">1</a></sup>
+          Which layer dominates, no one has settled. Liu declines to name one
+          cause, Hsieh locates the effect in the attention bias, and Xiao explains
+          only the primacy half. None of the three is refuted by another.
+        </p>
+        <p>
+          The behavior itself is settled. It is real, it reproduces, and a bigger
+          advertised context window does not remove it.
+          Liu's group checked directly: where an input fit both a base model and an
+          extended-context version of it, the two accuracy curves sat almost on top
+          of each other. The longer window bought no better use of
+          position.<sup class="nb-cite"><a href="#s1" data-nb-locator="§4.1">1</a></sup>
+        </p>
+
+        <div class="nb-note">
+          <span class="nb-note-label">In the paper's words</span>
+          <blockquote>
+            "Extended-context models are not necessarily better than their
+            non-extended counterparts at using their input context."<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">Liu et al., "Lost in the Middle"</span>
+          </blockquote>
+        </div>
+
+        <p>
+          Later work bounds the same point. None of it reruns Liu's exact position
+          test on today's frontier models, so what follows is about long-context
+          use in general. The RULER benchmark found
+          that models advertising windows of 32,000 tokens or more often could not
+          hold accuracy out to that length on harder tasks, though they aced the
+          plain needle-in-a-haystack test.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          NoLiMa, in 2025, wrote its buried fact to share little wording with the
+          question, and GPT-4o fell from 99.3% on short inputs to 69.7% at 32,000
+          tokens.<sup class="nb-cite"><a href="#s7">7</a></sup> Levy and coauthors
+          held a reasoning task fixed and only padded the input with filler, and
+          accuracy dropped well short of any model's maximum
+          length.<sup class="nb-cite"><a href="#s8">8</a></sup> The U by position in
+          a 2025 model is unmeasured here. The pattern that more input degrades how
+          well the input gets used is not.
+        </p>
+      </section>
+
+      <section data-nb-section="retrieval" id="retrieval">
+        <h2>Retrieval builds a middle for the answer to hide in</h2>
+        <p>
+          This is not only a lab result. Two everyday habits walk into it. The
+          first is pasting a long document into a chatbot and asking about one
+          clause; if that clause sits in the middle, the model works from its worst
+          position. The second is retrieval-augmented generation, the standard way
+          to give a model outside knowledge: a retriever fetches the passages most
+          likely to be relevant, stacks them into the prompt, and the model reads
+          the stack. Liu's group tested the reader end and found it saturates early.
+          Past about twenty retrieved documents, giving GPT-3.5-Turbo more
+          documents added roughly one and a half points while the prompt, and the bill, kept
+          climbing.<sup class="nb-cite"><a href="#s1" data-nb-locator="§5, Figure 11">1</a></sup>
+          The retriever keeps finding relevant text; the reader stops using the
+          extra.
+        </p>
+        <p>
+          The fix that follows is blunt: put the passage you most need where the
+          model reads best, at the start or the end, not the middle of a long
+          stack. The finding reached production tooling on that logic. LangChain, a
+          widely used framework for these systems, ships a document reorderer whose
+          stated job is to counter lost in the middle by moving the most relevant
+          passages to the beginning and end and the least relevant to the
+          center.<sup class="nb-cite"><a href="#s9">9</a></sup> It cites Liu's paper
+          for why it exists.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Where a fact sits in a long prompt can change whether the model uses it.
+          Liu's group measured accuracy tracing a U by position: highest when the
+          answer is first or last, lowest in the middle. For GPT-3.5-Turbo the
+          middle cost more than twenty points and fell below answering with no
+          documents at all. The swing varies by model: position matters, sometimes
+          a lot, but models do not ignore the middle. The behavior comes from how a
+          model takes in length: position is added to the input as a signal, and
+          attention favors the start and the ends. No single one of those is the
+          whole cause. A larger context window does not remove it, in Liu's test or
+          the later benchmarks. So when one passage has to land, put it first or
+          last, and when a retriever stacks twenty, remember the model reads the
+          middle worst.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2307.03172">Liu et al., "Lost in the Middle: How Language Models Use Long Contexts"</a>:
+            the full paper, with every curve and both extra experiments.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2404.06654">Hsieh et al., "RULER: What's the Real Context Size of Your Long-Context Language Models?"</a>:
+            how far an advertised context length holds up once the task gets
+            harder.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.03172"
+              >arXiv · Liu et al., "Lost in the Middle: How Language Models Use Long Contexts" (TACL, 2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.03762"
+              >arXiv · Vaswani et al., "Attention Is All You Need" (2017)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2104.09864"
+              >arXiv · Su et al., "RoFormer: Enhanced Transformer with Rotary Position Embedding" (2021)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2309.17453"
+              >arXiv · Xiao et al., "Efficient Streaming Language Models with Attention Sinks" (2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.16008"
+              >arXiv · Hsieh et al., "Found in the Middle: Calibrating Positional Attention Bias Improves Long Context Utilization" (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.06654"
+              >arXiv · Hsieh et al., "RULER: What's the Real Context Size of Your Long-Context Language Models?" (2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2502.05167"
+              >arXiv · Modarressi et al., "NoLiMa: Long-Context Evaluation Beyond Literal Matching" (2025)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2402.14848"
+              >arXiv · Levy et al., "Same Task, More Tokens: the Impact of Input Length on the Reasoning Performance of Large Language Models" (2024)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://reference.langchain.com/python/langchain-community/document_transformers/long_context_reorder/LongContextReorder"
+              >LangChain · LongContextReorder (API reference)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
