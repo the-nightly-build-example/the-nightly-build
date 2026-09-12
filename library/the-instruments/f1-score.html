@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A high F1 score can hide a model that missed an entire class · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "f1-score",
+        "template": "lesson",
+        "title": "A high F1 score can hide a model that missed an entire class",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-12",
+        "tags": ["classification", "evaluation", "precision-recall"],
+        "sources": 8,
+        "words": 2112,
+        "reading_minutes": 9,
+        "dek": "The harmonic mean of precision and recall sits under a large share of classification leaderboards, and it never touches the one cell of the confusion matrix that would show a model ignoring the rare class.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">A high F1 score can hide a model that missed an entire class</h1>
+        <p class="nb-dekline">
+          The harmonic mean of precision and recall sits under a large share of
+          classification leaderboards, and it never touches the one cell of the
+          confusion matrix that would show a model ignoring the rare class.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-12</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You keep meeting the F1 score. It sits under reading-comprehension
+          benchmarks, under spam filters and tumor detectors, under almost any
+          claim that one model classifies something better than the last one
+          did. It is a single number, and a single number is easy to take on
+          trust. This lesson builds F1 from the counts up: precision, recall,
+          and the harmonic mean that ties them together, and then the three
+          things that one number quietly leaves out. By the end you will be able
+          to read a state-of-the-art F1 and ask the three questions that decide
+          whether it means anything: which class counted as positive, how the
+          per-class scores were averaged, and how rare the positives were.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/squad.html">SQuAD</a>: a reading
+            benchmark scored by F1, where machines passed the human line without
+            learning to read.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/auroc.html">AUROC</a>: another
+            single-number verdict on a classifier, and what it stays silent
+            about.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-instruments/calibration-error.html">Calibration
+            error</a>: what it means for a model's probabilities to be
+            trustworthy, and how that is scored.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One number from four counts</h2>
+        <p>
+          The F1 score is a single number between 0 and 1, and it decides a
+          large share of public claims about classifiers. Those are the systems
+          that sort email into spam and not-spam, scans into tumor and clear,
+          documents into relevant and not. Reading-comprehension benchmarks
+          report it, and so does almost any paper announcing a state-of-the-art
+          classifier. The
+          number is old. It grew out of information retrieval, where C. J. van
+          Rijsbergen defined the two quantities it combines and built a measure
+          to weigh them together.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Both quantities, and F1 itself, come from four counts you can read off
+          a small table.
+        </p>
+      </section>
+
+      <section data-nb-section="precision-recall" id="precision-recall">
+        <h2>Precision and recall, from a table of four</h2>
+        <p>
+          Set a classifier loose on a batch and sort its verdicts against the
+          truth. Every item lands in one of four boxes. It was positive and the
+          system called it positive: a true positive. It was positive and the
+          system missed it: a false negative. It was negative and the system
+          falsely flagged it: a false positive. It was negative and the system
+          correctly left it alone: a true negative. Take a search that returns
+          10 documents from a collection of 1,000, when 12 of those documents
+          are actually relevant.
+        </p>
+        <table class="nb-table">
+          <caption>
+            One search, sorted into the four boxes. Precision reads down the
+            column of items the system returned; recall reads across the row of
+            items that were actually relevant.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Called positive</th>
+              <th>Called negative</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Actually positive</span></td>
+              <td>8</td>
+              <td>4</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Actually negative</span></td>
+              <td>2</td>
+              <td>986</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Precision reads down the column of things the system called positive:
+          of the 10 it returned, 8 were relevant, so precision is 0.8. Van
+          Rijsbergen defined it as the chance that a returned item is
+          relevant.<sup class="nb-cite"><a href="#s1">1</a></sup> Recall reads
+          across the row of things that were actually positive: of the 12
+          relevant documents the system found 8, so recall is about 0.67, the
+          chance that a relevant item gets returned.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          In counts, that is
+          <span class="nb-math-in">\mathrm{precision} = \mathrm{TP}/(\mathrm{TP}+\mathrm{FP})</span>
+          and
+          <span class="nb-math-in">\mathrm{recall} = \mathrm{TP}/(\mathrm{TP}+\mathrm{FN})</span>.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Neither precision nor recall uses the box holding 986.
+        </p>
+      </section>
+
+      <section data-nb-section="harmonic-mean" id="harmonic-mean">
+        <h2>Why the mean is harmonic</h2>
+        <p>
+          Two numbers invite an average, and the obvious average is the
+          arithmetic mean. F1 does not use it. F1 is the harmonic mean of
+          precision and recall,<sup class="nb-cite"><a href="#s3">3</a></sup> and
+          the harmonic mean has one property that matters here: it sits close to
+          the smaller of the two numbers rather than halfway between them.
+        </p>
+        <p>
+          Watch it on a lopsided pair. A fingerprint system with precision 1.0
+          and recall 0.2 is almost useless. It is right whenever it speaks, but
+          it stays silent on four cases in five. The arithmetic mean rewards it
+          with 0.6. The harmonic mean gives it 0.33, which is about what a nearly
+          useless system deserves.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          A lopsided pair cannot buy back a low recall with a high precision.
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \mathrm{F1} \;=\; 2\cdot\frac{\htmlClass{nb-mc1}{P}\cdot
+            \htmlClass{nb-mc2}{R}}{\htmlClass{nb-mc1}{P}+\htmlClass{nb-mc2}{R}}
+            \;=\; \frac{2\,\mathrm{TP}}{2\,\mathrm{TP}+\mathrm{FP}+\mathrm{FN}}
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">P</span
+              ><span>precision, the share of flagged items that were right.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">R</span
+              ><span
+                >recall, the share of real positives the system found.</span
+              >
+            </li>
+          </ul>
+          <figcaption>
+            F1 written as the harmonic mean of precision and recall, and again
+            in raw counts as twice the true positives over twice the true
+            positives plus the two kinds of error.<sup class="nb-cite"
+              ><a href="#s3">3</a></sup
+            ><sup class="nb-cite"><a href="#s2">2</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          The measure did not arrive with the name F. Van Rijsbergen wrote it as
+          an effectiveness score to be minimized, fitted with a single dial that
+          lets a user weight recall against precision.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The evaluation community adopted it at the fourth Message
+          Understanding Conference in 1992, wrote it in the form still used, and
+          called it the F-measure. Its parameter β sets recall's importance
+          relative to precision. β above 1 weights recall more, β below 1 weights
+          precision more, and β equal to 1 gives the equal-weight case everyone
+          now writes as F1.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The letter itself was a mild accident, picked from a different F in van
+          Rijsbergen's book.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="ignored-cell" id="ignored-cell">
+        <h2>The cell F1 never reads</h2>
+        <p>
+          Look back at the four boxes. F1 uses three of them. True positives,
+          false positives, and false negatives all appear in precision or
+          recall. The fourth box, the true negatives, never enters the
+          formula.<sup class="nb-cite"><a href="#s5">5</a></sup> In the search
+          example that box held 986 documents, and F1 would read exactly the same
+          if it held 986,000. David Powers put the general point plainly: the
+          precision-recall-F family ignores how well a system handles the
+          negatives, so a system that is genuinely worse can score
+          higher.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>Three consequences follow, and each is a question to ask of any F1 you are handed.</p>
+        <p>
+          <strong>Which class is positive?</strong> F1 is not symmetric. Swap the
+          labels for positive and negative and the score changes, so the same
+          predictions earn two different F1s depending on which class you decided
+          to count.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          <strong>At what base rate?</strong> Because F1 turns on the positives,
+          its best operating point moves with how common the positives are, and
+          two F1 scores from datasets of different prevalence are not
+          comparable.<sup class="nb-cite"><a href="#s6">6</a></sup> Push that to
+          the limit and it gets worse: a classifier that knows nothing at all
+          maximizes its F1 by labeling every single item positive.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Recall climbs to 1, precision settles at the base rate, and the
+          harmonic mean of the two can clear what an honest but cautious
+          classifier manages.
+        </p>
+        <p>
+          <strong>Which averaging?</strong> F1 is defined for a two-class
+          problem, so scoring three or more classes means averaging the
+          per-class F1s, and there is more than one way to do it. Micro
+          averaging pools the counts across all classes and takes one quotient;
+          with every class included, that number is simply accuracy.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Macro averaging takes the plain mean of the per-class scores, giving a
+          rare class the same weight as a common one.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Weighted averaging weights each class by its size and can land outside
+          the range between precision and recall.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Same predictions, three different numbers.
+        </p>
+      </section>
+
+      <section data-nb-section="wrong-winner" id="wrong-winner">
+        <h2>F1 crowns the wrong classifier</h2>
+        <p>
+          Davide Chicco and Giuseppe Jurman built the cleanest demonstration of
+          the cost. They ran classifiers on skewed data and set F1 and accuracy
+          against the Matthews correlation coefficient, or MCC. MCC uses all four
+          boxes and reads as a correlation between prediction and truth, running
+          from −1 through 0, a coin toss, up to +1.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            Two synthetic classifiers from Chicco and Jurman. In the first row F1
+            and accuracy both look excellent; in the second, F1 alone still looks
+            fair. MCC flags both.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Case</th>
+              <th class="txt">Class split</th>
+              <th class="txt">Negatives caught</th>
+              <th>Accuracy</th>
+              <th>F1</th>
+              <th>MCC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">A1</span></td>
+              <td class="txt">91% positive</td>
+              <td class="txt">0 of 9</td>
+              <td>0.90</td>
+              <td>0.95</td>
+              <td>−0.03</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">B1</span></td>
+              <td class="txt">50 / 50</td>
+              <td class="txt">5 of 50</td>
+              <td>0.52</td>
+              <td>0.66</td>
+              <td>+0.07</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          In the first case the data is 91% positive, and a classifier calls
+          almost everything positive: it catches 90 of 91 positives and 0 of 9
+          negatives. Its F1 is 0.95 and its accuracy is 0.90, both excellent. Its
+          MCC is −0.03, the score of a coin toss, because it never once got a
+          negative right.<sup class="nb-cite"><a href="#s2">2</a></sup> The second
+          case is balanced 50-50, and there F1 alone is fooled. It reads a
+          passable 0.66 while the classifier finds only 5 of 50 negatives, and
+          both accuracy at 0.52 and MCC at +0.07 report the coin toss that it
+          is.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The same reversal shows up on real data. On a colon-cancer
+          gene-expression dataset of 62 patients, ranking classifiers by F1
+          crowns a k-nearest-neighbors model at 0.87, ahead of gradient boosting
+          at 0.81. MCC reverses them: gradient boosting leads at +0.55 to k-NN's
+          +0.48. The k-NN model wins on F1 by finding cancer well, catching 92%
+          of the sick. But it clears only 52% of the healthy, barely better than
+          a coin toss on the patients it should be reassuring.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Rank by F1 and you ship the model that sends nearly half of the healthy
+          patients on for more tests.
+        </p>
+        <p>
+          Even inside multi-class F1 the ranking is not safe. Two formulas both
+          travel under the name macro F1: the plain mean of the per-class F1s,
+          which scikit-learn computes by default, and the harmonic mean of the
+          averaged precision and averaged recall, which some shared tasks use.
+          Juri Opitz and Sebastian Burst showed the two can disagree by as much
+          as 0.5 and, worse, can order two classifiers in opposite directions. On
+          one pair of confusion matrices, moving from the first to the second
+          raises the second formula from 0.50 to 0.55, an apparent improvement.
+          The first formula does the opposite, falling from 0.49 to
+          0.48.<sup class="nb-cite"><a href="#s8">8</a></sup> A
+          macro-F1 leaderboard has to say which macro F1 it means.
+        </p>
+        <p>
+          None of this makes F1 a bad measure. Van Rijsbergen built it for document
+          retrieval, where the true negatives are every document you correctly
+          ignored, an unbounded and uninformative mass.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          There, accuracy is the useless number. Label every document irrelevant
+          and you score near-perfect while returning nothing, the same way
+          Chicco's majority classifier scores the majority fraction by doing
+          nothing.<sup class="nb-cite"><a href="#s2">2</a></sup> In a
+          needle-in-a-haystack search, ignoring the true negatives is exactly
+          right, because those negatives carry no news. Powers calls the same
+          blindness to true negatives a bias, and whether it is a feature or a
+          bias depends only on whether the negatives are worth counting.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          MCC is no free lunch either: it is undefined when a whole row or column
+          of the table is empty, and Chicco resolves those cases only by
+          convention.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          F1 is the harmonic mean of precision and recall, and the harmonic mean
+          is what pulls it down toward whichever of the two is worse. That is its
+          real strength: a model cannot coast on a high precision while its
+          recall collapses. Its blind spot is the true negatives, the items it
+          correctly left alone, which never enter the formula. When those matter
+          and the classes are skewed, F1 can sit near the top while a model
+          misses a whole class, and a score like MCC that uses all four counts
+          will catch what F1 cannot. Macro F1, meanwhile, is not even one number.
+          So the three questions are the thing to carry away: which class was
+          positive, which averaging produced the score, and at what base rate. F1
+          is the right tool for the retrieval problems it was built for, where
+          the true negatives are an uninformative mass, and the wrong one when
+          those negatives carry the news.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://doi.org/10.1186/s12864-019-6413-7">Chicco &amp;
+            Jurman, on MCC over F1</a>: the full argument with all six synthetic
+            cases and the colon-cancer table.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1911.03347">Opitz &amp; Burst, "Macro
+            F1 and Macro F1"</a>: the proof that two macro-F1 formulas can reverse
+            a ranking.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a
+              href="https://people.cs.pitt.edu/~litman/courses/cs1671s20/F-measure-YS-26Oct07.pdf"
+              >Sasaki, "The truth of the F-measure"</a
+            >: a short derivation of the F-measure and the accident behind its
+            name.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.dcs.gla.ac.uk/Keith/Chapter.7/Ch.7.html"
+              >University of Glasgow · C. J. van Rijsbergen, <em>Information
+              Retrieval</em>, Chapter 7 (1979)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://doi.org/10.1186/s12864-019-6413-7"
+              >BMC Genomics · Chicco &amp; Jurman, The advantages of the Matthews
+              correlation coefficient over F1 score and accuracy (2020)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://people.cs.pitt.edu/~litman/courses/cs1671s20/F-measure-YS-26Oct07.pdf"
+              >Yutaka Sasaki · The truth of the F-measure (2007)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/M92-1002/"
+              >ACL Anthology · Nancy Chinchor, MUC-4 Evaluation Metrics (1992)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2010.16061"
+              >arXiv · David M. W. Powers, Evaluation: from precision, recall and
+              F-measure to ROC, informedness, markedness and correlation
+              (2011)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1402.1892"
+              >arXiv · Lipton, Elkan &amp; Naryanaswamy, Thresholding Classifiers
+              to Maximize F1 Score (2014)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://scikit-learn.org/stable/modules/model_evaluation.html"
+              >scikit-learn · Metrics and scoring: quantifying the quality of
+              predictions</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1911.03347"
+              >arXiv · Juri Opitz &amp; Sebastian Burst, Macro F1 and Macro F1
+              (2019)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
