@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kingma and Welling made random sampling differentiable · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "variational-autoencoder",
+        "template": "lesson",
+        "title": "Kingma and Welling made random sampling differentiable",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-12",
+        "tags": ["autoencoder", "generative-models", "variational-inference"],
+        "sources": 9,
+        "words": 2191,
+        "reading_minutes": 10,
+        "dek": "A generative model first trained on handwritten digits, whose real legacy became the compressed latent space that Stable Diffusion runs inside.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Kingma and Welling made random sampling differentiable</h1>
+        <p class="nb-dekline">
+          A generative model first trained on handwritten digits, whose real
+          legacy became the compressed latent space that Stable Diffusion runs
+          inside.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-09-12</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have already met the word autoencoder once, in the lesson on
+          latent diffusion, where a compressed grid stood in for the full image
+          while the model did its work. This is the model that word points back
+          to. In 2013 two researchers in Amsterdam gave deep generative models a
+          way to learn a compact, sampleable space by the same gradient descent
+          that trains an ordinary classifier. Their design still sits inside the
+          image generators people use today. By the end you will be able to say
+          what a variational autoencoder is, what its reparameterization trick
+          solved, why its objective has two terms, and why VAEs are prized now
+          more as latent spaces than as image generators.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/gans.html">The GAN paper credited with deepfakes generated blurry thumbnails</a>:
+            the other 2014 route to generative images, trained by a contest
+            between two networks instead of a likelihood bound.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/denoising-diffusion.html">The diffusion paper behind today's image generators could not take a prompt</a>:
+            the method that learns to reverse a thousand steps of added noise,
+            the third pillar of modern generative modeling.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-evidence/latent-diffusion.html">Stable Diffusion does its denoising on a compressed grid, not the full image</a>:
+            where the reader first met an autoencoder, and where the VAE's
+            descendants earn their keep.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A generative model trained by plain gradient descent</h2>
+        <p>
+          A generative model learns to produce new examples that resemble a
+          training set. Diederik Kingma and Max Welling, at the University of
+          Amsterdam, built theirs around two networks and a hidden space of
+          factors, the latent space, and showed it could be trained end to end
+          by ordinary gradient descent.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          An encoder reads a data point and places it in that space; a decoder
+          reads a point from the space and rebuilds the data. An encoder feeding
+          a decoder, trained to reproduce its own input, is an autoencoder, the
+          same kind of component that compresses images inside
+          <a href="../the-evidence/latent-diffusion.html">latent diffusion</a>.
+        </p>
+        <p>
+          Two choices made this autoencoder generative rather than a mere
+          compressor. The encoder outputs a whole distribution over the latent
+          space rather than a single code, so the space fills in and new points
+          can be drawn from it. And the model trains against a single objective a
+          gradient can climb. The one obstacle was that the objective runs
+          through a random sampling step, and a gradient does not normally pass
+          through a coin toss. A move they call the reparameterization trick
+          removed it.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="encoder-and-latent-space" id="encoder-and-latent-space">
+        <h2>The encoder describes a point as a distribution</h2>
+        <p>
+          In a plain autoencoder the encoder maps each input to one code. The
+          VAE's encoder, which the paper calls a recognition model or a
+          probabilistic encoder, instead reports a distribution: for every
+          dimension of the latent space it emits a mean and a spread.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+          A digit lands not on one point but on a small blur of nearby points,
+          any of which the decoder should rebuild into that digit.
+        </p>
+        <p>
+          The spread is what ties the space together. The model asks every
+          example's blur to resemble one fixed reference distribution, the prior.
+          That prior is a centered, standard bell curve in every dimension,
+          written <span class="nb-math-in">p(\mathbf{z}) = \mathcal{N}(0, I)</span>.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+          Because the blurs overlap and share that shape, the space has no dead
+          gaps: draw a point near the center and the decoder, having seen its
+          neighborhood, turns it into a plausible new example.
+        </p>
+        <p>
+          The latent space is not something to visualize. The experiments swept
+          spaces from two dimensions up to two hundred, and no one pictures a
+          two-hundred-dimensional space, professional mathematicians
+          included.<sup class="nb-cite"><a href="#s1">1</a></sup> The mean and
+          spread are just lists of numbers the encoder prints, one pair per
+          dimension.
+        </p>
+      </section>
+
+      <section data-nb-section="the-two-terms" id="the-two-terms">
+        <h2>Two terms pulling in different directions</h2>
+        <p>
+          Training maximizes one quantity, the evidence lower bound, or ELBO. It
+          is a lower bound on how likely the data is under the model, and it
+          splits into two terms that want different things.<sup class="nb-cite"><a
+              href="#s1">1</a></sup>
+        </p>
+
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \mathcal{L}(\theta,\phi;\mathbf{x}) = \htmlClass{nb-mc1}{-\,D_{\mathrm{KL}}\!\left(q_\phi(\mathbf{z}\mid\mathbf{x})\,\|\,p_\theta(\mathbf{z})\right)} + \htmlClass{nb-mc2}{\mathbb{E}_{q_\phi(\mathbf{z}\mid\mathbf{x})}\!\left[\log p_\theta(\mathbf{x}\mid\mathbf{z})\right]}
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">D_{\mathrm{KL}}(q_\phi\,\|\,p_\theta)</span
+              ><span>How far the encoder's distribution over codes sits from the prior. Subtracting it pulls that distribution toward the standard bell curve.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">\mathbb{E}[\log p_\theta(\mathbf{x}\mid\mathbf{z})]</span
+              ><span>How well the decoder rebuilds the input from a code the encoder drew. Raising it rewards faithful reconstructions.</span>
+            </li>
+          </ul>
+          <figcaption>
+            The objective the whole model climbs: a reconstruction reward set
+            against a penalty for straying from the prior.<sup class="nb-cite"><a
+                href="#s1">1</a></sup>
+          </figcaption>
+        </figure>
+
+        <p>
+          The second term is the reconstruction reward. The decoder receives a
+          code drawn from the encoder's blur and is scored on how well it
+          rebuilds the original. The first term has a name worth defining: the KL
+          divergence. Before the symbol, the plain question it answers is how
+          different two distributions are. If you expected draws from one
+          distribution but they actually come from another, the KL divergence
+          measures how badly the first predicts the second. Here it measures the
+          gap between one example's blur and the prior, and the objective
+          subtracts it, which pushes every blur toward that shared bell curve.
+        </p>
+        <p>
+          When the prior and the encoder's blur are both bell curves, the gap has
+          a short closed form, one that needs no sampling. For each latent
+          dimension it adds up
+          <span class="nb-math-in">\tfrac{1}{2}\bigl(\mu_j^2 + \sigma_j^2 - 1 - \log\sigma_j^2\bigr)</span>
+          from the encoder's mean and spread.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Set the mean to zero and the spread to one and every piece cancels: the
+          blur already matches the prior, and the penalty is nothing. Push the
+          mean out to three, or shrink the spread to a tenth, and the penalty
+          climbs.
+        </p>
+        <p>
+          The two terms are a tug of war. Reconstruction alone would let the
+          encoder scatter each example to its own far corner and memorize the
+          set, leaving the space between corners empty. The KL term alone would
+          crush every blur onto the prior and throw away what makes one example
+          different from another. The useful models live in the balance, packed
+          tight enough to sample from and loose enough to tell the data apart.
+        </p>
+        <p>
+          How much weight the balance gives each side is a dial. Higgins and
+          colleagues at DeepMind multiplied the KL term by a single knob they
+          called β. At β of one it is the plain VAE. Turning β above one presses
+          the blurs harder toward the prior, trading reconstruction sharpness for
+          latent factors that vary more independently, the effect they named
+          disentanglement.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The balance is also fragile. Bowman and colleagues trained a VAE with a
+          strong recurrent decoder on text. Most runs quietly set the encoder's
+          blur equal to the prior, driving the KL term to zero, and the decoder
+          learned to model the data on its own and ignore the latent code
+          entirely.<sup class="nb-cite"><a href="#s3">3</a></sup> The failure now
+          goes by posterior collapse. Their fixes were to ramp the KL weight up
+          slowly during training and to weaken the decoder so it had to use the
+          code. The tidy two-term picture holds as the objective, but in practice
+          the terms can collapse into each other.
+        </p>
+      </section>
+
+      <section data-nb-section="reparameterization" id="reparameterization">
+        <h2>Sending a gradient through a random draw</h2>
+        <p>
+          One step blocks the whole plan. To train by gradient descent you take
+          the gradient of the objective with respect to the encoder's
+          parameters. But the objective is an average over codes drawn from the
+          encoder's blur, and a gradient cannot pass through a random draw. The
+          obvious workaround, estimating the gradient from samples, gives an
+          estimate the paper reports as so noisy it "exhibits very high variance
+          and is impractical."<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The trick is to move the randomness out of the path the gradient
+          travels. Rather than draw a code directly from the encoder's blur, draw
+          a fixed unit of noise from a standard bell curve and build the code
+          from it and the encoder's outputs.
+        </p>
+
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \mathbf{z} = \boldsymbol{\mu} + \boldsymbol{\sigma} \odot \boldsymbol{\varepsilon}, \qquad \boldsymbol{\varepsilon} \sim \mathcal{N}(0, I)
+          </div>
+        </figure>
+
+        <p>
+          Now the code is a plain function of the encoder's mean and spread plus
+          outside noise, and the random part no longer sits between the objective
+          and the parameters.<sup class="nb-cite"><a href="#s1">1</a></sup> Fix
+          the noise at a half, and the code becomes the mean plus half the spread.
+          Nudge the mean up and the code moves up with it, one for one. The
+          gradient has a clean path from the code back to the encoder, and the
+          encoder can learn.
+        </p>
+        <p>
+          The idea was in the air. Kingma and Welling gave the deep
+          latent-variable case its standard recipe and its name. But they credit
+          Rezende, Mohamed and Wierstra with an independent, near-simultaneous
+          derivation of the same connection between encoders, generative models
+          and gradient-based inference.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          They also point to Salimans and Knowles a year earlier for a similar
+          reparameterization used elsewhere.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The move was co-discovered, and the paper is more careful about that
+          than its later reputation is.
+        </p>
+      </section>
+
+      <section data-nb-section="from-proof-to-latent-space" id="from-proof-to-latent-space">
+        <h2>From a CPU proof to Stable Diffusion's latent space</h2>
+        <p>
+          The experiments were small, and the paper is plain about it. The models
+          were single-hidden-layer networks, run on handwritten digits from
+          MNIST and on the Frey Face set of one person's changing expression.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">1</span><span class="nb-stat-l">hidden layer per network</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">500 / 200</span><span class="nb-stat-l">hidden units, MNIST / Frey Face</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">~20–40 min</span><span class="nb-stat-l">per million samples, one CPU</span>
+          </div>
+        </div>
+
+        <p>
+          Those 500- and 200-unit networks trained on a single CPU, roughly
+          twenty to forty minutes per million samples.<sup class="nb-cite"><a
+              href="#s1">1</a></sup> What the paper reported was a likelihood. It
+          gave the variational lower bound over training, against a competing
+          method called wake-sleep, and a marginal-likelihood estimate sampled on
+          the first thousand train and test points.<sup class="nb-cite"><a
+              href="#s1">1</a></sup> It reports no image-quality score anywhere.
+          So the popular line that a VAE generates images runs ahead of what this
+          paper measured: how probable the data was under the model, not how good
+          its pictures looked.
+        </p>
+        <p>
+          The pictures tend to come out soft, and the reason is built into the
+          reconstruction term. A plain VAE scores its
+          rebuild pixel by pixel, under what Larsen and colleagues call an
+          element-wise Gaussian model, and they argue such element-wise errors
+          "are not adequate for images" with visual structure.<sup class="nb-cite"><a
+              href="#s5">5</a></sup> When several outputs could each explain an
+          input, minimizing pixel error settles on their average, and the average
+          of many sharp possibilities is a smear.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The famous blurriness is that averaging, not a verdict any one paper
+          pronounced.
+        </p>
+        <p>
+          What survived was the latent space itself. The autoencoder in latent
+          diffusion runs its whole diffusion process inside the compressed space
+          of a pretrained encoder. One of the two encoders Rombach and colleagues
+          train is regularized with "a slight KL-penalty towards a standard normal
+          on the learned latent, similar to a VAE."<sup class="nb-cite"><a
+              href="#s7">7</a></sup> The discrete branch of the family, the
+          VQ-VAE, swaps the continuous blur for a learned codebook of discrete
+          codes and a learned prior over them, which sidesteps posterior
+          collapse.<sup class="nb-cite"><a href="#s8">8</a></sup> Scaled up, that
+          line produced ImageNet samples the authors put at a quality "that rivals
+          that of state of the art Generative Adversarial Networks."<sup
+            class="nb-cite"><a href="#s9">9</a></sup> The fidelity came from a
+          powerful prior over the latent grid. The autoencoder alone did not
+          supply it.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A variational autoencoder is an encoder that turns each data point into
+          a small distribution over a latent space and a decoder that rebuilds
+          data from a point drawn out of it. The reparameterization trick solved
+          the one thing standing between that design and ordinary gradient
+          descent, moving the random draw out of the gradient's path so the whole
+          model could learn at once. The objective has two terms because a usable
+          space needs both: a reward for faithful rebuilds and a penalty that
+          keeps every example's blur close enough to a shared prior that new
+          points can be drawn from the space. And the reason VAEs are valued today
+          more as latent spaces than as image generators is already in the
+          original paper, which trained on digits and faces on a single CPU and
+          reported a likelihood bound, never a picture. Its descendants kept the
+          compressed, sampleable space and handed the work of sharp images to
+          something else.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1312.6114">Auto-Encoding Variational Bayes</a>:
+            the method paper itself, readable once the ELBO and the
+            reparameterization trick are in hand.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1606.05908">Tutorial on Variational Autoencoders</a>:
+            a longer, gentle walk through the same math with worked derivations.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1312.6114"
+              >arXiv · Diederik P. Kingma & Max Welling, "Auto-Encoding Variational Bayes" (2013; ICLR 2014)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://openreview.net/forum?id=Sy2fzU9gl"
+              >OpenReview · Irina Higgins et al., "β-VAE: Learning Basic Visual Concepts with a Constrained Variational Framework" (ICLR 2017)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1511.06349"
+              >arXiv · Samuel R. Bowman et al., "Generating Sentences from a Continuous Space" (2015)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1401.4082"
+              >arXiv · Danilo J. Rezende, Shakir Mohamed & Daan Wierstra, "Stochastic Backpropagation and Approximate Inference in Deep Generative Models" (2014)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1512.09300"
+              >arXiv · Anders Boesen Lindbo Larsen et al., "Autoencoding beyond pixels using a learned similarity metric" (2015)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/1606.05908"
+              >arXiv · Carl Doersch, "Tutorial on Variational Autoencoders" (2016)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2112.10752"
+              >arXiv · Robin Rombach et al., "High-Resolution Image Synthesis with Latent Diffusion Models" (2021)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1711.00937"
+              >arXiv · Aaron van den Oord, Oriol Vinyals & Koray Kavukcuoglu, "Neural Discrete Representation Learning" (2017)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1906.00446"
+              >arXiv · Ali Razavi, Aaron van den Oord & Oriol Vinyals, "Generating Diverse High-Fidelity Images with VQ-VAE-2" (2019)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
