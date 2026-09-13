@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mamba dropped attention to make long sequences cheap. Its authors put some back · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "mamba",
+        "template": "lesson",
+        "title": "Mamba dropped attention to make long sequences cheap. Its authors put some back",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-13",
+        "tags": ["mamba", "state-space-models", "sequence-modeling"],
+        "sources": 7,
+        "words": 2081,
+        "reading_minutes": 9,
+        "dek": "Mamba matches a transformer twice its size on short-context reasoning up to 2.8B parameters, and loses to a far smaller one at looking things up in a long context.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Mamba dropped attention to make long sequences cheap. Its authors put some back</h1>
+        <p class="nb-dekline">
+          Mamba matches a transformer twice its size on short-context reasoning up to 2.8B parameters, and loses to a far smaller one at looking things up in a long context.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-13</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every few months a new design is announced as the end of the
+          transformer, and Mamba is the one that stuck as the reference. If you
+          have seen the claim that attention is on its way out, this is the
+          paper underneath it. A state-space model reads a sequence a different
+          way: instead of comparing every token against every other, it carries
+          one compressed summary forward and updates it as it goes. By the end
+          you will know what that summary is and what the word "selective" adds
+          to it. You will also know exactly which claim the paper proved, at
+          what size it trained, and where the "transformers are finished"
+          reading runs past what the evidence shows.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/attention-is-all-you-need.html">The paper credited with starting the LLM era never trained a language model</a>:
+            the transformer paper this one replies to, and what attention is.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">An attention head is a weighted average that computes its own weights</a>:
+            how attention re-reads every earlier token, in worked numbers.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/lost-in-the-middle.html">A model's accuracy traces a U as the answer moves through a long prompt</a>:
+            what long context costs a transformer, and why the length matters.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The paper people mean by "post-transformer"</h2>
+        <p>
+          A transformer answers each new token by comparing it against every
+          token that came before it. Mamba, a sequence model published in
+          December 2023 by Albert Gu of Carnegie Mellon and Tri Dao of
+          Princeton, answers without looking back at all. It keeps a single
+          fixed-size summary of everything read so far and updates that summary
+          one token at a time, so the work it does per token never grows with
+          how much it has already read.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The pitch is cost. Because a transformer holds the entire past in
+          reach, its bill grows with the length of the sequence; Mamba's does
+          not. The paper reports four to five times the inference throughput of
+          a transformer its size, and a scaling curve that keeps pace with a
+          strong transformer recipe over the range it tested.<sup class="nb-cite"><a href="#s1">1</a></sup> Two years on,
+          those numbers are what people reach for when they argue attention is
+          finished.
+        </p>
+      </section>
+
+      <section data-nb-section="the-carried-state" id="the-carried-state">
+        <h2>The state that stands in for the past</h2>
+        <p>
+          A state-space model keeps a <em>state</em>: a fixed-size list of
+          numbers that stands in for everything the model has read. At each new
+          token it performs a <em>recurrence</em>, which just means it produces
+          the next state from the previous state and the token in front of it,
+          then reads its answer off that state. In the simplest linear form the
+          update is a weighted mix,
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            h_t = A\,h_{t-1} + B\,x_t, \qquad y_t = C\,h_t
+          </div>
+        </figure>
+        <p>
+          where <span class="nb-math-in">x_t</span> is the current token,
+          <span class="nb-math-in">h_t</span> the state after it, and
+          <span class="nb-math-in">A, B, C</span> are the fixed sets of weights
+          the model learned.<sup class="nb-cite"><a href="#s1">1</a></sup> Read
+          the two lines plainly: carry a little of the old state, fold in a
+          little of the new token, and let the state be the model's entire
+          memory of the sequence.
+        </p>
+        <p>
+          Set that beside attention.
+          Attention answers a token by reading every earlier token again. A
+          state-space model answers it by reading one thing: the state. The
+          paper puts the contrast in terms of compression. Attention does not
+          compress the past at all; it keeps every earlier token around and
+          re-reads them, which is why its cost climbs with length. A
+          state-space model compresses hard: everything it will ever know about
+          the past has to fit inside that one fixed state.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          That buys the constant per-token cost. It also makes the state a
+          bottleneck: whatever will not fit in it is lost, and what will not fit
+          turns out to decide how far the model can go.
+        </p>
+      </section>
+
+      <section data-nb-section="what-selective-changed" id="what-selective-changed">
+        <h2>What "selective" changed</h2>
+        <p>
+          State-space models were not new in 2023. The line Mamba builds on,
+          the S4 family from 2021, already carried a state forward and was
+          strong at very long inputs, solving a 16,000-step benchmark that
+          earlier models failed.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          But S4's update was fixed: the same weights applied to every token,
+          whatever the token was. That constraint had a payoff. When the update
+          never changes, the whole recurrence can be unrolled and computed in
+          one parallel pass, like a convolution, which trains fast. Its price
+          was that a model treating every token identically cannot decide that
+          some tokens matter and others are noise.
+        </p>
+        <p>
+          Mamba's one real change is to let the update depend on the token in
+          front of it. This is what the paper calls <em>selection</em>: how much
+          of the new token to write into the state, and how much of the old
+          state to keep, is now computed from the token itself. Shrink the state
+          to a single number and the update becomes a plain gate.
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            h_t = \htmlClass{nb-mc1}{g_t}\,\htmlClass{nb-mc3}{x_t}
+            + \bigl(1 - \htmlClass{nb-mc1}{g_t}\bigr)\,\htmlClass{nb-mc2}{h_{t-1}}
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">g_t</span
+              ><span>a number between 0 and 1 the model computes from the current token.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">x_t</span
+              ><span>the current token.</span>
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">h_{t-1}</span
+              ><span>the state carried in from the step before.</span>
+            </li>
+          </ul>
+          <figcaption>
+            The selective update with the state reduced to one number: near 1,
+            the gate overwrites the state with the token; near 0, the token is
+            ignored and the state passes through unchanged.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          That gate is the entire idea at its smallest. The model looks at each
+          token and chooses whether to remember it. Making the update depend on
+          the token breaks the convolution trick S4 relied on, so Mamba has to
+          run as a true step-by-step recurrence. Much of the paper's engineering
+          goes into keeping that recurrence fast, by holding the state in the
+          GPU's quickest memory rather than writing it out and back.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The payoff shows on a task built to need selection: copy only the
+          tokens that were marked and skip the rest. The fixed S4 scored 18.3
+          percent; selective Mamba scored 99.8.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Choosing what to keep is what closed that gap.
+        </p>
+      </section>
+
+      <section data-nb-section="behind-the-headline" id="behind-the-headline">
+        <h2>The 2.8B behind the headline</h2>
+        <p>
+          The line everyone quotes is that Mamba "matches Transformers twice its
+          size." The largest language model the paper
+          actually trained was 2.8 billion parameters; the "3B" of the abstract
+          is that same model rounded up. The "twice its size" claim rests on one
+          comparison: zero-shot common-sense reasoning. Across six tasks,
+          Mamba-2.8B averaged 63.3 against 59.1 for a same-size Pythia
+          transformer. It also came in ahead of the 61.7 scored by a Pythia
+          nearly two and a half times larger.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          On perplexity, a standard score for how well a model predicts the next
+          token where lower is better, Mamba's curve tracked a strong
+          transformer recipe over the sizes tested. Those are real results, and
+          they are short-context results at small-to-mid scale.
+        </p>
+        <p>
+          The authors are the ones who say so.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The authors on their own scale</span>
+          <blockquote>
+            "our empirical evaluation is limited to small model sizes, below the
+            threshold of most strong open source LLMs ... It remains to assess
+            whether Mamba still compares favorably at these larger
+            sizes."<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">Gu and Dao, Mamba, §5</span>
+          </blockquote>
+        </div>
+        <p>
+          The categories most in question at this point, long-context retrieval
+          and in-context learning at frontier scale, were not run at
+          language-model scale. The throughput headline needs the same care. The
+          four-to-five-times figure is generation throughput on one GPU, and it
+          comes from a specific advantage: with no stored past to hold, Mamba
+          runs far larger batches than a transformer of the same size can. In
+          training, its scan only overtakes a fast attention implementation once
+          the sequence passes roughly 2,000 tokens.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The win is real and it is specific: long-sequence, large-batch
+          generation, not a blanket speedup.
+        </p>
+      </section>
+
+      <section data-nb-section="where-it-breaks" id="where-it-breaks">
+        <h2>Where the successor story breaks</h2>
+        <p>
+          Because
+          everything a fixed state knows must fit inside it, a state-space model
+          struggles with any task that needs the exact earlier text: copying a
+          long string, or looking a specific entry up in a long context. A group
+          at Harvard proved the limit and then measured it. Transformers learn
+          to copy with about a hundred times fewer training examples than the
+          best state-space model. On a phone-book lookup, even a 410-million
+          parameter transformer beats a 2.8-billion parameter Mamba once the
+          book is long enough.<sup class="nb-cite"><a href="#s3">3</a></sup> The
+          detail that matters most: this held even though those Mamba models had
+          slightly lower perplexity. "Matches on perplexity" and "matches on the
+          thing you would use it for" are different claims, and Mamba's headline
+          was the first kind.
+        </p>
+        <p>
+          A year on, Gu and
+          Dao's follow-up sped up the layer and then put attention back in. A
+          model with about a tenth of its layers being attention beat both a
+          pure state-space model and a strong transformer. They credit the gain
+          to attention's knack for retrieving an earlier token instead of
+          forcing everything through the compressed state.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Industry landed in the same place. Jamba, billed as the first
+          production-grade hybrid, interleaves attention and Mamba layers, and
+          its makers state plainly that state-space models like Mamba "still
+          lag behind the performance of comparably sized Transformer language
+          models."<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          Falcon Mamba, a 7-billion parameter model with no attention at all,
+          reports beating Mistral 7B and Llama 3.1 8B on standard
+          leaderboards.<sup class="nb-cite"><a href="#s6">6</a></sup> A pure
+          state-space model really can be competitive at that size, and this is
+          the honest high-water mark for one. But 7B is well short of frontier
+          scale, and those leaderboards are the short-context reasoning tasks
+          where state-space models were always competitive. The result does not
+          test the copying and retrieval gap, and it does not close it.
+        </p>
+        <p>
+          Mamba showed that a fixed-state model
+          can match a same-size transformer on short-context reasoning up to
+          2.8B, and generate long sequences more cheaply. It did not show that a
+          pure state-space model matches transformers on retrieval, at long
+          context, or at frontier scale, and its own authors keep some attention
+          for the tasks where the fixed state falls short. Two years after the
+          paper, a technical explainer from IBM records the plain state of
+          things. Transformers "have remained the dominant mode of LLM," and
+          "still outpace both Mamba and Mamba-2 on tasks requiring in-context
+          learning ..., copying, or long-context reasoning." It points to
+          hybrids, its own production models among them, as the way to pair
+          Mamba's efficiency with attention's recall.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Mamba's real result is narrow and solid. A model that carries a fixed
+          compressed state forward, and chooses per token what to keep in it,
+          can match a same-size transformer on short-context reasoning up to
+          2.8B parameters. It can also generate long sequences more cheaply,
+          because it never re-reads the past. Its limit is that same fact seen
+          from the
+          other side. What does not fit in the fixed state, the exact wording of
+          a long passage or a lookup buried deep in a long context, is what it
+          loses. There, a small transformer beats a much larger Mamba. That
+          is why Mamba's own authors, and the production models that followed,
+          added a little attention back rather than take it all out. The
+          transformer is not finished. What the paper showed is smaller and more
+          useful than that. Attention is one way to read a sequence, not the
+          only one, and giving up the re-read buys cheap generation at the cost
+          of the exact recall the re-read was there to provide.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2402.01032">Repeat After Me: Transformers are Better than State Space Models at Copying</a>:
+            the proof and the measurements behind the retrieval gap.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2405.21060">Transformers are SSMs (Mamba-2)</a>:
+            the authors' follow-up, where a hybrid with about a tenth attention wins.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2410.05355">Falcon Mamba: The First Competitive Attention-free 7B Language Model</a>:
+            how far a pure state-space model has actually scaled.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; §2 Eqs 1–4; §3.1; Theorem 1; §3.3; Table 1; Table 3; §4.5 &amp; Fig. 8; §5"
+              href="https://arxiv.org/abs/2312.00752"
+              >Gu &amp; Dao · Mamba: Linear-Time Sequence Modeling with Selective State Spaces (2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; §1"
+              href="https://arxiv.org/abs/2111.00396"
+              >Gu, Goel &amp; Ré · Efficiently Modeling Long Sequences with Structured State Spaces (S4, ICLR 2022)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.2; §4.3, Phone-book lookup; Theorem 2.7"
+              href="https://arxiv.org/abs/2402.01032"
+              >Jelassi, Brandfonbrener, Kakade &amp; Malach · Repeat After Me: Transformers are Better than State Space Models at Copying (ICML 2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§9.2.3, Tables 2–3"
+              href="https://arxiv.org/abs/2405.21060"
+              >Dao &amp; Gu · Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality (Mamba-2, ICML 2024)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§1"
+              href="https://arxiv.org/abs/2403.19887"
+              >Lieber et al. · Jamba: A Hybrid Transformer-Mamba Language Model (2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2410.05355"
+              >Zuo et al. · Falcon Mamba: The First Competitive Attention-free 7B Language Model (2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="IBM Think, &quot;What Is A Mamba Model?&quot;"
+              href="https://www.ibm.com/think/topics/mamba-model"
+              >IBM Think (Dave Bergmann) · What Is A Mamba Model?</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
