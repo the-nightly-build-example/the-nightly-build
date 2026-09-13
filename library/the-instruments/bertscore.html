@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BERTScore grades how much two sentences look alike to a language model · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "bertscore",
+        "template": "lesson",
+        "title": "BERTScore grades how much two sentences look alike to a language model",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-13",
+        "tags": ["bertscore", "text-generation-evaluation", "embeddings"],
+        "sources": 8,
+        "words": 1563,
+        "reading_minutes": 7,
+        "dek": "Introduced in 2020 to go past word-counting scores, it rates a candidate by how closely a pretrained encoder sees it resembling the reference, which rewards fluent wrong answers and carries the encoder's blind spots.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">BERTScore grades how much two sentences look alike to a language model</h1>
+        <p class="nb-dekline">
+          Introduced in 2020 to go past word-counting scores, it rates a
+          candidate by how closely a pretrained encoder sees it resembling the
+          reference, which rewards fluent wrong answers and carries the
+          encoder's blind spots.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-09-13</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          BERTScore turns up constantly in AI papers and leaderboards, reported
+          next to BLEU and ROUGE and often described as the score that finally
+          grades meaning rather than word overlap. This lesson follows exactly
+          what it computes, from the tokens it turns into vectors, to the
+          matches it draws between them, to the precision, recall, and F1 it
+          averages out. It then shows where that computation quietly breaks. By
+          the end you will know why two BERTScore numbers can disagree without
+          either being wrong, and why a high one does not promise a correct
+          sentence.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/bleu.html">BLEU</a>: the older score
+            that grades a translation by counting matching word sequences.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/rouge.html">ROUGE</a>: the same
+            word-overlap idea applied to summaries, and where it goes blind.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/word-embeddings.html">Word embeddings</a>:
+            how a word becomes a vector, and how a transformer redraws that
+            vector per sentence.
+          </dd>
+          <dt>04</dt>
+          <dd>
+            <a href="../the-evidence/bert.html">BERT</a>: the encoder whose
+            representations BERTScore reads similarity out of.
+          </dd>
+          <dt>05</dt>
+          <dd>
+            <a href="../the-instruments/f1-score.html">The F1 score</a>: the
+            harmonic mean of precision and recall that BERTScore reports.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Meaning as a language model sees it</h2>
+        <p>
+          <a href="../the-instruments/bleu.html">BLEU</a> and
+          <a href="../the-instruments/rouge.html">ROUGE</a>, the two scores most
+          machine-translation and summarization papers report, both work by
+          counting how many words a candidate sentence shares with a human
+          reference. BERTScore, introduced in 2020 by Tianyi Zhang, Varsha
+          Kishore, Felix Wu, Kilian Weinberger, and Yoav Artzi, grades the same
+          candidate without counting a single shared word.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          It now ships as a default metric in Hugging Face's evaluate library,
+          where researchers report it beside BLEU and ROUGE.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Instead of matching words, it matches each token to its closest
+          counterpart by meaning. A pretrained encoder, a language model like
+          <a href="../the-evidence/bert.html">BERT</a>, reads the whole sentence
+          and turns every token into a vector, and BERTScore pairs each
+          candidate token with the reference token whose vector is most
+          similar.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="how-it-computes" id="how-it-computes">
+        <h2>Every token finds its closest partner</h2>
+        <p>
+          The encoder redraws a word's vector for every sentence it appears in,
+          so "bank" beside a river and "bank" that holds money come out as
+          different vectors. That per-sentence vector is a
+          <a href="../the-mechanics/word-embeddings.html">contextual
+          embedding</a>.<sup class="nb-cite"><a href="#s1">1</a></sup> The
+          default English encoder is roberta-large, and the library supports
+          about 130 models in all.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Two vectors are compared by cosine similarity: one number, between
+          &minus;1 and 1, for how closely they point the same way. For
+          these length-normalized token vectors it is simply their dot
+          product.<sup class="nb-cite"><a href="#s1">1</a></sup> BERTScore works
+          out that similarity for every candidate-reference token pair, then
+          matches greedily, so each token keeps only its single most similar
+          partner in the other sentence.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>Recall averages those best matches over the reference:</p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            R_{\text{BERT}} = \htmlClass{nb-mc3}{\frac{1}{|x|} \sum_{i}} \;
+            \htmlClass{nb-mc2}{\max_{j}} \; \htmlClass{nb-mc1}{x_i^{\top}
+            \hat{x}_j}
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">x_i^{\top} \hat{x}_j</span
+              ><span
+                >The cosine similarity of one reference token and one candidate
+                token, their dot product once the vectors are normalized.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">\max_{j}</span
+              ><span
+                >The greedy match: keep only the candidate token this reference
+                token resembles most.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">\frac{1}{|x|} \sum_{i}</span
+              ><span
+                >Average that best match over every token in the
+                reference.</span
+              >
+            </li>
+          </ul>
+          <figcaption>
+            Recall in BERTScore. Precision reverses the roles, and the reported
+            F1 is their harmonic mean.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Precision runs the same average from the candidate's side, matching
+          each candidate token to its best reference token, and the score people
+          report is their harmonic mean, the same
+          <a href="../the-instruments/f1-score.html">F1</a> that combines
+          precision and recall elsewhere.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          An optional step, idf weighting, gives rarer reference words more
+          weight, but the authors found it helped only sometimes and reported
+          their main results without it,<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          and the reference implementation warns it becomes unreliable when the
+          reference set is small.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="not-one-number" id="not-one-number">
+        <h2>Two BERTScores are rarely the same measurement</h2>
+        <p>
+          Run with roberta-large, raw BERTScores sit in a narrow band, often
+          between 0.85 and 0.95, because even unrelated sentences share many
+          high-similarity token matches.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          To spread them into a readable range, the authors offer baseline
+          rescaling: subtract a baseline, the average score over about a million
+          random and unrelated sentence pairs, then divide by one minus that
+          baseline.<sup class="nb-cite"><a href="#s1">1</a></sup> On one example
+          pair from the documentation, a raw F1 of 0.959 becomes 0.759. Across
+          the WMT18 German-to-English set, the average F1 falls from 0.931 to
+          0.576.<sup class="nb-cite"><a href="#s3">3</a></sup
+          ><sup class="nb-cite"><a href="#s4">4</a></sup> The authors are
+          explicit that this changes only readability: it "does not affect the
+          ranking ability and human correlation of BERTScore."<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          A rescaled number is comparable only to another one computed the same
+          way. Change the encoder, the layer it reads from, the library version,
+          or even the tokenizer, and the number moves.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Two BERTScores are the same measurement only when all of that matches.
+          The reference implementation prints a hash of the configuration, such
+          as
+          <code>roberta-large_L17_no-idf_version=0.3.0(hug_trans=2.3.0)</code>,
+          and the authors ask everyone to publish it in their papers, a practice
+          borrowed from sacreBLEU.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="what-it-misses" id="what-it-misses">
+        <h2>What a high score does not promise</h2>
+        <p>
+          Because the score reads similarity out of a pretrained encoder, a
+          wrong sentence that still resembles the reference can score high.
+          Michael Hanna and Ondřej Bojar tested this on translation: BERTScore
+          reliably catches obvious content-word mistakes but misses smaller
+          meaning-changing edits when the candidate still looks like the
+          reference.<sup class="nb-cite"><a href="#s5">5</a></sup> Take the
+          reference "You're crazy, aren't you?", a correct alternate "You're
+          crazy, right?", and a wrong candidate "You're crazy, are not you?" The
+          content words match almost perfectly, so the broken tag question
+          barely moves the score. Correct translations in their data averaged an
+          F1 of 0.815, and correct translations of this function-word kind only
+          reached 0.712, so there was little room left to mark a wrong one down.
+          On the direct test of whether the correct sentence beats the wrong
+          one, accuracy on function words was 42.9%, close to a coin flip, even
+          though it ran to 75.5% overall.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          This sits against the paper's own robustness result, and both hold. On
+          PAWS, an adversarial test that reorders a sentence's content words
+          to change its meaning, BERTScore dropped only slightly while most metrics
+          fell almost to chance.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          PAWS reorders content words, which the matching catches. A swapped
+          function word barely moves the vectors the encoder reads. Standing up
+          to the first kind of change buys no protection from the second.
+        </p>
+        <p>
+          The blind spots are the encoder's, and they include its biases.
+          Tianxiang Sun and colleagues scored pairs of sentences that were
+          identical except for one demographic word.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          For the reference "The carpenter made a desk for the clerk because the
+          clerk needed a desk," the candidate with "he" scored 70.14 and the one
+          with "she" scored 38.87, a gap of 31 points on a 0-to-100 scale from a
+          single pronoun. Across their gender set BERTScore's average gap was
+          about 7, where BLEU and ROUGE stayed near or below 3.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <p>
+          None of this makes BERTScore the strongest score available, either.
+          The paper reported better correlation with human judgment than BLEU
+          across translation and captioning, though it spread that evidence over
+          dozens of tables rather than one figure.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          In a large 2021 comparison of translation metrics, BERTScore ranked
+          system pairs correctly 92.2% of the time. That put it above BLEU's
+          88.2%, but below the trained metrics BLEURT (93.8%) and COMET (96.5%).
+          The authors of that study recommended COMET instead.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          On summarization it can fall further: when experts rated 16 systems
+          for factual consistency, BERTScore's reported F1 correlated 0.04 with
+          their judgments, below ROUGE-1's 0.53.<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          That single F1 hid a split, its recall half tracking consistency at
+          0.66 while its precision half ran slightly negative.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          BERTScore grades how much a candidate looks like the reference to a
+          pretrained encoder. That is more than counting shared words, and on
+          many translation tasks it does track human judgment better than BLEU.
+          But the resemblance it measures is the encoder's own. A wrong sentence
+          that still reads like the reference can score high, and a single
+          swapped pronoun can move the number by dozens of points. Two scores
+          are comparable only when the model, version, and settings match. When
+          you meet a BERTScore, read it next to the hash that produced it, and
+          next to at least one metric that fails in a different way.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://github.com/Tiiiger/bert_score">The bert_score
+            reference implementation</a>: the practical tips, the supported
+            models, and the hash the authors ask you to report.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://aclanthology.org/2021.wmt-1.57/">Kocmi et al., "To
+            Ship or Not to Ship"</a>: the wider bake-off where COMET and BLEURT
+            beat BERTScore at ranking translation systems.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1904.09675"
+              >arXiv · Zhang, Kishore, Wu, Weinberger &amp; Artzi, "BERTScore:
+              Evaluating Text Generation with BERT" (ICLR 2020)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/spaces/evaluate-metric/bertscore"
+              >Hugging Face · BERTScore metric card, the evaluate library</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/Tiiiger/bert_score"
+              >GitHub · Tiiiger/bert_score, the authors' reference
+              implementation and documentation</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/Tiiiger/bert_score/blob/master/journal/rescale_baseline.md"
+              >GitHub · bert_score journal, "Rescaling BERTScore with
+              Baselines"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2021.wmt-1.59/"
+              >ACL Anthology · Hanna &amp; Bojar, "A Fine-Grained Analysis of
+              BERTScore" (WMT 2021)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2022.emnlp-main.245/"
+              >ACL Anthology · Sun, He, Qiu &amp; Huang, "BERTScore is Unfair:
+              On Social Bias in Language Model-Based Metrics" (EMNLP 2022)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2021.wmt-1.57/"
+              >ACL Anthology · Kocmi et al., "To Ship or Not to Ship: An
+              Extensive Evaluation of Automatic Metrics for Machine Translation"
+              (WMT 2021)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2021.tacl-1.24/"
+              >ACL Anthology · Fabbri et al., "SummEval: Re-evaluating
+              Summarization Evaluation" (TACL 2021)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
