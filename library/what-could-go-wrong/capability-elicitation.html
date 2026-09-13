@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>How hard the testers push decides what a safety test finds · What Could Go Wrong</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "what-could-go-wrong",
+        "slug": "capability-elicitation",
+        "template": "lesson",
+        "title": "How hard the testers push decides what a safety test finds",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-13",
+        "tags": ["ai-safety", "capability-evaluations", "elicitation"],
+        "sources": 9,
+        "words": 2156,
+        "reading_minutes": 9,
+        "dek": "The same model scored 17.9% and then 56.9% on the same test after nothing but its prompt changed, so no single safety score is the ceiling on what a system can do.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">What Could Go Wrong</div>
+        <h1 class="nb-title">How hard the testers push decides what a safety test finds</h1>
+        <p class="nb-dekline">
+          The same model scored 17.9% and then 56.9% on the same test after nothing but its prompt changed, so no single safety score is the ceiling on what a system can do.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-13</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every few months a lab publishes a safety report saying its newest
+          model scored below the danger line on tests for things like writing
+          malware or helping plan an attack. You are meant to read that as
+          reassurance, and often it is. This lesson is about what such a score
+          can and cannot tell you. A test does not measure a model on its own.
+          It measures the model together with the effort spent trying to make it
+          perform, and that effort has a floor no one can prove is a ceiling. By
+          the end you will know why a failed dangerous-capability test is a
+          lower bound on what a model can do. You will also see how far that
+          effort has moved the number in practice, and where the people who
+          worry too much and the people who worry too little both run ahead of
+          the evidence.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../what-could-go-wrong/sandbagging.html">A model that hides what it can do</a>:
+            deliberate underperformance is the model's own choice, where this
+            lesson is about the testers' effort.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../what-could-go-wrong/open-weights-release.html">Removing safety training after release</a>:
+            fine-tuning off a model's refusals is one of the levers that changes
+            what a test would find.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The number is the model plus the effort</h2>
+        <p>
+          When a lab tests whether a model can do something dangerous, it runs
+          the model against a set of tasks and reports how many it completes.
+          The number that comes back is easy to read as a fact about the model:
+          this is what it can do. It is not. A capability score measures the
+          model together with the effort spent drawing the capability out. That
+          second part has a name, elicitation, and it covers the prompting,
+          tools, scaffolding, extra attempts, and fine-tuning a tester applies
+          to make the model perform at its best.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Change the effort and the number changes, with the model held fixed.
+        </p>
+        <p>
+          The evaluation organization METR, which builds
+          dangerous-capability tests for frontier labs, describes the goal of
+          its own process as a score that represents "the full capabilities of
+          the model that are likely to be accessible with plausible amounts of
+          post-training enhancement."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The target is not what the model does out of the box. It is the most a
+          determined person could get it to do.
+        </p>
+        <p>
+          This is a different worry from a model that hides what it can do. A
+          model can deliberately tank a test it recognizes, which this course
+          covers under <a href="../what-could-go-wrong/sandbagging.html">sandbagging</a>.
+          Even a fully cooperative model, trying its hardest, scores
+          higher when the tester writes a better prompt, hands it a code
+          interpreter, or lets it try a hundred times.
+          Sandbagging is something the model does. The elicitation gap is
+          something the testers leave on the table.
+        </p>
+      </section>
+
+      <section data-nb-section="failed-test-is-a-floor" id="failed-test-is-a-floor">
+        <h2>Why a failed test is only a floor</h2>
+        <p>
+          If a score rises with effort, then any single score is a reading taken
+          at one level of effort. A model that fails a
+          dangerous-capability test might be genuinely unable to do the
+          dangerous thing. Or the testers might not have found the prompt, the
+          tool, or the fine-tune that would have gotten it there. From the score
+          alone, the two are hard to tell apart.
+        </p>
+        <p>
+          So the careful evaluators refuse to read the number as a ceiling. The
+          UK's AI Security Institute, a government body that tests frontier
+          models, warns that without strong elicitation "we may significantly
+          underestimate what models can achieve and what skilled or malicious
+          users might be able to accomplish."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          OpenAI's Preparedness Framework, the policy governing when it will hold
+          a model back, states it plainly: the company regards "any one-time
+          capability elicitation in a frontier model as a lower bound, rather
+          than a ceiling."<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          A test result, on this reading, is a floor. It tells you the model can
+          do at least this much. It does not tell you the model can do at most
+          this much, because the next scaffold has not been tried. Serious people
+          hold this view because they have watched the floor move, again and
+          again, on models they did not change.
+        </p>
+      </section>
+
+      <section data-nb-section="same-model-pushed-harder" id="same-model-pushed-harder">
+        <h2>The same model, pushed harder</h2>
+        <p>
+          In 2022, researchers testing a 540-billion-parameter model called
+          PaLM on grade-school math problems found it solved 17.9% of them with
+          an ordinary prompt. Asking the model to write out its reasoning step
+          by step first, a technique called chain-of-thought prompting, raised
+          that to 56.9% on the same problems and the same model.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Nothing about the model had changed. The way it was asked had.
+        </p>
+        <p>
+          Letting a model try more than once has the same effect. On a benchmark
+          of real software bugs, a coding model solved 15.9% of them when it got
+          one attempt each. Given 250 attempts, and credit whenever any one of
+          them produced a working fix, it solved 56%, past the day's best
+          single-attempt system at 43%.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          The sharpest case comes from security testing. Meta's CyberSecEval 2
+          benchmark measured how often models could exploit a common memory bug
+          called a buffer overflow, and GPT-4 Turbo passed at a rate of 0.05, on
+          a scale where 1.00 is every case. The benchmark's authors concluded
+          that "further work is needed for LLMs to become proficient at exploit
+          generation."<sup class="nb-cite"><a href="#s6">6</a></sup> Google's
+          Project Zero then re-ran the same tests on the same model, but wrapped
+          it in a purpose-built harness: a code sandbox, a debugger, and a
+          structured loop that let the model reason and retry. The pass rate
+          went to 1.00.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            The same model scores far higher when the effort to draw it out
+            changes. In each row nothing about the model itself was
+            altered.<sup class="nb-cite"><a href="#s4">4</a></sup><sup class="nb-cite"><a href="#s5">5</a></sup><sup class="nb-cite"><a href="#s7">7</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Effort applied</th>
+              <th class="txt">Model and test</th>
+              <th>Before</th>
+              <th>After</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Prompting</span></td>
+              <td class="txt">PaLM 540B, grade-school math (GSM8K)</td>
+              <td>17.9%</td>
+              <td>56.9%</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Repeated sampling</span></td>
+              <td class="txt">coding model, real-bug benchmark (250 tries)</td>
+              <td>15.9%</td>
+              <td>56%</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Agent scaffold</span></td>
+              <td class="txt">GPT-4 Turbo, buffer-overflow test</td>
+              <td>0.05</td>
+              <td>1.00</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Fine-tuning moves the number too, in the direction safety cares about
+          most. A model's trained-in refusals can be removed for a small
+          fraction of what it cost to install them, the subject of this course's
+          lesson on
+          <a href="../what-could-go-wrong/open-weights-release.html">open-weights release</a>.
+          It is one more lever: apply it, and the same model attempts what it
+          used to decline.
+        </p>
+      </section>
+
+      <section data-nb-section="what-elicitation-cannot-do" id="what-elicitation-cannot-do">
+        <h2>What better elicitation cannot do</h2>
+        <p>
+          None of this means the right harness can conjure a capability from
+          nothing. Elicitation reaches what training already put within reach.
+          When OpenAI's red-teamers tried to make GPT-4 "engineer new
+          biochemical substances," they could not.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Effort finds what is there. It cannot install what is not.
+        </p>
+        <p>
+          There is also a ceiling on how far one lever goes. Repeated sampling
+          looks unstoppable until you ask who picks the winning answer. On math
+          benchmarks with no automatic checker, a model given 10,000 tries
+          produces a correct answer somewhere in the pile more than 95% of the
+          time, but the methods for choosing which answer to trust stop
+          improving after about 100.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Without something that can recognize a right answer, the extra
+          attempts pile up unused. Many dangerous tasks are like that: judging
+          whether a plan for a weapon would work is itself the hard part.
+        </p>
+        <p>
+          The clearest picture of a test read as a floor is OpenAI's own account
+          of GPT-4. Before release, the company gave the Alignment Research
+          Center early access to check whether the model could copy itself onto
+          new servers, get money, and avoid being shut down. The group could not
+          fine-tune the model and did not have the final version. The System
+          Card reports the result and its own limit in the same breath.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The lab's own caveat</span>
+          <blockquote>
+            "Preliminary assessments of GPT-4's abilities, conducted with no
+            task-specific finetuning, found it ineffective at autonomously
+            replicating, acquiring resources, and avoiding being shut down 'in
+            the wild.' &hellip; These experiments were conducted on a model
+            without any additional task-specific fine-tuning, and fine-tuning
+            for task-specific behavior could lead to a difference in
+            performance."<sup class="nb-cite"><a href="#s8" data-nb-locator="§2.9, pp. 15-16">8</a></sup>
+            <span class="nb-note-who">OpenAI, GPT-4 System Card</span>
+          </blockquote>
+        </div>
+        <p>
+          The test did not hide a dangerous capability. It
+          found, correctly on the evidence it had, that the model could not
+          replicate on its own. What the card declines to say is that the matter
+          is settled, because the version tested was not fine-tuned for the
+          task, and fine-tuning was the one thing the group could not try. The
+          number was a floor the company would not mistake for a ceiling.
+        </p>
+        <p>
+          Every number here shows
+          elicitation raising a capability the model turned out to have. None
+          shows a genuinely dangerous capability that a passing test hid and a
+          later push drew out. That second thing is the worry, and it stays an
+          inference. As one review of evaluation methods puts it, "an evaluation
+          not finding a capability doesn't mean it isn't there."<sup class="nb-cite"><a href="#s9">9</a></sup>
+          The trouble is that absence and unelicited presence look identical from
+          the score. The same review notes there are "no principled methods" to
+          tell whether a capability has been fully drawn out.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-floor-labs-stand-on" id="the-floor-labs-stand-on">
+        <h2>The floor labs stand on now</h2>
+        <p>
+          Today the evaluators build for this. METR publishes elicitation
+          guidelines: fine-tune the model for tool use, add chain-of-thought,
+          give it a command line and a browser, and report the best-performing
+          setup.<sup class="nb-cite"><a href="#s1">1</a></sup> AISI estimates
+          that skipping this work can cost a factor it likens to five-to-twenty
+          times the training compute in measured performance, though it offers
+          that as a rough characterization rather than a measured
+          constant.<sup class="nb-cite"><a href="#s2">2</a></sup> OpenAI says it
+          aims to test at "the high end of expected elicitation" by someone
+          trying to misuse the model, including fine-tuning when the weights are
+          to be released.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          Two ways of reading a passing score still run ahead of what any of this
+          supports. The first is relief: the model was tested with strong
+          elicitation and still could not do the dangerous thing, so it is safe.
+          The steelman is real. A floor pushed high with real effort is
+          meaningful evidence, and worth far more than a floor set by a lazy
+          test. But it is still a floor. The cyber score that sat at 0.05 was, to
+          its own careful authors, a reason to say more work was needed, and a
+          better scaffold then found 1.00 in the same model. No method exists to
+          rule out the next scaffold, so relief has to stay provisional.
+        </p>
+        <p>
+          The second reading is alarm: the gaps are so large that dangerous
+          capabilities must already be hiding behind today's passing tests. This
+          steelman is also real. Prompting tripled a math score, repeated
+          sampling more than tripled a coding score, and a scaffold took a cyber
+          score from near zero to perfect. Gaps that size are ordinary. But
+          ordinary gaps in measured skills are not proof of a hidden dangerous
+          one. Elicitation reaches what training put there, and no one has yet
+          shown a catastrophic capability that a passing evaluation concealed.
+          "We cannot rule it out" is what the evidence carries. "It is there" is
+          more than the evidence carries.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A passing safety score is a floor. It is not a proof of safety. It
+          tells you a model can do at least this much under the effort someone
+          spent. It never tells you the model can do at most this much, because
+          the next prompt, tool, scaffold, or fine-tune has not been tried. This
+          is why the careful evaluators call their own results lower bounds. The
+          finding cuts against comfort and against alarm at once. A high floor
+          reached with real effort is genuine evidence, and it still cannot rule
+          out a harder push. The large gaps that effort has revealed are real,
+          and they are not yet evidence that a dangerous capability sits hidden
+          behind a test that passed. A floor found by pushing hard is worth a
+          great deal. A floor found by a gentle test is worth much less. Neither
+          one is a ceiling.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://metr.org/blog/2024-03-15-guidelines-for-capability-elicitation/">METR, Guidelines for capability elicitation</a>:
+            how one evaluation organization decides how hard to push a model
+            before it reports a score.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2412.08653">Barnett and Thiergart, What AI evaluations can and cannot do</a>:
+            a careful account of why evaluations give lower bounds and never
+            upper ones.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://metr.org/blog/2024-03-15-guidelines-for-capability-elicitation/"
+              >METR · Guidelines for capability elicitation</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.aisi.gov.uk/blog/our-approach-to-ai-capability-elicitation"
+              >AI Security Institute · Our approach to AI capability elicitation</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/pdf/18a02b5d-6b67-4cec-ab64-68cdfbddebcd/preparedness-framework-v2.pdf"
+              >OpenAI · Preparedness Framework (Version 2)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2201.11903"
+              >Wei et al. · Chain-of-Thought Prompting Elicits Reasoning in Large Language Models</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2407.21787"
+              >Brown et al. · Large Language Monkeys: Scaling Inference Compute with Repeated Sampling</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.13161"
+              >Bhatt et al. (Meta) · CyberSecEval 2</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://projectzero.google/2024/06/project-naptime.html"
+              >Google Project Zero · Project Naptime</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/papers/gpt-4-system-card.pdf"
+              >OpenAI · GPT-4 System Card</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2412.08653"
+              >Barnett and Thiergart · What AI evaluations for preventing catastrophic risks can and cannot do</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
