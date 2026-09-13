@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Whisper answers silence with a sentence no one spoke · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "speech-to-text-hallucination",
+        "template": "lesson",
+        "title": "Whisper answers silence with a sentence no one spoke",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-13",
+        "tags": ["speech-recognition", "hallucination", "whisper", "transcription", "language-model"],
+        "sources": 8,
+        "words": 2069,
+        "reading_minutes": 9,
+        "dek": "The stage that writes the words is a language model, and a language model with almost nothing to go on still produces its most probable sentence instead of a blank.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">Whisper answers silence with a sentence no one spoke</h1>
+        <p class="nb-dekline">
+          The stage that writes the words is a language model, and a language
+          model with almost nothing to go on still produces its most probable
+          sentence instead of a blank.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-13</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A doctor's visit, a meeting, a voice memo: the same kind of system now
+          turns all of them into text, and it will sometimes write down a
+          sentence nobody said. Not a garbled version of real words, but a
+          fluent, grammatical sentence with no source in the audio. One such
+          tool, built on OpenAI's Whisper, is used by more than 30,000
+          clinicians. By default it deletes the recording once the note exists,
+          so the invented line has nothing left to check it against. By the end
+          of this lesson you will be able to say why a transcription tool invents
+          text at all. You will see why it happens over silence and background
+          noise in particular, and why the answer comes down to one design choice
+          the tool shares with a chatbot.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/hallucination.html">Why a chatbot states false facts with confidence</a>:
+            the same fallback in a text model, without the audio.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/whisper.html">What Whisper is</a>: the model
+            behind many of today's transcription tools, and how OpenAI built it.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A sentence the doctor never heard</h2>
+        <p>
+          In a growing number of clinics, a piece of software listens to the
+          visit and drafts the note. One of the most widely used of these tools
+          comes from a company called Nabla and is built on OpenAI's Whisper.
+          The Associated Press reported in 2024 that more than 30,000 clinicians
+          and 40 health systems, including Children's Hospital Los Angeles, had
+          adopted it.<sup class="nb-cite"><a href="#s1">1</a></sup> To protect
+          patient privacy, the tool deletes the original recording by default
+          once the transcript exists.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Nabla says clinicians can opt in to keeping the audio, but deletion is
+          the default.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          That default matters because of what these systems sometimes do. A
+          University of Michigan researcher who examined the output found
+          invented text in eight of ten transcriptions. Another developer found
+          it in nearly all of 26,000.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The inventions are not smudged versions of real speech. In one case
+          Whisper took a plain spoken sentence and added a clause about "two
+          other girls and one lady, um, which were Black," people who were never
+          mentioned. In another it prescribed a drug that does not exist,
+          "hyperactivated antibiotics."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          When the recording is already gone, nothing is left to show the line
+          was never said.
+        </p>
+      </section>
+
+      <section data-nb-section="invention-vs-mishearing" id="invention-vs-mishearing">
+        <h2>How an invention differs from a mishearing</h2>
+        <p>
+          This is not the mistake people expect from a transcription tool. The
+          expected mistake is a mishearing: the audio says "recognize speech"
+          and the transcript reads "wreck a nice beach." The words come out
+          wrong, but they stay close to the sound. The invented sentence is a
+          different kind of error. Researchers who study it define a
+          transcription hallucination as output that is fluent and grammatical
+          yet unrelated in meaning to what was said. They hold it apart from a
+          mishearing, which stays near the real words in both sound and
+          sense.<sup class="nb-cite"><a href="#s3">3</a></sup> A mishearing is
+          the system getting the sound wrong. A hallucination is the system
+          writing text that no sound produced.
+        </p>
+        <p>
+          The distinction has a sharp practical edge:
+          <a href="../the-instruments/word-error-rate.html">Word Error Rate</a>,
+          the standard accuracy score for transcription, cannot see it. It counts
+          the fraction of words a transcript gets wrong against a reference. A
+          model that hallucinates and one that does not can post the same
+          overall error rate, which is why the behavior went unmeasured for so
+          long.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          How often does it happen? There is no single answer.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Three attempts to measure how often Whisper hallucinates. Each used
+            different audio, a different version of the tool, and a different
+            unit of count, so no single rate carries across
+            them.<sup class="nb-cite"><a href="#s4">4</a></sup><sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Reported figure</th>
+              <th class="txt">What it measured</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1.4%</td>
+              <td class="txt">
+                of 13,140 short segments from interviews recorded for aphasia
+                research, run through the default Whisper API in 2023.
+              </td>
+            </tr>
+            <tr>
+              <td>8 of 10</td>
+              <td class="txt">
+                transcriptions in one researcher's sample of everyday
+                recordings; another developer found invented text in nearly all
+                of 26,000 transcripts.
+              </td>
+            </tr>
+            <tr>
+              <td class="txt">No significant issue</td>
+              <td class="txt">
+                across 9 million clinical visits, on Nabla's own version of
+                Whisper, which it says it tuned to suppress the behavior.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          These figures do not contradict each other. The 1.4% is the average
+          across interviews recorded for aphasia research, audio chosen
+          precisely because aphasia produces the long pauses that were expected
+          to provoke the behavior.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The developer counts come from everyday recordings full of the pauses
+          and background sound that set it off.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Nabla runs a version it says it tuned to suppress the behavior, over
+          visits it does not describe in detail.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The rate depends on what the system is fed.
+        </p>
+      </section>
+
+      <section data-nb-section="two-machines-inside-a-transcriber" id="two-machines-inside-a-transcriber">
+        <h2>The two machines inside a transcriber</h2>
+        <p>
+          Why nothing in the audio can still become words comes down to how
+          the tool is built. Whisper is an encoder-decoder model, and the two
+          halves do different jobs.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The encoder is the listener. It takes the sound, converted into a
+          picture of which frequencies are present at each instant, and turns it
+          into a compact set of numbers that captures what is in the
+          audio.<sup class="nb-cite"><a href="#s5">5</a></sup> The decoder is the
+          writer. It reads what the encoder produced and emits the transcript one
+          word-piece at a time, each choice shaped by the audio and by the words
+          it has already written.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          OpenAI describes
+          the decoder in its own paper as "an audio-conditional language
+          model."<sup class="nb-cite"><a href="#s5">5</a></sup> A language model
+          is a system trained to predict likely text: give it some words and it
+          produces the word most likely to come next. That is the same
+          <a href="../the-mechanics/autoregressive-generation.html">next-token prediction</a>
+          that drives a chatbot. Whisper's decoder is one of those, with the
+          audio wired in as an extra input. It was trained on 680,000 hours of
+          recordings paired with their transcripts, and it learned the shape of
+          well-formed language along the way.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Its job is not to report sounds. Its job is to produce probable text,
+          conditioned on the sound when there is sound to condition on.
+        </p>
+      </section>
+
+      <section data-nb-section="why-silence-becomes-a-sentence" id="why-silence-becomes-a-sentence">
+        <h2>Why silence comes out as a sentence</h2>
+        <p>
+          When the audio carries clear speech, the
+          decoder has a strong signal from the encoder, and it writes what it
+          hears. When the audio carries silence, a pause, or background noise,
+          the decoder has little or nothing from the encoder to go on. It does
+          not stop. A language model that has run out of input still produces its
+          most probable continuation, and for a system trained on ordinary
+          transcripts, the most probable continuation is an ordinary, grammatical
+          sentence.<sup class="nb-cite"><a href="#s5">5</a></sup> Asked to
+          transcribe silence, the decoder does not go quiet. It writes the most
+          probable words, and the most probable words are a sentence.
+        </p>
+        <p>
+          It helps to compare an older kind of speech recognizer. Systems from
+          before this design worked closer to sound in, word out: they matched
+          stretches of audio to the words those stretches most resembled. They
+          had no way to spin a fluent sentence out of nothing, because they held
+          no model of fluent language to fall back on. Give one silence and it
+          gave silence back. Whisper's decoder cannot answer with silence in
+          that way, because answering with probable text is the only thing it
+          does.
+        </p>
+        <p>
+          Which probable text? Often something the model saw many times in
+          training over exactly this kind of low-information audio. Whisper
+          learned in part from a large body of video subtitles, and subtitles
+          routinely run credits and boilerplate over the silent end of a clip. So
+          the model came to tie silence to those phrases and reproduces them when
+          it meets silence again.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">What Whisper writes over silence</span>
+          <blockquote>
+            "Sous-titres réalisés par la communauté d'Amara.org." "Thanks for
+            watching!"<sup class="nb-cite"><a href="#s6">6</a></sup>
+            <span class="nb-note-who">Whisper output over non-speech audio, reported by users</span>
+          </blockquote>
+        </div>
+        <p>
+          The trigger is low-information audio in general, not digital silence in
+          particular. A separate study produced the same fluent, unrelated
+          invention on purpose by injecting one second of random noise at the
+          start of an utterance; the same noise spread across the whole utterance
+          instead produced ordinary mishearings.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Nor is the invention the ordinary randomness that sometimes makes a
+          model creative: Koenecke's team ran Whisper at its least random setting,
+          and it still hallucinated.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          That rules out chance as the cause. The invention is the model doing
+          exactly what it was built to do, on an input that gives it nothing to
+          anchor to.
+        </p>
+      </section>
+
+      <section data-nb-section="the-tendency-no-decoding-rule-removes" id="the-tendency-no-decoding-rule-removes">
+        <h2>The tendency no decoding rule removes</h2>
+        <p>
+          Two parts of this are settled engineering. The decoder is a generative
+          language model, by OpenAI's own description, and a language model given
+          empty input still produces output.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          OpenAI's model card says as much in plain terms. The predictions "may
+          include texts that are not actually spoken in the audio input," a
+          consequence of the model combining language prediction with
+          transcription. The card recommends against using Whisper in high-risk
+          settings such as decision-making.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          What is not settled is how far the tendency can be reduced. The fixes
+          that exist work around the decoder rather than change it. Whisper can
+          estimate when a stretch is probably non-speech and decline to
+          transcribe it.<sup class="nb-cite"><a href="#s5">5</a></sup> OpenAI's
+          own repository later added an option that skips a silent stretch and
+          re-runs it whenever a hallucination is
+          suspected.<sup class="nb-cite"><a href="#s8">8</a></sup> These help. After OpenAI updated Whisper in late 2023, Koenecke's team
+          re-ran the 187 segments that had reliably hallucinated and found only 12
+          still did.<sup class="nb-cite"><a href="#s4">4</a></sup> Yet the same
+          team reports that Whisper still hallucinates, and the silence-skipping
+          option was added precisely because the problem did not go
+          away.<sup class="nb-cite"><a href="#s8">8</a></sup> The fixes lower how
+          often it happens without touching why it happens, because the reason is
+          the decoder's design.
+        </p>
+        <p>
+          Two questions stay open even for the people who build these systems.
+          One is exactly which inputs set off an invention rather than a correct
+          blank. The other is how much of the tendency better training or smarter
+          decoding can ever remove. On
+          the same 187 segments, five competing services from Google, Amazon,
+          Microsoft and others produced no comparable
+          hallucinations.<sup class="nb-cite"><a href="#s4">4</a></sup> As of 2023
+          and 2024, then, the behavior was particular to Whisper and not forced by
+          the encoder-decoder design itself. That is a single comparison at one
+          moment, and a system built the same way could still show it. What is not
+          in doubt is the mechanism: when the stage that writes the words is a
+          language model, an input with nothing to say still comes out as words.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A transcription tool like Whisper is two systems stacked together: a
+          listener that turns sound into numbers, and a writer that turns those
+          numbers into text. The writer is a language model, the same kind of
+          system that finishes a chatbot's sentence, and its job is to produce
+          probable text. Give it clear speech and it writes what it hears. Give
+          it silence, a pause, or background noise and it has almost nothing to
+          hear. It still writes, because writing probable text is all it does,
+          and the most probable text is a fluent sentence. That is why the
+          invented line is confident and grammatical, and why it clusters on
+          quiet and noisy audio. The fixes that exist lower how often it happens
+          without reaching why. So when a captioning tool or a medical scribe
+          hands you a clean sentence, the sentence being clean is no evidence
+          that anyone said it. The safeguard is the one Nabla's default takes
+          away: keep the recording, so a person can check the words against the
+          sound.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://facctconference.org/static/papers24/facct24-111.pdf">Careless Whisper: Speech-to-Text Hallucination Harms</a>:
+            the peer-reviewed study behind the rates, with its catalog of harmful
+            inventions.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2212.04356">Robust Speech Recognition via Large-Scale Weak Supervision</a>:
+            OpenAI's own paper on Whisper, including the failure modes it lists.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.ksl.com/article/51163476/ai-powered-transcription-tool-used-in-hospitals-invents-things-no-one-said-researchers-say"
+              >Associated Press · AI-powered transcription tool used in hospitals invents things no one said, researchers say</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nabla.com/blog/how-nabla-uses-whisper/"
+              >Nabla · How Nabla uses Whisper</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2401.01572"
+              >Frieske &amp; Shi · Hallucinations in Neural Automatic Speech Recognition: Identifying Errors and Hallucinatory Models</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://facctconference.org/static/papers24/facct24-111.pdf"
+              >Koenecke et al. (FAccT 2024) · Careless Whisper: Speech-to-Text Hallucination Harms</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2212.04356"
+              >Radford et al. (OpenAI) · Robust Speech Recognition via Large-Scale Weak Supervision</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/openai/whisper/discussions/928"
+              >openai/whisper · Discussion #928, "Dataset bias (Translated by Amara.org Community)"</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/openai/whisper/blob/main/model-card.md"
+              >OpenAI · Whisper model card</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/openai/whisper/pull/1838"
+              >openai/whisper · Skip silence around hallucinations (PR #1838)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
