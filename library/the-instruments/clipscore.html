@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CLIPScore scores below chance when a caption's words are swapped · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "clipscore",
+        "template": "lesson",
+        "title": "CLIPScore scores below chance when a caption's words are swapped",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-14",
+        "tags": ["clipscore", "text-to-image-evaluation", "prompt-alignment"],
+        "sources": 8,
+        "words": 2077,
+        "reading_minutes": 9,
+        "dek": "Text-to-image papers trust it to check prompt alignment, but the human-correlation numbers behind that trust were measured on image captioning, a different task where the score is far stronger.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">CLIPScore scores below chance when a caption's words are swapped</h1>
+        <p class="nb-dekline">
+          Text-to-image papers trust it to check prompt alignment, but the
+          human-correlation numbers behind that trust were measured on image
+          captioning, a different task where the score is far stronger.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-14</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Nearly every paper that builds a text-to-image model reports a number
+          for how well its pictures follow the prompt, and for years the number
+          has usually been CLIPScore. It is fast, it needs no human-written
+          answer to compare against, and it decides real things: which of two
+          systems a leaderboard ranks higher, and which sample a training run
+          keeps. This lesson follows what that number is actually made of, from
+          the two vectors it compares to the single similarity it scales into a
+          grade. Then it shows where the grade misleads: on the swaps it is
+          meant to catch, on the task it was never checked on, and on what
+          happens when a model is trained to raise it. By the end you will know
+          why a high CLIPScore does not promise a picture that matches its
+          prompt.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/clip.html">CLIP</a>: the model whose
+            image-text judgment CLIPScore reads a number out of.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/attribute-binding.html">Attribute
+            binding</a>: why an image generator puts a prompt's colors on the
+            wrong objects.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-instruments/llm-as-a-judge.html">LLM as a judge</a>:
+            the wider practice of scoring one model's output with another model.
+          </dd>
+          <dt>04</dt>
+          <dd>
+            <a href="../the-mechanics/counting-objects-in-images.html">Counting
+            objects in images</a>: one of the specific tasks CLIP is weak at,
+            and passes that weakness on.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A number for how well a picture follows its prompt</h2>
+        <p>
+          Ask a text-to-image system for "a red cube on a blue sphere." You get
+          back a picture, and you want to know whether it drew the prompt or
+          something else. The honest check is to show it to people and ask, but
+          people are slow and expensive, and a training run generates thousands
+          of images an hour. CLIPScore is the number the field reaches for
+          instead. It is a model's opinion of another model's output, standing
+          in for a person's. Hand it the prompt and the picture, and it returns
+          a grade for how well they match, with no human-written caption needed
+          as an answer key.<sup class="nb-cite"><a href="#s1">1</a></sup> That
+          last property has a name, reference-free, and it is most of why the
+          score caught on: you can run it on any generated image the moment it
+          exists.
+        </p>
+        <p>
+          The opinion it reports is not its own. CLIPScore reads it out of
+          <a href="../the-evidence/clip.html">CLIP</a>, a model trained to tell
+          whether an image and a caption belong together. So the grade is only
+          ever as good as CLIP's judgment of image-text fit, and every strength
+          and blind spot below is CLIP's, inherited whole. This is a different
+          question from whether a generated image looks real, which
+          <a href="../the-instruments/fid.html">FID</a> and the Inception Score
+          measure. CLIPScore says nothing about realism and those say nothing
+          about the prompt. It grades the match.
+        </p>
+      </section>
+
+      <section data-nb-section="the-construction" id="the-construction">
+        <h2>One cosine, clipped and stretched</h2>
+        <p>
+          CLIP is two encoders trained together, one for images and one for
+          text, on about 400 million image-caption pairs scraped from the
+          web.<sup class="nb-cite"><a href="#s2">2</a></sup> The training pulls
+          each true pair's image vector and text vector close together and
+          pushes mismatched pairs apart, until both encoders write into one
+          shared space where nearness means "these go together." Once trained,
+          the encoders turn any image and any caption into two vectors in that
+          space. The closeness of two vectors is their cosine similarity: one
+          number, near 1 when they point the same way and near 0 when they are
+          unrelated.
+        </p>
+        <p>
+          CLIPScore is that cosine, lightly dressed. Hessel and coauthors, who
+          named it in 2021, take the cosine between the prompt's text vector and
+          the image's vector, clip anything negative up to zero, and multiply by
+          a fixed 2.5.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \mathrm{CLIP\text{-}S}(c, v) = \htmlClass{nb-mc3}{2.5} \cdot
+            \htmlClass{nb-mc2}{\max}\!\bigl( \htmlClass{nb-mc1}{\cos(c, v)},\, 0
+            \bigr)
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">\cos(c, v)</span
+              ><span
+                >The cosine similarity of the caption vector and the image
+                vector: how close CLIP places them in its shared space.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">\max</span
+              ><span
+                >Clip a negative similarity up to zero, so a mismatch bottoms
+                out instead of going below zero.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc3">2.5</span
+              ><span
+                >A fixed stretch that widens CLIP's narrow raw range, roughly 0
+                to 0.4, toward a 0-to-1 scale. It moves the numbers, not the
+                ranking.</span
+              >
+            </li>
+          </ul>
+          <figcaption>
+            CLIPScore in full, computed with the public ViT-B/32 CLIP model. The
+            2.5 rescales for readability and leaves every comparison
+            unchanged.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          That is the whole construction. There is a variant, RefCLIPScore, that
+          also compares the image against human reference captions when you have
+          them,<sup class="nb-cite"><a href="#s1">1</a></sup> but the version
+          people report for generated images is the reference-free one above,
+          because generated images arrive without a reference. Everything the
+          grade knows, it knows through that one cosine.
+        </p>
+      </section>
+
+      <section data-nb-section="checked-on-captions" id="checked-on-captions">
+        <h2>Checked on captions, trusted on generations</h2>
+        <p>
+          A number is only worth reporting if it agrees with the people it
+          stands in for, so Hessel and coauthors measured that agreement. On
+          Flickr8K-Expert, a set of real photographs with human ratings of
+          candidate captions, CLIPScore ranked the captions the way expert
+          raters did, at a Kendall correlation of 51.2.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          That beat the older CIDEr (43.9) and SPICE (44.9) scores, which need
+          reference captions. A correlation of 100 would be perfect agreement
+          and 0 no relationship at all, so 51.2 puts the score and the raters
+          just over halfway there.
+          That result, fast and reference-free and closer to humans than the
+          alternatives, is why CLIPScore spread.
+        </p>
+        <p>
+          But it was measured on one task in particular: captions written for
+          real photographs, the image-captioning task the paper set out to
+          serve. The job it now
+          does is the reverse. A text-to-image score starts from the prompt and
+          grades a generated image, and a survey of the field lists CLIPScore as
+          one of the first reference-free alignment scores that everyone reached
+          for once diffusion models arrived.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          The 51.2 traveled to the new task as if it came along with the metric.
+          It did not. Hu and coauthors built a benchmark of generated images
+          with human faithfulness ratings, and CLIPScore's agreement with those
+          ratings fell to a Spearman correlation of 33.2.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          That is close to SPICE again, and well under the 59.7 their own metric
+          reached.
+          The credential that earned CLIPScore its trust was never collected on
+          the task the trust is spent on, and where someone did collect it, the
+          number is far lower.
+        </p>
+      </section>
+
+      <section data-nb-section="the-swaps-it-misses" id="the-swaps-it-misses">
+        <h2>Which object got which color</h2>
+        <p>
+          Go back to "a red cube on a blue sphere." Swap the colors and you have
+          "a blue cube on a red sphere": the same words, a different
+          picture. Telling the two prompts apart is the test of
+          <a href="../the-mechanics/attribute-binding.html">attribute
+          binding</a>, keeping track of which adjective belongs to which noun,
+          and it is exactly what CLIP's text encoder tends to drop. The authors
+          of VQAScore put it flatly: CLIP's text encoders "can notoriously act
+          as a 'bag of words', conflating prompts such as 'the horse is eating
+          the grass' with 'the grass is eating the horse'."<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          The controlled measurements bear that out. On a benchmark that makes
+          CLIP choose the right caption against a hard negative with one thing
+          swapped, it scores about 63% when a relation is swapped and about 62%
+          when an attribute is, both barely above the 50% a coin would
+          get.<sup class="nb-cite"><a href="#s6">6</a></sup> Reorder a whole
+          caption and it does no better, near 46% on the reordered-caption
+          test.<sup class="nb-cite"><a href="#s6">6</a></sup> This is
+          insufficient sensitivity rather than total blindness. The same authors
+          shuffled every word in a caption and asked CLIP to retrieve the right
+          image.<sup class="nb-cite"><a href="#s6">6</a></sup> Accuracy dropped
+          from 50.3% to 34.1%, a real fall, just a much smaller one than
+          scrambling a sentence should cause.
+          CLIP notices word order a little. It does not weigh it the way a reader
+          does.
+        </p>
+        <p>
+          A weak grader is worse than no grader when it grades below chance.
+          Winoground pairs two images with two captions built from the same
+          words, and a model earns a point on its group metric only by matching
+          both correctly. Pure guessing scores about 16.7%, one in six.
+          CLIPScore reaches 7.8%, under half of chance. VQAScore, which checks
+          alignment by asking a question-answering model whether the image shows
+          the prompt, reaches 46.0% on the same
+          prompts.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="clipscore/chart-1.png"
+            alt="Bar chart of Winoground group scores: CLIPScore at 7.8, below a dashed random-chance line at 16.7; VQAScore at 46.0, above it; a dotted human line sits near 85.5."
+          />
+          <figcaption>
+            Fig. 1 · Winoground group scores on the same compositional prompts,
+            where a point requires matching both images to both captions.
+            Guessing lands near 16.7%; reported human performance near
+            85.5%.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Word order is one inherited blind spot. The rest come with it. CLIP
+          "struggles with more abstract and systematic tasks such as counting
+          the number of objects in an image," its own authors
+          report,<sup class="nb-cite"><a href="#s2">2</a></sup> so a CLIPScore
+          cannot reliably tell four apples from five. And because it learned from
+          uncurated web pairs, it carries their biases, which the CLIPScore
+          authors flag directly in closing.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          A single similarity number folds all of this into one figure that
+          looks decisive and hides which part it got wrong.
+        </p>
+      </section>
+
+      <section data-nb-section="optimizing-the-grader" id="optimizing-the-grader">
+        <h2>What happens when the grade becomes the goal</h2>
+        <p>
+          Those failures all come from reading a CLIPScore. A sharper one appears
+          when a system is built to raise it, because then any gap between the
+          score and real matching becomes something to exploit. The FuseDream
+          authors showed the gap directly: starting from an image and taking one
+          small adversarial step, a perturbation too slight to see, they found a
+          near-identical picture with a much higher CLIP score and no more real
+          relevance to the prompt.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Optimize the number hard enough and the number is what you get, which
+          the authors name a danger of overfitting to the score.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          The same gap opens in the gentler act of picking. Generate several
+          images and keep the one with the highest CLIPScore, and you are
+          selecting for CLIP's taste, not the viewer's. The Pick-a-Pic authors
+          measured how far apart those are. On held-out pairs where real users
+          had chosen the image they preferred, an off-the-shelf CLIP model
+          agreed with the human choice 60.8% of the time. PickScore, a CLIP
+          model fine-tuned on those same choices, agreed 70.5% of the time, past
+          even the 68.0% at which human experts agreed with each
+          other.<sup class="nb-cite"><a href="#s8">8</a></sup> The roughly
+          ten-point gap between the stock CLIP score and the tuned one is the
+          cost of selecting by CLIP's preferences: a best-of-N chosen that way
+          is the best in CLIP's opinion, which is measurably not the reader's.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          CLIPScore is one cosine similarity from CLIP, clipped and scaled into a
+          grade for how well an image matches a prompt. It is fast and needs no
+          answer key, and that convenience is real. But it grades with CLIP's
+          judgment, and inherits CLIP's limits. It barely registers which object
+          in a prompt got which color. It scores below chance on the
+          compositional swaps it is asked to catch. Pushed on as a training
+          reward or a selection rule, it rewards CLIP's preferences over a
+          person's. The human-correlation figure that made it standard was
+          earned grading captions for real photos, not the generated images it
+          is now spent on, where its agreement with people is far lower. When
+          you meet a CLIPScore, take it as a fast estimate of gross image-text
+          fit, not a verdict on prompt alignment, and read it next to a metric
+          like VQAScore or TIFA that fails in a different way.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2403.11821">Hartwig et al., "A Survey
+            on Quality Metrics for Text-to-Image Generation"</a>: the full map of
+            the alignment scores built to route around CLIPScore.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2404.01291">Lin et al., "Evaluating
+            Text-to-Visual Generation with Image-to-Text Generation"</a>: how
+            VQAScore turns a question-answering model into the alignment check.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2104.08718"
+              >arXiv · Hessel, Holtzman, Forbes, Le Bras &amp; Choi, "CLIPScore:
+              A Reference-free Evaluation Metric for Image Captioning" (EMNLP
+              2021)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2103.00020"
+              >arXiv · Radford et al., "Learning Transferable Visual Models From
+              Natural Language Supervision" (CLIP, 2021)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2403.11821"
+              >arXiv · Hartwig et al., "A Survey on Quality Metrics for
+              Text-to-Image Generation" (2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2303.11897"
+              >arXiv · Hu et al., "TIFA: Accurate and Interpretable Text-to-Image
+              Faithfulness Evaluation with Question Answering" (ICCV 2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.01291"
+              >arXiv · Lin et al., "Evaluating Text-to-Visual Generation with
+              Image-to-Text Generation" (VQAScore, ECCV 2024)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2210.01936"
+              >arXiv · Yuksekgonul, Bianchi, Kalluri, Jurafsky &amp; Zou, "When
+              and why vision-language models behave like bags-of-words, and what
+              to do about it?" (ICLR 2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2112.01573"
+              >arXiv · Liu et al., "FuseDream: Training-Free Text-to-Image
+              Generation with Improved CLIP+GAN Space Optimization" (2021)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.01569"
+              >arXiv · Kirstain, Polyak, Singer, Matiana, Penna &amp; Levy,
+              "Pick-a-Pic: An Open Dataset of User Preferences for Text-to-Image
+              Generation" (PickScore, NeurIPS 2023)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
