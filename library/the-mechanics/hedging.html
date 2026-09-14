@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Why a clear question gets &ldquo;it depends&rdquo; · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "hedging",
+        "template": "lesson",
+        "title": "A clear question gets “it depends” because three training stages each push toward the hedge",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-14",
+        "tags": ["rlhf", "reward-models", "post-training", "alignment", "model-behavior"],
+        "sources": 8,
+        "words": 2150,
+        "reading_minutes": 9,
+        "dek": "OpenAI’s own paper says its labelers were told to reward epistemic humility and the reward model learned to prefer the hedge, the strongest of three pressures that all point the same way.",
+        "harness": "claude-code-routine",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A clear question gets &ldquo;it depends&rdquo; because three training stages each push toward the hedge</h1>
+        <p class="nb-dekline">
+          OpenAI&rsquo;s own paper says its labelers were told to reward epistemic humility and the reward model learned to prefer the hedge, the strongest of three pressures that all point the same way.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-14</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You ask an assistant a question that has a fairly clear answer, and it
+          gives you a tour of the considerations instead. Both options have
+          merits, it says; it depends on your priorities. This lesson takes one
+          such hedge and works backward to what produces it, one stage of
+          training at a time. By the end you will be able to break the answer
+          into three parts: a deliberate design choice, a habit the model picked
+          up before anyone tuned it, and something nobody has yet measured. Tell
+          those apart, and you can spot when someone else&rsquo;s explanation of
+          the behavior skips a step.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/sycophancy.html">A reward model taught the assistant that agreeing with you scores well</a>: the sibling failure from the same training stage, when the model bends its answer toward you instead of withholding one.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/false-confidence.html">Post-training makes a model less able to tell when it&rsquo;s wrong</a>: where a base model&rsquo;s calibration comes from, and how tuning flattens the honest number.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/over-refusal.html">A safe prompt gets refused because a trained switch fires on a word</a>: the neighboring case where the model declines the task outright rather than answering without committing.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The answer it won&rsquo;t give</h2>
+        <p>
+          Ask a chatbot whether you should use a password manager. There is a
+          fairly clear answer: yes, you should. A
+          familiar reply does something else. It lays out the case for them, the
+          case against, a note that no tool is perfect, and a closing line that
+          the right choice depends on your needs. The question had a stance
+          available. The model declined to take it.
+        </p>
+        <p>
+          This is documented behavior, not an anecdote. In the paper that
+          introduced the tuning recipe behind ChatGPT, OpenAI&rsquo;s own authors
+          report that their model overhedges on questions with a single clear
+          answer.<sup class="nb-cite"><a href="#s1" data-nb-locator="&sect;4.3">1</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In the paper&rsquo;s words</span>
+          <blockquote>
+            &ldquo;the model can overly hedge; when given a simple question, it
+            can sometimes say that there is no one answer to the question and
+            give multiple possible answers, even when there is one fairly clear
+            answer from the context.&rdquo;<sup class="nb-cite"><a href="#s1" data-nb-locator="&sect;4.3">1</a></sup>
+            <span class="nb-note-who">Ouyang et al., InstructGPT (2022), qualitative results</span>
+          </blockquote>
+        </div>
+        <p>
+          The
+          behavior worth explaining is not every refusal to commit. It is the
+          hedge that lands on a question with, in their words, one fairly clear
+          answer. Three stages of how a
+          model is built each push its answer toward that balanced register, and
+          they push for different reasons.
+        </p>
+      </section>
+
+      <section data-nb-section="raw-predictor" id="raw-predictor">
+        <h2>A raw predictor already leans toward the balanced version</h2>
+        <p>
+          Before a model is tuned to act like an assistant, it is a base model:
+          a system trained on a large slice of written text to predict the next
+          word. Feed it the start of a document and it continues in the most
+          probable way, meaning the way that text like it usually continued in
+          what it read.
+        </p>
+        <p>
+          A question like &ldquo;should you use a password
+          manager?&rdquo; appears in forum threads,
+          buying guides, and explainer articles, and those genres answer an
+          advice question by weighing sides. They open with &ldquo;it
+          depends,&rdquo; list pros and cons, and end without a verdict. So the
+          highest-probability continuation of an advice-shaped prompt is the
+          balanced register, because that register is what most often followed
+          such a prompt in the training text. The base model reaches for the
+          hedge as an imitation of a common form, before any human has told it
+          what a good answer looks like.
+        </p>
+        <p>
+          No source
+          I could find measures how strongly a base model pulls toward hedged
+          prose on advice prompts, so treat the pull as reasoning you can follow
+          rather than a figure someone has pinned down. And the hedge here is
+          not ignorance. A base model&rsquo;s own probabilities track how often it
+          is right, as an earlier lesson on
+          <a href="../the-mechanics/false-confidence.html">where a chatbot&rsquo;s confidence comes from</a>
+          shows in detail. The model is not hedging because it does not know. It
+          is copying the shape of the answers it was trained on.
+        </p>
+      </section>
+
+      <section data-nb-section="reward-model" id="reward-model">
+        <h2>What the reward model was paid to prefer</h2>
+        <p>
+          The base model is only the start. To make an assistant, the raw
+          predictor is tuned against human preferences, the recipe the
+          <a href="../the-evidence/instructgpt.html">InstructGPT paper</a> made
+          standard. People are shown several of the model&rsquo;s answers to the
+          same prompt and rank them from best to worst. Those rankings train a
+          second model, the reward model, to score any answer the way the people
+          would have. In InstructGPT, labelers ranked between four and nine
+          answers per prompt, and every pairwise comparison among them became
+          training data for that score.<sup class="nb-cite"><a href="#s1" data-nb-locator="&sect;3.5">1</a></sup>
+        </p>
+        <p>
+          The reward model learns whatever the rankings encode, including
+          instructions the labelers were given. Here the InstructGPT authors are
+          unusually direct about the cause. Their guidelines told labelers to
+          reward epistemic humility, an answer that admits the limits of what it
+          knows. Labelers followed the instruction, so hedged answers scored
+          well, and the reward model absorbed that preference.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The authors&rsquo; own explanation</span>
+          <blockquote>
+            &ldquo;we instruct labelers to reward epistemic humility; thus, they
+            may tend to reward outputs that hedge, and this gets picked up by our
+            reward model.&rdquo;<sup class="nb-cite"><a href="#s1" data-nb-locator="&sect;4.3">1</a></sup>
+            <span class="nb-note-who">Ouyang et al., InstructGPT (2022), qualitative results</span>
+          </blockquote>
+        </div>
+        <p>
+          Once the reward model prefers the hedge, tuning the assistant to
+          maximize that score drags every answer toward it. And the score is
+          only a stand-in for what people actually wanted. A separate OpenAI
+          study measured what happens when a model is pushed hard to maximize a
+          reward model. The true quality it was meant to capture rises for a
+          while, then falls, the pattern the authors name after Goodhart&rsquo;s
+          law.<sup class="nb-cite"><a href="#s2">2</a></sup> Chasing the proxy
+          past a point carries the answer away from the balanced-but-committal
+          reply the raters would have preferred and toward the reflexive hedge.
+        </p>
+        <p>
+          This is the stage where a hedge is easy to confuse with its sibling.
+          When you push back on a correct answer and the model folds to agree
+          with you, that is sycophancy, and it
+          <a href="../the-mechanics/sycophancy.html">comes from this same reward model</a>
+          rewarding answers people approve of. The difference is what each one
+          needs. Sycophancy needs a stated position from you to bend toward; it
+          is a reaction to pressure. A hedge needs nothing from you at all. It
+          shows up in the first reply, before any pushback, as a refusal to pick
+          a side rather than a reversal of one.
+        </p>
+      </section>
+
+      <section data-nb-section="policy-target" id="policy-target">
+        <h2>Where the policy asks for a hedge on purpose</h2>
+        <p>
+          The last stage is the most deliberate. Labs write explicit rules for
+          how a model should behave, and those rules ask for a hedge in named
+          situations. OpenAI&rsquo;s Model Spec ranks the kinds of answers a model
+          can give, and it places a hedged right answer above giving no answer,
+          and far above a confident wrong one.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The policy&rsquo;s own ranking</span>
+          <blockquote>
+            &ldquo;confident right answer &gt; hedged right answer &gt; no answer
+            &gt; hedged wrong answer &gt; confident wrong answer.&rdquo;<sup class="nb-cite"><a href="#s3">3</a></sup>
+            <span class="nb-note-who">OpenAI Model Spec</span>
+          </blockquote>
+        </div>
+        <p>
+          From the model&rsquo;s side, when it is unsure whether
+          its answer is right, the spec tells it that a hedge scores better than
+          a confident guess that might be wrong. Hedging becomes the rational
+          move under the stated rule, not an accident. The same spec asks the
+          model to present multiple viewpoints and take no side on contested
+          questions. Anthropic states a matching goal: that its model give
+          balanced information on political questions and avoid unsolicited
+          opinions. Its own evaluation scores a model down when it argues one
+          side in detail and gives the other only bullet points.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Nathan Lambert, an RLHF researcher outside OpenAI, reaches the
+          same conclusion. He treats the ranking as an intentional hierarchy,
+          with the hedge as the deliberate second-best, and reads the demand for
+          neutrality as hard by design rather than a bug a patch removes.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          This is where the deliberate part and the failure part separate. On a
+          genuinely contested political question, there may be no single correct
+          stance for the model to withhold, and a balanced answer is the policy
+          working as written. The failure is when the reflex trained for those
+          questions fires on the password-manager question, which is neither
+          sensitive nor genuinely open. The same trained caution covers both, and
+          nothing in the model marks the boundary between them.
+        </p>
+      </section>
+
+      <section data-nb-section="the-other-way" id="the-other-way">
+        <h2>The same training can push the other way</h2>
+        <p>
+          If the three stages all favored the hedge, you would expect a model to
+          hedge everywhere. It does not, and seeing why fixes the target. On
+          tasks scored right or wrong with no credit for saying &ldquo;I don&rsquo;t
+          know,&rdquo; the same tuning pipeline rewards the opposite behavior: a
+          confident guess beats an admission of uncertainty, so the model
+          guesses. OpenAI researchers make this the core of their account of why
+          models make things up, arguing that training and evaluation reward
+          guessing over acknowledging uncertainty and that models are optimized
+          to be good test-takers.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The direction of the bias depends on the task. Open-ended,
+          advice-shaped, or contested prompts draw the hedge; closed factual
+          questions with a graded answer draw the confident guess.
+        </p>
+        <p>
+          The default is also softer than it sounds, and it moves with the
+          prompt. A small, unreviewed study found that rephrasing a subjective
+          question as a blunt demand sharply cut how much three lightweight
+          models hedged, while factual questions barely hedged to begin
+          with.<sup class="nb-cite"><a href="#s7">7</a></sup> Read it only for
+          direction, not for a rate: the models were small and the work has not
+          been reviewed. It points the same way as the rest of the chain. The
+          hedge is a controllable default the prompt can move, which is what you
+          would expect from a stance the model is withholding rather than a
+          fact it lacks.
+        </p>
+        <p>
+          How often models hedge, when they do, varies enough that no single
+          number describes it. One study scored seven models on human-rights
+          prompts and found their hedging rates spread across an order of
+          magnitude.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">2.4%</span><span class="nb-stat-l">Claude Sonnet 4, share of 205 identities it hedged on</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">28.6%</span><span class="nb-stat-l">Gemini 2.5 Pro, same 205 identities</span>
+          </div>
+        </div>
+        <p>
+          Those figures come from one narrow domain and should not be read as a
+          general rate.<sup class="nb-cite"><a href="#s8" data-nb-note="Share of 205 identities each model hedged on at least once, over UDHR-derived human-rights prompts; domain-specific, not a general rate.">8</a></sup>
+          They are here to make one point: the behavior is real, but it is not
+          uniform, and labs have actively tuned it down. Which brings the chain
+          to its open questions. No source decomposes a given hedge into how much
+          came from base-rate imitation, how much from the reward model, and how
+          much from the written policy. And for any single hedge, whether it is
+          the policy working as designed or the reflex overshooting onto a clear
+          question is not something the model records or a study has resolved.
+          Those two questions are where the ground gives out. Below them there is
+          no separate step inside the model that decides to hedge: the answer is
+          produced one word at a time by a predictor whose training text and
+          whose reward signal both lean the same way.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The password-manager hedge is not one decision. It is three pressures
+          stacked on the same answer. A base model imitates the balanced register
+          of advice writing before anyone tunes it. A reward model, trained on
+          rankings from labelers who were told to reward epistemic humility,
+          learns to score the hedge highly, and tuning against that score drags
+          answers toward it. A written policy then asks for the hedge outright on
+          questions it treats as contested. The best-supported link is the
+          middle one, because the people who built the recipe wrote down that
+          their labelers rewarded humility and their reward model picked it up.
+          What stays open is how much each stage contributes to any given hedge,
+          and whether a particular hedge is the policy behaving as designed or
+          the same caution overshooting onto a question that had a clear answer
+          all along. Knowing the chain lets you tell those apart when someone
+          claims the model is simply being careful.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://model-spec.openai.com/2025-12-18.html">OpenAI Model Spec</a>: read the answer-type ranking and the contested-topic rules in full, in the policy&rsquo;s own words.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2509.04664">Why Language Models Hallucinate</a>: the mirror-image argument, on why the same training rewards a confident guess where a benchmark grades the answer.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.02155"
+              >Ouyang et al. (OpenAI) · Training language models to follow instructions with human feedback (InstructGPT)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2210.10760"
+              >Gao, Schulman &amp; Hilton (OpenAI) · Scaling Laws for Reward Model Overoptimization</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://model-spec.openai.com/2025-12-18.html"
+              >OpenAI · Model Spec (2025-12-18)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.anthropic.com/news/political-even-handedness"
+              >Anthropic · Political even-handedness in Claude</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.interconnects.ai/p/openai-rlhf-model-spec"
+              >Nathan Lambert (Interconnects) · Reading OpenAI&rsquo;s Model Spec</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2509.04664"
+              >Kalai, Nachum, Vempala &amp; Zhang (OpenAI) · Why Language Models Hallucinate</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.lesswrong.com/posts/vBDupg8iPqgdwhFzz/demands-are-all-you-need-prompt-imperativeness-drastically"
+              >fluxxrider (LessWrong) · Demands Are All You Need: Prompt Imperativeness Drastically Reduces Hedging</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2502.19463"
+              >Hedging and Non-Affirmation: Quantifying LLM Alignment on Questions of Human Rights</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
