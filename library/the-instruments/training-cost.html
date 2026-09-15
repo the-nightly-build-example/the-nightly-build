@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nvidia lost $589 billion in a day, more than 100,000 times DeepSeek's training bill · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "training-cost",
+        "template": "lesson",
+        "title": "Nvidia lost $589 billion in a day, more than 100,000 times DeepSeek's training bill",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-15",
+        "tags": [],
+        "sources": 10,
+        "words": 1591,
+        "reading_minutes": 7,
+        "dek": "DeepSeek's report priced one training run at $5.576 million, and investors who read that as the whole model's cost helped trigger the sell-off on 27 January 2025.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">Nvidia lost $589 billion in a day, more than 100,000 times DeepSeek's training bill</h1>
+        <p class="nb-dekline">
+          DeepSeek's report priced one training run at $5.576 million, and investors who read that as the whole model's cost helped trigger the sell-off on 27 January 2025.
+        </p>
+        <div class="nb-byline">
+          <span>7 min read</span><span>2026-09-15</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every frontier-model announcement now comes with a price tag, and the price tag becomes the headline before anyone reads how it was built. In January 2025, a $5.576 million figure from one technical report sat inside the largest single-day loss of market value any company has ever recorded, in a week when a lot of people read that figure as something it wasn't. This lesson takes the figure apart: what its two inputs actually are, what DeepSeek's own report says it leaves out, what outside estimates add on top of that, and what it cost when nobody stopped to check.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/parameter-count.html">DeepSeek-V3 lists 671 billion parameters and runs 37 billion per token</a>: how this model's declared size is itself a constructed figure.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/deepseek-r1.html">DeepSeek trained a model to reason without ever showing it a worked example</a>: R1's own training run, and its own separate, smaller cost.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-instruments/training-compute.html">GPT-4 sits above the EU's systemic-risk line on a number OpenAI never disclosed</a>: the other frontier number, training compute in FLOPs, estimated the same way.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>DeepSeek's technical report starts with a number</h2>
+        <p>
+          DeepSeek-AI published the technical report for DeepSeek-V3 on 27 December 2024. The model has
+          <a href="../the-instruments/parameter-count.html">671 billion total parameters and activates 37 billion of them for each token</a>, a size this course already worked through. One line in the report's introduction would end up mattering more than any of its benchmark scores. DeepSeek measures a training run the way a factory measures a shift: in GPU-hours, one GPU running for one hour. The full run took 2.788 million of them, the report says, and at an assumed rental price of $2 per GPU-hour, that totals $5.576 million.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          That figure belongs to V3, not to R1, the reasoning model DeepSeek released weeks later with its
+          <a href="../the-evidence/deepseek-r1.html">own, separate training run</a>. A September 2025 round of coverage even attached a different number, about $294,000, to R1's post-training run alone: distinct from, and much smaller than, V3's $5.576 million training total.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Read as an invoice, $5.576 million looks like DeepSeek's whole budget for building a frontier model. Read as what the report actually says, it is an estimate scoped to one run, built from two choices: how many hours that run took, and what an hour of that hardware was assumed to cost.
+        </p>
+      </section>
+
+      <section data-nb-section="the-arithmetic" id="the-arithmetic">
+        <h2>A measured count times an assumed price</h2>
+        <p>
+          Training a model this size runs thousands of GPUs at once for weeks. DeepSeek's Table 1 splits that time into three stages.<sup class="nb-cite"><a href="#s1">1</a></sup> Pre-training, the stage where the model reads its way through 14.8 trillion tokens, took 2,664,000 GPU-hours and cost $5.328 million at the assumed rate. Extending its context window took another 119,000 hours, or $238,000. Post-training took 5,000 hours, or $10,000. Add the three and the total is 2,788,000 GPU-hours. Multiply by $2 and the result is the number everyone quoted: $5.576 million.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="training-cost/asset-1.png"
+            alt="Table 1 from the DeepSeek-V3 technical report: training costs split by stage. Pre-training, 2,664K GPU-hours, $5.328M. Context extension, 119K GPU-hours, $0.238M. Post-training, 5K GPU-hours, $0.01M. Total, 2,788K GPU-hours, $5.576M. Caption states the figures assume a rental price of $2 per H800 GPU-hour."
+          />
+          <figcaption>
+            Fig. 1 · The report's own breakdown, stage by stage, with the $2-per-hour assumption stated in its own caption.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          The report gives the rate behind the largest of those stages: on a cluster of 2,048 H800 GPUs, DeepSeek trained on each trillion tokens in about 180,000 GPU-hours, or 3.7 days.<sup class="nb-cite"><a href="#s1">1</a></sup> That's the same kind of number this course used to compare
+          <a href="../the-instruments/tokens-per-second.html">Groq's and Anyscale's hardware speed</a>, just counted in hours of compute bought rather than tokens produced per second.
+        </p>
+        <p>
+          Neither number in that multiplication is a receipt. The hour count is measured, for one run, on DeepSeek's own cluster. The $2-an-hour price is not a bill DeepSeek paid; it is an assumption, stated in the same sentence as the total, about what an hour of that hardware costs to rent.<sup class="nb-cite"><a href="#s1">1</a></sup> Change either input and the total changes with it.
+        </p>
+      </section>
+
+      <section data-nb-section="what-it-leaves-out" id="what-it-leaves-out">
+        <h2>The caveat says less than it's credited for</h2>
+        <p>
+          A training-cost figure like this one exists so an outsider can compare what it costs different labs to reach similar capability, without access to anyone's internal budget. DeepSeek's number does something most such claims don't: it shows its own arithmetic, in a public report, down to the assumed hourly price.
+        </p>
+        <p>
+          The report's own caveat says what that number does not cover: "the aforementioned costs include only the official training of DeepSeek-V3, excluding the costs associated with prior research and ablation experiments on architectures, algorithms, or data."<sup class="nb-cite"><a href="#s1">1</a></sup> That's the whole exclusion. It does not mention salaries, hardware bought and never used successfully, or the cost of acquiring the training data, however often coverage described the gap that way. What DeepSeek says is missing is prior research and architecture experiments. Nothing else.
+        </p>
+        <p>
+          The bigger, all-in estimate comes from outside the report. SemiAnalysis, a semiconductor research firm, estimated that DeepSeek's parent company has access to roughly 50,000 Hopper-generation GPUs: about 10,000 H800s, 10,000 H100s, and a mix of H20s. It put the company's total server capital expenditure at about $1.6 billion, with hardware spending over its history "well higher than $500 million."<sup class="nb-cite"><a href="#s3">3</a></sup> By its own account, the $5.6 million figure "is attributed to just the GPU cost of the pre-training run, which is only a portion of the total cost of the model."<sup class="nb-cite"><a href="#s3">3</a></sup> Bernstein analyst Stacy Rasgon made the same point more bluntly the week the number went viral: DeepSeek did not "build OpenAI for $5M."<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Both SemiAnalysis and Rasgon were drawing that line in the same week the $5.576 million figure reached the widest audience it would ever have, the week Nvidia's stock recorded its steepest single-day loss on record.
+        </p>
+      </section>
+
+      <section data-nb-section="the-selloff" id="the-selloff">
+        <h2>A $589 billion trading session</h2>
+        <p>
+          On Monday 27 January 2025, Nvidia's stock fell nearly 17 percent, from $142.62 the previous Friday to $118.42, a drop of $24.20 a share.<sup class="nb-cite"><a href="#s5">5</a></sup><sup class="nb-cite"><a href="#s6">6</a></sup> The fall erased about $589 billion in market value in a single session, more than double the $279 billion Nvidia itself had lost on its previous worst day, under five months earlier. Bloomberg, CNBC, and Forbes all reported it as the largest one-day loss of market value any company had recorded.<sup class="nb-cite"><a href="#s7">7</a></sup><sup class="nb-cite"><a href="#s8">8</a></sup><sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">$5.576M</span><span class="nb-stat-l">REPORTED TRAINING COST</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">$589B</span><span class="nb-stat-l">NVIDIA'S MARKET LOSS</span>
+          </div>
+        </div>
+        <figure class="nb-figure">
+          <img
+            src="training-cost/chart-1.png"
+            alt="Bar chart of Nvidia's closing stock price, $142.62 on Friday 24 January 2025 and $118.42 on Monday 27 January 2025."
+          />
+          <figcaption>
+            Fig. 2 · Nvidia's close the Friday before DeepSeek's report and R1 circulated widely, and the Monday after. Two independent price services agree to within a rounding.<sup class="nb-cite"
+              ><a href="#s5">5</a></sup
+            ><sup class="nb-cite"><a href="#s6">6</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Coverage that week tied the drop directly to DeepSeek's own number. Yahoo Finance reported that the decline came as DeepSeek's claim that one of its models cost just $5.6 million to train raised new doubts about how much computing power the industry actually needed.<sup class="nb-cite"><a href="#s10">10</a></sup> That reading is real: investors who took $5.576 million as the cost of building a frontier model had a plain reason to ask why anyone still needed Nvidia's most expensive chips.
+        </p>
+        <p>
+          No source ties the loss to that reading alone. Bernstein's Rasgon called the panic "overblown" the same day. Talk of a "death-knell of the AI infrastructure complex as we know it," he said, went too far, even as he credited DeepSeek's models as ones that "look fantastic," short of being "miracles."<sup class="nb-cite"><a href="#s4">4</a></sup> The number moved a market that was already reacting to a genuinely capable model shipping from a lab most investors hadn't been pricing in. How much of the $589 billion the misreading caused on its own, no source separates out, and none claims it was all of it.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          DeepSeek's $5.576 million never claimed to be the cost of building DeepSeek-V3. It is 2.788 million GPU-hours, DeepSeek's own measured total for one training run, multiplied by $2, an assumed rental price the report states as exactly that: an assumption. What DeepSeek's own caveat excludes is prior research and architecture experiments, nothing about salaries or data acquisition, whatever outside estimates like SemiAnalysis's added on top later. And the $589 billion Nvidia lost the week the number spread wasn't proof the figure was dishonest, or proof it was harmless. It was proof that a market which let one line from a technical report stand in for a whole company's spending was going to be surprised by something, sooner or later. The next time a lab attaches a dollar figure to training a model, ask the question DeepSeek's own report already answers for itself. How many hours were counted. What price was assumed for them. Which part of the process they covered.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2412.19437">DeepSeek-V3 Technical Report</a>: the full paper this lesson draws its numbers from, including the architecture and evaluations the cost figure sits beside.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://newsletter.semianalysis.com/p/deepseek-debates">SemiAnalysis, "DeepSeek Debates"</a>: the fuller teardown of DeepSeek's hardware and spending behind the estimates this lesson cites.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2412.19437"
+              >arXiv · DeepSeek-V3 Technical Report</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.theregister.com/2025/09/19/deepseek_cost_train/"
+              >The Register · DeepSeek's AI training cost revisited</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://newsletter.semianalysis.com/p/deepseek-debates"
+              >SemiAnalysis · DeepSeek Debates</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.cnbc.com/2025/01/27/deepseek-sell-off-nvidia-analysts-react.html"
+              >CNBC · The DeepSeek sell-off: what major analysts are saying</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://stockanalysis.com/stocks/nvda/history/"
+              >StockAnalysis.com · NVDA price history</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.statmuse.com/money/ask/nvidia-stock-price-in-january-2025"
+              >StatMuse · Nvidia stock price in January 2025</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.bloomberg.com/news/articles/2025-01-27/asml-sinks-as-china-ai-startup-triggers-panic-in-tech-stocks"
+              >Bloomberg · Nvidia's $589 Billion DeepSeek Plunge Is Largest in Market History</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.cnbc.com/2025/01/27/nvidia-sheds-almost-600-billion-in-market-cap-biggest-drop-ever.html"
+              >CNBC · Nvidia sheds almost $600 billion in market cap, biggest one-day loss in U.S. history</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.forbes.com/sites/dereksaul/2025/01/27/biggest-market-loss-in-history-nvidia-stock-sheds-nearly-600-billion-as-deepseek-shakes-ai-darling/"
+              >Forbes · Biggest market loss in history: Nvidia stock sheds nearly $600 billion as DeepSeek shakes AI darling</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://finance.yahoo.com/news/nvidia-stock-plummets-loses-record-589-billion-as-deepseek-prompts-questions-over-ai-spending-135105824.html"
+              >Yahoo Finance · Nvidia stock plummets, loses record $589 billion as DeepSeek prompts questions over AI spending</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
