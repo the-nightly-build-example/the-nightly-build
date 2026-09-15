@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A text-to-speech voice mispronounces a word for one of two different reasons · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "text-to-speech-pronunciation",
+        "template": "lesson",
+        "title": "A text-to-speech voice mispronounces a word for one of two different reasons",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-15",
+        "tags": ["text-to-speech", "pronunciation", "homograph", "grapheme-to-phoneme", "speech-synthesis"],
+        "sources": 8,
+        "words": 2182,
+        "reading_minutes": 9,
+        "dek": "Siri says \"Mobile, Ala.\" with the wrong vowel and \"Des Moines\" with its silent letters sounded out, and the two mistakes are made at different points in the same pipeline, before either one becomes a sound.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A text-to-speech voice mispronounces a word for one of two different reasons</h1>
+        <p class="nb-dekline">
+          Siri says "Mobile, Ala." with the wrong vowel and "Des Moines" with its silent letters sounded out, and the two mistakes are made at different points in the same pipeline, before either one becomes a sound.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-15</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every screen reader, audiobook narrator, GPS voice, and voice assistant makes this same silent call on every sentence, and it gets away with it almost every time. English is full of written forms, abbreviations, numbers, names, homographs, that don't map to one obvious sound. A listener only notices the calls that go wrong: a navigation app mangling a street name, an audiobook narrator giving "lead" the wrong vowel, a screen reader a blind user depends on turning a medication dose into something else. By the end you'll be able to place a mispronunciation inside the exact stage that produced it, and say whether the fix is a bigger dictionary or a system that finally reads the sentence.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="speech-to-text-hallucination.html">Whisper answers silence with a sentence no one spoke</a>: the opposite direction, audio into text, with its own confident wrong answer when the model has too little to go on.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="text-in-images.html">A generated image gets its letters wrong before the picture is ever drawn</a>: a different medium, the same shape of failure: the wrong call made at a text-handling stage before the output is produced.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The front end decides the words before the back end makes a sound</h2>
+        <p>
+          A classic text-to-speech system runs in two stages. A front end reads the sentence and works out, word by word, how it should sound. A back end turns that decision into audio. DeepMind's own account of the pipeline behind WaveNet describes the same split: a text-analysis stage that decides, and a synthesis stage that only works from what it decided.<sup class="nb-cite"><a href="#s1">1</a></sup> By the time synthesis starts, the pronunciation is fixed. Nothing about how natural the voice sounds can undo a wrong call upstream.
+        </p>
+        <p>
+          NPR collected two real examples of that upstream call going wrong, both from Siri. The Alabama city "Mobile, Ala." came out with the vowel of the adjective instead of the place, and "Des Moines" came out with its silent letters sounded out loud.<sup class="nb-cite"><a href="#s2">2</a></sup> To a listener, those sound like the same glitch. They come from different parts of the front end.
+        </p>
+      </section>
+
+      <section data-nb-section="normalization" id="normalization">
+        <h2>Numbers, abbreviations, and dates are not words yet</h2>
+        <p>
+          Not every written form in a sentence is already a word. <code>Dr.</code> could be "doctor" or "drive." <code>St.</code> could be "saint" or "street." <code>2010</code> could be "twenty ten" or "two thousand ten," depending on whether it names a year or a quantity. Before a system can decide how these should sound, it has to expand them into the words a person would actually say. That step is text normalization, and it is genuinely ambiguous: the right expansion depends on context the written form alone doesn't settle.
+        </p>
+        <p>
+          Google researchers measured just how ambiguous it is with a system trained on nothing but this problem: millions of examples of written text paired with its correctly spoken form.<sup class="nb-cite"><a href="#s3">3</a></sup> It got the mapping right the overwhelming majority of the time, 99.3% overall accuracy on the English test set. On the fraction it got wrong, the errors swapped in a different meaning.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Two errors an experimental normalizer produced, before Google's production system adds a filter to catch them.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Written form</th>
+              <th>Correct</th>
+              <th class="txt">What the model said instead</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">£900 million</span></td>
+              <td>nine hundred million pounds</td>
+              <td class="txt">nine hundred million euros</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">2 mA</span></td>
+              <td>two milliamperes</td>
+              <td class="txt">two units</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          That's not a mistake you're likely to hear from a shipping voice. Production systems pair the raw model with a rule-based filter, built to catch and block outputs like these before they ship.<sup class="nb-cite"><a href="#s3">3</a></sup> A string of digits or an abbreviation needs interpretation before it is a word at all, and with nothing there to check it, that interpretation can drift far.
+        </p>
+      </section>
+
+      <section data-nb-section="grapheme-to-phoneme" id="grapheme-to-phoneme">
+        <h2>A name with no dictionary entry gets sounded out from scratch</h2>
+        <p>
+          A system also needs to pronounce ordinary words it has never been told how to say: a name, a brand, a borrowed word. English spelling doesn't make this easy: "ough" sounds different in "though," "through," and "rough," with no general rule for which applies.
+        </p>
+        <p>
+          A pronunciation system starts from a dictionary: common words paired with their correct sound, broken into phonemes, the sound units a word is built from (the difference between "pat" and "bat" is a single phoneme). Google engineers break "google" into its phoneme string this way in a 2015 paper.<sup class="nb-cite"><a href="#s4">4</a></sup> A dictionary only covers words someone added. For everything else, grapheme-to-phoneme conversion, or G2P, predicts the phoneme string from the letters, generalizing from spelling patterns it has seen: "invoked anytime a word is not in the static dictionary."<sup class="nb-cite"><a href="#s4">4</a></sup> That's why an uncommon name is where G2P is most likely to guess wrong: usually there's no entry to fall back on, and the spelling doesn't reliably say how the word sounds.
+        </p>
+        <p>
+          How often does the guess fail? On dictionary words the system had never seen in training, a strong neural predictor got 25.8% wrong, roughly one in four, falling to 21.3% with a statistical backstop.<sup class="nb-cite"><a href="#s4">4</a></sup> That's on ordinary English words. NPR found the same gap in the world: Siri's "Des Moines," sounding out silent letters that place name doesn't pronounce.<sup class="nb-cite"><a href="#s2">2</a></sup> There's no meaning to weigh, no pronunciation chosen badly. The dictionary is, as one researcher who helped build Siri put it, "the first port of call."<sup class="nb-cite"><a href="#s2">2</a></sup> For "Des Moines," it wasn't there, and the right sound was never produced.
+        </p>
+      </section>
+
+      <section data-nb-section="homograph-disambiguation" id="homograph-disambiguation">
+        <h2>Choosing between two correct sounds needs the rest of the sentence</h2>
+        <p>
+          Some written forms have more than one correct spoken answer built in, and no dictionary entry or spelling rule can choose between them. "I will lead the team" takes a different vowel than "the pipe is made of lead." "She plays bass" is a fish or an instrument. "He read it yesterday" and "he will read it tomorrow" say the same four letters two ways, by tense. These are homographs: one spelling, two or more real pronunciations, decided by sense or part of speech in that sentence.<sup class="nb-cite"><a href="#s5">5</a></sup> A homograph seen in isolation cannot be resolved by spelling alone. Both pronunciations are equally valid answers to "how do you say this word." The only source of the right answer is meaning, and it shows up only once the rest of the sentence is read.
+        </p>
+        <p>
+          "Mobile" is the opposite case. Siri has this everyday word in its dictionary, so unlike "Des Moines" the right sound was there. The mistake is that "mobile" has two correct spoken forms, one for the adjective and one for the Alabama city, and choosing between them needs the word right after it, "Ala." Siri picked the adjective's sound for a city name.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Homograph disambiguation is a studied, named problem with its own accuracy figures. Researchers at Google built a labeled benchmark of 163 English homographs, drawn from roughly a hundred Wikipedia sentences apiece, and measured how well different approaches chose the right pronunciation, from ignoring the sentence to combining rules with machine learning.<sup class="nb-cite"><a href="#s5">5</a></sup> A separate team at Amazon reached 99.1% on the same benchmark using contextual language-model features and no hand-written rules, confirming the ceiling from a different direction.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            How much of homograph resolution reading the sentence buys, on Google's public benchmark of 163 homographs.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Method</th>
+              <th>Accuracy</th>
+              <th class="txt">What it uses</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Most frequent</span></td>
+              <td>85.0%</td>
+              <td class="txt">Ignores the sentence: always guesses the homograph's more common pronunciation.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Rules</span></td>
+              <td>89.3%</td>
+              <td class="txt">Hand-written grammar and context rules.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Machine learning</span></td>
+              <td>95.4%</td>
+              <td class="txt">A classifier trained on the sentence, no hand-written rules.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Hybrid</span></td>
+              <td>99.0%</td>
+              <td class="txt">Rules and machine learning combined; runs on Google's live traffic.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The benchmark measures a known homograph already located in the sentence, not how often one turns up unflagged in ordinary speech, or how these systems do outside the labeled list. Even inside the curated set, some cases resist every method: in one sentence from Google's error analysis, "Smith has played Trophy matches for the county from 1993 to present," every system tested still chose the verb's pronunciation over the correct noun.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Which failure just happened</span>
+          <p>
+            A written form that comes out as a sound correct for no sense of that word, a name stretched to fit English spelling rules, an abbreviation expanded wrong, is a normalization or G2P failure: the right sound was never generated. A written form that comes out as a real, correct pronunciation, just the wrong one for this sentence, is a homograph failure: the right sound existed, and the system assigned it to the wrong sense. "Des Moines" sounding out silent letters is the first kind. "Mobile, Ala." taking the adjective's vowel is the second.
+          </p>
+        </div>
+      </section>
+
+      <section data-nb-section="the-floor" id="the-floor">
+        <h2>What neural TTS fixed, and the sentence no system can resolve</h2>
+        <p>
+          Everything so far describes the classic pipeline: normalization, then G2P, then homograph disambiguation, each finished before a synthesizer runs. Modern neural systems don't keep the boxes so clean. Google's Tacotron 2, published in 2018, sounds close to a human reader and maps a sentence's letters almost straight to audio in one network, folding much of the front end into a single model trained end to end.<sup class="nb-cite"><a href="#s7">7</a></sup> It is still trained on already-normalized text: the researchers write "16" as "sixteen" before the model ever sees it, so normalization has just moved outside the network.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          Tacotron 2 still mispronounces. On a 100-sentence stress test, it got 6 sentences wrong and skipped a word on 1. The researchers call occasional mispronunciation the single biggest reason listeners preferred the human recording.<sup class="nb-cite"><a href="#s7">7</a></sup> On out-of-domain headlines, names are the recurring trouble spot, the same shape of failure as G2P: a model trained mostly on ordinary vocabulary has, in effect, no dictionary entry for a name it rarely saw. The same test turned up a third kind of error: 23 of the 100 sentences had unnatural prosody, the wrong syllable stressed, an odd rhythm. That isn't a word-choice error. It's a failure in what used to be the back end: the model misjudging pace and stress rather than choosing the wrong word, in an architecture where front and back aren't separate boxes anymore.<sup class="nb-cite"><a href="#s7">7</a></sup> The claim that a mispronunciation is almost always a front-end mistake holds for the classic pipeline. It holds less cleanly once normalization, G2P, and synthesis train together.
+        </p>
+        <p>
+          Vendors patch what's left, word by word. Amazon's Polly lets a developer upload a pronunciation lexicon mapping a written form to a replacement spelling or phoneme string, applied before synthesis starts: "W3C" becomes "World Wide Web Consortium."<sup class="nb-cite"><a href="#s8">8</a></sup> It fixes the word someone added, not the mechanism that got it wrong.
+        </p>
+        <p>
+          Under all of it sits a floor no version of this pipeline gets past. "I read it" cannot be resolved from the sentence alone. Whether it's present or past depends on what came before it, and a system that sees only this sentence knows exactly as much as someone who walks in partway through and hears only that line: nothing. That's the point where a bigger dictionary, more data, or more rules stop helping. The sentence itself doesn't contain the answer.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The wrong sound almost never comes from the voice itself. It comes from a decision made earlier, in a stage that never makes a sound: a written form gets expanded into words, sounded out letter by letter, or handed one of two correct pronunciations, all before a synthesizer runs. A word that comes out right for no sense of it at all is a normalization or grapheme-to-phoneme failure: the right sound was never generated. A word that comes out as a real, correct pronunciation, just the wrong one for the sentence, is a homograph failure: the right sound existed, and the system read the wrong meaning into it. The next time a voice gets a word wrong, that's the question worth asking: did it never have this sound, or did it have two and choose badly.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://aclanthology.org/L18-1215/">Gorman, Mazovetskiy & Nikolaev, "Improving Homograph Disambiguation with Supervised Machine Learning"</a>: the full 163-homograph benchmark behind the "present" case that still trips every system.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://research.google.com/pubs/archive/43264.pdf">Rao, Peng, Sak & Beaufays, "Grapheme-to-Phoneme Conversion Using Long Short-Term Memory Recurrent Neural Networks"</a>: the G2P paper itself, with phoneme-error tables this lesson had no room for.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1609.03499"
+              >van den Oord et al. (DeepMind) · WaveNet: A Generative Model for Raw Audio</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.npr.org/sections/alltechconsidered/2015/10/05/446051309/hey-siri-what-did-you-say-why-computers-still-mispronounce-names"
+              >NPR · Hey Siri, What Did You Say? Why Computers Still Mispronounce Names</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1611.00068"
+              >Sproat & Jaitly (Google) · RNN Approaches to Text Normalization: A Challenge</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://research.google.com/pubs/archive/43264.pdf"
+              >Rao, Peng, Sak & Beaufays (Google) · Grapheme-to-Phoneme Conversion Using Long Short-Term Memory Recurrent Neural Networks</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/L18-1215/"
+              >Gorman, Mazovetskiy & Nikolaev (Google) · Improving Homograph Disambiguation with Supervised Machine Learning</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.isca-archive.org/ssw_2021/nicolis21_ssw.html"
+              >Nicolis & Klimkov (Amazon) · Homograph Disambiguation with Contextual Word Embeddings for TTS Systems</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1712.05884"
+              >Shen et al. (Google) · Natural TTS Synthesis by Conditioning WaveNet on Mel Spectrogram Predictions</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://docs.aws.amazon.com/polly/latest/dg/managing-lexicons.html"
+              >Amazon Web Services · Managing Lexicons (Amazon Polly Developer Guide)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
