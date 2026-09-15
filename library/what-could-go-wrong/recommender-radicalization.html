@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The studies built to catch a YouTube rabbit hole mostly came up empty · What Could Go Wrong</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "what-could-go-wrong",
+        "slug": "recommender-radicalization",
+        "template": "lesson",
+        "title": "The studies built to catch a YouTube rabbit hole mostly came up empty",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-15",
+        "tags": ["recommender-systems", "radicalization", "filter-bubble", "youtube", "social-media"],
+        "sources": 9,
+        "words": 2188,
+        "reading_minutes": 10,
+        "dek": "Studies that tracked real YouTube viewing found extreme content clustered among a small group of already resentful subscribers, reached mostly through their own subscriptions and links from outside the platform.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">What Could Go Wrong</div>
+        <h1 class="nb-title">The studies built to catch a YouTube rabbit hole mostly came up empty</h1>
+        <p class="nb-dekline">
+          Studies that tracked real YouTube viewing found extreme content
+          clustered among a small group of already resentful subscribers,
+          reached mostly through their own subscriptions and links from
+          outside the platform.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-09-15</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Recommender systems choose what shows up first for billions of
+          people every day: YouTube's up-next queue, Facebook and
+          Instagram's feed, TikTok's For You page. One of the most repeated
+          claims about AI at work today is that they quietly push people
+          toward extremes. This lesson checks that claim against the tests
+          built to catch it in real systems, not simulated ones. By the
+          end, you'll know what four careful studies found, why each comes
+          with a limit, and what that leaves you free to worry about.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../when-ai-breaks/facebook-myanmar.html"
+              >Facebook ranked Myanmar's feed for engagement while it could
+              not moderate Burmese</a
+            >: what an engagement-ranked feed reliably rewards, and the harm
+            it did when nothing else was catching what it promoted.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../what-could-go-wrong/gradual-disempowerment.html"
+              >No AI has to go rogue for humans to lose control</a
+            >: the broader argument that recommenders are quietly doing
+            culture's job, with more on the same 2020 feed experiment cited
+            here.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../what-could-go-wrong/ai-persuasion.html"
+              >GPT-4 shifted opinions more than humans did, once it knew who
+              it was arguing with</a
+            >: what changes when the system doing the recommending can also
+            argue with you directly.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The bubble and the Great Radicalizer</h2>
+        <p>
+          In 2011, the writer and activist Eli Pariser noticed that Facebook
+          had stopped showing him his conservative friends' posts. He hadn't
+          unfollowed anyone. "Facebook was looking at which links I clicked
+          on, and it was noticing that, actually, I was clicking more on my
+          liberal friends' links than on my conservative friends' links. And
+          without consulting me about it, it had edited them out."<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          He named what he'd found the filter bubble: "your own personal,
+          unique universe of information that you live in online."<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The same tailoring ran underneath the rest of what he used. Google
+          drew on "57 signals" to shape results. Two friends who typed the
+          same search term got different worlds back: one saw the Egyptian
+          protests filling his first page, the other saw nothing about
+          them.<sup class="nb-cite"><a href="#s1">1</a></sup> Nobody
+          had asked for this. The danger, in Pariser's argument, was an
+          editor nobody could see, narrowing what a person believed everyone
+          else was seeing too.
+        </p>
+        <p>
+          Facebook's feed and Google's results page are both output by a
+          recommender system: software deciding, out of everything
+          available, what one person sees next. YouTube's version is tuned
+          by engagement optimization, against how long a person keeps
+          watching, not an editor's judgment. A feed built that way reliably
+          rewards attention: it amplifies whatever holds it, calm or
+          extreme. The same ranking shaped
+          <a href="../when-ai-breaks/facebook-myanmar.html">Myanmar's
+          feed</a>.
+        </p>
+        <p>
+          Seven years after Pariser's talk, the technology writer Zeynep
+          Tufekci gave the same worry a sharper edge and a name that stuck:
+          "the Great Radicalizer."<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Watching videos of Donald Trump's 2016 rallies, she found
+          YouTube's autoplay queue drifting toward white supremacy and
+          Holocaust denial. A fresh account built on nothing but Clinton and
+          Sanders videos drifted toward left-wing 9/11 conspiracy
+          content.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          "It seems as if you are never 'hard core' enough for YouTube's
+          recommendation algorithm," she wrote.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Her explanation was economic: YouTube profits from watch-time, and
+          the algorithm "concluded that people are drawn to content that is
+          more extreme" than what they started with, so escalation
+          pays.<sup class="nb-cite"><a href="#s2">2</a></sup> Given
+          YouTube's billion or so users, she wrote, "YouTube leads
+          viewers down a rabbit hole of extremism, while Google racks up
+          the ad sales."<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="real-youtube-viewing" id="real-youtube-viewing">
+        <h2>What four years of real YouTube viewing showed</h2>
+        <p>
+          Tufekci's own case leaned on evidence she called thin: "good data
+          is hard to come by," she wrote.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Her examples came from outside audits, not her own research.
+          Guillaume Chaslot's account-tracking tool, and a Wall Street
+          Journal investigation using the same tool, found that a walk
+          started on either a Clinton or a Trump video was "many times more
+          likely" to end on a pro-Trump one.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Jonathan Albright's search on "crisis actor" found autoplay
+          carrying him into a network of roughly 9,000 conspiracy
+          videos.<sup class="nb-cite"><a href="#s2">2</a></sup> All three
+          are the same kind of test: a fresh account with no history, walked
+          through the recommendations to see where it lands. That is not
+          what the algorithm does to a real audience carrying its own
+          history in, and that difference is what the studies that followed
+          measured directly.
+        </p>
+        <p>
+          The largest of those studies traced real viewing. A team led by
+          the network scientist Homa Hosseinmardi followed 309,813 US
+          adults in a Nielsen panel, across 21,385,962 video
+          views from January 2016 through December 2019.<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="Methods and Materials">3</a></sup
+          >
+          Channels were sorted into six political categories; news made up
+          about 11% of what the panel watched.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Far-right channels barely moved, from 0.17% of watch-time in 2016
+          to 0.30% in 2019. "Anti-woke" channels, the fastest-growing
+          category, went from 0.31% to 1.02%.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Fig. 2B">3</a></sup
+          >
+          Sessions of consecutive videos showed no drift toward extremes
+          either.<sup class="nb-cite"><a href="#s3">3</a></sup> Far-right
+          views mostly arrived from outside YouTube's own suggestions:
+          41.29% followed an external link, 35.8% another YouTube video, the
+          rest from the homepage, a channel page, or search.<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="Table 2">3</a></sup
+          >
+          The authors are explicit about the limit: "our analysis ...
+          applies only at the population level. It says little about ...
+          the possible radicalization of individuals or small groups of
+          individuals."<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          A second team, led by the political scientists Annie Chen and
+          Brendan Nyhan, tracked actual behavior instead of a panel's
+          viewing history.<sup class="nb-cite"><a href="#s4">4</a></sup> They
+          recruited 1,181 people, oversampled for high resentment and heavy
+          YouTube use. A browser extension logged their real viewing and the
+          recommendations YouTube actually showed them, matched to a 2018
+          attitude survey, in 2020, a year after YouTube overhauled its
+          recommender.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Alternative-media channels made up 3% of logged views; extremist
+          channels, 0.5%; mainstream news, 3.6%; everything else, 93%.<sup
+            class="nb-cite"
+            ><a href="#s4" data-nb-locator="Fig. 2">4</a></sup
+          >
+          Most of that sliver came from existing subscribers: 60.8% of
+          alternative-channel views, 54.7% of extremist-channel views.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The team applied a strict, four-part definition meant to catch
+          someone with no prior interest walked step by step into
+          extremism. By that definition, rabbit-hole events hit 0.01% of
+          all video visits, among 3.0% of participants, a figure the
+          authors call a lower bound.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          "YouTube's algorithms were not sending people down 'rabbit holes'
+          during our observation window in 2020," they wrote, "possibly due
+          to changes that the company made to its recommender system in
+          2019."<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="whose-choices-shape-feed" id="whose-choices-shape-feed">
+        <h2>Whose choices actually shape the feed</h2>
+        <p>
+          Pariser's half of the argument got its own test four years after
+          his talk. A Facebook team led by the data scientists Eytan
+          Bakshy, Solomon Messing, and Lada Adamic examined 10.1 million US
+          users who had publicly listed a political affiliation. They
+          tracked 7 million distinct news links their friends shared
+          between July 2014 and January 2015.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          They split exposure to this cross-cutting content, meaning news
+          from the other side, into what friends shared, what the feed
+          surfaced, and what users clicked.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Friend networks weren't sealed to begin with: over 20% of an
+          ideology-reporting user's friends listed the opposing party.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Ranking narrowed it 5% for conservatives and 8% for liberals;
+          clicking narrowed it further for conservatives, 17%, though for
+          liberals the two effects were close, 6% versus 8%.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          "Compared with
+          algorithmic ranking, individuals' choices played a stronger role
+          in limiting exposure to cross-cutting content," the authors
+          concluded.<sup class="nb-cite"><a href="#s5">5</a></sup> The
+          sample skews younger, more educated, and more female than the
+          country, and critics contest measuring ranking against choice
+          rather than a neutral baseline.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          The clearest test of whether the ranked feed itself moves anyone's
+          politics came five years later, around the 2020 election. A team
+          led by the political scientist Andrew Guess randomized consenting
+          Facebook and Instagram users onto a chronological feed, no
+          ranking, for roughly three months, against users left on the
+          default algorithm.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Enrollment ran to about 23,000 users per study, per Science's own
+          news coverage rather than the paywalled study text.<sup
+            class="nb-cite"
+            ><a
+              href="#s7"
+              data-nb-note="Enrollment figure reported by Science's news coverage; not verified against the paywalled study body."
+              >7</a
+            ></sup
+          >
+          The chronological feed changed plenty: less time on the platform,
+          more political and untrustworthy content, and, on Facebook, less
+          uncivil content and more from moderate and ideologically mixed
+          friends.<sup class="nb-cite"><a href="#s6">6</a></sup> None of it
+          moved what the study measured: "the chronological feed did not
+          significantly alter levels of issue polarization, affective
+          polarization, political knowledge, or other key attitudes during
+          the 3-month study period."<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <p>
+          That finding carries its own asterisk. UMass Amherst researchers
+          Chhandak Bagchi and Przemyslaw Grabowicz later found the window
+          wasn't ordinary: "Beginning around the start of November 2020,
+          Meta introduced 63 'break glass' changes to Facebook's news feed,
+          ... expressly designed to diminish the visibility of untrustworthy
+          news surrounding the 2020 U.S. presidential election."<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          A null measured inside a feed the company had already hand-tuned
+          is narrower than "the ranked feed, as it normally runs, doesn't
+          move anyone's politics."
+        </p>
+      </section>
+
+      <section data-nb-section="gap-on-both-sides" id="gap-on-both-sides">
+        <h2>The gap on both sides</h2>
+        <p>
+          The argument didn't stay confined to a talk and an op-ed. In
+          2017, Roger McNamee, an early Facebook and Google investor, made
+          the same case from inside the industry. "Facebook, Google and
+          others compete for each consumer's attention," he wrote,
+          "reinforcing biases and reducing the diversity of ideas to which
+          each is exposed."<sup class="nb-cite"><a href="#s9">9</a></sup>
+          Same mechanism: attention as the business model, narrowing as the
+          side effect.
+        </p>
+        <p>
+          Set the studies beside what each can actually reach.
+        </p>
+        <table class="nb-table">
+          <caption>
+            What each null result shows, and what it can't reach.<sup
+              class="nb-cite"
+              ><a href="#s3">3</a></sup
+            ><sup class="nb-cite"><a href="#s4">4</a></sup
+            ><sup class="nb-cite"><a href="#s6">6</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Study</th>
+              <th class="txt">Tested</th>
+              <th class="txt">Found</th>
+              <th class="txt">Can't rule out</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Hosseinmardi 2021</span></td>
+              <td class="txt">
+                309,813-person national panel, 2016 to 2019
+              </td>
+              <td class="txt">
+                No drift toward extreme content; far-right rose only to
+                0.30% of watch-time
+              </td>
+              <td class="txt">
+                Individual radicalization; applies "only at the population
+                level"
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Chen 2023</span></td>
+              <td class="txt">
+                1,181 tracked viewers, 2020, a year after YouTube's
+                recommender overhaul
+              </td>
+              <td class="txt">
+                Rabbit holes hit 0.01% of visits; most extreme viewing came
+                from subscribers
+              </td>
+              <td class="txt">
+                The pre-2019 system Tufekci described; names 2019's changes
+                as a likely cause
+              </td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Guess 2023</span></td>
+              <td class="txt">About 23,000 users on a chronological feed, Sept to Dec 2020</td>
+              <td class="txt">
+                Feed changed what people saw; polarization and knowledge
+                held steady
+              </td>
+              <td class="txt">
+                An unaltered algorithm; Meta made 63 emergency changes to
+                the same feed mid-study
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Two of the three concede the individual case outright.
+          Hosseinmardi's team says its method "applies only at the
+          population level" and "says little about ... the possible
+          radicalization of individuals ..."<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          Chen's team calls its rabbit-hole rate a lower bound.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The minority that does watch extremist channels, carrying
+          resentments it already held, is real in both datasets. The
+          studies rule out that the algorithm manufactures that minority.
+          They don't rule out that it exists.
+        </p>
+        <p>
+          Neither side gets to claim these tests as a clean win. "The
+          algorithm radicalizes ordinary users" asks population studies to
+          show something they weren't built to see: one person, over years,
+          on the YouTube that existed before 2019. "Recommenders are
+          harmless" asks a three-month experiment, run inside a feed Meta
+          had already altered, to stand for an ordinary year. Both claims
+          spend confidence the studies did not bank.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The vivid version of this argument is an algorithm noticing what
+          holds attention and quietly walking someone toward something more
+          extreme. Pariser and Tufekci made that argument before anyone
+          checked it against real behavior, and the checks mostly didn't
+          confirm it. Across a national panel, a tracked cohort, and a
+          randomized feed swap, typical viewers didn't drift toward
+          extremes. The people who did watch extreme content mostly
+          brought their politics in with them, through a subscription or a
+          link from elsewhere. That doesn't make the algorithm harmless.
+          The tests ran on population averages, on a YouTube that had
+          already changed its recommender once, and, on Facebook, inside a
+          window the company had deliberately altered. A resentful
+          minority is still finding what it's looking for. The confident
+          version of each claim is still waiting on a study built to test
+          it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.pnas.org/doi/10.1073/pnas.2101967118"
+              >Hosseinmardi et al., "Examining the consumption of radical
+              content on YouTube"</a
+            >: the full panel study, with the six-category channel taxonomy
+            and the entry-point breakdown behind the numbers here.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.science.org/doi/10.1126/sciadv.adk2031"
+              >Chen et al., "Subscriptions and external links help drive
+              resentful users to alternative and extremist YouTube
+              channels"</a
+            >: the full study design, including the four-part definition of
+            a rabbit-hole event.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.ted.com/talks/eli_pariser_beware_online_filter_bubbles"
+              >TED · Eli Pariser, "Beware online 'filter bubbles'" (2011)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nytimes.com/2018/03/10/opinion/sunday/youtube-politics-radical.html"
+              >The New York Times · Zeynep Tufekci, "YouTube, the Great
+              Radicalizer" (2018)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.pnas.org/doi/10.1073/pnas.2101967118"
+              >PNAS · Hosseinmardi, Ghasemian, Clauset, Mobius, Rothschild,
+              Watts, "Examining the consumption of radical content on
+              YouTube" (2021)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.science.org/doi/10.1126/sciadv.adk2031"
+              >Science Advances · Chen, Nyhan, Reifler, Robertson, Wilson,
+              "Subscriptions and external links help drive resentful users
+              to alternative and extremist YouTube channels" (2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.science.org/doi/10.1126/science.aaa1160"
+              >Science · Bakshy, Messing, Adamic, "Exposure to ideologically
+              diverse news and opinion on Facebook" (2015)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.science.org/doi/10.1126/science.abp9364"
+              >Science · Guess et al., "How do social media feed algorithms
+              affect attitudes and behavior in an election campaign?"
+              (2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.science.org/content/article/does-social-media-polarize-voters-unprecedented-experiments-facebook-users-reveal"
+              >Science · news coverage of the 2020 Facebook and Instagram
+              election feed experiments (2023)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.cics.umass.edu/news/facebook-algorithm-curbs-election-misinformation"
+              >UMass Amherst · news release on Bagchi and Grabowicz's
+              reanalysis of the 2020 feed experiments</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.usatoday.com/story/opinion/2017/08/08/i-invested-early-google-and-facebook-now-they-terrify-me-roger-mcnamee-column/543755001/"
+              >USA Today · Roger McNamee, "I invested early in Google and
+              Facebook. Now they terrify me." (2017)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
