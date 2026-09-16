@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Millions of watermarked stock photos teach image generators to draw one of their own · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "watermarks-in-generated-images",
+        "template": "lesson",
+        "title": "Millions of watermarked stock photos teach image generators to draw one of their own",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-16",
+        "tags": ["diffusion-models", "training-data", "watermarks", "memorization", "stable-diffusion"],
+        "sources": 9,
+        "words": 2188,
+        "reading_minutes": 10,
+        "dek": "A diffusion model learns the regularities across billions of training photos, and a stock-photo mark common enough in that data becomes one of them, a mechanism distinct from the rarer case where a model reproduces one training photo almost whole.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">Millions of watermarked stock photos teach image generators to draw one of their own</h1>
+        <p class="nb-dekline">
+          A diffusion model learns the regularities across billions of training photos, and a stock-photo mark common enough in that data becomes one of them, a mechanism distinct from the rarer case where a model reproduces one training photo almost whole.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-09-16</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A generated photo comes back with a smeared, half-legible
+          watermark sitting in one corner, on an image nobody ever scanned
+          from a stock-photo site. People who use these tools often read it
+          as proof that one specific photo got copied in. This lesson traces
+          the mark back through the training data, the training objective,
+          and the two ways a diffusion model can relate to what it learned
+          from. By the end you can say which mechanism produced it, and
+          which claim about it a piece of evidence can and cannot support.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/image-generation.html">An image generator turns a field of static into your picture by removing the noise a little at a time</a>: the training and drawing steps this lesson builds on, taught in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/text-in-images.html">A generated image gets its letters wrong before the picture is ever drawn</a>: why generated text comes out garbled, a different question from why a watermark pattern is there at all.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A mark on a photo nobody watermarked</h2>
+        <p>
+          Ask an image generator for an ordinary photograph. Sometimes a
+          garbled, half-legible mark shows up across one corner of the frame,
+          pale text in a stock-photography font, smeared just enough that you
+          cannot quite read it, on an image that came from a text prompt, not
+          a scan of a real photo agency's archive. In a 2023 copyright
+          lawsuit against Stability AI, Getty
+          Images filed several such images as exhibits: a garden wedding
+          photo, a red-carpet gown, a synthetic-looking rugby scene. Each
+          carries a blurred, gettyimages-style mark in one corner, on
+          pictures Getty had no part in making. The complaint itself calls
+          them "distorted versions of Getty Images' watermark and other
+          watermarks."<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          That is a different question from why the letters in that smear
+          never spell a real word, which a
+          <a href="../the-mechanics/text-in-images.html">different lesson</a>
+          covers. This lesson is about the more basic mystery: why a
+          watermark-shaped pattern is on the image at all, when nothing
+          resembling copy-and-paste happens anywhere in the system that
+          draws it.
+        </p>
+      </section>
+
+      <section data-nb-section="training-data" id="training-data">
+        <h2>Billions of photos, and no clean count of how many carry a mark</h2>
+        <p>
+          Start with what these models actually train on. Stable Diffusion,
+          the model behind Getty's exhibits, trained on subsets of LAION-5B,
+          a dataset of 5.85 billion image-text pairs pulled from the
+          public web.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The English-language slice, LAION-2B-en, is 2.32 billion pairs on
+          its own, the largest single piece of Stable Diffusion's training
+          recipe. The model spent its first 237,000 training steps there,
+          before later stages moved to two smaller, more
+          curated subsets of the same dataset.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">5.85B</span
+            ><span class="nb-stat-l">LAION-5B image-text pairs</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">6.1%</span
+            ><span class="nb-stat-l">watermarked, English subset (est.)</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">3%</span
+            ><span class="nb-stat-l">flagged NSFW, whole dataset</span>
+          </div>
+        </div>
+        <p>
+          LAION-5B's own paper scores every image for two things: how likely
+          it is to be NSFW, and how likely it is to carry a watermark. Both
+          are probability scores, not a filter, and the paper gives a
+          headline NSFW figure, 3% of the dataset, but no equivalent
+          watermark number.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          That figure comes instead from LAION's own announcement blog: a
+          watermark proportion of 6.1% for LAION-2B-en, 5.6% for the
+          multilingual slice, and 4% for the slice whose language could not
+          be classified. The post measures this at a classifier threshold it
+          calls conservative, meaning the true share likely runs higher, not
+          lower.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          A separate assessment of data risk in large training sets cites the
+          same figure, still unrevised.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Stable Diffusion's own developers documented where a watermark
+          filter entered training, and where it did not.
+          The first two stages, 237,000 steps on LAION-2B-en and 194,000 more
+          on a higher-resolution subset, carry no watermark filter at all,
+          and every later checkpoint resumed from that unfiltered pair
+          rather than starting over.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Only the next subset was screened for it, at an estimated
+          probability under 0.5, looser than the 0.8 threshold behind
+          LAION's own conservative estimate above, and an estimate rather
+          than a checked label.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          LAION-5B's own datasheet also notes near-duplicate images make "a
+          many to one embedding" possible, and lists deduplication as future
+          work, not something done.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          That combination, a partial, permissive filter over an unfiltered
+          foundation with no deduplication, is the raw material ahead.
+        </p>
+      </section>
+
+      <section data-nb-section="distributional-learning" id="distributional-learning">
+        <h2>Learning the class of photo, mark included</h2>
+        <p>
+          A diffusion model is never told which pixels to reproduce. It is
+          trained on one repeated task: take a training image with random
+          noise mixed into it, predict the noise that was added, and
+          subtract that prediction out. Run that step backward, over and
+          over, starting from pure noise. That reverse process is generating
+          a picture: the same
+          <a href="../the-mechanics/image-generation.html">denoising loop</a>
+          an earlier lesson walks through in full. The paper
+          that introduced this architecture defines the training goal
+          plainly: a diffusion model is "a probabilistic model designed to
+          learn a data distribution p(x) by gradually denoising a normally
+          distributed variable." Its training loss has no step that targets
+          any one specific training example, only the distribution as a
+          whole.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          "Learn a data distribution" is the phrase worth sitting with. Say
+          a watermark shows up in roughly one in twenty of the training
+          photos in a class the model sees constantly, stock sports
+          photography for instance. That smear is then a statistical
+          regularity of that class of image, the same kind of regularity as
+          grass reading green. The model has no notion of "this specific
+          photo's copyright mark." It has only seen millions of examples
+          where a certain texture co-occurs with a certain kind of scene,
+          and learned to reproduce that co-occurrence along with everything
+          else about it. Ask for a generic sports photo and the mark can
+          come along, not because one photo got copied, but because the
+          mark is part of what "looks like a stock sports photo"
+          statistically means to the model. This part of the chain is
+          settled: it is the training objective the model's own architects
+          describe, not a disputed inference.
+        </p>
+      </section>
+
+      <section data-nb-section="memorization" id="memorization">
+        <h2>A second, rarer mechanism reproduces one photo almost whole</h2>
+        <p>
+          A diffusion model can also reproduce one training image nearly
+          intact, not a class of images but one photo, as researchers have
+          shown. A 2023 study attacked Stable Diffusion
+          v1.4 directly: 500 generations each for the 350,000
+          most-duplicated training captions, 175 million images in total,
+          each checked against the training set for a near-pixel-perfect
+          match. 94 cleared a strict distance threshold, and 13 more were
+          confirmed by manual inspection, 109 near-copies in total.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          The study is
+          explicit about what drives it: memorization
+          concentrated almost entirely on images duplicated at least 100
+          times somewhere in the training set. Duplication itself, not the
+          training objective alone, is what the authors call "a major
+          factor behind training data extraction."<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          Even at that level, the images involved were still roughly one in
+          a million of the full training set: the single most-repeated
+          sliver of the data, not typical behavior.
+          Deduplicating the training set helps, but the only measurement of
+          how much comes from a far smaller test. On CIFAR-10, removing
+          near-duplicate images cut the number of memorized outputs from
+          1,280 to 986, about a 23% relative drop, a result the researchers
+          themselves call "not a substantial drop." They never ran the
+          equivalent test on Stable Diffusion or any LAION-scale
+          dataset.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          Both mechanisms are real and distinct: one reproduces a pattern
+          learned across a whole class of images, the other reproduces one
+          image almost whole. What is still open is telling them apart for
+          any single output. The same researchers
+          name that directly, for the field generally. Whether large-scale
+          generative models work by producing novel output or by copying
+          and interpolating between individual training examples "remains
+          open," in their own words.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          On the watermark specifically, there is a further gap, and it is
+          not confined to one study. This memorization study never mentions
+          watermarks, and its breakdown of what got memorized (recognizable
+          people, products for sale, logos) has no watermark category.<sup
+          class="nb-cite"><a href="#s7">7</a></sup>
+          A second, independent study of that same reproduction, using an
+          entirely different detection method, does not mention watermarks
+          either. Its own examples are full images and objects, a sofa, a
+          Hokusai wave print, a celebrity portrait, never a mark alone.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="the-exhibit" id="the-exhibit">
+        <h2>What the lawsuit's own exhibit actually shows</h2>
+        <p>
+          That gap sits inside Getty Images' 2023 lawsuit against
+          Stability AI, filed in federal court in Delaware.<sup
+            class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+          One paragraph of the complaint cites exactly the memorization
+          research above to say that "independent researchers have observed
+          that Stable Diffusion sometimes memorizes and regenerates specific
+          images that were used to train the model." The very next paragraph
+          presents the complaint's central watermark exhibit.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Getty's own framing</span>
+          <blockquote>
+            In many cases, and as discussed further below, the output
+            delivered by Stability AI includes a modified version of a Getty
+            Images watermark, underscoring the clear link between the
+            copyrighted images that Stability AI copied without permission
+            and the output its model delivers.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+            <span class="nb-note-who"
+              >Getty Images v. Stability AI, complaint ¶52</span
+            >
+          </blockquote>
+        </div>
+        <p>
+          The paragraph captions a side-by-side pair as an original training
+          photo on the left and the model's output on the right. Look at the
+          two images directly, and the pairing does not hold up as a copy.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="watermarks-in-generated-images/asset-1.png"
+            alt="Two soccer photographs side by side, as printed in Getty's complaint. The left image is a real Getty stock photo of a Tottenham Hotspur player challenging a Southampton player, watermarked 'gettyimages / Andrew Powell' with a visible stock-photo ID number. The right image is a different scene: a Tottenham player wearing a fictitious red 'AA' chest crest challenges a Liverpool player, and carries a smeared, largely illegible mark in the same corner position and typeface family as a Getty watermark."
+          />
+          <figcaption>
+            Fig. 1 · Getty's own exhibit pairs two different photographs,
+            not a matched original and its copy.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Complaint ¶52, p. 18 (PageID #18)"
+                data-nb-note="Shows the two images share no content beyond a corner-positioned mark in a similar typeface family, not the same photo, players, or pose."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          The two photographs are not the same players, the same pose, or
+          even the same sponsor. The left shirt carries a real kit sponsor.
+          The right shirt's red crest reads "AA," which is not any real
+          sponsor's mark. What the two images actually share is a corner
+          position and a general typeface family for the distorted text,
+          nothing else. Read on its own, the exhibit is not evidence that
+          one specific photo got copied. It is better evidence for the
+          other mechanism in this lesson: a mark reproduced as a learned
+          regularity of an entire class of image, independent of any single
+          source photo. Getty's later exhibits make a more modest claim:
+          three further examples show only recurring watermark distortion,
+          none paired against a specific training photo.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          That framing sits more comfortably with distributional learning
+          than paragraph 52's matched-pair claim does. None of this settles
+          Getty's broader copyright claim, a separate legal question the
+          images alone cannot answer.
+        </p>
+        <p>
+          Zoom out, and the ghost watermark stops being a special case. The
+          training objective, the scale of the data, and a watermark filter
+          that only partly applied are enough to produce a watermark-shaped
+          pattern in generated output. Go one level deeper and there is
+          nothing left to find. The objective, the data, and how much of
+          that data was screened before training account for the whole
+          behavior. None of it is unique to one model or one company. Any
+          system trained on scraped web data inherits that data's
+          regularities, filtered or not, and a stock-photo watermark is only
+          the most visible one. Deduplication and watermark filtering can
+          reduce how often it surfaces, the way the CIFAR-10 result above
+          suggests, but neither removes it outright at the scale these
+          models train on.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Both mechanisms are real, and now you can tell them apart. A
+          watermark on an ordinary generated scene is almost always the
+          boring, settled explanation: a mark common enough in the training
+          data that the model folded it into what "this kind of photo"
+          statistically looks like, the same way it folded in grass being
+          green. The rarer case is a model reproducing one training photo
+          nearly whole, a different mechanism tied to images duplicated many
+          times over. Researchers say plainly that telling the
+          two apart for a single output is still unresolved. The lawsuit
+          exhibit that reads like a smoking gun for copying is, read
+          directly, much better evidence for the other mechanism. The
+          next time someone hands you a ghost watermark as proof that one
+          photo was stolen, check what the two images actually share before
+          you believe it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2301.13188">Extracting Training Data from Diffusion Models</a>: the full extraction study behind this lesson's memorization numbers, including the CIFAR-10 deduplication experiment.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://laion.ai/blog/laion-5b/">LAION-5B: A New Era of Open Large-Scale Multi-Modal Datasets</a>: the dataset's own announcement, with the watermark-proportion figures this lesson cites.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.courtlistener.com/docket/66788385/1/getty-images-us-inc-v-stability-ai-inc/"
+              >Getty Images (US), Inc. · Complaint, Getty Images v. Stability AI (D. Del.)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2210.08402"
+              >Schuhmann et al. · LAION-5B: An Open Large-Scale Dataset for Training Next Generation Image-Text Models</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://laion.ai/blog/laion-5b/"
+              >LAION · LAION-5B: A New Era of Open Large-Scale Multi-Modal Datasets</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2406.09548"
+              >Cooper · Between Randomness and Arbitrariness: Some Lessons for Reliable Machine Learning at Scale</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/CompVis/stable-diffusion/blob/main/Stable_Diffusion_v1_Model_Card.md"
+              >Rombach and Esser · Stable Diffusion v1 Model Card</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2112.10752"
+              >Rombach et al. · High-Resolution Image Synthesis with Latent Diffusion Models</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2301.13188"
+              >Carlini et al. · Extracting Training Data from Diffusion Models</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2212.03860"
+              >Somepalli et al. · Diffusion Art or Digital Forgery? Investigating Data Replication in Diffusion Models</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.courtlistener.com/docket/66788385/getty-images-us-inc-v-stability-ai-inc/"
+              >CourtListener/RECAP · Docket, Getty Images v. Stability AI, No. 1:23-cv-00135 (D. Del.)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
