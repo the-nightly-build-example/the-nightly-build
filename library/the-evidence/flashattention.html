@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FlashAttention does more arithmetic to move less data · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "flashattention",
+        "template": "lesson",
+        "title": "FlashAttention does more arithmetic to move less data",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-16",
+        "tags": [],
+        "sources": 7,
+        "words": 2189,
+        "reading_minutes": 10,
+        "dek": "Dao and coauthors' 2022 paper tiles the score matrix through a GPU's on-chip memory, cutting one training configuration's HBM traffic from 40.3GB to 4.4GB and its runtime from 41.7 to 7.3 milliseconds.",
+        "harness": "claude-code",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">FlashAttention does more arithmetic to move less data</h1>
+        <p class="nb-dekline">
+          Dao and coauthors' 2022 paper tiles the score matrix through a
+          GPU's on-chip memory, cutting one training configuration's HBM
+          traffic from 40.3GB to 4.4GB and its runtime from 41.7 to 7.3
+          milliseconds.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-09-16</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Context windows have grown by orders of magnitude, and the paper
+          usually credited for that gets misdescribed as an approximation, a
+          shortcut, a way of trimming the arithmetic. None of that happened.
+          FlashAttention runs the identical arithmetic a GPU always ran for
+          attention, bit for bit, and gets faster by moving a big table of
+          numbers less, not by skipping any of the multiplication. This
+          lesson works through what that table is and why a GPU keeps two
+          very different kinds of memory. Then it goes through what the 2022
+          paper and its two successors actually measured, including the
+          numbers a fast retelling tends to flatten into one.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">An attention head is a weighted average that computes its own weights</a>:
+            how one attention head turns a comparison between two tokens into
+            a number, the step this lesson builds on without re-explaining.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="attention-is-all-you-need.html">The paper credited with starting the LLM era never trained a language model</a>:
+            the architecture FlashAttention speeds up, including the GPT-2
+            model this lesson's benchmarks use.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>1,024 tokens make a table of 1,048,576 scores</h2>
+        <p>
+          "FlashAttention" comes from a 2022 paper by Tri Dao, Daniel Y. Fu,
+          Stefano Ermon, Atri Rudra, and Christopher Ré, "FlashAttention:
+          Fast and Memory-Efficient Exact Attention with IO-Awareness,"
+          presented at NeurIPS that year.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          It rewrites how attention runs on a GPU, without changing what
+          attention computes.
+        </p>
+        <p>
+          Every attention step compares each token in a sequence with every
+          other token and turns each comparison into a score. How one
+          attention head turns a comparison into a number is its own
+          subject, already taught in
+          <a href="../the-mechanics/attention.html">the mechanics of an attention head</a>.
+          What matters here is the shape of the result: for a sequence of N
+          tokens, comparing every token to every other one produces a score
+          for every pair, an N-by-N table.
+        </p>
+        <p>
+          The paper's own worked example uses a sequence of 1,024 tokens with
+          64-dimension attention, the size GPT-2 trains on.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§2.2, p.3">1</a></sup
+          >
+          A table of scores for one head over one sequence at that length
+          holds 1,024 times 1,024 entries: 1,048,576 of them. Stored in the
+          16-bit format the paper trains in, that's about 2.1 megabytes for
+          a single head on a single sequence. That byte figure is arithmetic
+          on the paper's own dimensions, not a number it states directly.
+          Multiply it by dozens of heads and a batch of sequences, and the
+          table standard attention builds and discards at every layer gets
+          large fast. The paper's argument doesn't start with that table's
+          size, though. It starts with where the table has to live while
+          it's being built.
+        </p>
+      </section>
+
+      <section data-nb-section="fast-tier-slow-tier" id="fast-tier-slow-tier">
+        <h2>One A100 has about 20MB of on-chip memory and 40 to 80GB of HBM</h2>
+        <p>
+          A GPU keeps its numbers in two very different kinds of memory. One
+          is on-chip SRAM: small, built directly into each processing core,
+          and fast to read and write. The other is HBM, high-bandwidth
+          memory: much larger, sitting off to the side of the compute cores,
+          and much slower to reach. The paper calls a computation
+          "memory-bound" when its runtime is set by moving data between
+          these two tiers rather than by the arithmetic itself. That's
+          exactly what it argues was happening to standard attention.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§2.1, &quot;Hardware Performance,&quot; p.3">1</a></sup
+          >
+        </p>
+        <p>
+          The paper gives both tiers' sizes and speeds together. Each of an
+          A100's 108 streaming multiprocessors carries 192KB of on-chip
+          SRAM, "bandwidth estimated around 19TB/s." The whole GPU carries
+          40-80GB of HBM, "with bandwidth 1.5-2.0TB/s."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§2.1, p.3">1</a></sup
+          >
+          Most of that checks out against NVIDIA's own documents. The 192KB
+          figure and the 108 active processors both match NVIDIA's
+          architecture whitepaper.<sup
+            class="nb-cite"
+            ><a href="#s2" data-nb-locator="p.15, p.19">2</a></sup
+          >
+          Multiply 192KB by 108 processors and the chip carries about 20MB
+          of on-chip memory in total, matching what the paper's own diagram
+          of the two tiers gives for that number.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Fig. 1">1</a></sup
+          >
+          NVIDIA's product datasheet confirms the HBM side too: 1,555
+          gigabytes per second on the 40GB card the paper benchmarks on, up
+          to 2,039 on the 80GB version, inside the paper's own rounded
+          range.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="p.1, SKU table">3</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">~20MB</span
+            ><span class="nb-stat-l">On-chip memory, total</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">40–80GB</span
+            ><span class="nb-stat-l">HBM capacity</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">~2,000×</span
+            ><span class="nb-stat-l">how much larger HBM is</span>
+          </div>
+        </div>
+        <p>
+          The one figure that doesn't check out the same way is the 19
+          terabytes per second. The paper itself calls it "estimated" and
+          credits two outside microbenchmarking papers, not NVIDIA.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§2.1, p.3">1</a></sup
+          >
+          NVIDIA's architecture whitepaper confirms the capacity numbers
+          above. It never states an on-chip bandwidth figure at all.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Its only terabyte-per-second figures describe the link between
+          GPUs, not the memory inside one. The size gap between the two
+          tiers is a vendor spec on both ends. The speed gap rests on a
+          vendor spec for one side and an outside estimate for the other.
+        </p>
+      </section>
+
+      <section data-nb-section="tiling-and-recompute" id="tiling-and-recompute">
+        <h2>FlashAttention never writes the full score table to HBM</h2>
+        <p>
+          FlashAttention's answer to that gap is not to skip any of the
+          comparison. Algorithm 1 in the paper returns exactly the output
+          standard attention does, softmax(QK<sup>T</sup>)V, "with no
+          approximation."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Abstract">1</a></sup
+          >
+          What changes is where the score table lives while it's being
+          built. The paper describes that change as four moves, repeated for
+          each block of the sequence in turn:
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>Load one tile</h3>
+            <p>
+              Pull one block of the key and value table into on-chip
+              memory, alongside the block of queries already there.<sup
+                class="nb-cite"
+                ><a href="#s1">1</a></sup
+              >
+            </p>
+          </li>
+          <li>
+            <h3>Score inside SRAM</h3>
+            <p>
+              Compute that block's scores entirely inside on-chip memory. The
+              full N-by-N table these blocks add up to is never written out
+              to HBM at all.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Keep a running total</h3>
+            <p>
+              Update a running softmax sum and a running weighted output as
+              each new block arrives. That keeps the normalization across
+              the whole row correct without ever holding the whole row in
+              memory at once.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Recompute, don't store</h3>
+            <p>
+              In the backward pass, rebuild each block's scores from the same
+              tiles instead of reading them back from HBM: extra arithmetic,
+              traded for data the chip never has to move.<sup
+                class="nb-cite"
+                ><a href="#s1" data-nb-locator="§3.1, Theorem 1">1</a></sup
+              >
+            </p>
+          </li>
+        </ol>
+        <p>
+          That fourth step is why the trade of more arithmetic for less data
+          is real, not a turn of phrase. The paper benchmarks a GPT-2 medium
+          configuration: sequence length 1,024, 64-dimension heads, 16
+          heads, batch size 64, one A100. There, standard attention runs
+          66.6 billion floating-point operations. FlashAttention runs 75.2
+          billion, about 13% more, because of that recomputation.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Fig. 2, left">1</a></sup
+          >
+          What FlashAttention removes is data movement, not arithmetic: 40.3
+          gigabytes of HBM reads and writes for standard attention on that
+          same configuration, against 4.4 gigabytes for FlashAttention.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Fig. 2, left">1</a></sup
+          >
+          The runtime for that configuration drops from 41.7 milliseconds to
+          7.3, a 5.7-times speedup, even though the chip does more math to
+          get there.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Fig. 2, left">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="four-speed-numbers" id="four-speed-numbers">
+        <h2>The paper reports four different speed numbers, not one</h2>
+        <p>
+          Runtime on one GPT-2 configuration is one number, not the number.
+          The paper's speed claims come from four benchmarks, measuring
+          different things against different baselines, and a retelling
+          that averages them or repeats the largest one is combining figures
+          the paper never combined.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Four numbers the paper calls "faster," each scoped to its own
+            benchmark and baseline.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Measured</th>
+              <th class="txt">Configuration</th>
+              <th>Before → after</th>
+              <th>Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Fwd+bwd</span></td>
+              <td class="txt">GPT-2 medium, one A100, seq. 1,024</td>
+              <td>41.7ms → 7.3ms</td>
+              <td>5.7×</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Fwd only</span></td>
+              <td class="txt">
+                vs. PyTorch's standard attention, seq. 512, with masking
+              </td>
+              <td>0.78ms → 0.21ms</td>
+              <td>3.7×</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">BERT-large</span></td>
+              <td class="txt">
+                End-to-end training, 8×A100, to 72.0% accuracy
+              </td>
+              <td>20.0 → 17.4 min</td>
+              <td>15% faster</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GPT-2 medium</span></td>
+              <td class="txt">
+                End-to-end training vs. HuggingFace, 8×A100
+              </td>
+              <td>21.0 → 6.9 days</td>
+              <td>3.0×</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The paper's own running text undersells one of these. Its
+          introduction claims "up to 3x" against HuggingFace's
+          implementation. Table 2 actually shows GPT-2 small finishing in
+          2.7 days against HuggingFace's 9.5, a 3.5-times difference, at the
+          identical 18.2 perplexity.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 2, p.8">1</a></sup
+          >
+          Against Megatron-LM, the gap shrinks to roughly 1.7 to 1.8
+          times.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 2, p.8">1</a></sup
+          >
+          A "faster than Megatron-LM" number and a "faster than HuggingFace"
+          number describe the same model against two different baselines,
+          not one shared multiple.
+        </p>
+        <p>
+          The paper's second claim is about memory, not speed. Standard
+          attention's memory footprint grows with the square of the sequence
+          length, because the whole score table has to exist somewhere at
+          once. FlashAttention's grows in a straight line, because no tile
+          outlives the running total it feeds.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.2, Theorem 2">1</a></sup
+          >
+          Appendix E.6 gives the full series: FlashAttention's memory use
+          runs from 22 megabytes at a sequence length of 128 up to 13,376
+          megabytes at 65,536. Standard attention runs out of GPU memory
+          entirely past a sequence length of 4,096, on the same 40GB
+          card.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Appendix E.6, Table 21">1</a></sup
+          >
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="flashattention/chart-1.png"
+            alt="Log-log line chart of memory use in megabytes against sequence length in tokens. FlashAttention's line runs from 128 to 65,536 tokens in a straight line. Standard attention's line is steeper and stops at 4,096 tokens."
+          />
+          <figcaption>
+            Fig. 1 · Memory use by sequence length on one 40GB A100, forward
+            and backward pass combined. Both axes are log-scaled; standard
+            attention's line ends at 4,096 tokens because the benchmark ran
+            out of memory beyond it.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Appendix E.6, Table 21"
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          That different memory curve is what let the paper run sequences no
+          dense-attention baseline had reached before. On the Long Range
+          Arena's Path-X task, a sequence length of 16,384, FlashAttention
+          was the first Transformer to score better than chance: 61.4%
+          accuracy, against a coin flip's 50%.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§4.2, Table 6">1</a></sup
+          >
+          More of the document fit in memory at once, so the model could
+          attend to more of it.
+        </p>
+      </section>
+
+      <section data-nb-section="still-exact" id="still-exact">
+        <h2>FlashAttention-2 and FlashAttention-3 still return the same answer</h2>
+        <p>
+          The algorithm moved into standard software directly. PyTorch 2.0
+          added a native fused-attention operation,
+          <code>torch.nn.functional.scaled_dot_product_attention</code>,
+          that dispatches to a FlashAttention kernel by input shape and
+          hardware.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          PyTorch's own benchmarks report 5-20% faster inference and 10-70%
+          faster training, with the largest gains in small-head-dimension
+          configurations: up to 3 times the speed, up to 40 times less
+          memory.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The same tile-size tradeoff shows up again: speedup falls from
+          3.4 times at a head dimension of 8 to 1.01 times at 128. A larger
+          head dimension needs more, smaller tiles to fit the same on-chip
+          memory.<sup class="nb-cite"
+            ><a
+              href="#s4"
+              data-nb-locator="&quot;Head dimension influence on speedups, memory savings&quot;"
+              >4</a
+            ></sup
+          >
+        </p>
+        <p>
+          The algorithm itself also improved. FlashAttention still reached
+          only 25-40% of an A100's peak matrix-multiply throughput, Dao
+          found in a 2023 follow-up, because of how work was split across
+          the GPU's thread blocks and warps.<sup class="nb-cite"
+            ><a href="#s5" data-nb-locator="§1">5</a></sup
+          >
+          FlashAttention-2 restructures that partitioning and reaches 50-73%
+          of peak, roughly twice v1's speed. It still returns "the correct
+          output O=softmax(QK^T)V (with no approximation)."<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          A year later, FlashAttention-3 targeted a newer chip, the H100,
+          where plain FlashAttention-2 reaches only about 35% utilization:
+          it doesn't use the H100's asynchronous tensor cores and
+          data-movement engine.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          FlashAttention-3 overlaps computation with data movement and adds
+          an 8-bit floating-point mode, reaching 1.5 to 2.0 times
+          FlashAttention-2's speed on H100.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          That 8-bit mode is the one place this algorithm does introduce
+          error, and it's a different kind. Eight-bit numbers are coarser
+          than 16-bit ones, so rounding to them loses precision no tiling
+          scheme can recover. FlashAttention-3 reports that loss at 2.6
+          times lower than a naive 8-bit baseline, not zero.<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          That's a statement about numerical precision, not about whether
+          the algorithm skips any of the comparison.
+        </p>
+        <p>
+          Hugging Face's model library now lists both versions by name: a
+          model can be loaded with
+          <code>attn_implementation="flash_attention_2"</code> or
+          <code>attn_implementation="flash_attention_3"</code>, next to
+          PyTorch's own built-in option.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          The name invites a guess about how that speed is won: that
+          FlashAttention skips some of the comparison, the way an index
+          skips rows it can already rule out. The paper's own numbers rule
+          that guess out, and its successors haven't changed the answer.
+          Every multiplication standard attention performs, FlashAttention
+          performs too, plus the extra ones its backward pass recomputes.
+          What moved, on the GPT-2 configuration described earlier, was the
+          40.3 gigabytes of HBM traffic, cut to 4.4, not the 66.6 billion
+          floating-point operations, which rose to 75.2.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          FlashAttention doesn't skip any of attention's arithmetic. It
+          tiles the score table into blocks small enough for a GPU's
+          on-chip memory, keeps a running softmax as each block arrives, and
+          recomputes rather than stores in the backward pass. That's why
+          the GPT-2 configuration this lesson opened with runs more
+          floating-point operations, 75.2 billion against 66.6, and still
+          finishes 5.7 times faster. The extra arithmetic buys a much
+          smaller trip through HBM: 4.4 gigabytes instead of 40.3. Two more
+          papers later, FlashAttention-2 and FlashAttention-3 still return
+          that same exact result. Only the parallelism, the chip, and, in
+          FlashAttention-3's 8-bit mode, the precision changed. Whatever a
+          model's context window can now hold, the reason traces back to a
+          memory tier a few hundred kilobytes wide, not to attention doing
+          less work.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2307.08691">FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning</a>:
+            the 2023 paper that raised A100 utilization from 25-40% of peak
+            to 50-73%.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://huggingface.co/docs/transformers/attention_interface">Attention backends</a>:
+            Hugging Face's own documentation for loading a model with
+            FlashAttention-2 or FlashAttention-3 by name.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2205.14135"
+              >arXiv · Dao, Fu, Ermon, Rudra, and Ré, "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" (2022)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://images.nvidia.com/aem-dam/en-zz/Solutions/data-center/nvidia-ampere-architecture-whitepaper.pdf"
+              >NVIDIA · "NVIDIA A100 Tensor Core GPU Architecture" (whitepaper)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/a100/pdf/nvidia-a100-datasheet-us-nvidia-1758950-r4-web.pdf"
+              >NVIDIA · "NVIDIA A100 Tensor Core GPU" (datasheet)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://pytorch.org/blog/out-of-the-box-acceleration/"
+              >PyTorch Blog · "Out of the Box Acceleration and Memory Savings of Hugging Face Decoder Models with PyTorch 2.0"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.08691"
+              >arXiv · Dao, "FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning" (2023)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2407.08608"
+              >arXiv · Shah, Bikshandi, Zhang, Thakkar, Ramani, and Dao, "FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision" (2024)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/docs/transformers/attention_interface"
+              >Hugging Face · "Attention backends"</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
