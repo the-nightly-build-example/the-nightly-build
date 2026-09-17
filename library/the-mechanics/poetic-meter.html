@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A chatbot rhymes a poem but can't count its syllables · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "poetic-meter",
+        "template": "lesson",
+        "title": "A chatbot rhymes a poem but can't count its syllables",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-17",
+        "tags": ["poetry", "meter", "syllables", "tokenization", "phonology", "rhyme"],
+        "sources": 8,
+        "words": 1846,
+        "reading_minutes": 8,
+        "dek": "Its tokenizer hands it frequency-chosen chunks of text, never the syllables or stress a poet counts, so the rhymes survive on surface patterns while the meter falls apart.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A chatbot rhymes a poem but can't count its syllables</h1>
+        <p class="nb-dekline">
+          Its tokenizer hands it frequency-chosen chunks of text, never the syllables or stress a poet counts, so the rhymes survive on surface patterns while the meter falls apart.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-17</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Ask any chatbot for a poem in a fixed form, a haiku or a limerick or a
+          sonnet, and you will likely watch it rhyme with ease and then miscount
+          the syllables. It is one of the most reproducible failures in everyday
+          use, and it looks strange: a system that can write working code cannot
+          reliably count to five across a line it just wrote itself. By the end
+          you will be able to say which part of the model is responsible, why the
+          rhymes come out so much better than the beat, and where even the people
+          who build these systems do not yet have the answer.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../transformers-first-principles/tokenization.html">A transformer never reads the letters in strawberry</a>:
+            what a token is and how the vocabulary gets built by counting letter
+            pairs. This lesson starts where that one ends.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/counting-letters.html">A model can spell strawberry and still miscount its letters</a>:
+            the same root cause on the spelling side, tokens hiding the letters
+            inside a word. Here the hidden thing is sound, not spelling.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html">The instant a model writes a token, it becomes fact</a>:
+            how a model can settle on a word ahead of time and write toward it,
+            the mechanism behind the rhyme half of this failure.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Ask for a haiku, then count the syllables</h2>
+        <p>
+          A chatbot asked for a haiku hands back three tidy lines about cherry
+          blossoms. Count the syllables and the form falls apart: often five,
+          then eight, then six, where a haiku wants five, seven, five. Ask for a
+          limerick and the rhymes usually land while the beat stumbles through
+          the middle.
+        </p>
+        <p>
+          The gap is measured, not just felt. A 2024 benchmark, PhonologyBench,
+          put text-only models through three tasks: counting the syllables in a
+          sentence, producing a word that rhymes with a given one, and turning
+          spelling into pronunciation. On syllable counting, people scored 90%
+          and the models trailed them by 45 points. On rhyming, the same models
+          trailed by only 17.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Same systems, same input, and the task that turns on counting is the
+          one they are worst at.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">45 pts</span
+            ><span class="nb-stat-l">behind people at counting syllables</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">17 pts</span
+            ><span class="nb-stat-l">behind people at rhyming</span>
+          </div>
+        </div>
+        <p>
+          To see why counting is the hard part, follow a line of verse backward
+          from the page into the model, one step at a time, and stop at the step
+          below which nothing changes the answer.
+        </p>
+      </section>
+
+      <section data-nb-section="input" id="input">
+        <h2>The model never receives a syllable</h2>
+        <p>
+          Start with what the model is handed. A line of verse does not reach it
+          as letters, and it does not reach it as sound. A step called the
+          <a href="../transformers-first-principles/tokenization.html">tokenizer</a>
+          first chops the text into tokens, the sub-word chunks a model actually
+          reads, each one an entry in a fixed vocabulary. The chunks are chosen
+          for a single reason: frequency. The method most models use, byte-pair
+          encoding, begins with single characters and repeatedly merges whichever
+          adjacent pair occurs most often across the training text, stopping when
+          the vocabulary reaches a set size.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          A common word like <code>rabbit</code> survives as one token; a rare one
+          breaks into several pieces. Nothing in that procedure ever consults how
+          a word sounds.
+        </p>
+        <p>
+          So the two things a poet counts are simply not in the input. A syllable
+          is a unit of sound, one beat of a spoken word. Stress is which syllable
+          you lean on when you say it. The word <code>record</code> is really two
+          words: stressed on the first syllable, REC-ord, it is a noun; stressed
+          on the second, re-CORD, it is a verb. The seven letters are identical.
+          Only the beat differs, and the beat is nowhere on the page. A person
+          hears it. The model receives <code>record</code> as a token or two, with
+          no channel that carries the beat at all.
+        </p>
+        <p>
+          Meter is built from exactly those two things. A haiku counts syllables,
+          five then seven then five. Iambic pentameter counts them too, ten to a
+          line, and adds a stress pattern: an unstressed beat followed by a
+          stressed one, five times over. To hold any of it a writer has to count
+          a kind of sound the model was never given.
+        </p>
+      </section>
+
+      <section data-nb-section="spelling" id="spelling">
+        <h2>Could the spelling fill the gap?</h2>
+        <p>
+          One reasonable hope is that the model reconstructs the sound from the
+          spelling. For English, that is a poor bet, and the reason is a property
+          of the language itself. English has a deep orthography, meaning its
+          spelling maps only loosely onto its sounds. The pair <code>ea</code>
+          says one thing in <code>beat</code> and another in <code>head</code>,
+          with no mark on the page to tell them apart.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The letters underdetermine the sound.
+        </p>
+        <p>
+          The size of the bet is measurable. PhonologyBench also scored
+          grapheme-to-phoneme conversion, the job of turning spelling into a
+          phonetic transcription. A dedicated tool built for nothing else topped
+          out near 62% on common English words, and the best model came in under
+          53%.<sup class="nb-cite"><a href="#s1">1</a></sup> When the
+          purpose-built converter misses more than a third of the time, a general
+          chatbot inferring sound from letters on the side has little firm ground
+          to stand on.
+        </p>
+      </section>
+
+      <section data-nb-section="rhyme" id="rhyme">
+        <h2>Why the rhymes land and the meter limps</h2>
+        <p>
+          If sound is missing, why does rhyme come out so much better than meter?
+          For two reasons, and neither one restores the missing sense of sound.
+        </p>
+        <p>
+          The first is that rhyme is thick in the training text. Human poems
+          rhyme most of the time: across large collections of human verse, fewer
+          than about 15% of four-line stanzas use no rhyme at
+          all.<sup class="nb-cite"><a href="#s4">4</a></sup> A model trained to
+          predict the next token has seen <code>flame</code> close lines that end
+          in <code>name</code> and <code>same</code> countless times. It can
+          reproduce that surface pattern without knowing what any of the words
+          sound like, the way it can finish a familiar phrase it has never heard
+          aloud.
+        </p>
+        <p>
+          The second is a head start the model gives itself on rhyme. Interpretability
+          work that traced a model composing a rhyming couplet found it settling
+          on the final rhyme word before it wrote the line, then bending the words
+          in between toward that ending; suppressing the chosen word made the model
+          pick a different one and rewrite the whole line to reach
+          it.<sup class="nb-cite"><a href="#s5">5</a></sup> That is the
+          <a href="../the-mechanics/autoregressive-generation.html">forward planning</a>
+          an earlier lesson covers, and the result surprised the researchers, who
+          had assumed the model chose one word at a time.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Meter gets no equivalent. There is no single syllable-count the model
+          can fix on at the line break and build the line toward.
+        </p>
+        <p>
+          None of this makes rhyme reliable. On PhonologyBench, the strongest
+          model rhymed common words about 69% of the time but rare words only
+          46%, where people managed 86% and 60%.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Rhyme success tracks how common a word is, which is what a system leaning
+          on how often word-endings co-occur would produce, rather than one hearing
+          the endings. Rhyme is better than meter. It is not solved.
+        </p>
+      </section>
+
+      <section data-nb-section="floor" id="floor">
+        <h2>The floor beneath the failure</h2>
+        <p>
+          Keep going down and the steps run out. The part of the model that writes
+          the poem has no syllable counter and no stress map to consult. Nothing
+          in the path from text to output was built to hold a beat, so when a form
+          demands an exact count the model approximates from surface statistics
+          and often misses. That much is settled: tokens carry no direct syllable
+          or stress information, and on the tasks that need it, the models
+          measurably fail.
+        </p>
+        <p>
+          Two questions sit above that floor, and both are genuinely open. The
+          first is whether the sound is truly absent or merely unused. Recent
+          probing work points to unused. A simple classifier reading a single-token
+          word's internal representation can recover which phonemes the word
+          contains about 96% of the time, against 42% for a random-embedding
+          control, and
+          nudging that representation along a learned "vowel" direction changes
+          which words the model rhymes.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Some phonetic structure is latently present in what the model learned. It
+          is just not reliably deployed for exact counting.
+        </p>
+        <p>
+          The second open question is why some models scan so much better than
+          others. On the same syllable-counting test, with the same text-only
+          input, one strong model reached 55% while another sat at 23% and a third
+          at 20%.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Counting syllables on PhonologyBench: people against three text-only
+            models, scored on the same 1,000 sentences.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Reader</th>
+              <th>Syllable accuracy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Human</span></td>
+              <td>90.0%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Claude 3 Sonnet</span></td>
+              <td>55.3%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GPT-4</span></td>
+              <td>23.3%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GPT-3.5 Turbo</span></td>
+              <td>19.6%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          That is a spread of more than 30 points between two capable closed
+          models on identical input, and none of the sources explains it. One clue
+          does sharpen the picture. Give a model finer-grained input and the
+          numbers move: feeding characters instead of whole-word tokens raises
+          rhyming and syllable scores, and inserting character-level delimiters
+          lifted one model's rhyme-awareness from 66% to 77%.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The structure is recoverable when the tokenization stops hiding it,
+          which points at the tokenizer, not the text medium, as the bottleneck.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The poem rhymes and will not scan for one reason: the model never
+          receives the sound of the words. Its tokenizer hands it frequency-chosen
+          chunks of text, not syllables and not stress, and meter is built from
+          exactly the two things the input leaves out. Rhyme survives anyway,
+          because it is thick in the training text and because the model can fix a
+          rhyme word at the line break and write toward it. Counting has no such
+          shortcut, so it fails. What stays unsettled is how much sound is buried
+          in what the model learned, and why some models scan far better than
+          others on the very same input. So the next time a limerick rhymes but
+          limps, read the two together: they are one fact seen twice, a model that
+          reads a poem by frequency and never by sound.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2404.02456">PhonologyBench</a>:
+            the benchmark behind the syllable, rhyme, and spelling-to-sound
+            numbers here, with the full per-model tables.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2508.02527">I Have No Mouth, and I Must Rhyme</a>:
+            the probing study that recovers phonemes from a model's token
+            representations and steers its rhymes by hand.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://transformer-circuits.pub/2025/attribution-graphs/biology.html">On the Biology of a Large Language Model</a>:
+            Anthropic's interpretability report, whose "Planning in Poems"
+            section shows the rhyme word chosen ahead of the line.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.02456"
+              >arXiv · PhonologyBench: Evaluating Phonological Skills of Large Language Models</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/P16-1162/"
+              >ACL 2016 · Neural Machine Translation of Rare Words with Subword Units</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://en.wikipedia.org/wiki/Orthographic_depth"
+              >Wikipedia · Orthographic depth</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.15267"
+              >arXiv · Evaluating Diversity in Automatic Poetry Generation</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://transformer-circuits.pub/2025/attribution-graphs/biology.html"
+              >Anthropic · On the Biology of a Large Language Model, "Planning in Poems"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.technologyreview.com/2025/03/27/1113916/anthropic-can-now-track-the-bizarre-inner-workings-of-a-large-language-model"
+              >MIT Technology Review · Anthropic can now track the bizarre inner workings of a large language model</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2508.02527"
+              >arXiv · I Have No Mouth, and I Must Rhyme: Uncovering Internal Phonetic Representations in LLaMA 3.2</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2604.17105"
+              >arXiv · How Tokenization Limits Phonological Knowledge Representation in Language Models</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
