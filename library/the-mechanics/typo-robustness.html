@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A typo still breaks into pieces the model has already learned · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "typo-robustness",
+        "template": "lesson",
+        "title": "A typo still breaks into pieces the model has already learned",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-18",
+        "tags": ["tokenization", "typos", "robustness"],
+        "sources": 11,
+        "words": 2199,
+        "reading_minutes": 10,
+        "dek": "Subword tokenizers split a misspelling into fragments that already carried meaning from training, and the same flexibility gives a deliberate attacker a way in.",
+        "harness": "claude-code-routine",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A typo still breaks into pieces the model has already learned</h1>
+        <p class="nb-dekline">
+          Subword tokenizers split a misspelling into fragments that already
+          carried meaning from training, and the same flexibility gives a
+          deliberate attacker a way in.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-09-18</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every chatbot conversation is full of them: a dropped letter, two
+          letters swapped, a word typed the way it sounds instead of the way
+          it's spelled. The reply comes back as if none of it happened.
+          That's stranger than it looks, because nothing in a language model
+          corrects your spelling before reading it: no spell-checker under
+          your prompt, no dictionary lookup, no stage built to notice a word
+          is wrong. By the end of this lesson you'll know what happens
+          instead: a fixed, frequency-learned way of cutting text into
+          pieces, and where that same flexibility stops being a safety net
+          and starts being something an attacker can use.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/glitch-tokens.html">The token a model can't repeat back</a>: the inverse failure, a token that reached the vocabulary but never reached the model's training.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/word-embeddings.html">A transformer redraws a word's vector for every sentence it appears in</a>: the vector mechanism this lesson leans on for why a token's pieces already mean something.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Nothing in the pipeline checks your spelling</h2>
+        <p>
+          A message that reads "i dont no if this is neccessary" gets
+          answered by a chatbot as though every word in it were spelled
+          correctly. The easy explanation is that something quietly fixes the
+          spelling before the model sees it, the way a word processor
+          underlines a typo and offers the right one. That explanation is
+          wrong, and no source says so directly. A complete description of
+          the pipeline simply leaves the correction step out.
+        </p>
+        <p>
+          The paper that introduced the transformer architecture behind GPT
+          models lays out every stage between raw tokens and a predicted next
+          word. Each token is embedded, gains a signal for its position,
+          passes through repeated blocks of self-attention and feed-forward
+          transformation, and is projected through one linear layer and a
+          softmax into a probability over the entire vocabulary.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 3, 3.4">1</a></sup
+          >
+          Turning text into tokens, the step before any of that, is described
+          in OpenAI's GPT-2 paper as a fixed merging procedure applied to raw
+          bytes. The paper treats avoiding "lossy pre-processing" as a stated
+          design goal, not a step it adds.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 2.2, 3.1">2</a></sup
+          >
+          There is no spelling stage: the pipeline has tokenizing,
+          embedding, attention, and next-token prediction, and nothing else.
+        </p>
+      </section>
+
+      <section data-nb-section="tokenization" id="tokenization">
+        <h2>A misspelling breaks into more, smaller tokens</h2>
+        <p>
+          Before any of those stages run, the raw text is cut into tokens:
+          chunks that can be a whole common word or as short as a single
+          character, chosen by an algorithm called byte-pair encoding, or
+          BPE. BPE began as a text-compression algorithm and was later
+          adapted for exactly this kind of tokenization.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          It learns its chunks once, from a large body of training text,
+          before the model itself ever trains. It counts every pair of
+          adjacent symbols in that text, merges the single most frequent pair
+          into a new symbol, and repeats the merge a fixed number of
+          times.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Sec. 3.2">4</a></sup
+          >
+          Whatever symbols survive become the fixed vocabulary. New text is
+          split into characters, then rebuilt by replaying those merges into
+          the largest known chunks.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          A rare or misspelled word that never appeared whole in training
+          simply comes out as more, smaller pieces instead of one piece.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          GPT-2 and its successors run that merging procedure over raw bytes
+          rather than characters, so the starting alphabet is only 256
+          symbols instead of the 130,000-plus Unicode would need.<sup
+            class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 2.2">2</a></sup
+          >
+          Any string can always be represented; the worst case is a word
+          breaking all the way down to individual bytes.<sup
+            class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          A live run of tiktoken, OpenAI's own tokenizer, using the
+          <code>cl100k_base</code> vocabulary that backs GPT-3.5-turbo and
+          GPT-4,<sup class="nb-cite"><a href="#s5">5</a></sup> shows exactly
+          this split. "Necessary" comes out as a single token. "Neccessary"
+          comes out as three: "ne", "ccess", and "ary".<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          The same pattern holds across other ordinary misspellings:
+        </p>
+        <table class="nb-table">
+          <caption>
+            Correct and misspelled token counts, cl100k_base encoding, tiktoken v0.14.0.<sup
+              class="nb-cite"
+              ><a href="#s6">6</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Word</th>
+              <th>Tokens</th>
+              <th class="txt">Pieces</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">necessary</span></td>
+              <td>1</td>
+              <td class="txt">necessary</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">neccessary</span></td>
+              <td>3</td>
+              <td class="txt">ne · ccess · ary</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">beautiful</span></td>
+              <td>1</td>
+              <td class="txt">beautiful</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">beautifull</span></td>
+              <td>4</td>
+              <td class="txt">be · aut · if · ull</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">definitely</span></td>
+              <td>2</td>
+              <td class="txt">def · initely</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">definately</span></td>
+              <td>3</td>
+              <td class="txt">def · in · ately</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The fallback goes all the way to raw bytes when nothing else
+          matches: an emoji not covered by any learned merge splits into the
+          UTF-8 bytes that encode it, three tokens for one emoji, nothing
+          dropped.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          A tokenizer built this way never has an unrecognized word to
+          substitute or correct, only bytes to fall back on.
+        </p>
+        <p>
+          That same subword mechanism runs the opposite way when the
+          vocabulary itself misfires.
+          <a href="../the-mechanics/glitch-tokens.html"
+            >The token a model can't repeat back</a
+          >
+          describes strings that earned their own token during tokenizer
+          training but almost never appeared during the model's training, so
+          that token's meaning never formed. That is the inverse of a typo:
+          one whole token with no learned meaning, instead of a misspelled
+          word broken into pieces that already mean something.
+        </p>
+      </section>
+
+      <section data-nb-section="common-pieces" id="common-pieces">
+        <h2>Common pieces already carry the meaning</h2>
+        <p>
+          Once split into tokens, each piece enters the model as a vector: a
+          long list of numbers learned during training. A transformer
+          <a href="../the-mechanics/word-embeddings.html"
+            >redraws that vector for the sentence a token is actually sitting
+            in</a
+          >, but the vector it starts from already reflects everywhere that
+          token showed up in training, whatever word it was part of.
+        </p>
+        <p>
+          Nothing in that pipeline defends against typos on purpose, either.
+          Researchers building subword translation systems have said as much
+          about their own work: rather than building in a defense, "we
+          instead hope that the relevant noise will occur in the training
+          data."<sup class="nb-cite"
+            ><a href="#s7" data-nb-locator="Sec. 1">7</a></sup
+          >
+          Whatever tolerance for a misspelling exists has to come from what
+          byte-pair encoding already does to ordinary text, not from a
+          designed correction step.
+        </p>
+        <p>
+          That points to the real reason the pieces still mean something.
+          BPE's merge rule only ever promotes the single most frequent
+          symbol pair in the training text, repeated until its merge budget
+          runs out.<sup class="nb-cite"><a href="#s4">4</a></sup> A fragment
+          small enough to survive on its own is, by construction, one of the
+          more common sequences in the language. "Ne", "ccess", and "ary"
+          turn up constantly across ordinary, correctly spelled words. Each
+          has had far more chances to earn a well-trained vector than the
+          rare string "neccessary" ever would alone. A misspelling breaking
+          into recognizable pieces is not the model recalling this exact
+          typo. It is the tokenizer handing the model pieces it already
+          understands, arranged in an order it hasn't seen but can still
+          read from what those pieces mean elsewhere.
+        </p>
+      </section>
+
+      <section data-nb-section="context" id="context">
+        <h2>Context makes the intended word the most likely next one</h2>
+        <p>
+          The last stage in the pipeline turns every token's vector into a
+          probability distribution over what comes next.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          A model reading "...that isn't neccessary for the meeting" has
+          already turned "ne", "ccess", and "ary" into vectors near
+          "necessary". Every other token in the sentence is available too.
+          <a href="../the-mechanics/attention.html"
+            >An attention head is a weighted average that computes its own
+            weights</a
+          >
+          across exactly those earlier tokens, so the surrounding words vote
+          on what the misspelled one most likely means, the same way they
+          would for the correctly spelled version.
+        </p>
+        <p>
+          The model then
+          <a href="../the-mechanics/autoregressive-generation.html"
+            >predicts one token, appends it, and runs again</a
+          >, reasoning from that point about a sentence with "ne", "ccess",
+          "ary" sitting where "necessary" would have. None of this rewrites
+          those tokens into "necessary"; they stay exactly what the
+          tokenizer produced. What changes is which continuation those
+          pieces, read in context, make most probable.
+        </p>
+      </section>
+
+      <section data-nb-section="the-edge" id="the-edge">
+        <h2>The same flexibility that helps a typo also helps an attack</h2>
+        <p>
+          Put together, this is settled: fixed, frequency-learned pieces,
+          already meaningful from training, read in context by a mechanism
+          never built to notice a misspelling.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s2">2</a></sup
+          ><sup class="nb-cite"><a href="#s4">4</a></sup>
+          It is not a guarantee against every character-level change,
+          though, and the line between an everyday typo and an adversarial
+          input is fuzzier than a clean split.
+        </p>
+        <p>
+          A 2023 benchmark ran algorithm-searched, maximum-damage character
+          edits against nine large language models, including GPT-3.5 and
+          GPT-4, and found an average 20 percent drop in task performance.
+          GPT-4 was among the most robust models tested, but not immune.<sup
+            class="nb-cite"
+            ><a href="#s8" data-nb-locator="Sec. 4.1">8</a></sup
+          >
+          The authors describe those same edits as "plausible user errors
+          like typos,"<sup class="nb-cite"><a href="#s8">8</a></sup>
+          blurring the line between an everyday typo and a crafted one. A
+          2025 study of GPT-4o and a large Llama model found something
+          related: the
+          model's own wording measurably changes between a clean prompt and
+          one perturbed with synthetic, keyboard-adjacent typos.<sup
+            class="nb-cite"
+            ><a href="#s9" data-nb-locator="Methods, Results">9</a></sup
+          >
+          That is not evidence of a misread. The study measures wording
+          overlap, not comprehension, so a changed answer can still be a
+          correct one stated differently.<sup class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+        </p>
+        <p>
+          The same study complicates the training-data story further: it
+          describes large language model training sets as "curated datasets
+          that lack human-induced errors, such as typos."<sup
+            class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+          That favors the reading this lesson has argued for, where "ne",
+          "ccess", and "ary" are common pieces on their own, over the folk
+          version where the model simply memorized this one typo.
+        </p>
+        <p>
+          The same subword flexibility that lets an accidental typo land
+          safely gives a deliberate attacker more precise room to work.
+          Testing a fine-tuned BERT sentiment classifier, researchers found
+          that a single character added, dropped, or swapped, chosen to do
+          maximum damage, dropped its accuracy from 90.3 percent to 45.8
+          percent.<sup class="nb-cite"
+            ><a href="#s10" data-nb-locator="Abstract">10</a></sup
+          >
+          Subword and character-level models turned out more vulnerable to
+          this than word-level models, because every character edit produces
+          a genuinely different sequence for an attacker to search over.<sup
+            class="nb-cite"
+            ><a href="#s10">10</a></sup
+          >
+        </p>
+        <p>
+          A further class of attack sits outside typo robustness
+          altogether. Homoglyphs, a Cyrillic "а" standing in for a Latin
+          "a", and invisible Unicode characters change what bytes a
+          tokenizer receives without changing what a human reader sees.<sup
+            class="nb-cite"
+            ><a href="#s11" data-nb-locator="Sec. I">11</a></sup
+          >
+          A single substitution can measurably degrade a target system.
+          Three can functionally break many of the machine-translation,
+          moderation, and classification systems tested.<sup
+            class="nb-cite"
+            ><a href="#s11">11</a></sup
+          >
+          A typo is visible to everyone who reads it. An imperceptible
+          encoding attack, by design, is not, and it targets the boundary
+          between text and bytes directly rather than producing a spelling
+          variant anyone would notice.
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>
+                No stage in the documented pipeline corrects, normalizes, or
+                flags spelling.<sup class="nb-cite"
+                  ><a href="#s1">1</a></sup
+                ><sup class="nb-cite"><a href="#s2">2</a></sup>
+              </li>
+              <li>
+                Byte-level tokenization guarantees any string resolves to
+                known pieces, down to bytes in the worst case.<sup
+                  class="nb-cite"
+                  ><a href="#s2">2</a></sup
+                >
+              </li>
+              <li>
+                An ordinary misspelling's fragments are common pieces with
+                well-trained vectors, read correctly through context.<sup
+                  class="nb-cite"
+                  ><a href="#s4">4</a></sup
+                >
+              </li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>
+                Character-level edits searched for maximum damage still cut
+                performance on GPT-4-class models by roughly a fifth on
+                average.<sup class="nb-cite"><a href="#s8">8</a></sup>
+              </li>
+              <li>
+                One deliberately chosen character edit collapsed a
+                classifier's accuracy from 90.3% to 45.8%.<sup
+                  class="nb-cite"
+                  ><a href="#s10">10</a></sup
+                >
+              </li>
+              <li>
+                Homoglyphs and invisible characters are invisible to a human
+                reader and can functionally break a target system with as
+                few as three injections.<sup class="nb-cite"
+                  ><a href="#s11">11</a></sup
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+        <p>
+          An explanation that only says the model "understood" a typo does
+          not distinguish an ordinary misspelling from a Cyrillic "а"
+          standing in for a Latin one, and that distinction is exactly what
+          separates a solved problem from an open one.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A typo works because tokenization, not correction, does the
+          reading. Byte-pair encoding cuts any string, misspelled or not,
+          into pieces from a fixed vocabulary built by merging the most
+          frequent chunks in training text. A piece too rare to survive on
+          its own still breaks into smaller pieces common enough to already
+          carry a well-trained meaning. Context finishes the job: attention
+          over the rest of the sentence makes the intended reading the most
+          likely next prediction. That is settled engineering, not a lucky
+          accident. It is also not a guarantee: character-level edits built
+          to do damage still measurably hurt GPT-4-class models, and
+          homoglyphs exploit the same tokenizer from an angle no accidental
+          typo reaches. The next time an explanation says only that a
+          chatbot "understood" a typo, this lesson supplies the missing
+          step: which tokens it actually read, and why those tokens already
+          meant something.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2106.09898">Boucher, Shumailov, Anderson, Papernot, "Bad Characters: Imperceptible NLP Attacks"</a>: the full catalog of homoglyph and invisible-character attacks this lesson's edge case only samples.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2306.04528">Zhu et al., "PromptRobust: Towards Evaluating the Robustness of Large Language Models on Adversarial Prompts"</a>: the full benchmark behind this lesson's character-level robustness numbers, run across nine models.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.03762"
+              >arXiv · Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, Polosukhin, "Attention Is All You Need" (NeurIPS 2017)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf"
+              >OpenAI · Radford, Wu, Child, Luan, Amodei, Sutskever, "Language Models are Unsupervised Multitask Learners" (GPT-2, 2019)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://huggingface.co/learn/llm-course/en/chapter6/5"
+              >Hugging Face · "Byte-Pair Encoding tokenization," LLM Course</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/P16-1162/"
+              >ACL Anthology · Sennrich, Haddow, Birch, "Neural Machine Translation of Rare Words with Subword Units" (ACL 2016)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/openai/openai-cookbook/blob/main/examples/How_to_count_tokens_with_tiktoken.ipynb"
+              >OpenAI Cookbook · "How to count tokens with tiktoken"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/openai/tiktoken"
+              >GitHub · OpenAI, tiktoken v0.14.0, live run against <code>cl100k_base</code> (2026-09-18)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1711.02173"
+              >arXiv · Belinkov, Bisk, "Synthetic and Natural Noise Both Break Neural Machine Translation" (ICLR 2018)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2306.04528"
+              >arXiv · Zhu, Wang, Zhou, Wang, Chen, Wang, Yang, Ye, Gong, Zhang, Xie, "PromptRobust: Towards Evaluating the Robustness of Large Language Models on Adversarial Prompts" (2023)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nature.com/articles/s41598-025-29770-0"
+              >Scientific Reports · Alahmari, "Large language models robustness against perturbation" (2025)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/P19-1561/"
+              >ACL Anthology · Pruthi, Dhingra, Lipton, "Combating Adversarial Misspellings with Robust Word Recognition" (ACL 2019)</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2106.09898"
+              >arXiv · Boucher, Shumailov, Anderson, Papernot, "Bad Characters: Imperceptible NLP Attacks" (IEEE S&P 2022)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
