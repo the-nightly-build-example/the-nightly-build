@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YOLOv3 tied RetinaNet on one mAP and trailed it by 4.8 points on another · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "mean-average-precision",
+        "template": "lesson",
+        "title": "YOLOv3 tied RetinaNet on one mAP and trailed it by 4.8 points on another",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-18",
+        "tags": ["object-detection", "evaluation", "precision-recall"],
+        "sources": 9,
+        "words": 2199,
+        "reading_minutes": 10,
+        "dek": "COCO's headline detection score averages the overlap test across ten thresholds where PASCAL VOC used a single one, which is why the same two detectors, YOLOv3 and RetinaNet, tied under one and split by 4.8 points under the other.",
+        "harness": "Claude Code",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">YOLOv3 tied RetinaNet on one mAP and trailed it by 4.8 points on another</h1>
+        <p class="nb-dekline">
+          COCO's headline detection score averages the overlap test across ten
+          thresholds where PASCAL VOC used a single one, which is why the same
+          two detectors, YOLOv3 and RetinaNet, tied under one and split by 4.8
+          points under the other.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-09-18</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every object-detection leaderboard, the systems that spot
+          pedestrians for a self-driving car, tumors on a scan, defects on a
+          factory line, reports one of two letters: AP, or its cousin mAP.
+          This lesson builds that number up from the ground: a detector's
+          output, and the overlap test that decides whether a predicted box
+          counts as a hit. It shows how one class's ranked hits and misses
+          collapse into a single Average Precision. Then it does something
+          the number itself will not do for you. "mAP" has named at least
+          three different computations since PASCAL VOC first defined it.
+          COCO's version is not VOC's version. Two real detectors, compared
+          by their own authors, ranked in opposite order depending on which
+          one got reported. By the end you will know what a reported mAP
+          licenses, and what it does not.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="f1-score.html">The F1 score</a>: precision and recall
+            built from a table of four counts, and the harmonic mean that
+            ties them together.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="auroc.html">AUROC</a>: a single-number score that never
+            fixes the threshold a classifier will run at.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A detected box has to earn its match</h2>
+        <p>
+          An object detector's output is a list of boxes drawn on an image,
+          each with a class label, "dog," "stop sign," and a confidence
+          score attached. Grading that output means asking two questions:
+          did the detector draw a box in roughly the right place, and did
+          it put the right label on it? The first question needs its own
+          test, because "roughly the right place" has to mean something
+          specific and repeatable.
+        </p>
+        <p>
+          The test is called Intersection over Union, or IoU. Draw the
+          ground-truth box, the one a human labeler drew around the real
+          object, and the detector's predicted box on the same image. IoU is
+          the area where the two boxes overlap, divided by the area they
+          cover between them:
+          <span class="nb-math-in"
+            >\mathrm{IoU} = \dfrac{\text{area of overlap}}{\text{area of
+            union}}</span
+          >.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sect. 4.2, Eq. 3">1</a></sup
+          >
+          Say the ground-truth box covers 100 square units of the image and
+          the predicted box covers 100 as well, but the two only overlap on
+          70 of those units. Their union covers 100 + 100 &minus; 70 = 130
+          units, so IoU = 70/130, about 0.54.
+        </p>
+        <p>
+          The PASCAL VOC challenge, which set most of these conventions in
+          the 2000s, drew the line for a hit at an IoU above 0.5. That bar
+          was set deliberately loose: even two people drawing a box around
+          the same object rarely agree on its exact edges, and the
+          organizers built room for that disagreement into the test.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sect. 4.2, p. 313">1</a></sup
+          >
+          Loosen the bar further and a detector's measured score climbs even
+          though its boxes have not gotten any tighter. On the class where
+          2007's submitted detectors did best, cars, dropping the overlap
+          requirement from 50 percent to 10 percent raised the measured
+          score by about 7.5 points, on the exact same predicted boxes.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sect. 6.2.3, Fig. 19">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="average-precision" id="average-precision">
+        <h2>Turning a ranked list into one number</h2>
+        <p>
+          <a href="f1-score.html">The f1-score lesson</a> already built
+          precision and recall from a table of four counts. Average
+          Precision, or AP, asks how those two numbers trade off as a
+          detector gets pickier about what it is willing to call a positive.
+        </p>
+        <p>
+          Take every detection a model produced for one class and rank them
+          by confidence, most sure to least sure. Walk down the list,
+          checking each against the IoU test and an unclaimed ground-truth
+          box, marking it a hit or a miss, and keep a running precision and
+          recall as you go.
+        </p>
+        <table class="nb-table">
+          <caption>
+            One class, "dog," with four real dogs across the images and six
+            detections the model made, ranked most to least confident. Each
+            new hit raises recall; each miss drags precision down until the
+            next hit recovers part of it.<sup class="nb-cite"
+              ><a href="#s2">2</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th class="txt">Result</th>
+              <th>Precision</th>
+              <th>Recall</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">1</span></td>
+              <td class="txt">Hit</td>
+              <td>1.00</td>
+              <td>0.25</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">2</span></td>
+              <td class="txt">Hit</td>
+              <td>1.00</td>
+              <td>0.50</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">3</span></td>
+              <td class="txt">Miss</td>
+              <td>0.67</td>
+              <td>0.50</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">4</span></td>
+              <td class="txt">Hit</td>
+              <td>0.75</td>
+              <td>0.75</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">5</span></td>
+              <td class="txt">Miss</td>
+              <td>0.60</td>
+              <td>0.75</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">6</span></td>
+              <td class="txt">Miss</td>
+              <td>0.50</td>
+              <td>0.75</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Plot each row's precision against its recall and the points trace
+          the precision-recall curve, zigzagging down as confidence drops.
+          Average Precision is the area under that curve, one number
+          standing in for the whole shape of it. The current definition
+          takes that area in two steps. First, at every recall level,
+          replace the precision with the highest precision achieved at that
+          recall or higher, which turns the zigzag into a staircase. Then
+          measure the staircase's area exactly, since it is built from flat
+          steps.<sup
+            class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sect. 3.4.1, p. 12">2</a></sup
+          >
+          Run that on the table above and the area comes out to about 0.69,
+          one class's AP.
+        </p>
+      </section>
+
+      <section data-nb-section="map-definitions" id="map-definitions">
+        <h2>COCO redefined what the average covers</h2>
+        <p>
+          When the COCO dataset was published in 2014, its own paper did not
+          yet define the score it would be judged on. Its authors wrote that
+          "a full discussion of evaluation metrics will be added once the
+          evaluation server is complete."<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Sect. 7">3</a></sup
+          >
+        </p>
+        <p>
+          When the evaluation server did ship, it changed two things at once.
+          The first is the easy one: "mean" now runs across every category
+          in the dataset. COCO's documentation treats the words
+          interchangeably: "AP is averaged over all
+          categories. Traditionally, this is called 'mean average
+          precision' (mAP). We make no distinction between AP and mAP."<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          VOC's mAP already worked that way. The second change did not. VOC
+          scored a hit at a single IoU of 0.5. COCO's documentation labels
+          that single-threshold score "the PASCAL VOC metric" and lists it
+          apart from its actual headline number, which averages precision
+          across ten overlap thresholds, 0.50 to 0.95. It calls this "a
+          break from tradition," because "averaging over IoUs rewards
+          detectors with better localization."<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          The reference code that computes every official COCO score
+          confirms it: ten thresholds, 0.50 to 0.95, averaged with a plain
+          mean.<sup class="nb-cite"
+            ><a href="#s5" data-nb-locator="Params.setDetParams, iouThrs">5</a></sup
+          >
+        </p>
+        <p>
+          The threshold was not the only thing that moved. VOC itself
+          changed how it draws the area under the curve, partway through its
+          own run. Through 2009 it took the curve's height at eleven evenly
+          spaced recall levels and averaged those eleven numbers. From 2010
+          it switched to the every-point method built above, because the
+          coarser eleven-point version, in the organizers' own later words,
+          "was too crude to discriminate between the methods at low AP."<sup
+            class="nb-cite"
+            ><a href="#s6" data-nb-locator="Sect. 2.4.3">6</a></sup
+          >
+          The two methods do not agree even when everything else about the
+          detections is held fixed. On one worked
+          example built to isolate just that choice, eleven-point
+          interpolation gives an AP of 88.64 percent and all-point
+          interpolation gives 89.58 percent, on identical detections at the
+          identical overlap threshold.<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+        </p>
+        <p>
+          So a single "mAP" figure, quoted without its source, could be
+          VOC's original eleven-point average at one overlap threshold, VOC's
+          later all-point average at that same threshold, or COCO's
+          all-point average spread across ten thresholds and every category.
+          Those are at least three different computations, and none of them
+          converts into another by a fixed formula.
+        </p>
+      </section>
+
+      <section data-nb-section="yolov3-vs-retinanet" id="yolov3-vs-retinanet">
+        <h2>Same detectors, opposite rankings</h2>
+        <p>
+          In 2018 Joseph Redmon and Ali Farhadi published YOLOv3
+          alongside a comparison to RetinaNet. Reported under what they
+          called "the old .5 IOU mAP detection metric," AP50, YOLOv3-608
+          scored 57.9 and RetinaNet-101-800 scored 57.5. The paper called
+          that "similar performance," and noted that YOLOv3 ran 3.8 times
+          faster, 51 milliseconds against 198.<sup class="nb-cite"
+            ><a href="#s8" data-nb-locator="Abstract">8</a></sup
+          >
+        </p>
+        <p>
+          Report the same two detectors on COCO's own headline number
+          instead, averaged over the ten overlap thresholds, and the
+          near-tie disappears. YOLOv3-608 scores 33.0. RetinaNet-101-800
+          scores 37.8, a 4.8-point gap in RetinaNet's favor.<sup
+            class="nb-cite"
+            ><a href="#s8" data-nb-locator="Fig. 1 and Fig. 3 data tables"
+              >8</a
+            ></sup
+          >
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="mean-average-precision/chart-1.png"
+            alt="A grouped bar chart. Under AP50, YOLOv3-608 scores 57.9 and RetinaNet-101-800 scores 57.5, nearly identical bars. Under COCO AP, averaged across ten IoU thresholds, YOLOv3-608 scores 33.0 and RetinaNet-101-800 scores 37.8, a visibly taller bar for RetinaNet."
+          />
+          <figcaption>
+            Fig. 1 &middot; The same two detectors under two mAP definitions:
+            nearly tied on the single-threshold score, a 4.8-point gap under
+            COCO's ten-threshold average.<sup class="nb-cite"
+              ><a href="#s8">8</a></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          The paper explains why, in a section titled "What This All
+          Means": "It's not as great on the COCO average AP between
+          .5 and .95 IOU metric. But it's very good on the old detection
+          metric of .5 IOU."<sup class="nb-cite"
+            ><a href="#s8" data-nb-locator="Sect. 5">8</a></sup
+          >
+          Earlier, the paper gives the reason: YOLOv3's "performance
+          drops significantly as the IOU threshold increases," meaning its
+          boxes are close enough to count at a loose 0.5 overlap but not
+          tight enough to hold up as the bar rises toward 0.95.<sup
+            class="nb-cite"
+            ><a href="#s8" data-nb-locator="Sect. 3">8</a></sup
+          >
+        </p>
+        <p>
+          No independent reviewer is on record saying either number fooled
+          them. What happened here needed no outside victim: two detectors,
+          evaluated under a name that names two different procedures,
+          produced two verdicts about which one localizes better, in the
+          same paper. Hand a reader the AP50 line from one and the COCO AP
+          line from another, with nothing telling them the two scores
+          differ, and they would draw the wrong conclusion about which
+          detector to trust.
+        </p>
+        <p>
+          A single mAP number also hides how it was earned. A model can
+          nail nine classes out of ten and miss the tenth almost every time,
+          and still post a high mAP, because that one bad class is one line
+          in a long average. It can look best at a confidence cutoff no
+          deployment would ever run at, because the precision-recall curve
+          sweeps every cutoff at once. It can hand back the same score for
+          well-calibrated confidence numbers and nonsense ones alike,
+          because, as YOLOv3's authors worked out in their own rebuttal to a
+          reviewer, AP reads only the order a detector ranks its own
+          detections, never the confidence values themselves.<sup
+            class="nb-cite"
+            ><a href="#s8" data-nb-locator="Rebuttal, Fig. 5">8</a></sup
+          >
+        </p>
+        <p>
+          mAP is a proxy for a question it never actually asks. You want to
+          know whether a detector will catch the one rare, safety-relevant
+          object it cannot afford to miss; mAP reports how it ranked every
+          class, common and rare, folded into one average. You want to know
+          whether it works at the confidence threshold your system runs at;
+          mAP averages over every threshold from the most cautious to the
+          most reckless. You want to know whether its boxes are tight enough
+          for the job; mAP folds that into ten overlap thresholds and hands
+          back one number for all of them.
+        </p>
+        <p>
+          None of that makes a higher mAP meaningless. In 2023, researchers
+          tested sixteen 3D object detectors in a self-driving stack in the
+          CARLA simulator, to see whether the score predicted how well the
+          cars actually drove. It did. mAP correlated
+          with the simulator's driving-quality score at r&nbsp;=&nbsp;0.80
+          and with how often the cars collided at r&nbsp;=&nbsp;0.90. A
+          metric built specifically for driving did only slightly better, at
+          r&nbsp;=&nbsp;0.85 and r&nbsp;=&nbsp;0.90.<sup class="nb-cite"
+            ><a href="#s9" data-nb-locator="Sect. 5, Table 1">9</a></sup
+          >
+          That study measured a different task, 3D boxes from lidar and
+          cameras judged by a simulated drive, not the 2D image boxes VOC
+          and COCO score. Correlating with an average outcome is not the
+          same claim as never being fooled about one model. It is still
+          real evidence that a detection mAP can track what a deployment
+          cares about. The YOLOv3 case does not show that mAP lies. It
+          shows something narrower: the same three letters can point at two
+          different procedures, and a detector that wins by one can lose by
+          the other without either number being wrong.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A reported mAP is the end of a chain. A box counts as a hit only
+          past an overlap threshold. One class's ranked hits and misses
+          become a precision-recall curve, and that curve becomes one
+          Average Precision. Every class's AP gets averaged into the mAP a
+          leaderboard prints. Every link in that chain is a choice, and the
+          choices have changed. PASCAL VOC scored a hit at a single 0.5
+          overlap and averaged eleven points of the curve, then switched to
+          averaging every point on it. COCO kept that overlap floor but
+          added nine harder ones on top, averaging across all ten. Report
+          YOLOv3 and RetinaNet under the old single-threshold score and
+          they tie. Report them under COCO's ten-threshold score and
+          RetinaNet leads by 4.8 points, exactly as its own authors
+          documented. A reported mAP does not tell you a detector is good.
+          It tells you how it ranked, under one specific, namable set of
+          choices, worth only as much as knowing which choices they were.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://cocodataset.org/#detection-eval">COCO Detection
+            Evaluation</a>: the full page defining all twelve COCO detection
+            metrics, not just the two this lesson compared.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://github.com/rafaelpadilla/review_object_detection_metrics"
+              >Padilla et al., detection-metrics toolkit</a
+            >: computes AP by every interpolation method this lesson named,
+            side by side, on the same detections.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.robots.ox.ac.uk/~vgg/projects/pascal/VOC/pubs/everingham10.pdf"
+              >IJCV &middot; Everingham, Van Gool, Williams, Winn &amp;
+              Zisserman, The PASCAL Visual Object Classes (VOC) Challenge
+              (2010)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.robots.ox.ac.uk/~vgg/projects/pascal/VOC/voc2012/devkit_doc.pdf"
+              >Everingham &amp; Winn &middot; The PASCAL Visual Object Classes
+              Challenge 2012 (VOC2012) Development Kit (2012)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/pdf/1405.0312"
+              >arXiv &middot; Lin et al., Microsoft COCO: Common Objects in
+              Context (2014/2015)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://cocodataset.org/#detection-eval"
+              >COCO Consortium &middot; Detection Evaluation documentation</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/cocodataset/cocoapi/blob/master/PythonAPI/pycocotools/cocoeval.py"
+              >GitHub &middot; cocodataset/cocoapi, pycocotools/cocoeval.py
+              (reference implementation)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.robots.ox.ac.uk/~vgg/projects/pascal/VOC/pubs/everingham15.pdf"
+              >IJCV &middot; Everingham, Eslami, Van Gool, Williams, Winn
+              &amp; Zisserman, The PASCAL Visual Object Classes Challenge: A
+              Retrospective (2015)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://github.com/rafaelpadilla/review_object_detection_metrics"
+              >GitHub &middot; Padilla et al., A Comparative Analysis of
+              Object Detection Metrics, companion toolkit</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/pdf/1804.02767"
+              >arXiv &middot; Redmon &amp; Farhadi, YOLOv3: An Incremental
+              Improvement (2018)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://openaccess.thecvf.com/content/ICCV2023W/BRAVO/papers/Schreier_On_Offline_Evaluation_of_3D_Object_Detection_for_Autonomous_Driving_ICCVW_2023_paper.pdf"
+              >CVF Open Access &middot; Schreier, Renz, Geiger &amp; Chitta,
+              On Offline Evaluation of 3D Object Detection for Autonomous
+              Driving (ICCV 2023 Workshop)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
