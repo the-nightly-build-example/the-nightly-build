@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The 2016 WaveNet paper never reports its own generation speed · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "wavenet",
+        "template": "lesson",
+        "title": "The 2016 WaveNet paper never reports its own generation speed",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-18",
+        "tags": ["wavenet", "text-to-speech", "deepmind", "generative-audio"],
+        "sources": 8,
+        "words": 2177,
+        "reading_minutes": 9,
+        "dek": "Van den Oord and DeepMind's 2016 model scored 4.21 out of 5 in its own listening test, against a natural recording that scored 4.55 in the same test.",
+        "harness": "claude-code",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">The 2016 WaveNet paper never reports its own generation speed</h1>
+        <p class="nb-dekline">
+          Van den Oord and DeepMind's 2016 model scored 4.21 out of 5 in its own listening test, against a natural recording that scored 4.55 in the same test.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-18</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          WaveNet is the paper people mean when they say AI learned to talk.
+          Its lineage runs through the voice reading your turn-by-turn
+          directions, the narrator on an audiobook app, and the assistant on
+          your phone that no longer sounds like a phone tree. This lesson
+          reads the 2016 document itself, not the decade of shorthand built on
+          top of it. It covers what one listening test actually measured,
+          what the paper says about generating that speech in real time (one
+          sentence, and it isn't a number), and which of WaveNet's
+          most-quoted figures come from a different paper entirely. By the
+          end, you'll be able to tell, for any claim made in WaveNet's name,
+          whether it belongs to the 2016 paper or to something published
+          afterward.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html"
+              >The instant a model writes a token, it becomes fact</a
+            >: the general mechanic behind predicting one output from
+            everything generated before it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/mean-opinion-score.html"
+              >A mean opinion score doesn't travel between tests</a
+            >: why none of this lesson's MOS numbers can be compared to each
+            other without checking what test produced them.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One hundred sentences, eight listeners, one score</h2>
+        <p>
+          In September 2016, Aäron van den Oord and a team at DeepMind posted
+          "WaveNet: A Generative Model for Raw Audio" to arXiv.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          It became the paper people cite when they say AI-generated speech
+          got good enough to sound human. What it actually reports is one
+          experiment: a single listening test, run separately in North
+          American English and Mandarin. Each of 100 held-out sentences from a
+          lone professional speaker, rendered by every system under test, was
+          rated by eight crowdsourced listeners on a five-point scale, after
+          ratings that failed a headphone check (about 40 percent of them)
+          were thrown out.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          WaveNet's synthesized English averaged 4.21 out of 5. A natural
+          recording of the same sentences averaged 4.55 in the same test.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          > The best prior
+          systems scored lower still: 3.67 for a statistical parametric
+          model, 3.86 for a system that stitches speech together from
+          recorded fragments.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The table below is the paper's own Table 1.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The paper's own listening-test scores, on a 1&ndash;5 scale with
+            95% confidence intervals, from 100 held-out sentences per
+            language rated by 8 crowdsourced listeners each.<sup
+              class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>System</th>
+              <th>English MOS</th>
+              <th>Mandarin MOS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Natural (16-bit)</span></td>
+              <td>4.55 &plusmn; 0.075</td>
+              <td>4.21 &plusmn; 0.071</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Natural (8-bit)</span></td>
+              <td>4.46 &plusmn; 0.067</td>
+              <td>4.25 &plusmn; 0.082</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">WaveNet</span></td>
+              <td>4.21 &plusmn; 0.081</td>
+              <td>4.08 &plusmn; 0.085</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Parametric (LSTM-RNN)</span></td>
+              <td>3.67 &plusmn; 0.098</td>
+              <td>3.79 &plusmn; 0.084</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Concatenative (HMM)</span></td>
+              <td>3.86 &plusmn; 0.137</td>
+              <td>3.47 &plusmn; 0.108</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          DeepMind's own announcement of the result stuck to the same scale:
+          it framed WaveNet as "reducing the gap with human performance by
+          over 50%," not as a system that had closed it.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          No claim of matching human speech, generating it in real time, or
+          shipping it in a product appears in either the paper or that
+          announcement. Why real-time generation had to wait for a different
+          paper starts with what WaveNet actually predicts, one sample at a
+          time.
+        </p>
+      </section>
+
+      <section data-nb-section="mechanism" id="mechanism">
+        <h2>Guessing 16,000 samples a second</h2>
+        <p>
+          A digitized recording of speech is a long list of numbers, one for
+          every instant a microphone was sampled. An ordinary recording
+          samples at least 16,000 of them every second.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          WaveNet generates that list one number at a time: to produce the
+          next sample, the network looks at every sample it has generated so
+          far and outputs a probability distribution over what comes next, a
+          design known as autoregressive. Picture it on three numbers instead
+          of 16,000: given a run like &minus;0.2, 0.1, 0.3, the model's whole
+          job is to guess a fourth. WaveNet does that guess 16,000 times over
+          for a single second of audio, each guess built on everything
+          guessed before it.
+        </p>
+        <p>
+          Reaching back far enough in that list to shape a believable sample
+          is exactly what makes raw audio hard. A plain convolutional layer
+          only looks a handful of samples back, so seeing far enough into the
+          past to shape a single natural-sounding sound would take either an
+          enormous filter or dozens of stacked layers.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          WaveNet's stack instead skips over most of what lies in between.
+          The paper's own diagram shows four layers whose skip widens by
+          doubling at each one &mdash; 1, 2, 4, then 8 samples. A unit at the
+          top layer has effectively looked back across all of them, while
+          doing no more work than an ordinary convolution spends looking back
+          across four.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The paper calls this a dilated causal convolution: causal because a
+          sample never looks ahead of the one it's predicting, dilated
+          because of the widening skip.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Even stacked this way, the paper reports that its unconditional
+          model can only draw on about 300 milliseconds of its own history,
+          roughly the length of two or three phonemes, before that memory runs
+          out.<sup class="nb-cite"><a href="#s1">1</a></sup> Left to generate
+          speech with no text to steady it, the model invents words that sound
+          like language, then loses the thread and starts inventing a new one
+          once it drifts past that 300-millisecond reach.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Built this way, the model was trained on three kinds of audio: 24.6
+          hours from one English speaker and 34.8 hours from one Mandarin
+          speaker for text-to-speech. Music used roughly 200 hours of tagged
+          clips plus 60 hours of scraped piano recordings, with no
+          listening-test score reported for either.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Retrained as a plain classifier instead of a generator, the same
+          design also set what the paper calls the best score yet for a model
+          trained directly on raw audio on TIMIT, a standard
+          speech-recognition benchmark. The result, an 18.8 phoneme error
+          rate, is reported without a specific prior score to measure it
+          against or a stated number of training hours.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="speed" id="speed">
+        <h2>The paper's only sentence about speed</h2>
+        <p>
+          On how long any of this takes to generate, the 2016 paper says
+          exactly one thing: "the predictions are sequential: after each
+          sample is predicted, it is fed back into the network to predict the
+          next sample."<sup class="nb-cite"><a href="#s1">1</a></sup> No
+          timing figure, no real-time comparison, no statement about whether
+          the method could run in a live product appears anywhere else in the
+          text.
+        </p>
+        <p>
+          Those numbers arrived a year later, in a follow-up paper written by
+          several of the same authors plus new co-authors. Running the
+          original, undistilled network on a single Nvidia P100 GPU,
+          DeepMind's own optimized implementation reached 172 timesteps a
+          second.<sup class="nb-cite"><a href="#s3">3</a></sup> A live
+          product generating 24 kHz audio needs 24,000 samples every second,
+          so the original network ran at under one two-hundredth of that
+          speed.<sup class="nb-cite"><a href="#s3">3</a></sup> The paper says
+          plainly why that mattered: relying on sequential generation of one
+          sample at a time made the network "poorly suited to today's
+          massively parallel computers, and therefore hard to deploy in a
+          real-time production setting."<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">172</span
+            ><span class="nb-stat-l">Timesteps/sec, original network</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">24,000</span
+            ><span class="nb-stat-l">Samples/sec needed for real time</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">500,000+</span
+            ><span class="nb-stat-l">Timesteps/sec, distilled network</span>
+          </div>
+        </div>
+        <p>
+          The fix, called probability density distillation, trains a second,
+          feed-forward network to copy a pretrained WaveNet, closely enough
+          that the new network can produce every sample of an utterance
+          together instead of one after another.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          DeepMind's own description put it more plainly: the new network
+          learns to generate "the first and last word &mdash; and everything
+          in between &mdash; at the same time."<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          On the same P100 GPU, the distilled network reached over 500,000
+          timesteps a second, which the paper calls three orders of magnitude
+          faster than the network it copied.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          That distilled version, not the one described in the 2016 paper, is
+          what DeepMind put into a live product the following year.
+        </p>
+      </section>
+
+      <section data-nb-section="present-day" id="present-day">
+        <h2>The name outlived the architecture</h2>
+        <p>
+          The distilled system launched inside Google Assistant in October
+          2017, the first product to run on what DeepMind called Google's
+          newest TPU cloud infrastructure.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          DeepMind's launch post reported a new listening test with its own
+          scores: 4.347 and 4.314 for two US English voices, 3.966 for a
+          third voice, and 4.236 for a Japanese voice. The human baseline in
+          that same test was 4.667.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          That 4.667 is not the 4.55 the 2016 paper measured for natural
+          English speech, or the 4.21 it measured for natural Mandarin.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          DeepMind repeated the same 4.667 figure again two months later, in
+          a separate post about the underlying method.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Three tests, three panels, three numbers for what a human voice
+          scores on this same five-point scale. That is why a raw MOS
+          travels badly between papers, and why WaveNet's own English score,
+          4.21, is the safer number to repeat than any percentage computed
+          from it.
+        </p>
+        <p>
+          The 4.41 that gets quoted as WaveNet reaching near-human quality
+          comes from the 2017 paper's own Table 1, but on a new 24 kHz
+          recording, not the 16 kHz corpus the 2016 paper's 4.21 came from.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          On that new corpus, the original architecture and its distilled
+          copy score identically, 4.41 each, beating a concatenative baseline
+          retrained on the same higher-fidelity recordings at 4.19.<sup
+            class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          That is a real result. It is not a like-for-like improvement over
+          the number the 2016 paper reported: part of the gain is a better
+          recording, not only a better model, and the 2017 paper does not
+          separate how much of it is which.
+        </p>
+        <p>
+          A second deployment, Google's Cloud Text-to-Speech product, reported
+          a fourth number five months later: an average score of 4.1,
+          described as reducing the gap with human speech by "over 70%."<sup
+            class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          That 70 percent is not the 51 percent the 2016 paper reported for
+          English or the 69 percent it reported for Mandarin,<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          and Google's post does not say which language or which point values
+          it is computed from.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          One paper's own two languages account for two of these percentages.
+          A different product, two years later, supplies the third. Treating
+          any one of them as "the gap WaveNet closed" would flatten a real
+          difference between three separate measurements.
+        </p>
+        <p>
+          A 2021 academic survey of speech-synthesis methods, independent of
+          DeepMind, credits WaveNet as "the first neural-based vocoder" while
+          stating plainly that "although WaveNet achieves good voice quality,
+          it suffers from slow inference speed."<sup class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The vocoder families that took over production speech synthesis
+          after it, built on generative adversarial networks and on
+          diffusion, generate every sample of an utterance in parallel from
+          the start.<sup class="nb-cite"><a href="#s7">7</a></sup> Parallel
+          WaveNet reached that same output speed a different way, by
+          distilling a slow teacher into a fast student.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          What survived from the 2016 paper is the idea underneath all of
+          them: model the raw waveform directly, sample by sample, instead of
+          hand-engineered vocoder features. What did not survive, on its own,
+          is the architecture that first proved the idea worked.
+        </p>
+        <p>
+          Coverage of the 2016 announcement was not automatically looser than
+          the paper. Engadget's write-up at the time reported the gap-closing
+          result without claiming parity, noting that "we're still far from
+          using a WaveNet-powered app."<sup class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          Exactly where the looser "human-level" shorthand entered the record
+          afterward is not something any single article traces back to; it
+          reads like a number drifting into a vaguer claim over years of
+          retelling, not one overclaim anyone can point to.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          What the 2016 WaveNet paper actually established is one number: on
+          a five-point scale, in one listening test, its synthesized English
+          speech scored 4.21 against a natural recording's 4.55. That is a
+          real, sourced result, and closing about half that gap was enough to
+          build the paper's reputation. What the paper never claimed is that
+          the result was fast, finished, or the number behind any of the
+          louder headlines that followed it. Generation speed came from a
+          different paper a year later. The 4.41 quoted as "near-human" came
+          from a different recording setup a year after that. And the system
+          DeepMind actually shipped was already a rebuilt, distilled network,
+          not the one the 2016 paper described. That paper's own claim was
+          smaller and slower than its name now carries: a score of 4.21, on
+          one test, in one language, with no speed attached to it at all.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1711.10433"
+              >Parallel WaveNet (van den Oord et al., 2017)</a
+            >: the distillation method that made generation three orders of
+            magnitude faster, in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2106.15561"
+              >A Survey on Neural Speech Synthesis (Tan et al., 2021)</a
+            >: every vocoder family that took over production speech
+            synthesis after WaveNet.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; &sect;2.1; &sect;3; Table 1; speech-recognition subsection; &sect;4"
+              href="https://arxiv.org/abs/1609.03499"
+              >van den Oord et al. &middot; WaveNet: A Generative Model for
+              Raw Audio (2016)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Body text; MOS comparison tables; generation-cost paragraph"
+              href="https://deepmind.google/discover/blog/wavenet-a-generative-model-for-raw-audio/"
+              >DeepMind &middot; WaveNet: A Generative Model for Raw Audio
+              (2016 announcement)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract; &sect;2; inference-speed section; Table 1; Table 2; Conclusion"
+              href="https://arxiv.org/abs/1711.10433"
+              >van den Oord et al. &middot; Parallel WaveNet: Fast
+              High-Fidelity Speech Synthesis (2017)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Teacher/student paragraphs; 1000x figure; human-baseline sentence"
+              href="https://deepmind.google/discover/blog/high-fidelity-speech-synthesis-with-wavenet/"
+              >DeepMind &middot; High-Fidelity Speech Synthesis with WaveNet
+              (Nov. 2017)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="50ms/1000x paragraphs; per-voice MOS list; TPU sentence"
+              href="https://deepmind.google/discover/blog/wavenet-launches-in-the-google-assistant/"
+              >DeepMind &middot; WaveNet Launches in the Google Assistant
+              (Oct. 2017)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="MOS/quality paragraph; speed paragraph; history paragraph"
+              href="https://cloud.google.com/blog/products/ai-machine-learning/introducing-cloud-text-to-speech-powered-by-deepmind-wavenet-technology"
+              >Google Cloud &middot; Introducing Cloud Text-to-Speech, Powered
+              by DeepMind WaveNet Technology (2018)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="&sect;2.4 (Vocoders): autoregressive, flow-based, GAN-based, diffusion-based subsections"
+              href="https://arxiv.org/abs/2106.15561"
+              >Tan, Qin, Soong &amp; Liu &middot; A Survey on Neural Speech
+              Synthesis (2021)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Full short article body"
+              href="https://www.engadget.com/2016-09-10-google-deepmind-ai-wavenet-text-to-speech.html"
+              >Engadget (Mariella Moon) &middot; report on DeepMind's WaveNet
+              announcement (Sept. 2016)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
