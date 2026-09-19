@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      AlphaStar reached Grandmaster while capped at 22 actions every five
+      seconds · The Evidence
+    </title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "alphastar",
+        "template": "lesson",
+        "title": "AlphaStar reached Grandmaster while capped at 22 actions every five seconds",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-19",
+        "tags": ["reinforcement-learning", "starcraft", "deepmind", "alphastar"],
+        "sources": 6,
+        "words": 1907,
+        "reading_minutes": 8,
+        "dek": "The rank came from anonymous games on Blizzard's European ladder, and the January show match everyone remembers ran a looser, less constrained agent.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">
+          AlphaStar reached Grandmaster while capped at 22 actions every five
+          seconds
+        </h1>
+        <p class="nb-dekline">
+          The rank came from anonymous games on Blizzard's European ladder, and
+          the January show match everyone remembers ran a looser, less
+          constrained agent.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-19</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When people say an AI reached Grandmaster at StarCraft II, they are
+          almost always citing one document: DeepMind's 2019 paper on AlphaStar.
+          StarCraft is the game AI researchers reached for after chess and Go,
+          because it is played in real time and each side can see only part of
+          the map. This lesson reads that paper and DeepMind's own companion
+          posts to separate what AlphaStar was shown to do from the version of
+          the story that stuck. By the end you will know how it was trained,
+          what its eyes and hands were allowed to do, and exactly what its
+          Grandmaster rank does and does not prove.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/atari-dqn.html"
+              >DQN reached &lsquo;human-level&rsquo; Atari on 29 of the 49
+              games</a
+            >: the reinforcement-learning method this lesson builds on, and
+            another &lsquo;human-level&rsquo; claim worth checking.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/alphago.html"
+              >AlphaGo's Nature paper never mentions Lee Sedol</a
+            >: an earlier DeepMind agent, also started on human games, and who
+            it was actually measured against.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-evidence/alphazero.html"
+              >AlphaZero beat Stockfish twice, under different rules each
+              time</a
+            >: the pure self-play system that used no human data, the contrast
+            to AlphaStar's replay start.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The paper behind the headline</h2>
+        <p>
+          AlphaStar is a StarCraft II player built at DeepMind and described in
+          a 2019 <em>Nature</em> paper by Oriol Vinyals, Igor Babuschkin, and
+          dozens of colleagues.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The paper's central result is one sentence: evaluated in the full game
+          against human players, AlphaStar was rated Grandmaster, the ladder's
+          top tier, for all three of the game's races, and above 99.8% of
+          ranked players.<sup class="nb-cite"><a href="#s1">1</a></sup> Most
+          people remember that sentence in a shorter form, &ldquo;an AI reached
+          Grandmaster at StarCraft,&rdquo; and a looser one, &ldquo;an AI beat
+          the pros.&rdquo;
+        </p>
+        <p>
+          The rank came from anonymous games on Battle.net, Blizzard's official
+          online ladder. DeepMind entered the agent under the same conditions as
+          any human: real opponents who did not know they faced a bot, standard
+          maps, and matchmaking that chose who it played.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Its strongest versions were rated 6,275 MMR at Protoss, 6,048 at
+          Terran, and 5,835 at Zerg, where MMR is Battle.net's single skill
+          number for a player. Measured against a pool of about 90,000 active
+          players on the European server, that put the average in the top
+          0.15%.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          StarCraft drew AI research because it breaks the assumptions that made
+          chess and Go tractable. It runs in real time rather than in turns. It
+          is also a game of imperfect information: each side sees only the part
+          of the map its own units can see. Both players commit to moves while
+          half-blind to the other.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          AlphaStar learns by reinforcement learning, in which an agent tries
+          actions and is rewarded for the ones that lead to winning, the same
+          family of method behind DeepMind's earlier
+          <a href="../the-evidence/atari-dqn.html">work on Atari</a>. What made
+          the paper famous was the claim that this recipe could reach the top of
+          a human ladder in a game this messy.
+        </p>
+      </section>
+
+      <section data-nb-section="training" id="training">
+        <h2>From human replays to a league of rivals</h2>
+        <p>
+          AlphaStar was not built from self-play alone. Its training ran in
+          stages, and human games seeded every one of them.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>Copy strong human players</h3>
+            <p>
+              The agent first learned by supervised imitation, adjusting itself
+              to reproduce the moves in a public set of 971,000 anonymized human
+              replays from players in the top 22% of the ladder. That step alone
+              produced an agent rated about 3,699 MMR on average, already above
+              84% of human players.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Study the best games more closely</h3>
+            <p>
+              A second pass fine-tuned the agent on 16,000 replays from players
+              above 6,200 MMR, which raised its win rate against StarCraft's
+              built-in elite bot from 87% to 96% in Protoss mirror
+              matches.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Play a league of opponents</h3>
+            <p>
+              Reinforcement learning then improved the agents by having them
+              play each other inside what DeepMind calls a league: a population
+              of agents kept training together so that no single strategy can
+              quietly dominate. Three main agents, one per race, are the ones
+              actually deployed. Alongside them run three main exploiters and six
+              league exploiters, which exist only to hunt weaknesses in the
+              others and force them out. Human data stays in the loop even here:
+              each agent is pulled back toward its imitation policy when it
+              drifts, and rewarded for following build orders drawn from human
+              games.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </p>
+          </li>
+        </ol>
+        <p>
+          The full league ran on 32 third-generation tensor processing units per
+          agent for 44 days, creating roughly 900 distinct agents along the
+          way.<sup class="nb-cite"><a href="#s1">1</a></sup> This is the sense in
+          which AlphaStar &ldquo;taught itself&rdquo;: the reinforcement stage is
+          self-driven, but it begins and stays anchored in human play, which is
+          what sets it apart from a pure self-play system like
+          <a href="../the-evidence/alphazero.html">AlphaZero</a>.
+        </p>
+      </section>
+
+      <section data-nb-section="interface" id="interface">
+        <h2>The limits on how it sees and acts</h2>
+        <p>
+          A StarCraft player's skill is partly mechanical: how much of the map
+          you keep track of, and how fast you can issue commands. To keep the
+          result about strategy rather than raw speed, DeepMind constrained both
+          of these, and the exact constraints are the most misremembered part of
+          the whole story.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The <em>Nature</em> version saw the game through a camera it had to
+          move, the way a person scrolls the screen, rather than reading the
+          entire map at once. Its rate of action was capped at 22 non-duplicate
+          actions per five-second window.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Actions per minute, or APM, is the standard count of how many commands
+          a player issues in a minute, and StarCraft professionals routinely
+          sustain several hundred.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The agent also acted on a delay, choosing its next observation on
+          average about 370 milliseconds ahead and responding within roughly 110
+          milliseconds.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          DeepMind then tested whether these limits were doing real work, in
+          ablations that remove a single feature to see what it was worth.
+          Restricting the agent to the camera lowered its performance against a
+          version that read the whole map. Pushing its action rate either below
+          or above the chosen cap also made it play worse.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The constraints cost the agent strength. It reached Grandmaster
+          carrying them.
+        </p>
+      </section>
+
+      <section data-nb-section="two-agents" id="two-agents">
+        <h2>Two agents, one memory</h2>
+        <p>
+          The &ldquo;it only clicked faster&rdquo; criticism was not invented.
+          It was aimed at an earlier, looser version of AlphaStar, and the
+          confusion in popular memory comes from treating that version and the
+          ladder one as the same agent.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          In December 2018, DeepMind recorded a series against two
+          professionals, Dario &ldquo;TLO&rdquo; W&uuml;nsch and Grzegorz
+          &ldquo;MaNa&rdquo; Komincz, and showed it in January 2019.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          That agent was, in the paper's words, less restricted: it had no
+          limited camera and read the map fully zoomed out, and it could act more
+          often.<sup class="nb-cite"><a href="#s1">1</a></sup> It won all ten
+          recorded games, 5-0 against each player.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Two caveats sit inside that &ldquo;beat the pros&rdquo; result. TLO is
+          a professional Zerg player who played Protoss, not his own race, in
+          the series.<sup class="nb-cite"><a href="#s1">1</a></sup> And when
+          DeepMind later put a camera-restricted prototype into a live game, MaNa
+          beat it, making the public record 10-1.<sup class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          An independent analysis by Rick Korzekwa found that AlphaStar's average
+          action rate in one December game was in fact lower than MaNa's. But the
+          agent banked its budget and spent it in bursts: 14 stretches above 400
+          APM and 6 above 500 APM, each sustained for five seconds in combat and
+          executed with no wasted clicks.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Together with seeing the whole map at once, he judged that speed
+          advantage large enough to have swung the games.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          Every part of that critique describes the December agent. None of it
+          describes the version that later climbed the ladder.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            The December 2018 demonstration agent and the
+            <em>Nature</em> ladder agent, side by side.<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            ><sup class="nb-cite"><a href="#s4">4</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">What it had</th>
+              <th class="txt">December 2018 demonstration</th>
+              <th class="txt">Nature ladder version</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Vision</span></td>
+              <td class="txt">whole map, zoomed out</td>
+              <td class="txt">a camera it had to move</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Action limit</span></td>
+              <td class="txt">looser limits</td>
+              <td>22 per 5 s</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Races &amp; maps</span></td>
+              <td class="txt">Protoss only, one map</td>
+              <td class="txt">all three races, ladder maps</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Opponents</span></td>
+              <td class="txt">TLO and MaNa, a set series</td>
+              <td class="txt">anonymous ladder players</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Record</span></td>
+              <td>10-1</td>
+              <td class="txt">Grandmaster, above 99.8%</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section data-nb-section="superhuman" id="superhuman">
+        <h2>Grading the &ldquo;superhuman&rdquo; claim</h2>
+        <p>
+          Grandmaster on the ladder and beating the world's best in a controlled
+          match are different claims, and the paper is explicit about the gap
+          between them. Its ladder conditions, it says, &ldquo;do not directly
+          measure its susceptibility to exploitation under repeated
+          play.&rdquo;<sup class="nb-cite"><a href="#s1">1</a></sup> A ranked
+          ladder rewards an agent for being strong against a broad field of
+          anonymous opponents. It does not test whether a top professional, given
+          a run of games to study the agent, could find a weakness and repeat it.
+          The paper does not claim that AlphaStar beat the best players in a set
+          series under its ladder constraints.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          One of the paper's own authors is a professional player. TLO is quoted
+          in it saying that, with the limits in place, the agent
+          &ldquo;doesn't feel superhuman&mdash;certainly not on a level that a
+          human couldn't theoretically achieve.&rdquo;<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          That is the team stating, inside the document, that the constrained
+          version's edge was human-shaped.
+        </p>
+        <div class="nb-holdsup">
+          <div class="good">
+            <span class="nb-holdsup-label">What holds up</span>
+            <ul>
+              <li>
+                One system reached the top tier of a live human ladder, across
+                all three races, in a real-time game of imperfect information.
+              </li>
+              <li>
+                It got there from imitation of human replays plus league
+                reinforcement learning, a training recipe the paper documents in
+                full.
+              </li>
+              <li>
+                Its measured effective action rate sat inside the human range,
+                and its interface limits, by the paper's own ablations, cost it
+                strength rather than granting an edge.
+              </li>
+            </ul>
+          </div>
+          <div class="careful">
+            <span class="nb-holdsup-label">What to be careful about</span>
+            <ul>
+              <li>
+                The Grandmaster rank was anonymous ladder play, not a controlled
+                series against the world's best.
+              </li>
+              <li>
+                The famous 10-1 demonstration used a looser, no-camera agent,
+                against one off-race professional and one on-race one.
+              </li>
+              <li>
+                The strongest &ldquo;clicked too fast&rdquo; evidence measures
+                that December agent, not the ladder version.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          AlphaStar is a real result told slightly wrong. A system trained by
+          copying human replays and then playing a league of versions of itself
+          reached the top 0.15% of StarCraft's European ladder, playing
+          anonymous games through a camera and under a strict cap on how often it
+          could act. What it did not do was beat the world's best in a match
+          those players could prepare for. The version that went 5-0 against two
+          pros in the famous demonstration was a looser, faster, whole-map-seeing
+          agent, and even that record includes a live loss. Both things are
+          true. The ladder rank is the paper's headline result, and the games
+          against the pros are a preliminary demonstration the paper is careful
+          to keep separate.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1902.01724"
+              >AlphaStar: An Evolutionary Computation Perspective</a
+            >: an outside analysis of the league design and what it borrows from
+            evolutionary methods.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1708.04782"
+              >StarCraft II: A New Challenge for Reinforcement Learning</a
+            >: the StarCraft II environment DeepMind and Blizzard released so
+            others could train agents on the game.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.nature.com/articles/s41586-019-1724-z"
+              >Nature · Grandmaster level in StarCraft II using multi-agent
+              reinforcement learning (Vinyals et al., 2019)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://deepmind.google/blog/alphastar-grandmaster-level-in-starcraft-ii-using-multi-agent-reinforcement-learning/"
+              >DeepMind · AlphaStar: Grandmaster level in StarCraft II using
+              multi-agent reinforcement learning (October 2019)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.nature.com/articles/d41586-019-03298-6"
+              >Nature News · AI reaches grandmaster status in StarCraft II
+              (Garisto, 2019)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://deepmind.google/blog/alphastar-mastering-the-real-time-strategy-game-starcraft-ii/"
+              >DeepMind · AlphaStar: Mastering the real-time strategy game
+              StarCraft II (January 2019)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.engadget.com/2019-01-24-deepmind-ai-starcraft-ii-demonstration-tlo-mana.html"
+              >Engadget · DeepMind's AI wins, then loses, against StarCraft II
+              pros (Dellinger, 2019)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://aiimpacts.org/the-unexpected-difficulty-of-comparing-alphastar-to-humans/"
+              >AI Impacts · The unexpected difficulty of comparing AlphaStar to
+              humans (Korzekwa, 2019)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
