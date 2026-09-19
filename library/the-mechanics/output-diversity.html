@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbots keep naming the heroine Elara because alignment narrowed their range · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "output-diversity",
+        "template": "lesson",
+        "title": "Chatbots keep naming the heroine Elara because alignment narrowed their range",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-19",
+        "tags": ["post-training", "rlhf", "output-diversity", "sampling"],
+        "sources": 8,
+        "words": 2163,
+        "reading_minutes": 9,
+        "dek": "Reward training concentrates a model's probability on a few favored answers, and turning up temperature samples that narrowed range more loosely without restoring the variety the base model started with.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">Chatbots keep naming the heroine Elara because alignment narrowed their range</h1>
+        <p class="nb-dekline">
+          Reward training concentrates a model's probability on a few favored answers, and turning up temperature samples that narrowed range more loosely without restoring the variety the base model started with.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-19</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every time you ask a chatbot to brainstorm names, pitch story ideas,
+          or pick something at random, you are drawing from a model trained to
+          give the answer people rate highest, not the widest range of answers.
+          That is why the results feel same-y, and why the temperature setting
+          most people reach for to loosen them up only partly works. This lesson
+          starts from the behavior you can see, the heroine who keeps being
+          named Elara, and works back to the training step that produces it. It
+          defines the spread of answers a model draws from, shows where the
+          spread gets narrowed, and explains why one slider cannot widen it
+          again. By the end you can say why "AI writing all sounds the same" is a
+          fact about how these models are trained.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/sampling-temperature.html">Two answers to one prompt diverge at a single draw</a>:
+            how a model turns its weights into a next word, and what the
+            temperature knob does at the moment of the draw.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/overused-words.html">Chatbots overuse &lsquo;delve&rsquo;</a>:
+            another fingerprint that training leaves on model prose, and a
+            popular explanation for it that failed its one direct test.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The heroine is almost always named Elara</h2>
+        <p>
+          Ask a chatbot for a short story and there is a fair chance the hero is
+          a young woman named Elara. Open a fresh chat, ask again, and she comes
+          back. The habit is common enough that a naming expert made Elara her
+          2025 name of the year, reporting that AI systems reach for it "no
+          matter the context, no matter the genre," down to math workbooks about
+          Elara's adventures in geometry.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          It is a strong tendency rather than a fixed law. On a widely shared
+          thread cataloguing the pattern, one model version returns Elara while
+          others default to Aldric, Lila, or Elinor. Models lean hard on a few
+          names, but no model always picks the
+          same one.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Names are the kind of thing memory embroiders, so the sturdier
+          evidence is measured. Padmakumar and He had 38 writers compose
+          argumentative essays three ways: alone, alongside the base model
+          GPT-3, and alongside its aligned version, InstructGPT. The two models
+          contributed about the same amount of text, roughly a third of the
+          characters, yet only the InstructGPT essays grew more alike. The
+          average similarity between different authors' essays rose from about
+          0.154 for writers working alone to 0.166 with InstructGPT. GPT-3 left
+          it near 0.158, and the jump for InstructGPT was statistically
+          significant.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Different people, handed the aligned model, drifted toward the same
+          essay.
+        </p>
+        <p>
+          The narrowing shows up in tone as plainly as in wording. Wu, Black,
+          and Chandrasekaran had models generate book reviews and counted how
+          many landed in the most positive sentiment band. Real human reviews
+          land there only 2.8% of the time. The base model stays close to
+          people. Each further step of alignment piles the reviews onto the
+          positive end.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Share of generated book reviews whose average sentiment falls in the
+            most positive band, by how far the model has been aligned. The base
+            model sits near the human rate; supervised fine-tuning and then RLHF
+            drive the share up.<sup class="nb-cite"><a href="#s4" data-nb-locator="Section 5; pp. 12, 14">4</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th class="txt">Training stage</th>
+              <th>Most-positive share</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Human reviews</span></td>
+              <td class="txt">the source data</td>
+              <td>2.8%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Llama-2</span></td>
+              <td class="txt">base, pretrained only</td>
+              <td>5.9%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Vicuna-13b</span></td>
+              <td class="txt">supervised fine-tuning</td>
+              <td>44.7%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Llama-2-chat</span></td>
+              <td class="txt">RLHF</td>
+              <td>82.1%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GPT-3.5, GPT-4</span></td>
+              <td class="txt">aligned, proprietary</td>
+              <td>100%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Many people pin this sameness on the temperature setting and try to
+          cure it by turning that setting up. The cure mostly fails, and seeing
+          why means following an answer back to where it is born.
+        </p>
+      </section>
+
+      <section data-nb-section="distribution" id="distribution">
+        <h2>A model draws each answer from a spread of options</h2>
+        <p>
+          A language model does not keep answers on a shelf. At each step it
+          assigns a probability to every word that could come next, and a
+          sampler draws one word from those odds. An earlier lesson walks
+          through that single draw and the temperature knob that tunes it.
+          <a href="../the-mechanics/sampling-temperature.html">Two answers to one prompt diverge at a single draw</a>
+          is the place to start if the draw is new to you. What matters here sits
+          one level up: not the odds on the next word but the spread of whole
+          answers the model tends to give. Call that spread the output
+          distribution. When it is wide, repeated requests wander across many
+          answers. When it is narrow, they keep landing on the same few.
+        </p>
+        <p>
+          Two words describe the shape of that spread. A mode is a peak, an
+          answer the model returns far more often than its neighbors. Elara is a
+          mode. Entropy measures how spread out the whole distribution is:
+          high entropy means the odds are shared across many options, and low
+          entropy means a few options hold most of the weight.
+        </p>
+        <p>
+          Before any alignment, the spread is wide, because the base model is
+          trained to imitate an enormous range of human writing, and human
+          writing is full of different names and different sentences.
+          Behnam Mohammadi compared a base model with its aligned version and
+          found the base model's next-word odds spread across many words,
+          leaving its token-level entropy higher than the aligned model's.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The book-review test tells the same story from the other end: the base
+          Llama-2 put 5.9% of its reviews in the top sentiment band, close to the
+          human 2.8% and far from the 82.1% of its aligned sibling.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Left as a plain imitator, a model roughly reproduces the variety of the
+          text it learned from.
+        </p>
+      </section>
+
+      <section data-nb-section="reward-narrowing" id="reward-narrowing">
+        <h2>Reward training piles the odds onto a few answers</h2>
+        <p>
+          That variety does not survive the next stage. After pretraining, a
+          model is aligned so it follows instructions and answers the way people
+          prefer. The standard method, reinforcement learning from human
+          feedback, trains a separate reward model to score answers by how much
+          human raters like them, then tunes the model to earn higher scores.
+          The published InstructGPT objective states exactly what that tuning
+          maximizes.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <figure class="nb-math">
+          <div class="nb-math-eq">
+            \text{objective} = \mathbb{E}\!\left[\, \htmlClass{nb-mc1}{r_\theta(x,y)} \;-\; \htmlClass{nb-mc2}{\beta \, \log \frac{\pi^{\mathrm{RL}}(y \mid x)}{\pi^{\mathrm{SFT}}(y \mid x)}} \,\right] \;+\; \gamma \, \mathbb{E}\!\left[\log \pi^{\mathrm{RL}}(x)\right]
+          </div>
+          <ul class="nb-math-legend">
+            <li>
+              <span class="nb-math-term nb-mc1">r_\theta(x,y)</span><span
+                >The reward: how much a scorer trained on human preferences likes
+                the answer. Pushing this term up is what shifts probability onto
+                a few high-scoring answers.</span
+              >
+            </li>
+            <li>
+              <span class="nb-math-term nb-mc2">\beta \, \log \tfrac{\pi^{\mathrm{RL}}}{\pi^{\mathrm{SFT}}}</span><span
+                >The leash: a penalty for straying from the pre-reward model. It
+                caps how far training drifts and does not, on its own, widen the
+                range.</span
+              >
+            </li>
+          </ul>
+          <figcaption>
+            What reinforcement learning maximizes when it aligns a model. The
+            reward term concentrates the odds. The penalty only limits the
+            drift. The last term optionally mixes in ordinary text
+            prediction.<sup class="nb-cite"><a href="#s6" data-nb-locator="Section 3.5; Equation (2)">6</a></sup>
+          </figcaption>
+        </figure>
+        <p>
+          Read it as one instruction: produce answers the reward model scores
+          highly, and do not drift too far from the model you started as. The
+          reward term is the pressure that narrows. If a handful of answers
+          reliably earn high scores, raising the score means putting more
+          probability on those answers and less on everything else, so the
+          distribution contracts around the reward's favorites. That is where a
+          recurring Elara comes from. A smooth, pleasant name with no real-world
+          person attached is a safe high-scorer, so a model trained to please
+          gravitates to it.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          It is tempting to blame the penalty term instead. It measures how far
+          the aligned model has moved from the pre-reward one, so it reads like a
+          brake on variety. It is a leash, not the hand that narrows. The
+          InstructGPT authors added it to stop the model from over-optimizing the
+          reward and wandering into nonsense, not to shrink the range.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Kirk and coauthors tested the leash directly and found that tightening
+          it, by raising the penalty coefficient, lowered diversity further
+          rather than restoring it.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The narrowing lives in the reward chase. The penalty only bounds how
+          far the chase can run.
+        </p>
+        <p>
+          The measured drops line up across studies. Kirk and coauthors compared
+          full RLHF against the supervised model it starts from. They found that
+          "RLHF substantially decreases the diversity of outputs sampled for a
+          given input," and reported what they call the first rigorous
+          demonstration of across-input mode collapse from RLHF: even across many
+          different prompts, the answers cluster onto a few. That across-input
+          effect is real but smaller than the per-input drop, and the per-input
+          variety is what falls most clearly.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Padmakumar and He's aligned essays carried the fewest distinct wordings
+          and the fewest distinct ideas at every threshold they
+          checked.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          Mohammadi's aligned model ran at lower token-level entropy
+          throughout.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="temperature" id="temperature">
+        <h2>A hotter setting cannot restore what was trimmed</h2>
+        <p>
+          This is where the temperature guess falls apart. Temperature flattens
+          or sharpens the odds at the moment of the draw, as the earlier lesson
+          lays out. Turn it up and the sampler reaches further down the list of
+          options the model is offering. But it can only reach among options that
+          still carry weight. If reward training already stripped the
+          probability off the alternatives, a hotter setting spreads the draw
+          across a distribution that is itself narrow. It samples the surviving
+          range more loosely. It cannot rebuild a range the training removed.
+        </p>
+        <p>
+          Two findings mark the limit. Mohammadi found that the aligned model's
+          favorite completions, its attractor states, persist even at a
+          temperature of 1, a high setting, while the base model shows no such
+          trapping even at low temperatures.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Wu and coauthors tried four ways to widen the reviews, including higher
+          temperature and prompts that explicitly asked for variety. The best of
+          them moved the most-positive share from 82.1% down to 58.1%, still far
+          above the 5.9% the base model produced on its own.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The knob buys a little room. It does not undo the training.
+        </p>
+      </section>
+
+      <section data-nb-section="scope" id="scope">
+        <h2>What the narrowing does not touch</h2>
+        <p>
+          A loose version of this claim does not survive one careful study.
+          Shypula and coauthors measured diversity
+          only among the answers that were actually good, and by that measure
+          preference-tuned models came out ahead of base and supervised models,
+          by a wide margin.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Alignment raises the share of usable answers, and counting only the
+          usable ones can flip the verdict. The same paper still finds aligned
+          models lower on plain word- and sentence-level variety.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          So alignment trims the
+          variety of words and sentence shapes and concentrates the model on a
+          few modes. Whether you call that "less diverse" depends on whether you
+          weight by quality.
+        </p>
+        <p>
+          Two things about this are settled engineering. Post-training measurably
+          lowers word- and sentence-level diversity and token-level entropy
+          relative to the base model, and a hotter temperature does not restore
+          what it removed. Two things are still open, even for the people who
+          build these systems. Which pressure dominates the narrowing, reward
+          over-optimization or homogeneous raters or something else again, is
+          unresolved, though the KL penalty has been ruled out as the main
+          cause. And how to hand back the base model's range without giving up
+          the quality alignment bought remains unsolved. When a chatbot keeps
+          offering you Elara, that open question is what stands between you and
+          the variety you asked for.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The variety you want lived in the base model, which imitated the full
+          range of human writing. Alignment trained the model to prefer the
+          answers people rate highly. In doing so it moved probability off the
+          alternatives and onto a few favorites, and separate requests keep
+          returning the same names, the same tone, the same shapes. Turning up
+          temperature samples that narrowed range more loosely. It cannot restore
+          options the training removed. The fix people reach for is a setting,
+          and the cause sits one level deeper, in what the model was rewarded to
+          do.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2310.06452">Kirk et al., "Understanding the Effects of RLHF on LLM Generalisation and Diversity"</a>:
+            the study that first demonstrated across-input mode collapse from
+            RLHF, and tested the KL penalty as a cause.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2407.02209">Wu, Black, and Chandrasekaran, "Generative Monoculture in Large Language Models"</a>:
+            the sentiment and factuality measurements behind the table, and the
+            temperature and prompting tests that only partly widen the output.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.today.com/parents/family/elara-name-of-the-year-ai-rcna250091"
+              >TODAY · Laura Wattenberg on Elara, AI&rsquo;s favorite name and 2025 Name of the Year</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://news.ycombinator.com/item?id=42093394"
+              >Hacker News · &ldquo;When you ask ChatGPT &lsquo;Tell me a story&rsquo; it&rsquo;s always about a girl named Elara&rdquo;</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2309.05196"
+              >arXiv · Padmakumar and He, &ldquo;Does Writing with Language Models Reduce Content Diversity?&rdquo;</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2407.02209"
+              >arXiv · Wu, Black, and Chandrasekaran, &ldquo;Generative Monoculture in Large Language Models&rdquo;</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.05587"
+              >arXiv · Behnam Mohammadi, &ldquo;Creativity Has Left the Chat: The Price of Debiasing Language Models&rdquo;</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.02155"
+              >arXiv · Ouyang et al., &ldquo;Training language models to follow instructions with human feedback&rdquo;</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2310.06452"
+              >arXiv · Kirk et al., &ldquo;Understanding the Effects of RLHF on LLM Generalisation and Diversity&rdquo;</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2504.12522"
+              >arXiv · Shypula et al., &ldquo;Evaluating the Diversity and Quality of LLM Generated Content&rdquo;</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
