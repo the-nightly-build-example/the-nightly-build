@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Amazon's Rekognition falsely matched 28 members of Congress to arrest photos · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "amazon-rekognition-congress",
+        "template": "lesson",
+        "title": "Amazon's Rekognition falsely matched 28 members of Congress to arrest photos",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-19",
+        "tags": ["facial-recognition", "amazon-rekognition", "face-matching", "confidence-threshold", "demographic-bias"],
+        "sources": 9,
+        "words": 1936,
+        "reading_minutes": 8,
+        "dek": "The ACLU ran the scan for $12.33 at the tool's default setting, and the argument that followed turned on a confidence number Amazon kept raising.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">Amazon's Rekognition falsely matched 28 members of Congress to arrest photos</h1>
+        <p class="nb-dekline">
+          The ACLU ran the scan for $12.33 at the tool's default setting, and the
+          argument that followed turned on a confidence number Amazon kept raising.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-19</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A police department can buy face matching the way anyone buys cloud
+          storage: upload a photo, search it against a database of faces, and get
+          back a ranked list of who it might be. Whether that tool helps or harms
+          turns on a setting most buyers never touch, and in July 2018 a
+          civil-liberties group spent $12.33 to show what the default setting
+          does. By the end of this lesson you will know what a face-matching
+          "match" actually is, why searching a large gallery of photos produces
+          wrong hits even when any single comparison is usually right, and why
+          those wrong hits do not land on everyone equally.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../when-ai-breaks/google-photos-gorilla.html">To stop labeling Black men as gorillas, Google stopped labeling gorillas</a>:
+            how a vision system's error rate can differ sharply by skin tone.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../when-ai-breaks/shotspotter-wrongful-arrest.html">The ShotSpotter alert that jailed Michael Williams began as a firecracker</a>:
+            why a mostly-accurate alert can still produce mostly false positives.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../when-ai-breaks/clearview-ai.html">Regulators kept ruling Clearview illegal as its face database grew past 30 billion photos</a>:
+            how face search built on scraped photos ran into the law.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The ACLU ran all 535 members at the default setting</h2>
+        <p>
+          In July 2018 the ACLU of Northern California took the official photo of
+          every one of the 535 members of Congress and ran each through Amazon
+          Rekognition, Amazon's commercial face-matching service, sold through AWS
+          and pitched to police departments.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Face matching takes a probe, the face you are searching for, and compares
+          it against a gallery, a stored set of faces. It returns candidates, each
+          with a similarity score: a percentage for how closely the two faces
+          resemble each other. The ACLU's gallery was 25,000 publicly available
+          arrest photos.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Run at the service's default settings, Rekognition returned 28 matches.
+          All 28 were false matches, cases where the system links photos of two
+          different people: no member of Congress was the person in the arrest
+          photo it was paired with. Nearly 40% of the false matches were people of
+          color, though people of color make up about 20% of Congress. Six were
+          members of the Congressional Black Caucus, among them the late Rep. John
+          Lewis of Georgia. The whole scan cost $12.33.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="threshold" id="threshold">
+        <h2>Behind a match is a similarity score and a cutoff</h2>
+        <p>
+          A match is not something the system discovers. It is a similarity score
+          that clears a cutoff the operator sets, called the confidence threshold.
+          Below the line the candidate is dropped; at or above it, the system calls
+          it a match. The ACLU used Rekognition's default threshold of 80%.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Amazon disputed the test the next day, July 27, 2018. Dr. Matt Wood, who
+          ran deep learning and AI at AWS, called the 80% default good for general
+          use, such as identifying celebrities or spotting look-alike family members
+          in a photos app. But it is "not the right setting for public safety use
+          cases," he wrote, and for those Amazon recommends 99%. Amazon said it re-ran a similar
+          test at 99% and got zero misidentifications against a corpus 30 times
+          larger than the ACLU's.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The ACLU's reply, the same week, made two points. A default is what an
+          operator gets out of the box, and Amazon neither requires 99% nor gates
+          the API on it. And Amazon's own recommended figure kept moving: its June
+          2017 walkthrough with the Washington County Sheriff's Office had set the
+          threshold at 85%, and in the days around the test the recommendation went
+          to 95% and then to 99%.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            The confidence threshold named for face matching, by the source that
+            stated it.<sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s3">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Threshold</th>
+              <th class="txt">Where it came from</th>
+              <th class="txt">What it was for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>80%</td>
+              <td class="txt">Rekognition's API default</td>
+              <td class="txt">general use, like celebrities or look-alike family photos</td>
+            </tr>
+            <tr>
+              <td>85%</td>
+              <td class="txt">Amazon's June 2017 Washington County post</td>
+              <td class="txt">an early walkthrough for police</td>
+            </tr>
+            <tr>
+              <td>95%</td>
+              <td class="txt">the ACLU's account of Amazon's reply</td>
+              <td class="txt">the figure Amazon gave before settling on 99%</td>
+            </tr>
+            <tr>
+              <td>99%</td>
+              <td class="txt">Amazon's documentation and rebuttal</td>
+              <td class="txt">law-enforcement identification</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          That raising the threshold lowers the number of false matches is not in
+          dispute. What the ACLU disputed is who has to know to raise it, and
+          whether a higher cutoff fixes the whole problem. It does not, because the
+          cutoff is only one of two things working against the operator.
+        </p>
+      </section>
+
+      <section data-nb-section="gallery-size" id="gallery-size">
+        <h2>A bigger gallery buys more chances to be wrong</h2>
+        <p>
+          The second thing is the size of the gallery. A one-to-many search
+          compares the probe against every face stored, so running 535 probe faces
+          against 25,000 arrest photos is more than thirteen million one-to-one
+          comparisons.<sup class="nb-cite"><a href="#s1">1</a></sup> Each comparison
+          can go wrong on its own, and the more you run, the more chances a wrong
+          one has to clear the line. This is the base-rate problem the
+          <a href="../when-ai-breaks/shotspotter-wrongful-arrest.html">ShotSpotter
+          lesson</a> works through: a test that is usually right still turns up
+          false alarms once you run it enough times. A search of thousands of faces
+          is exactly that many times.
+        </p>
+        <p>
+          So a false match does not require a bad algorithm. It requires a large
+          gallery and a cutoff loose enough to let the closest wrong face through,
+          and the ACLU supplied both. Amazon's retest points the same way from the
+          other side. When it pushed the cutoff to 99% and searched an even larger
+          set, its reported misidentifications fell to zero.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The threshold and the gallery are the two dials. The ACLU left the
+          threshold at its factory setting, and the gallery of 25,000 gave the
+          wrong faces their chances.
+        </p>
+      </section>
+
+      <section data-nb-section="uneven-errors" id="uneven-errors">
+        <h2>The wrong hits did not fall evenly</h2>
+        <p>
+          The 28 false matches skewed by race, but 28 is a small set, and that
+          skew describes these particular matches rather than a measured error rate
+          for any group.<sup class="nb-cite"><a href="#s1">1</a></sup> To ask
+          whether face systems really err more on some faces than others, you have
+          to look at controlled audits, and the two most often cited measure a
+          different task than the ACLU test.
+        </p>
+        <p>
+          Gender Shades, published in 2018 by Joy Buolamwini and Timnit Gebru,
+          tested three commercial gender-classification systems, ones that guess a
+          binary gender label from a face, from Microsoft, Face++, and IBM. Amazon
+          was not among them. Darker-skinned women were misclassified at rates up
+          to 34.7%, against a maximum of 0.8% for lighter-skinned men.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The follow-up, Actionable Auditing by Inioluwa Deborah Raji and
+          Buolamwini, added Amazon: on the same benchmark, Rekognition mislabeled
+          the gender of darker-skinned women 31.37% of the time and of
+          lighter-skinned men 0.0%.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Both figures measure gender classification, not face matching. Guessing a
+          face's gender is a different task from deciding whether two faces belong
+          to the same person. A gap measured on one task, like the
+          <a href="../when-ai-breaks/google-photos-gorilla.html">skin-tone gap in
+          image labeling</a>, does not automatically carry to the other.
+        </p>
+        <p>
+          Amazon drew exactly that line. In January 2019 Wood argued that facial
+          analysis, finding generic attributes like gender, and facial recognition,
+          matching a face to an identity, are "completely different in terms of the
+          underlying technology," and that "using facial analysis to do facial
+          recognition is an inaccurate and unadvised way to identify unique
+          individuals." Amazon said its own gender-classification test on more than
+          12,000 images found "no significant difference in accuracy" across
+          ethnicities, and that Rekognition searched MegaFace's one million images
+          with zero false positives at the 99% threshold.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          So does matching itself err unevenly? The one study that measured
+          demographic differences in face recognition rather than classification is
+          NIST's, published in December 2019. Testing one-to-one and one-to-many
+          algorithms from many developers on operational photo sets, NIST found
+          false-positive rates that vary across demographic groups by factors of 10
+          to beyond 100. On U.S. mugshots, the one-to-many case that matches the
+          ACLU's scenario, false positives were highest for American Indians, with
+          elevated rates for African American and Asian faces. They were also higher
+          for women than for men.<sup class="nb-cite"><a href="#s7">7</a></sup> That is a
+          measured property of face matching. Raising the threshold lowers the
+          overall false-match rate, which is Amazon's point, but does not by itself
+          even out the gap between groups, which is NIST's.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          NIST never tested Rekognition itself, though, because Amazon did not
+          submit it.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="today" id="today">
+        <h2>Where face matching runs after the pause</h2>
+        <p>
+          On June 10, 2020, Amazon changed course. It announced a one-year
+          moratorium on police use of Rekognition and asked Congress to write rules
+          for the technology. It kept access open for Thorn, the International
+          Center for Missing and Exploited Children, and Marinus Analytics, for
+          anti-trafficking and missing-children work.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          It came amid the protests after George Floyd's death and one day after
+          IBM left general-purpose face recognition. MIT Technology Review, which
+          tracked the campaign from the Congress test through the audits, reported
+          that the pause was narrow: time-limited, and silent on federal agencies
+          such as ICE and DHS.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <p>
+          The mechanisms did not pause with the product. Face matching still runs
+          in policing and in identity checks, and the
+          <a href="../when-ai-breaks/clearview-ai.html">face-search vendors
+          regulators have chased</a> sell it against galleries far larger than
+          25,000. A match is still a similarity score past a cutoff someone chooses,
+          a search still runs a probe against a gallery big enough to make some
+          matches wrong, and where the errors have been measured, they still do not
+          fall evenly. The next face search that returns a name is running the same
+          arithmetic the ACLU paid $12.33 to expose.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The $12.33 test did not prove that Amazon's software is racist, and Amazon
+          did not prove it is safe. It proved something narrower and more useful:
+          that a face "match" is a similarity score past a cutoff someone chooses,
+          that searching thousands of photos gives a wrong hit many chances to
+          appear, and that where face systems have been measured, the wrong hits do
+          not land evenly. Amazon's fix, recommending 99% instead of 80%, lowers the
+          count but does not answer the last point, and the test that would, a
+          demographic evaluation of Rekognition's own matching, is the one Amazon
+          declined to hand over. So when someone tells you a face search "matched,"
+          you now have three questions to ask: what the cutoff was, how large the
+          gallery was, and whether anyone measured who it gets wrong.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://nvlpubs.nist.gov/nistpubs/ir/2019/nist.ir.8280.pdf">NIST, Face Recognition Vendor Test Part 3: Demographic Effects</a>:
+            the measured demographic differences in face matching, in the report's own numbers.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.aies-conference.com/2019/wp-content/uploads/2019/01/AIES-19_paper_223.pdf">Raji and Buolamwini, Actionable Auditing</a>:
+            the audit that put Rekognition's gender-classification error side by side with its competitors'.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.aclu.org/news/privacy-technology/amazons-face-recognition-falsely-matched-28"
+              >ACLU of Northern California · Amazon's Face Recognition Falsely Matched 28 Members of Congress With Mugshots (Jacob Snow, July 26, 2018)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aws.amazon.com/blogs/aws/thoughts-on-machine-learning-accuracy/"
+              >Amazon Web Services · Thoughts On Machine Learning Accuracy (Matt Wood, July 27, 2018)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.aclu.org/press-releases/aclu-comment-new-amazon-statement-responding-face-recognition-technology-test"
+              >ACLU · Comment on New Amazon Statement Responding to Face Recognition Technology Test (Jacob Snow, 2018)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://proceedings.mlr.press/v81/buolamwini18a/buolamwini18a.pdf"
+              >Buolamwini & Gebru · Gender Shades: Intersectional Accuracy Disparities in Commercial Gender Classification (PMLR v81, 2018)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.aies-conference.com/2019/wp-content/uploads/2019/01/AIES-19_paper_223.pdf"
+              >Raji & Buolamwini · Actionable Auditing (AIES 2019)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aws.amazon.com/blogs/machine-learning/thoughts-on-recent-research-paper-and-associated-article-on-amazon-rekognition/"
+              >Amazon Web Services · Thoughts on Recent Research Paper and Associated Article on Amazon Rekognition (Matt Wood, January 26, 2019)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://nvlpubs.nist.gov/nistpubs/ir/2019/nist.ir.8280.pdf"
+              >NIST · Face Recognition Vendor Test (FRVT) Part 3: Demographic Effects, NISTIR 8280 (Grother, Ngan, Hanaoka, December 2019)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.aboutamazon.com/news/policy-news-views/we-are-implementing-a-one-year-moratorium-on-police-use-of-rekognition"
+              >Amazon · We are implementing a one-year moratorium on police use of Rekognition (June 10, 2020)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.technologyreview.com/2020/06/12/1003482/amazon-stopped-selling-police-face-recognition-fight/"
+              >MIT Technology Review · The two-year fight to stop Amazon from selling face recognition to the police (Karen Hao, June 2020)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
