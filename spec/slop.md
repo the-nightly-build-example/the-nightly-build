@@ -62,6 +62,13 @@ of them still goes if it fails the test above.
   ("that's the whole point", "here's the kicker", "the catch is"), and the "X is
   the whole Y" family is another ("that identity is the whole guarantee"). Such
   a sentence grades the argument instead of continuing it.
+- **Performed carefulness.** A sentence that advertises the writer's judgment
+  where a qualification belongs. "The honest position is", "the honest first
+  question is", and "what the evidence has earned" rate the writer's own care.
+  "The confidence on both sides runs ahead of the evidence" and "less settled
+  than either side admits" rate the people arguing rather than the argument. A
+  real qualification names something a reader can check: what went unmeasured,
+  who disagrees, what would settle it. Keep those and cut the display.
 - **Fluff.** Filler openings ("In today's fast-paced world"), empty connectives,
   throat-clearing ("As you might know"), and openers that lecture: Note,
   Consider, Imagine.
@@ -93,10 +100,10 @@ carries the same vagueness, and repunctuating an em-dash keeps the fluff the
 dash was carrying. Delete first, then rewrite what remains.
 
 A template or a press may allow one of these failures where its own work needs
-it. The lesson template allows its two bookend cards to address the reader,
-which the self-reference entry above otherwise rules out. `spec/editorial.md`
-sets the terms. A sentence written in an allowed form still has to say
-something.
+it. The example lesson template allows its two bookend cards to address the
+reader, which the self-reference entry above otherwise rules out.
+`spec/editorial.md` sets the terms. A sentence written in an allowed form still
+has to say something.
 
 ## Who this binds
 
