@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>o1 scored 74% on the 2024 AIME on one try and 83% on a vote over sixty-four · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "self-consistency-scoring",
+        "template": "lesson",
+        "title": "o1 scored 74% on the 2024 AIME on one try and 83% on a vote over sixty-four",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-19",
+        "tags": ["scoring", "reasoning-models", "sampling", "evaluation", "mathematics"],
+        "sources": 8,
+        "words": 1924,
+        "reading_minutes": 8,
+        "dek": "That higher number is a majority vote over many sampled tries, honest in OpenAI's own report and misleading the moment it is quoted without the compute behind it.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">o1 scored 74% on the 2024 AIME on one try and 83% on a vote over sixty-four</h1>
+        <p class="nb-dekline">
+          That higher number is a majority vote over many sampled tries, honest in OpenAI's own report and misleading the moment it is quoted without the compute behind it.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-19</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every few months a new reasoning model arrives with a striking score
+          on a hard math test: 83% on the AIME, 86.7%, numbers that a year
+          earlier would have belonged to a strong human competitor. Some of
+          those numbers are votes. The model was asked the same problem dozens
+          of times and graded on the answer it gave most often, at dozens of
+          times the computing cost of a single attempt. By the end of this
+          lesson you will know how a cons@k or maj@k score is built, why voting
+          raises it, and why a voted score and a single-try score are two
+          different measurements that should not be read against each other,
+          however similar they look on a slide.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/humaneval-pass-at-k.html">Pass@k on HumanEval</a>:
+            how a code score is computed from many tries, and why counting whether
+            any try passes is a different rule from taking a vote.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/aime.html">The AIME</a>: why a
+            fifteen-problem exam makes any single score wobble.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-instruments/math-benchmark.html">The MATH benchmark</a>:
+            what a boxed-answer math score does and does not pin down.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>How o1 reported two scores for one exam</h2>
+        <p>
+          When OpenAI introduced its o1 reasoning model in September 2024, it
+          reported two scores for the 2024 American Invitational Mathematics
+          Examination, a fifteen-problem high-school competition. Given one
+          attempt per problem, o1 solved 74%. Given sixty-four attempts and
+          graded on the answer that came up most often, it solved 83%.<sup
+            class="nb-cite"><a href="#s1">1</a></sup>
+          The model did not get better between the first attempt and the
+          sixty-fourth. The scoring rule changed.
+        </p>
+        <p>
+          That second rule has a label, consensus@64, and several cousins.
+          Self-consistency is the underlying method; cons@k, consensus@k, and
+          maj@k are the numbers it reports, where k is how many attempts were
+          sampled. Wherever the label appears, the score is a vote among a
+          model's own tries rather than a single try graded once. The vote
+          almost always scores higher than the single try.
+        </p>
+      </section>
+
+      <section data-nb-section="how-the-vote-is-built" id="how-the-vote-is-built">
+        <h2>How a majority vote becomes a score</h2>
+        <p>
+          A reasoning model does not jump to an answer. It writes out a chain of
+          thought first, a run of intermediate steps in ordinary text, and gives
+          its final answer at the end. It also does not write the same chain
+          every time. At each word the model holds a probability distribution
+          over what comes next, and a setting called the sampling temperature
+          controls how much it gambles. At temperature zero it always takes its
+          single most likely next word, so one prompt yields one fixed chain;
+          this is greedy decoding. Above zero it samples, and the same prompt can
+          produce a different chain, and a different final answer, on every
+          run.<sup class="nb-cite"><a href="#s2" data-nb-locator="Section 3.1">2</a></sup>
+        </p>
+        <p>
+          A majority-vote score is built on that variation, in three steps.
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>Sample k chains</h3>
+            <p>
+              Run the same problem k times at a nonzero temperature, collecting
+              k independent chains of thought, each ending in its own final
+              answer.<sup class="nb-cite"><a href="#s2">2</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Tally the final answers</h3>
+            <p>
+              Strip the reasoning from each chain, keep only its final answer,
+              and count how many chains landed on each distinct answer.
+            </p>
+          </li>
+          <li>
+            <h3>Report the plurality</h3>
+            <p>
+              Score the answer that appears most often, the plurality or
+              majority vote, and report whether it is correct as cons@k or maj@k
+              for that k.
+            </p>
+          </li>
+        </ol>
+        <p>
+          This is the self-consistency method Wang and coauthors introduced in
+          2022: replace greedy decoding with a diverse set of sampled chains,
+          then keep the answer that most of them agree on. In their
+          experiments they sampled forty chains per problem for a model like
+          PaLM-540B, at a temperature of 0.7.<sup class="nb-cite"><a
+            href="#s2" data-nb-locator="Section 2">2</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="why-voting-wins" id="why-voting-wins">
+        <h2>Why the vote beats a single try</h2>
+        <p>
+          The smallest version of the effect fits in ten tries. Suppose one
+          competition problem has the answer 24, and a model samples ten chains
+          of thought for it: six reason their way to 24, three make the same
+          wrong turn and reach 18, and one reaches 36. Keep a single chain and
+          what you report is a matter of luck. Six times in ten you would report
+          24, three times 18, once 36. Take the most common answer across all
+          ten and you report 24 every time. The vote lands on the right answer
+          for one specific reason: the model reaches 24 more often than it
+          repeats any single wrong answer.
+        </p>
+        <p>
+          The same effect holds at scale. On GSM8K, a set of grade-school math
+          word problems, Wang and coauthors ran PaLM-540B two ways. Kept to a
+          single greedy answer it scored 56.5%. Scored on a majority vote over
+          forty samples it scored 74.4%, a gain of 17.9 points from nothing but
+          sampling and counting.<sup class="nb-cite"><a href="#s2"
+            data-nb-locator="Table 1">2</a></sup>
+        </p>
+        <p>
+          A fair objection: should not one good, directed attempt beat a
+          scattered vote? When o1's numbers appeared, one analyst argued that
+          its single-attempt score ought to at least equal its consensus@64
+          score, on the reasoning that a model searching for the right answer
+          should beat one that merely samples and tallies.<sup class="nb-cite"><a
+            href="#s3">3</a></sup>
+          The measured numbers run the other way in every case here, and the ten
+          tries say why. A vote is not a search for the best chain. It is a way
+          to cancel out the chains that wander off, and it works whenever the
+          wanderers disagree with each other while the correct chains agree.
+        </p>
+        <p>
+          That is also the boundary of what a vote can do. Turn the counts
+          around: if seven of the ten chains reach 18 and only three reach 24,
+          the plurality is 18 and the vote is confidently wrong. Sampling more
+          chains does not help, because the model is not scattering around the
+          right answer, it is converging on the wrong one. A majority vote lifts
+          a score on problems the model half-knows. It cannot rescue a problem
+          the model is sure about and wrong about.
+        </p>
+      </section>
+
+      <section data-nb-section="the-ceiling" id="the-ceiling">
+        <h2>The vote climbs to a ceiling</h2>
+        <p>
+          Feeding a model more tries does raise a different number without any
+          ceiling in sight. Brown and
+          coauthors measured coverage: the fraction of problems for which at
+          least one sampled chain is correct. On a software-engineering
+          benchmark, coverage for one model rose from 15.9% at a single sample
+          to 56% at 250 samples, and kept climbing as they sampled further.<sup
+            class="nb-cite"><a href="#s4">4</a></sup>
+          Counting whether any of k tries is correct is the rule behind
+          <a href="../the-instruments/humaneval-pass-at-k.html">pass@k</a>, a
+          scoring convention used for code, and it is not what a vote measures.
+        </p>
+        <p>
+          Coverage asks whether the right answer is anywhere in the pile. The
+          vote asks whether the right answer is the most common thing in the
+          pile. The two come apart as the pile grows. Brown and coauthors found
+          that where no automatic checker can confirm an answer, majority voting
+          and similar selection methods plateau after several hundred samples and
+          stop tracking the sample budget, even while coverage keeps
+          rising.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The correct chain can be sitting in the pile, and if the wrong chains
+          outnumber it, the vote never picks it out.
+        </p>
+      </section>
+
+      <section data-nb-section="reading-the-vote" id="reading-the-vote">
+        <h2>Reading a vote as if it were one try</h2>
+        <p>
+          Every extra try in a vote is real computation. A consensus@64 score is
+          the accuracy of a system that generates sixty-four full chains of
+          thought for each problem and then votes; a single-try score is the
+          accuracy of a system that generates one.<sup class="nb-cite"><a
+            href="#s1">1</a></sup>
+          The vote can cost sixty-four times the inference of the single try.
+          Both can be honest numbers. They are not the same measurement, and the
+          trouble starts when they are read as though they were.
+        </p>
+        <p>
+          Inside the report that produces them, the two usually sit side by
+          side. Take Minerva, Google's 2022 math model, on MATH, a set of 12,500
+          competition-mathematics problems.<sup class="nb-cite"><a
+            href="#s5">5</a></sup>
+          Its Table 2 lists the 540-billion-parameter model at 33.6% for a
+          single greedy answer and 50.3% for a majority vote over sixty-four
+          samples, both labeled, one beside the other.<sup class="nb-cite"><a
+            href="#s6" data-nb-locator="Table 2">6</a></sup>
+          Reported that way, the vote is honest.
+        </p>
+        <p>
+          The same table carries the trap. Farther down the same MATH column
+          sits the prior published state of the art: 6.9%, a single-try
+          number.<sup class="nb-cite"><a href="#s6"
+            data-nb-locator="Table 2">6</a></sup>
+          A reader scanning the column sees 6.9% and 50.3% in one frame and
+          reads a leap of more than sevenfold in skill. Part of that leap is
+          real and part of it is the gap between scoring one answer and scoring
+          the vote of sixty-four. The like-for-like comparison to the old 6.9%
+          is Minerva's own single-try 33.6%, still a large jump, and it is the
+          number that tends not to travel.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Single-try and majority-vote scores as three model reports published
+            them, each pair from one system on one test.<sup class="nb-cite"><a
+              href="#s6">6</a></sup><sup class="nb-cite"><a href="#s1">1</a></sup><sup
+              class="nb-cite"><a href="#s7">7</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">System · test</th>
+              <th>Single try</th>
+              <th>Majority vote</th>
+              <th>k</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Minerva 540B</span> MATH</td>
+              <td>33.6%</td>
+              <td>50.3%</td>
+              <td>64</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">o1</span> AIME 2024</td>
+              <td>74%</td>
+              <td>83%</td>
+              <td>64</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">DeepSeek-R1-Zero</span> AIME 2024</td>
+              <td>71.0%</td>
+              <td>86.7%</td>
+              <td>64</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The mismatch does its real damage across models rather than within one
+          table. DeepSeek reported its R1-Zero model at 86.7% on the 2024 AIME by
+          majority vote, and said the score matched an OpenAI o1 version.<sup
+            class="nb-cite"><a href="#s7" data-nb-locator="Table 2">7</a></sup>
+          That comparison is fair, because DeepSeek set its cons@64 against o1's
+          cons@64, one vote against another.<sup class="nb-cite"><a href="#s7"
+            data-nb-locator="Table 2">7</a></sup>
+          The 86.7% stops being fair the moment it is quoted next to a single-try
+          score, or quoted with the sixty-four dropped, so that a vote among
+          sixty-four tries reads as one model's one-shot skill.
+        </p>
+        <p>
+          The layer of the field that compares models against each other has
+          moved to close that gap. Artificial Analysis, which ranks models on a
+          public leaderboard, scores every benchmark at pass@1, one attempt per
+          problem, and states plainly that reporting the best of k attempts would
+          inflate the numbers.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          Where systems are compared head to head, the single-try number is the
+          standard now, because a voted number is not comparable across systems
+          that paid different amounts of compute to produce it.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A cons@k, maj@k, or self-consistency score is a vote. The model answers
+          one problem k times, and the score is whether its most common answer is
+          right. Voting raises the score whenever the model reaches the correct
+          answer more often than it repeats any one wrong answer, which is often,
+          and it buys that lift with k times the compute of a single attempt. The
+          number is real: it is the accuracy of a system actually run that way.
+          What it is not is comparable to a score from a single try, or to a
+          voted score that used a different k. When you meet one of these
+          numbers, look for the k. If it is missing, the most useful thing to ask
+          is how many tries it took to get there.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2203.11171">Wang et al., Self-Consistency (2022)</a>:
+            the original method, with the sampling settings and the full results.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2407.21787">Brown et al., Large Language Monkeys (2024)</a>:
+            how coverage keeps scaling with samples while voting flattens out.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://openai.com/index/learning-to-reason-with-llms/"
+              >OpenAI · Learning to Reason with LLMs</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.11171"
+              >Wang et al. · Self-Consistency Improves Chain of Thought Reasoning in Language Models</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://leehanchung.github.io/blogs/2024/10/08/reasoning-understanding-o1/"
+              >Han Lee · Understanding OpenAI o1</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2407.21787"
+              >Brown et al. · Large Language Monkeys: Scaling Inference Compute with Repeated Sampling</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://datasets-benchmarks-proceedings.neurips.cc/paper/2021/hash/be83ab3ecd0db773eb2dc1b0a17836a1-Abstract-round2.html"
+              >Hendrycks et al. · Measuring Mathematical Problem Solving with the MATH Dataset</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2206.14858"
+              >Lewkowycz et al. · Solving Quantitative Reasoning Problems with Language Models (Minerva)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2501.12948"
+              >DeepSeek-AI · DeepSeek-R1: Incentivizing Reasoning Capability in LLMs</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://artificialanalysis.ai/methodology/intelligence-benchmarking"
+              >Artificial Analysis · Intelligence Benchmarking Methodology</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
