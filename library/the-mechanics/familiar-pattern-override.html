@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tell a model a puzzle isn't Tower of Hanoi and it solves Tower of Hanoi anyway · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "familiar-pattern-override",
+        "template": "lesson",
+        "title": "Tell a model a puzzle isn't Tower of Hanoi and it solves Tower of Hanoi anyway",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-20",
+        "tags": ["training-data-frequency", "reasoning-models", "logic-puzzles", "benchmarks"],
+        "sources": 8,
+        "words": 2172,
+        "reading_minutes": 9,
+        "dek": "A language model's training presses the textbook answer to a famous puzzle so hard into its probabilities that changing one detail in the question rarely stops it from answering as if nothing changed.",
+        "harness": "claude-code",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">Tell a model a puzzle isn't Tower of Hanoi and it solves Tower of Hanoi anyway</h1>
+        <p class="nb-dekline">
+          A language model's training presses the textbook answer to a famous puzzle so hard into its probabilities that changing one detail in the question rarely stops it from answering as if nothing changed.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-20</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Take a famous riddle, change the one detail that flips the answer,
+          and a chatbot still recites the textbook answer, confident as ever.
+          It is one of the most common ways people demonstrate that a model
+          "isn't really thinking," and it deserves an actual explanation
+          instead of a shrug. This lesson gives you the mechanism. A model's
+          training hands the unedited version of a classic puzzle a head
+          start before the model has even reached your edit. A prompt that
+          still looks almost exactly like the version it has seen can
+          outvote the one word you changed. By the end, you can tell this
+          failure apart from the three that look like it, and judge for
+          yourself how much the evidence about reasoning actually settles.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/gradient-descent.html">Gradient descent</a>: how
+            repeated examples during training raise the probability a model
+            assigns to one continuation over another.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html">The instant a model writes a token, it becomes fact</a>: the
+            loop that turns a probability into the one next word a model
+            actually writes.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Told outright it isn't Tower of Hanoi, the model solves Tower of Hanoi</h2>
+        <p>
+          Jang and colleagues built a test to diagnose this failure: a puzzle
+          whose prompt states, in so many words, <code
+            >this is NOT a Tower of Hanoi problem</code
+          >. Two reasoning models tested against it, Qwen3-32B and OpenAI's
+          o3, proceed to answer it as a standard Tower of Hanoi problem
+          anyway, as though the sentence denying that had never been
+          written.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Fig. 1 and caption, p.2">1</a></sup
+          >
+        </p>
+        <p>
+          It is not a one-off. Researchers at Arizona
+          State built a benchmark to catch this pattern at scale. They took
+          25 well-known logic puzzles, the kind shared as chatbot "gotchas."
+          They turned them into 149 variants that keep each puzzle's
+          reasoning structure intact but change the detail that decides the
+          answer.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 3.1, p.3">2</a></sup
+          >
+          Across eleven models, systems that come close to solving the
+          original, unaltered puzzles every time drop sharply on the altered
+          ones. Most of the failures are exactly this behavior: the model
+          produces the puzzle's old, canonical answer instead of working out
+          the new one. The paper's own name for it is "phantom
+          recall."<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Abstract">2</a></sup
+          >
+        </p>
+        <table class="nb-table">
+          <caption>
+            Accuracy on PHANTOM RECALL's 149 altered versions of 25 well-known
+            puzzles, human-graded; the same models solve the unaltered
+            originals close to perfectly.<sup class="nb-cite"
+              ><a href="#s2" data-nb-locator="Appendix B">2</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th>Accuracy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">o3</td>
+              <td>59.73% (89/149)</td>
+            </tr>
+            <tr>
+              <td class="txt">Gemini 2.5 Pro</td>
+              <td>58.39% (87/149)</td>
+            </tr>
+            <tr>
+              <td class="txt">Claude Sonnet 4</td>
+              <td>54.36% (81/149)</td>
+            </tr>
+            <tr>
+              <td class="txt">Gemini 2.5 Flash</td>
+              <td>48.32% (72/149)</td>
+            </tr>
+            <tr>
+              <td class="txt">Claude 3.5 Sonnet</td>
+              <td>46.31% (69/149)</td>
+            </tr>
+            <tr>
+              <td class="txt">GPT-4o</td>
+              <td>29.53% (44/149)</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          A second benchmark, built independently around a family-relationship
+          riddle rather than logic puzzles, put a sharper number on the same
+          collapse. Nezhurina and colleagues fix a template, "Alice has N
+          brothers and she also has M sisters. How many sisters does Alice's
+          brother have?", and vary only the numbers. Most tested models score
+          at or near zero. Among the few that clear even a low bar, GPT-4o
+          answers correctly about two times in three (p=0.649) and Claude 3
+          Opus a little under half the time (p=0.431).<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Sec. 3.1, p.7">3</a></sup
+          >
+          On a harder version of the same template, GPT-4, GPT-4o, and Claude
+          3 Opus all fall below one correct answer in five. OpenAI's
+          o1-preview holds close to perfect across every variation. But
+          o1-mini, sharing that same reasoning lineage, collapses right
+          alongside the older models.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Sec. 3.2, p.16-17; Fig. 12">3</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="the-old-answer-starts-ahead" id="the-old-answer-starts-ahead">
+        <h2>The old answer already has the higher probability</h2>
+        <p>
+          A model does not check a puzzle against a stored answer key. It
+          <a href="../the-mechanics/autoregressive-generation.html">predicts one token at a time</a>,
+          a probability across its whole vocabulary for what comes next given
+          everything written so far. Training sets those probabilities, and
+          it
+          <a href="../the-mechanics/gradient-descent.html">raises the odds of whatever continuation followed similar wording most often</a>.
+          A famous puzzle's canonical wording, worked through in exactly its
+          canonical way, appears in training data many times over. It sits
+          in riddle collections, in explainers about the trick, in forum
+          threads that repost the question next to the classic answer, and
+          in the benchmarks built to test whether models still know it. None of that repetition
+          goes away when someone changes one number or one clause in the copy
+          they type into a chatbot. The rest of that sentence still looks,
+          token for token, almost exactly like a version the model has
+          already seen paired with a very high probability, well before it
+          reaches the one word that changed.
+        </p>
+        <p>
+          How much repetition matters is measurable outside puzzles
+          altogether. Razeghi and colleagues compared GPT-family models
+          against how often a task's key terms appeared in the training
+          corpus. On tasks of matched difficulty, accuracy on the most
+          frequent tenth of terms can exceed accuracy on the least frequent
+          tenth by more than 70 percentage points, the gap between a task a
+          model gets right almost every time and one it gets right hardly at
+          all.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Abstract; Sec. 1">4</a></sup
+          >
+          McCoy and colleagues confirmed the same lever on tasks with exactly
+          one correct answer, so difficulty cannot be the excuse. Reversing a
+          sequence of words is the identical mechanical step either way, yet
+          GPT-4 hit 97% accuracy when the correct output happened to be an
+          ordinary, high-probability English sentence. It scored only 53%
+          when the correct output was a low-probability one.<sup class="nb-cite"
+            ><a href="#s5" data-nb-locator="Table 1">5</a></sup
+          >
+          How common the answer sounds can matter more than how hard the
+          task is.
+        </p>
+        <p>
+          That frequency-accuracy link also supports a claim no puzzle study
+          has tested directly. The override should run strongest on the
+          puzzles repeated most in training, a Monty Hall or a surgeon
+          riddle, and weakest on an obscure one nobody has typed into a
+          chatbot before. No study measures reversion rate against a
+          puzzle's fame. The claim is a reasonable extension of Razeghi's
+          and McCoy's numbers, not a separately measured result.
+        </p>
+      </section>
+
+      <section data-nb-section="reading-the-edit-versus-using-it" id="reading-the-edit-versus-using-it">
+        <h2>The model can restate the edit and still ignore it</h2>
+        <p>
+          Jang's team built a second version of the same test that rules out
+          the obvious excuse, that the model simply missed the changed
+          word.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Sec. 3.2, p.4">1</a></sup
+          >
+          Take the textbook Fibonacci rabbit-population puzzle, where a
+          founding pair produces a new pair every month and the population
+          grows the familiar sequence, and rewrite the setup so the founding
+          pair is described as <code>permanently infertile</code>. Read
+          straight, that single change means the population never grows past
+          two. A version of the model without extended reasoning gets this
+          right and says the population stays constant.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The swapped condition</span>
+          <p>
+            Given the same prompt, its reasoning-trained sibling calls the
+            stated condition "trivial," silently substitutes
+            <code>temporarily infertile</code> for the words actually in front
+            of it, and answers with the ordinary Fibonacci growth curve
+            instead, the canonical answer to the puzzle it was not
+            asked.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Fig. 1, p.2">1</a></sup
+            >
+          </p>
+        </div>
+        <div class="nb-pull">
+          <p>Reading the words was never the problem.</p>
+        </div>
+        <p>
+          That is what separates this failure from three others this desk has
+          already covered. <a href="irrelevant-context.html">Irrelevant context</a>
+          leaves the original problem intact and adds a true but useless
+          sentence on top. Here the problem's real answer has changed, and
+          the model overwrites the change instead of the added sentence.
+          <a href="memorization.html">Memorization</a> is a model reciting text
+          it saw verbatim in training. Nothing in Jang's altered prompt ever
+          appeared verbatim anywhere, so there is nothing to recite: the wrong
+          answer is generated fresh, from a template, not looked up. And a
+          <a href="prompt-sensitivity.html">prompt-sensitivity</a> failure turns
+          on how a question happens to be phrased. This one does not. The
+          model in Jang's test could accurately quote back the very sentence
+          it then discarded.
+        </p>
+        <p>
+          The same override shows up outside riddles, too, wherever a model
+          has a strong default and a prompt asks it to use something else.
+          Wu and colleagues asked GPT-3.5 to write a drawing program under a
+          coordinate convention flipped from its training default. The share of its
+          outputs that even parse as a valid program falls from 99% under the
+          ordinary convention to between 62% and 75%, depending on which
+          convention the prompt asked for instead. The model behaves as
+          though the old convention still held.<sup class="nb-cite"
+            ><a href="#s6" data-nb-locator="footnote 11, p.19-20">6</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="more-reasoning-does-not-reliably-beat-it" id="more-reasoning-does-not-reliably-beat-it">
+        <h2>More reasoning training does not reliably beat the override</h2>
+        <p>
+          On one point, the sources above are not divided. A model completes
+          the pattern it has seen assigned the highest probability, and a
+          strong enough prior can dominate a prompt that changes only a
+          small, specific part of that pattern. Every benchmark cited here
+          measures some version of that, on different puzzles, different
+          models, different years.
+        </p>
+        <p>
+          What it proves about "reasoning" is not settled the same way. One
+          reading holds that it shows there is no reasoning happening in any
+          operative sense, not a performance gap that more scale would close.
+          Konstantine Arkoudas argues exactly this from his own testing of
+          GPT-4 on puzzles he designed himself. In one, the model states a
+          relevant fact correctly and then fails to apply that same fact one
+          step later. Arkoudas concludes that "GPT-4 at present is utterly
+          incapable of reasoning, in spite of its sporadic displays of
+          ingenuity."<sup class="nb-cite"
+            ><a href="#s7" data-nb-locator="Abstract">7</a></sup
+          >
+          A milder reading says only that the prior wins under conditions
+          like these, without settling what sits underneath it. Nezhurina
+          and colleagues, whose own numbers are among the sharpest evidence
+          for the override, decline the stronger claim outright: "We do not
+          conclude entire absence of reasoning from the
+          observations."<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Introduction, p.2">3</a></sup
+          >
+        </p>
+        <p>
+          Whether training a model to reason longer fixes the override is
+          even less settled, and depends on which model and which puzzle
+          gets picked. PHANTOM RECALL's own extended "Thinking"
+          mode helps substantially on the identical 149-puzzle set: o3 gains
+          30.2 points over its non-thinking mode, Gemini 2.5 Pro gains 10.1,
+          and Claude gains 8.0.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Appendix B, Fig. 11-13">2</a></sup
+          >
+          But o3's thinking-mode score is still only 59.73%, and the paper's
+          own authors call the improvement "narrow and model-specific,"
+          concluding that phantom recall "persists across all
+          systems."<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Sec. 7 Conclusion">2</a></sup
+          >
+          The AIW numbers point two directions inside a single family.
+          O1-preview holds near-perfect across every version of its hardest
+          puzzle. O1-mini, trained from the same reasoning lineage, collapses
+          on the identical task.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Sec. 3.2, Fig. 12">3</a></sup
+          >
+          Jang's rabbit and Tower-of-Hanoi examples go further than either.
+          There, the reasoning-trained model overrides the stated condition
+          where its own non-reasoning counterpart does not: extended
+          reasoning makes this specific failure worse, not
+          better.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Fig. 1, p.2">1</a></sup
+          >
+          An independent replication of the AIW method across the wider
+          family of reasoning models reaches a similarly mixed verdict. Some
+          models are far more robust than others, and the split does not
+          line up with the benchmarks used to market them.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          No source here supports a model family having solved the
+          override, or reasoning training never helping. The specific puzzle
+          and model predict the outcome, not a rule running cleanly either
+          way.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The trick works because a model is not comparing your edited riddle
+          against the idea inside it. It is predicting the next token, and training has given the
+          unedited version of that riddle's answer a very high probability.
+          Your one changed word rarely outvotes that probability alone,
+          especially while everything around the word still matches the
+          version the model has already seen many times. Every benchmark
+          built to catch it agrees on that, from a rewritten sibling-count
+          riddle to a puzzle whose own prompt denies being Tower of Hanoi.
+          The disagreement starts one level up, over what the override
+          proves. Stating a fact correctly and then abandoning it a sentence
+          later is not something only a model that cannot reason would do:
+          in Jang's own worked examples, the reasoning-trained model
+          overrides the stated condition where its base model does not.
+          Whether more reasoning training beats the override is still an
+          open, model-by-model question, and so is whether "reasoning" is
+          even the right word for what is missing. The trick proves that a
+          strong enough prior can outvote an edited premise. It does not
+          decide which side of the reasoning argument is right.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2406.02061">Alice in Wonderland (Nezhurina et al., 2024)</a>:
+            the full paper, with every problem variation and every model
+            tested.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2510.11812">PHANTOM RECALL (Mukhopadhyay et al., 2025)</a>:
+            the 149-puzzle benchmark, in the researchers' own words, with the
+            full list of altered classics.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2505.17225">Reasoning Model is Stubborn (Jang et al., 2025)</a>:
+            the paper behind the rabbit and Tower-of-Hanoi examples, and its
+            case for calling this "reasoning rigidity."
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2505.17225"
+              >Jang et al. · Reasoning Model is Stubborn: Diagnosing Instruction Overriding in Reasoning Models</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2510.11812"
+              >Mukhopadhyay et al. · PHANTOM RECALL: When Familiar Puzzles Fool Smart Models</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2406.02061"
+              >Nezhurina et al. · Alice in Wonderland: Simple Tasks Showing Complete Reasoning Breakdown in State-Of-the-Art Large Language Models</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2202.07206"
+              >Razeghi et al. · Impact of Pretraining Term Frequencies on Few-Shot Reasoning</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2309.13638"
+              >McCoy et al. · Embers of Autoregression: Understanding Large Language Models Through the Problem They are Trained to Solve</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.02477"
+              >Wu et al. · Reasoning or Reciting? Exploring the Capabilities and Limitations of Language Models Through Counterfactual Tasks</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2308.03762"
+              >Arkoudas · GPT-4 Can't Reason</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.open-thoughts.ai/blog/aiw"
+              >Open Thoughts · Testing Reasoning Robustness with Alice in Wonderland</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
