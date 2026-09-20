@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flamingo beat fine-tuned models on six benchmarks with 32 examples · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "flamingo",
+        "template": "lesson",
+        "title": "Flamingo beat fine-tuned models on six benchmarks with 32 examples",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-20",
+        "tags": ["flamingo", "few-shot-learning", "vision-language-models", "deepmind", "in-context-learning"],
+        "sources": 6,
+        "words": 2084,
+        "reading_minutes": 9,
+        "dek": "DeepMind bridged a frozen vision model and a frozen language model with two small trained parts, then let a few examples in the prompt do the rest.",
+        "harness": "claude-code",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Flamingo beat fine-tuned models on six benchmarks with 32 examples</h1>
+        <p class="nb-dekline">
+          DeepMind bridged a frozen vision model and a frozen language model with two small trained parts, then let a few examples in the prompt do the rest.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-20</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every time a chatbot looks at a photograph and answers a question about it, some version of Flamingo's original bet is doing the work: a few examples standing in for a training set, images and text sharing one stream a language model reads. The paper that introduced that bet does not claim to have built a general multimodal intelligence. It reports a bounded set of wins, on 32 examples, on six benchmarks it names, with numbers a reader can check against its own tables. This lesson checks them, and shows what a frozen vision model and a frozen language model can and cannot do once they are bridged by two small trained parts.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="vision-transformer.html">The Vision Transformer</a>: how a pretrained image encoder turns pictures into vectors, the job Flamingo's own frozen vision half performs with a different architecture underneath.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="clip.html">CLIP</a>: the contrastive alternative, scoring whether an image and a caption already match instead of generating new text about either.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A few examples did the job a labeled dataset used to do</h2>
+        <p>
+          In 2022, DeepMind published Flamingo, a model that takes images, video, and text as input and produces text, and that can pick up a new visual task from a handful of examples placed directly in its own prompt. On six of sixteen published benchmarks, that few-shot version beat systems fine-tuned specifically for the task, using 32 examples and no update to any of its weights.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          That trick already had a name in text. Two years earlier, <a href="gpt-3-few-shot.html">GPT-3</a> had shown that a language model could learn a new task from a few examples typed into its prompt, with no retraining at all, a capability the field calls in-context learning. Flamingo does the same thing, except the examples can include pictures and short video clips as well as sentences. The task it learns can be answering a question about a photograph, captioning a video, or picking the right one of several statements about an image.
+        </p>
+        <p>
+          Two prior lessons on this desk mark what Flamingo is not. <a href="clip.html">CLIP</a> scores whether an image and a caption already match, a fixed judgment with no room to teach it something new. <a href="segment-anything.html">Segment Anything</a> returns a mask with no name attached to it. Flamingo does neither. Shown a few image-and-caption pairs, it writes new text: a caption, an answer, a description, whatever those examples establish the job to be.
+        </p>
+        <p>
+          It manages this by joining two pretrained models that never change during Flamingo's own training. One is a vision encoder that turns an image or video frame into a set of vectors. The other is a large language model that turns vectors and words into more words. Two new parts, trained specifically for this job, sit between them: a Perceiver Resampler and a set of gated cross-attention layers, so the language half can read what the vision half saw.<sup class="nb-cite"><a href="#s1">1</a></sup> DeepMind's own announcement framed the news not as a benchmark record for its own sake but as an efficiency result: "in several cases, the same Flamingo model outperforms methods that are fine-tuned and optimised for each task independently and use multiple orders of magnitude more task-specific data."<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          It's easy to read that framing as Flamingo inventing the trick. It didn't. A year earlier, a DeepMind paper called Frozen had already shown that freezing a language model's weights and training only a small bridge to feed it images produced multimodal in-context learning. It did this at a much smaller scale: a single frozen 7-billion-parameter model, one image at a time, no video.<sup class="nb-cite"><a href="#s3">3</a></sup> Flamingo's news was not the idea. It was making the idea work at the scale of a large language model, across video as well as still images, on sixteen benchmarks at once.
+        </p>
+      </section>
+
+      <section data-nb-section="the-bridge" id="the-bridge">
+        <h2>Two frozen models and 10 billion parameters of bridge</h2>
+        <p>
+          Flamingo's own architecture breaks into three moves, always in the same order:
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>The vision encoder looks first</h3>
+            <p>
+              A frozen network called NFNet-F6 turns each image or video frame into a set of vectors. It was already trained before Flamingo existed, and Flamingo's own training never changes it.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>The Perceiver Resampler compresses what it saw</h3>
+            <p>
+              A new, trained component takes the vision encoder's output and turns it into a small, fixed set of visual features, regardless of how many images or video frames came in.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Gated cross-attention lets the frozen language model check it</h3>
+            <p>
+              New layers, inserted between the language model's own frozen layers, let it attend to those visual features while it writes. In the largest model, one of these layers sits before every seventh language-model block.<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </p>
+          </li>
+        </ol>
+        <p>
+          Those two new parts are trained long before any prompt reaches them. Flamingo's makers built them on a purpose-scraped haul of web data: a 43-million-document corpus that keeps images and text in the order a web page actually mixes them, plus roughly 1.8 billion separate image-and-caption pairs bought in from elsewhere.<sup class="nb-cite"><a href="#s1">1</a></sup> The 32 examples a reader keeps hearing about arrive only afterward, at evaluation, standing in for a task-specific training set the model itself never needed.
+        </p>
+        <p>
+          The language model being bolted onto is Chinchilla, a 70-billion-parameter model DeepMind had trained separately on 1.4 trillion tokens. At that training budget, it already beat larger contemporaries like Gopher (280 billion parameters) and the original GPT-3 (175 billion).<sup class="nb-cite"><a href="#s4">4</a></sup> The vision encoder plays the same role a <a href="vision-transformer.html">Vision Transformer</a> plays elsewhere in computer vision, turning a picture into vectors a later model can use, though Flamingo's own encoder, NFNet-F6, is a convolutional network rather than a transformer.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Add up the largest model's parts and the split is deliberate. Of the 80-billion-parameter total, 70 billion sits in the frozen language model and 435 million in the frozen vision encoder. The rest, about 10.2 billion parameters, roughly 13 percent, is the Perceiver Resampler and the gated cross-attention layers combined. That 80-billion-parameter version is the one the paper calls simply "Flamingo." Two smaller versions, at 9.3 billion and 3.2 billion parameters, share the same design at a smaller scale.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="six-of-sixteen" id="six-of-sixteen">
+        <h2>Six wins, nine losses, one benchmark with no comparison</h2>
+        <p>
+          Flamingo's own tables give the shape of that headline result plainly:
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">16</span><span class="nb-stat-l">Benchmarks tested</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">6</span><span class="nb-stat-l">Beat fine-tuned state of the art</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">32</span><span class="nb-stat-l">Examples in the prompt</span>
+          </div>
+        </div>
+        <p>
+          Sixteen benchmarks covered captioning, visual question answering, visual dialogue, and multiple-choice tasks built on images and video.<sup class="nb-cite"><a href="#s1">1</a></sup> One of them, a compositional action-recognition task called RareAct, has no fine-tuned comparison to beat, so it sits outside the count. Of the other fifteen, Flamingo's 32-shot version beat the prior fine-tuned state of the art on six and trailed it on nine.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            The six benchmarks where 32 examples beat a fine-tuned specialist.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Flamingo, 32-shot</th>
+              <th class="txt">Fine-tuned SOTA (examples)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">OKVQA</span></td>
+              <td>57.8</td>
+              <td class="txt">54.4 (10 000)</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">MSVDQA</span></td>
+              <td>52.3</td>
+              <td class="txt">47.9 (27 000)</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Flickr30K</span></td>
+              <td>75.4</td>
+              <td class="txt">67.4 (30 000)</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">iVQA</span></td>
+              <td>45.3</td>
+              <td class="txt">35.4 (6 000)</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">STAR</span></td>
+              <td>42.2</td>
+              <td class="txt">36.7 (46 000)</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">NextQA</span></td>
+              <td>33.5</td>
+              <td class="txt">25.2 (38 000)</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The number in parentheses is how many labeled, task-specific examples the fine-tuned comparison needed. On OKVQA, that is 10,000 against Flamingo's 32, about 310 times fewer. The paper's own summary rounds this to "around 1000 times less task-specific training data," but the real ratio moves with the task: from about 190-to-1 on iVQA up to roughly 15,600-to-1 on the two tasks needing half a million examples, COCO and VATEX. Both are benchmarks where Flamingo's few-shot version did not beat the fine-tuned system.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Table 1's own caption, on the same page as this count, prints "seven" instead of six. The paper's introduction and the sentence in Section 3.1 both say six, and the caption on its own overview figure agrees. Recomputing the win-loss column directly from Table 1's own scores gives exactly six. This piece uses six.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Two of those six wins are not quite a cold open. OKVQA and MSVDQA belong to a five-benchmark "DEV" set, along with COCO, VQAv2, and VATEX. The authors used that set while choosing the model's own design and hyperparameters, and the paper itself warns that "performance estimates on the DEV benchmarks may be biased, as a result of model selection."<sup class="nb-cite"><a href="#s1">1</a></sup> That does not undo the win. It does mean two of the six were not run cold.
+        </p>
+        <p>
+          Even with its weights unfrozen and fine-tuned, on an unlimited annotation budget, Flamingo did not close every gap. Fine-tuning set a new state of the art on five more of the nine tasks it had lost few-shot: VQAv2, VATEX, VizWiz, MSRVTTQA, and HatefulMemes. On the other four (COCO, YouCook2, VisDial, and TextVQA), a fine-tuned Flamingo still trailed the prior fine-tuned state of the art. The paper attributes part of that gap to task-specific tricks it did not use, like optimizing directly for the CIDEr captioning score or fine-tuning on dense annotations for visual dialogue.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="after-flamingo" id="after-flamingo">
+        <h2>The frozen-backbone design did not become the field's choice</h2>
+        <p>
+          Flamingo's own weights were never released. Two outside teams confirm the fact rather than each other. The team that later built an open reproduction states plainly that "these autoregressive vision-language models are closed-source, and their weights, training data, code, and hyperparameters are proprietary." A survey of the field independently calls Flamingo "the closed-source vision-language model... by DeepMind" when describing a separate reproduction of it.<sup class="nb-cite"><a href="#s5">5</a></sup> Neither the paper nor DeepMind's own announcement says why. The paper's own discussion of risks, in the section built for exactly that conversation, weighs what a model like this could be used for; it does not weigh the decision to keep this one closed.<sup class="nb-cite"><a href="#s1">1</a></sup> That reason, if one exists on the record, is not in either document.
+        </p>
+        <p>
+          The closest anyone outside DeepMind has come is an open reproduction called OpenFlamingo, trained on public data (LAION-2B and a public interleaved-webpage dataset) in place of Flamingo's own proprietary sources. Averaged across seven evaluation datasets, its 3-billion and 9-billion-parameter versions reach 85 and 89 percent of their same-size Flamingo counterparts.<sup class="nb-cite"><a href="#s5">5</a></sup> The gap is not even. At zero shot, OpenFlamingo-9B trails Flamingo-9B by 6.9 percentage points on OK-VQA and 7.8 points on TextVQA. That gap widens rather than closes as more examples are added to the prompt.<sup class="nb-cite"><a href="#s5">5</a></sup> Nobody outside DeepMind has run the paper's own numbers directly. The public version gets close, unevenly.
+        </p>
+        <p>
+          The design that produced those numbers did not become the field's lasting choice either. A 2024–2025 survey of vision-language models credits Flamingo with the Perceiver Resampler and gated cross-attention design. It also treats Flamingo as the closed reference point later open efforts were built to reproduce, but it documents what came after: BLIP-2 later beat Flamingo-80B on zero-shot VQAv2 by 8.7 percentage points while training far fewer parameters. A more recent model called Sphinx deliberately unfreezes the language model during pretraining, on the reasoning that it improves vision-language alignment beyond what a frozen one allows.<sup class="nb-cite"><a href="#s6">6</a></sup> The two frozen halves that made Flamingo's few-shot result possible were, within a couple of years, the part of the recipe later models chose to change.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Flamingo's real result: on six of sixteen tasks, a single set of frozen weights beat systems built and tuned for one task each, after 32 examples instead of tens of thousands of labeled ones. On the other nine tasks, it did not, and the paper's own tables say so. Cite that number the next time "multimodal" gets used as a synonym for general intelligence: the paper it traces back to was careful about exactly six wins, on tasks it named, using weights nobody outside DeepMind has ever actually run.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2308.01390">OpenFlamingo</a>: the open reproduction that gets within 85 to 89 percent of Flamingo's own scores, unevenly.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2404.07214">A 2024–2025 survey of vision-language models</a>: where the field went after frozen backbones, including the models that unfroze them.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2204.14198"
+              >arXiv · Alayrac et al., "Flamingo: a Visual Language Model for Few-Shot Learning" (2022)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://deepmind.google/blog/tackling-multiple-tasks-with-a-single-visual-language-model/"
+              >DeepMind · "Tackling multiple tasks with a single visual language model" (2022)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2106.13884"
+              >arXiv · Tsimpoukelli et al., "Multimodal Few-Shot Learning with Frozen Language Models" (2021)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.15556"
+              >arXiv · Hoffmann et al., "Training Compute-Optimal Large Language Models" (2022)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2308.01390"
+              >arXiv · Awadalla et al., "OpenFlamingo: An Open-Source Framework for Training Large Autoregressive Vision-Language Models" (2023)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2404.07214"
+              >arXiv · Ghosh et al., a 2024–2025 survey of vision-language models</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
