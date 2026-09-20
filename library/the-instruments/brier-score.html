@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI forecasters beat the human crowd's Brier score by 0.002 on a subset of the questions · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "brier-score",
+        "template": "lesson",
+        "title": "AI forecasters beat the human crowd's Brier score by 0.002 on a subset of the questions",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-20",
+        "tags": ["brier-score", "proper-scoring-rule", "ai-forecasting", "base-rate", "murphy-decomposition"],
+        "sources": 8,
+        "words": 2163,
+        "reading_minutes": 9,
+        "dek": "On the full test set behind that number, the same system actually scored worse than the human crowd.",
+        "harness": "claude-code",
+        "model": "claude-sonnet-5"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">AI forecasters beat the human crowd's Brier score by 0.002 on a subset of the questions</h1>
+        <p class="nb-dekline">
+          On the full test set behind that number, the same system actually
+          scored worse than the human crowd.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-20</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A single number now stands in for whether a machine can predict the
+          future better than we can, and that number is almost always a
+          Brier score. It grades every major forecasting platform and sits
+          behind the recent claims that language models are closing in on
+          professional forecasters. Two cheap tricks can push that grade down
+          without any real skill behind it, and the loudest recent claim that
+          AI had closed the gap with human forecasters rested on missing
+          both.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/calibration-error.html">A model that only guesses the base rate scores zero calibration error</a>:
+            how the half of this split concerned with honest probabilities is
+            measured on its own, and how it can be gamed by coarse binning.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/auroc.html">A sepsis model scoring 0.63 AUROC caught one case in three at the threshold hospitals used</a>:
+            how the other half, a model's ability to tell cases apart at all,
+            is measured on its own.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The 0.03 gap a language model was supposed to have closed</h2>
+        <p>
+          In 2024, a team at UC Berkeley built a system that reads the news,
+          searches the web, and turns what it finds into a probability for
+          questions like whether a ceasefire will hold or a court will rule a
+          particular way. Tested on 914 such questions against a crowd of
+          human forecasters answering the same ones, the system scored 0.179
+          in Brier score to the crowd's 0.149.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Lower is better on this scale, so by the paper's own headline
+          numbers, the system lost.
+        </p>
+        <p>
+          That number, the Brier score, is the standard way to grade a
+          probability forecast, and it sits behind nearly every claim that an
+          AI model is approaching human-level forecasting. Before weighing
+          0.179 against 0.149, it helps to know exactly what the score
+          counts.
+        </p>
+        <p>
+          The idea, from the meteorologist Glenn Brier in 1950, is plain
+          arithmetic.<sup class="nb-cite"><a href="#s2">2</a></sup> For every
+          yes-or-no question, the forecaster states a probability. Once the
+          answer is known, square the distance between that probability and
+          what happened (1 if it happened, 0 if it didn't), and average the
+          squares across every question. Here is a small, made-up set of four
+          forecasts showing what that arithmetic rewards and punishes.
+        </p>
+        <table class="nb-table">
+          <caption>
+            A four-question Brier calculation. The squared errors average to
+            0.27.<sup class="nb-cite"
+              ><a
+                href="#s2"
+                data-nb-note="Illustrative forecasts and outcomes constructed by the author to demonstrate the definition; not data measured from this source."
+                >2</a
+              ></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Forecast</th>
+              <th>Outcome</th>
+              <th class="txt">Squared error</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>0.90</td>
+              <td>Happened</td>
+              <td class="txt">(0.90 − 1)² = 0.01</td>
+            </tr>
+            <tr>
+              <td>0.90</td>
+              <td>Didn't happen</td>
+              <td class="txt">(0.90 − 0)² = 0.81</td>
+            </tr>
+            <tr>
+              <td>0.50</td>
+              <td>Happened</td>
+              <td class="txt">(0.50 − 1)² = 0.25</td>
+            </tr>
+            <tr>
+              <td>0.10</td>
+              <td>Didn't happen</td>
+              <td class="txt">(0.10 − 0)² = 0.01</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Being confident and right costs almost nothing, 0.01 either way.
+          Hedging at 50 percent costs more than that even when it lands on
+          the right side, 0.25. Being confident and wrong is the disaster,
+          0.81. Zero is a perfect run; the scale used below runs up to 1 for
+          the worst one, stating certainty for the thing that didn't happen,
+          every time.
+        </p>
+        <p>
+          Brier's own 1950 paper counted both outcomes at once, which doubles
+          every score: his scale runs 0 to 2, and today's version, for a
+          yes-or-no question, is exactly half of his.<sup class="nb-cite"><a href="#s2">2</a></sup
+          ><sup class="nb-cite"><a href="#s3">3</a></sup> He used his own
+          scale to make a point worth keeping: a forecaster cannot do better
+          by hedging, or by stating something other than what he believes. He
+          took a ten-day record, three of the days rainy, and compared two
+          hypothetical forecasters who never looked at the weather and
+          simply repeated one number every time. The one who always said 30
+          percent, the true share of rain, scored 0.42. The one who said 20
+          percent instead did worse, 0.44.<sup class="nb-cite"><a href="#s2">2</a></sup> Guess higher or
+          lower than the truth and the score worsens either way; the best
+          constant answer is the honest one, which is why statisticians call
+          this a proper scoring rule.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Halawi and his coauthors report 0.179 and 0.149 on this halved
+          scale, the one used by every other study below.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="low-score-without-looking" id="low-score-without-looking">
+        <h2>The low score you get without looking</h2>
+        <p>
+          A forecaster who never looks at a question's specifics can still
+          post a good-looking number. Say a set of yes-or-no questions each
+          has a fifty-fifty base rate, and the forecaster ignores every one
+          and always answers 50 percent. The score is 0.25 on every question,
+          since (0.5 − 1)² and (0.5 − 0)² both equal a quarter.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          That is the baseline Halawi and his coauthors use to grade a model
+          with no web access at all. Among models tested this way, only
+          GPT-4 and Claude-2 cleared 0.25 "by a large margin," more than two
+          hundredths of a point.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Fifty percent is an easy trap to spot, since a coin flip is an
+          obviously lazy forecast. The trick gets harder to see once the base
+          rate isn't fifty percent. Take a question set where the event
+          happens only 10 percent of the time, a fair description of many
+          forecasting-platform questions about rare disasters and long-shot
+          outcomes. A forecaster who always answers 10 percent without
+          reading a question scores 0.09, nine times better than the
+          coin-flip forecaster's 0.25, without ever telling a likely case
+          from an unlikely one.<sup class="nb-cite"
+            ><a
+              href="#s2"
+              data-nb-note="Illustrative computation applying the Brier score definition to a hypothetical 10 percent base rate; not a figure reported by this source."
+              >2</a
+            ></sup
+          >
+        </p>
+        <p>
+          There's a reason the trick gets more effective the more lopsided
+          the true rate is. In 1973, the meteorologist Allan Murphy showed
+          that a Brier score splits into three pieces that add up to the
+          whole, work reproduced with his own equations and citation by
+          Ferro and Fricker's 2012 refinement of it.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Reliability measures whether stated probabilities match how often
+          things actually happen; the more they miss, the more it costs.
+          Resolution measures whether the outcome rate genuinely differs
+          depending on what he says — say the same number every time, and
+          resolution is zero, however well that number matches the
+          average.<sup class="nb-cite"><a href="#s4">4</a></sup> The third
+          piece, uncertainty, isn't the forecaster's doing: it's the plain
+          variance of the event itself, largest at a fifty-fifty base rate
+          and smaller the more lopsided the true rate gets.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          Run that back through the always-10-percent forecaster above: its
+          one stated probability matched the true rate exactly, so
+          reliability was perfect, and it never said anything else, so
+          resolution was zero. What was left was uncertainty alone, small
+          because the true rate was small. Reliability is exactly what
+          expected calibration error, taught in
+          <a href="../the-instruments/calibration-error.html">calibration error</a>,
+          isolates on its own. Resolution is close to what
+          <a href="../the-instruments/auroc.html">AUROC</a> scores directly:
+          not whether the stated numbers are true, but whether the forecaster
+          tells cases apart at all. A Brier score folds both into one figure
+          and can't tell you, by itself, which one a given result is
+          rewarding.
+        </p>
+      </section>
+
+      <section data-nb-section="two-scoring-conventions" id="two-scoring-conventions">
+        <h2>One forecast, counted two different ways</h2>
+        <p>
+          None of the numbers above mean anything if the two things compared
+          answered different questions. A Brier score averages over whatever
+          questions it happened to be computed on. A crowd tested on ten
+          near-certain questions will out-score a sharper forecaster tested
+          on ten genuine toss-ups, with nothing about relative skill in the
+          gap. ForecastBench, a 2025 project built specifically to compare
+          forecasters fairly, put the requirement plainly. Every forecaster
+          in the study, human or machine, answers the identical questions in
+          the identical window, "to ensure comparability of scores across
+          models and human-based aggregates."<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Without that, a Brier score proves nothing about who forecasts
+          better, only who was tested on what.
+        </p>
+        <p>
+          There is a second way for two numbers both called a Brier score to
+          disagree, and it has nothing to do with the questions. Good
+          Judgment Open, one of the platforms whose questions feed the
+          studies above, still scores exactly the way Brier did in 1950:
+          both outcomes counted, on the 0-to-2 scale. Its own FAQ works the
+          arithmetic: "For a yes/no question where you forecasted 70% and
+          the event happened, your score would be
+          (1-0.7)^2+(0-0.3)^2=0.18."<sup class="nb-cite"><a href="#s6">6</a></sup>
+          Run that same forecast through the halved formula used by Halawi
+          and every other study here, and it scores 0.09, exactly
+          half.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          A 0.18 and a 0.09 look nothing alike, and both describe the same
+          forecast and the same result. Copy a number from one convention
+          into a sentence built for the other, with no note of which scale it
+          came from. A mediocre forecaster then reads as twice as good, or
+          twice as bad, as he was. Comparing two Brier scores means checking
+          the questions and checking the scale.
+        </p>
+      </section>
+
+      <section data-nb-section="the-crowd-beating-claim" id="the-crowd-beating-claim">
+        <h2>The claim that didn't survive its own paper</h2>
+        <p>
+          Halawi and his coauthors did not build a naive test. All 914
+          questions postdated every tested model's training cutoff, so a
+          system couldn't have memorized outcomes, and web searches were
+          time-restricted so a system couldn't retrieve a page written after
+          a question opened.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Removing the retrieval step entirely cost the system 0.027 points
+          of Brier score — real evidence of a working system, not a
+          trick.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          None of that changes what the paper's own headline comparison
+          shows. Across the full 914-question test, the system scored 0.179
+          to the crowd's 0.149, a loss.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The claim that the system "surpasses" the crowd, the one that made
+          the paper's abstract, holds only on a narrower slice: questions
+          where the crowd's own forecast sat between 30 and 70 percent. These
+          are the genuinely uncertain calls. There, the system scored 0.238 to the
+          crowd's 0.240, a gap of two thousandths of a point<sup class="nb-cite"><a href="#s1">1</a></sup> —
+          an order of magnitude below the two-hundredths-of-a-point gap the
+          same paper elsewhere calls "large."<sup class="nb-cite"><a href="#s1">1</a></sup>
+          A critique posted to the AI Alignment Forum seven months later made
+          exactly this comparison, an inference of its own rather than a
+          sentence Halawi and his coauthors wrote, but one anyone can check
+          by reading the two numbers next to each other.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          A year on, the same shape of claim still did not hold up next to
+          real experts. Janna Lu's 2025 evaluation scored the best model,
+          OpenAI's o3, at a median Brier of 0.1352 across 334 Metaculus
+          questions. The expert panel Metaculus hired to check the bots
+          answered only 157 of those same questions, not all 334, and
+          posted a median of 0.0225.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          That is the same kind of mismatch Lu's own paper cautions against
+          elsewhere in its results: Brier scores, it says, "are not directly
+          comparable across different question
+          sets."<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          The clearest answer came from one of the 2024 paper's own authors.
+          Danny Halawi co-wrote ForecastBench, built to give the public,
+          superforecasters, and language models the identical questions in
+          the identical window. On a shared 200-question set, the three
+          groups scored like this:<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">0.096</span><span class="nb-stat-l">39 SUPERFORECASTERS</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">0.121</span><span class="nb-stat-l">GENERAL PUBLIC</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">0.122</span><span class="nb-stat-l">BEST LLM CONFIGURATION</span>
+          </div>
+        </div>
+        <p>
+          The best language-model configuration scored about the same as the
+          public and landed nowhere near the specialists: superforecasters
+          beat both groups at a significance level of better than one in a
+          thousand, the paper states.<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A Brier score is the average squared distance between a stated
+          probability and what happened, and the best way to lower it is
+          also the most honest one: say what you actually believe. That same
+          arithmetic is easy to abuse three ways. Answer with the base rate
+          and nothing else, and the score rewards you for it, more
+          generously the rarer the event is. Answer different questions than
+          your rival did, or count the identical arithmetic on two different
+          scales, and the two numbers being compared were never the same
+          number to begin with. The 2024 claim that a language model was
+          closing in on human forecasters ran into all three. The model
+          lost its own headline comparison. Its edge held only on a
+          favorable slice of questions. And a year of follow-up work kept
+          finding the same specialists still ahead. None of that makes the Brier
+          score wrong. It counted exactly what it was asked to count. What
+          went wrong was reading a 0.002 edge, on a favorable slice of the
+          questions, as proof that the larger claim behind it was settled.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.gjopen.com/faq">Good Judgment Open's FAQ</a>:
+            a working forecasting platform's own scoring rules, on the
+            two-term scale this lesson contrasts with the modern one.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.alignmentforum.org/posts/uGkRcHqatmPkvpGLq/contra-papers-claiming-superhuman-ai-forecasting">Contra Papers Claiming Superhuman AI Forecasting</a>:
+            the fuller critique of four 2024 papers, with the methodology
+            problems this lesson didn't have room for.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2402.18563"
+              >arXiv · Halawi, Zhang, Yueh-Han &amp; Steinhardt, Approaching Human-Level Forecasting with Language Models (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://archive.org/details/sim_monthly-weather-review_1950-01_78_1"
+              >Monthly Weather Review · Brier, Verification of Forecasts Expressed in Terms of Probability (1950)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://en.wikipedia.org/wiki/Brier_score"
+              >Wikipedia · Brier score</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://empslocal.ex.ac.uk/people/staff/ferro/Publications/ferro-fricker2012copyright.pdf"
+              >Quarterly Journal of the Royal Meteorological Society · Ferro &amp; Fricker, A Bias-Corrected Decomposition of the Brier Score (2012)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2409.19839"
+              >arXiv · Karger, Bastani, Yueh-Han, Jacobs, Halawi, Zhang &amp; Tetlock, ForecastBench: A Dynamic Benchmark of AI Forecasting Capabilities (2025)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.gjopen.com/faq"
+              >Good Judgment Open · FAQ</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.alignmentforum.org/posts/uGkRcHqatmPkvpGLq/contra-papers-claiming-superhuman-ai-forecasting"
+              >AI Alignment Forum · nikos, Mühlbacher, Phillips &amp; dschwarz, Contra Papers Claiming Superhuman AI Forecasting (2024)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2507.04562"
+              >arXiv · Lu, Evaluating LLMs on Real-World Forecasting Against Expert Forecasters (2025)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
