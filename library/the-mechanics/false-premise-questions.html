@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A chatbot answers a false-premise question as fluently as a true one · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "false-premise-questions",
+        "template": "lesson",
+        "title": "A chatbot answers a false-premise question as fluently as a true one",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-21",
+        "tags": ["false-premises", "presupposition", "next-token-prediction", "instruction-tuning", "question-answering"],
+        "sources": 10,
+        "words": 2148,
+        "reading_minutes": 9,
+        "dek": "Four datasets of real questions measure how often it happens, and the cause sits one level below the answer, in what a next-token predictor does with text already inside the prompt.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A chatbot answers a false-premise question as fluently as a true one</h1>
+        <p class="nb-dekline">
+          Four datasets of real questions measure how often it happens, and the cause sits one level below the answer, in what a next-token predictor does with text already inside the prompt.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-21</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have probably asked a chatbot something that carried a wrong
+          assumption without meaning to: a half-remembered fact, an event that
+          did not happen the way you framed it. Often the reply answers the
+          question and leaves the wrong
+          assumption standing, in prose confident enough that you would never
+          catch it. This lesson follows that behavior to its cause: why a system
+          that writes a fluent, correct-sounding answer builds it on a false
+          premise instead of flagging it. By the end you will know where
+          the failure starts, why the obvious fix has a price, and which part of
+          it the people who build these systems still cannot explain. You will
+          also be able to tell it apart from two failures it resembles.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/hallucination.html">A model builds a fake citation the same way it builds a true one</a>: inventing a fact from nothing, the failure this one is most often confused with.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/sycophancy.html">A reward model taught the assistant that agreeing with you scores well</a>: caving to a stated view once you push back, the other failure it resembles.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html">The instant a model writes a token, it becomes fact</a>: how a model turns "predict the next token" into a full reply.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A false premise gets a full answer</h2>
+        <p>
+          A chatbot will answer a question built on something false as smoothly
+          as any other. A question about why a novel that was never written
+          stirred such controversy can come back with the author, the year, and
+          the reviews, with nothing to flag that the novel does not exist.
+        </p>
+        <p>
+          Two nearby failures look like this one. In
+          <a href="../the-mechanics/hallucination.html">hallucination</a>, the
+          model invents a fact from nothing. In
+          <a href="../the-mechanics/sycophancy.html">sycophancy</a>, it abandons
+          a correct answer once you doubt it. This behavior is neither: the
+          false part arrived inside the question, and the model answered as
+          though it were true.
+        </p>
+        <p>
+          Researchers have built datasets of exactly these questions. In CREPE,
+          8,466 real questions from an "explain like I'm five" forum, 26 percent
+          rest on a false presupposition, a claim the question treats as settled
+          that is not true.<sup class="nb-cite"><a href="#s1">1</a></sup> People
+          build such questions without trying, asking about things they
+          half-remember. In (QA)², people rated answers to 301 questions with
+          questionable assumptions and 301 sound ones.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          One model gave acceptable answers 56 percent of the time on the sound
+          questions and only 40 percent once a bad assumption was smuggled in.
+          The questions were no harder; only the truth of the built-in assumption
+          changed.
+        </p>
+      </section>
+
+      <section data-nb-section="in-the-prompt" id="in-the-prompt">
+        <h2>The premise sits in the prompt as given</h2>
+        <p>
+          A chatbot generates its reply one token at a time, each predicted from
+          all the text so far, the prompt included. An earlier lesson on
+          <a href="../the-mechanics/autoregressive-generation.html">how a model turns "predict the next token" into a full reply</a>
+          works through that step; what matters here is the input side. The words
+          of your question are part of the text the model conditions
+          on.<sup class="nb-cite"><a href="#s3">3</a></sup> It does not hold them
+          at arm's length as claims to be judged. They are there, the way the
+          start of a sentence is there when you predict its end.
+        </p>
+        <p>
+          A question also carries more than what it asks. "Why did the author
+          revise the ending?" asks for a reason, but it takes for granted that
+          the author revised the ending. Linguists call that taken-for-granted
+          part a presupposition: the content a question treats as already true in
+          order to ask what it asks. Ask why something happened and you have
+          already granted that it happened.
+        </p>
+        <p>
+          For a next-token predictor, that granted content is not a separate
+          thing to check. It sits in the prompt like the true parts of the
+          question, and if it is false, the model conditions on it all the same.
+          The most natural continuation of "why did the author revise the ending"
+          is a reason for it.
+        </p>
+        <p>
+          Conditioning on the premise explains why the model can proceed, not why
+          it so rarely stops.
+        </p>
+      </section>
+
+      <section data-nb-section="two-jobs" id="two-jobs">
+        <h2>Spotting the premise and checking it are different jobs</h2>
+        <p>
+          Challenging a premise takes two abilities, and they are not equally
+          hard: noticing that the question contains a presupposition, and judging
+          whether it is true. A model can be good at the first and fail the
+          second.
+        </p>
+        <p>
+          The CREPE study measured both. Detecting a false presupposition from
+          the question alone reached about 67 percent, rising to 76 percent with
+          a human comment added.<sup class="nb-cite"><a href="#s1">1</a></sup> Writing a correct
+          rebuttal was much weaker, around 1.8 on a scale from 0 to 3 where
+          reference answers scored 2.8. The authors traced the weakness to one
+          step: retrieving the evidence that would show the presupposition false.
+          The model could tell a premise was lurking but not reliably find the
+          fact that would sink it.
+        </p>
+        <p>
+          An earlier study had already located the same bottleneck. Among
+          unanswerable questions people typed into Google, Kim and colleagues
+          found about 21 percent failed because they carried a presupposition
+          that could not be verified.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          They proposed three steps: state the presupposition, check whether it
+          holds, then explain. The checking step was where the system fell short,
+          even with the best available tools for judging whether one statement
+          follows from another.
+        </p>
+        <p>
+          So the picture is not a model that never notices; often it notices and
+          cannot confirm. But that leaves the behavior unexplained. On an easy
+          false premise, one the model has every fact to reject, it answers
+          anyway. Verification cannot be the whole story.
+        </p>
+      </section>
+
+      <section data-nb-section="the-ground" id="the-ground">
+        <h2>The text it learned from answers the question</h2>
+        <p>
+          A next-token predictor's default is whatever usually followed inputs
+          like this in its training text. So the question is what that text does
+          after a question carrying a false premise. Almost always, it answers
+          it. A forum post asks something and the replies answer it. The pattern
+          "when a question comes in, produce an answer" is everywhere in the data.
+          The pattern that checks the assumptions first is comparatively rare.
+        </p>
+        <p>
+          No one has counted how often written text stops to correct a false
+          premise instead of answering. The evidence for it is indirect but
+          consistent. When FalseQA tested
+          very large models on plainly false-premise questions, ones with 170
+          billion parameters and more failed
+          them.<sup class="nb-cite"><a href="#s5">5</a></sup> Yet the same work
+          found the models already held the knowledge to rebut the questions.
+          Fine-tuning on just 256 example pairs pulled it out: afterward, models
+          at 3 and 11 billion parameters told false premises from true ones about
+          77 to 79 percent of the time.
+        </p>
+        <p>
+          The failure, then, was not missing knowledge; it was there, and a light
+          touch surfaced it. What the default reflects is the shape of the
+          training text: the model learned to answer because answering is what
+          the text around a question overwhelmingly does. That rarity of
+          correction is inferred from the behavior, not read off a direct count.
+        </p>
+        <p>
+          Two things about the training are settled, and sit at the bottom of it.
+          The objective is next-token prediction over a large body of
+          text.<sup class="nb-cite"><a href="#s3">3</a></sup> Nothing under it
+          rewards flagging a false premise; it rewards matching what came next in
+          the data, and what came next was an answer. Later, models are tuned on
+          human feedback, a stage the lesson on
+          <a href="../the-mechanics/sycophancy.html">sycophancy</a> describes,
+          where people compare answers and their preferences train the model to
+          be more helpful.<sup class="nb-cite"><a href="#s6">6</a></sup> Being
+          helpful, there, means answering the question asked; none of it adds a
+          step that rejects the premise first. That is the ground: below the
+          objective and the data it ran on, nothing left would change the
+          default.
+        </p>
+      </section>
+
+      <section data-nb-section="still-open" id="still-open">
+        <h2>What the builders haven't settled</h2>
+        <p>
+          That default is settled. What is not is whether models detect false
+          premises, when they do, and whether a fix is worth its cost. These
+          questions are open even to the people who build these systems.
+        </p>
+        <p>
+          The clearest sign that the behavior is moving comes from medicine. The
+          Cancer-Myth benchmark posed 585 expert-vetted cancer questions, each
+          carrying a false assumption a patient might hold, and checked whether
+          the model corrected it.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Share of 585 expert-verified cancer questions on which each model corrected the false assumption; no model exceeds 43 percent.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th>Corrects the false premise</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">GPT-5</span></td>
+              <td>42.1%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Gemini-2.5-Pro</span></td>
+              <td>41.4%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Claude-4-Sonnet</span></td>
+              <td>40.0%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Gemini-1.5-Pro</span></td>
+              <td>27.2%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Gemma-2-27B</span></td>
+              <td>17.3%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">DeepSeek-R1</span></td>
+              <td>13.7%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">GPT-4o</span></td>
+              <td>5.8%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The strongest 2025 models cluster near 40, far above GPT-4o, but none
+          crosses a ceiling well below half. The gap is not about answer quality, which was
+          high on the same benchmark, with GPT-4-Turbo scoring 4.13 out of
+          5.<sup class="nb-cite"><a href="#s7">7</a></sup> The models write well;
+          they mostly do not stop to correct the myth the question is built on. A
+          general-audience feature put it plainly: across more than 500 such
+          questions, more than half of the responses failed to correct the
+          error.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          The medical setting is not unique. On politically loaded questions with
+          false presuppositions, GPT-4o, Llama-3-8B, and Mistral-7B mostly failed
+          to flag the false part, and the failure rate shifted with how the
+          presupposition was phrased.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <p>
+          None of this means the behavior is stuck. FalseQA already showed that
+          256 examples can teach a model to push back. The harder question is
+          whether that is worth its cost. A 2026 study tested methods that make
+          models reject false presuppositions more often and found a consistent
+          price.<sup class="nb-cite"><a href="#s10">10</a></sup> The same methods
+          make models reject true presuppositions too, so a model that gets
+          better on the trick questions gets worse on ordinary ones. Its
+          bolted-on fact-checking cannot always tell a false premise from a true
+          one, and real questions carry true premises far more often.
+        </p>
+        <p>
+          One question sits under all of this and has no answer yet. When a model
+          does correct a false premise, is it grasping that the premise is false,
+          or has it matched another pattern, the way it matched "answer the
+          question" before? The 256-example fix is the sharpest place to look.
+          That so few examples flip the behavior is what you would expect if the
+          fact was already there and needed only a nudge. It is equally what you
+          would expect if the model learned a new surface habit, with no more
+          grasp of truth than before. From the outside the two look the same. The
+          explanation runs out here, and it runs out for the researchers too.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When a chatbot answers a question built on a false premise, start at
+          the question. The false part is already inside it, and the model builds
+          its reply by continuing the text in front of it, so the premise is
+          treated as given, not weighed. Stopping takes two steps, and the second
+          is the hard one: confirming the assumption is false, which means finding
+          the fact that sinks it. Underneath that, the default is to answer. The
+          training text answers questions far more than it corrects them, and the
+          tuning that made the model helpful rewarded answering, never
+          premise-checking. That much is settled. What is not is
+          how far the newest models have climbed, and whether teaching them to
+          push back is worth making them worse on ordinary questions. The deepest
+          open question is whether a model that corrects a premise grasps that it
+          is false or has only matched one more pattern. A polished answer is not
+          a sign the premise was checked, because nothing in how the model works
+          checks it. That part is still yours.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arstechnica.com/science/2023/07/a-jargon-free-explanation-of-how-ai-large-language-models-work/">A jargon-free explanation of how AI large language models work</a>: how next-token prediction turns into a full answer, without the math.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://writings.stephenwolfram.com/2023/02/what-is-chatgpt-doing-and-why-does-it-work/">What Is ChatGPT Doing … and Why Does It Work?</a>: a longer walk through what a language model is doing when it predicts the next word.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2211.17257"
+              >Yu, Min, Zettlemoyer &amp; Hajishirzi · CREPE: Open-Domain Question Answering with False Presuppositions (2023)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2212.10003"
+              >Kim, Htut, Bowman &amp; Petty · (QA)²: Question Answering with Questionable Assumptions (2023)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2005.14165"
+              >Brown et al. · Language Models are Few-Shot Learners (2020)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2101.00391"
+              >Kim, Pavlick, Karagol Ayan &amp; Ramachandran · Which Linguist Invented the Lightbulb? Presupposition Verification for Question-Answering (2021)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2307.02394"
+              >Hu, Luo, Wang, Cheng, Liu &amp; Sun · Won't Get Fooled Again: Answering Questions with False Premises (2023)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.02155"
+              >Ouyang et al. · Training language models to follow instructions with human feedback (2022)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2504.11373"
+              >Zhu et al. · Cancer-Myth: Evaluating Large Language Models on Patient Questions with False Presuppositions (2025)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.cancertodaymag.org/spring-2026/a-digital-ally/"
+              >Cancer Today (AACR) · A Digital Ally, by Stephen Ornes (2026)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2505.22354"
+              >Sieker, Lachenmaier &amp; Zarrieß · LLMs Struggle to Reject False Presuppositions when Misinformation Stakes are High (2025)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2608.06539"
+              >Wang, Shwartz &amp; Gonen · Don't "Well, Actually" Me Unless You Know What You're Talking About: Weak Presupposition Verification Degrades General QA Performance (2026)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
