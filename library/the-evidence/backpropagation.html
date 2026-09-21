@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Backpropagation's famous paper · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "backpropagation",
+        "template": "lesson",
+        "title": "Backpropagation's famous paper showed a network building features no one designed",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-21",
+        "tags": ["backpropagation", "hidden-units", "neural-networks", "deep-learning", "distributed-representations"],
+        "sources": 6,
+        "words": 2117,
+        "reading_minutes": 9,
+        "dek": "Its main demonstration was a kinship puzzle of twenty-four people, and the backward calculus it is remembered for inventing had been in print since the early 1970s.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Backpropagation's famous paper showed a network building features no one designed</h1>
+        <p class="nb-dekline">
+          Its main demonstration was a kinship puzzle of twenty-four people, and the backward calculus it is remembered for inventing had been in print since the early 1970s.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-21</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every deep neural network in use today is trained by the procedure this
+          1986 paper made famous. You have already seen the step it repeats: each
+          weight moves a small way down its share of the error. What you have not
+          seen is the four-page document that convinced the field this step could
+          train networks with hidden layers, or what that document actually put
+          on the page. By the end you will know the one result the paper was
+          built to show, and how small the networks behind it were. You will also
+          know how to tell the paper from the legend the field now tells about
+          it. That legend usually gets two things wrong: who invented the
+          algorithm, and whether the paper was later proved wrong about where
+          training gets stuck.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/gradient-descent.html">One gradient step drops the loss from 7.0 to 0.225</a>:
+            the weight-update step this lesson builds on, worked by hand on small numbers.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../mathematical-intuition/chain-rule.html">A network's gradient is a product of local slopes chained backward</a>:
+            the calculus of the backward pass that back-propagation runs.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-evidence/alexnet.html">AlexNet</a>:
+            the 2012 result that made this procedure the field's default.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What the four-page letter actually claimed</h2>
+        <p>
+          In the 9 October 1986 issue of <em>Nature</em>, David Rumelhart,
+          Geoffrey Hinton, and Ronald Williams published a four-page letter
+          titled &ldquo;Learning representations by back-propagating
+          errors.&rdquo;<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Rumelhart and Williams were at the University of California, San Diego;
+          Hinton, the corresponding author, was at Carnegie-Mellon. The letter
+          describes what it calls &ldquo;a new learning procedure,
+          back-propagation, for networks of neurone-like units&rdquo; that
+          adjusts the connection weights to shrink the gap between the output a
+          network gives and the output it was supposed to
+          give.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The step at the center of that procedure appeared already, in
+          <a href="../the-mechanics/gradient-descent.html">gradient descent</a>:
+          training moves each weight a little way down its share of the error.
+          The 1986 letter is not mainly about that step. Its claim is about the
+          layers that sit between a network's inputs and its outputs, the hidden
+          units: units whose values the training sets, but which no one wires by
+          hand to stand for anything in particular. The letter's stated result is
+          that back-propagation makes those hidden units &ldquo;come to represent
+          important features of the task
+          domain.&rdquo;<sup class="nb-cite"><a href="#s1">1</a></sup> The network
+          is handed inputs and correct outputs and nothing else, and the useful
+          features in between are its own.
+        </p>
+      </section>
+
+      <section data-nb-section="hidden-units" id="hidden-units">
+        <h2>The hidden units that learned to sort a family</h2>
+        <p>
+          The letter's clearest demonstration of that claim is a puzzle about
+          family trees.<sup class="nb-cite"><a href="#s1">1</a></sup> The authors
+          built two family trees, one English and one Italian, with the same
+          shape: twenty-four people joined by twelve kinship relations such as
+          father, aunt, and nephew. They wrote each fact as a triple of a person,
+          a relation, and the person it points to. Given Colin and
+          <em>has-aunt</em>, the network was to switch on the units for Colin's
+          two aunts. It saw 100 of the 104 true triples during training and was
+          tested on the four it had never
+          seen.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The network solved the puzzle, including the four held-out triples. The
+          interesting part is how. Sitting between the input people and the output
+          people was a layer of six units, and after training, those six units had
+          taken on jobs no one had assigned them. One unit had come to separate
+          the English people from the Italian ones. Another encoded which
+          generation a person belonged to. A third encoded which branch of the
+          family they came from.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          Nationality, generation, and branch are the features that make kinship
+          questions answerable, and the network had recovered them from nothing
+          but a list of relatives.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="backpropagation/asset-1.png"
+            alt="Six rows of small shaded rectangles, one row per hidden unit, with the twenty-four people's names labeling the columns. Each row shows a different pattern of light and dark weights."
+          />
+          <figcaption>
+            Fig. 1 &middot; The weights from the twenty-four input people to the
+            six hidden units after training. Each unit's row of rectangles is the
+            feature it learned: unit 1 separates English from Italian, unit 2
+            encodes generation, unit 6 encodes family
+            branch.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Fig. 4 &middot; p. 535"
+                data-nb-url="https://www.cri.minesparis.psl.eu/people/silber/cours/2025/nlp/bib/RumelhartDE1986.pdf#page=3"
+                data-nb-note="The hidden units' learned features are the paper's central contribution made visible."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          The three authors made the same point at greater length in a companion
+          chapter they published that year in the <em>Parallel Distributed
+          Processing</em> volumes, where they named the procedure the generalized
+          delta rule and derived it in
+          full.<sup class="nb-cite"><a href="#s2">2</a></sup> There they wrote
+          that they had answered a challenge Marvin Minsky and Seymour Papert had
+          raised in 1969: that networks without trainable middle layers cannot
+          compute even simple logical functions such as
+          exclusive-or.<sup class="nb-cite"><a href="#s2">2</a></sup> The hidden
+          units are what met the challenge, and the family-tree units
+          show what they can do.
+        </p>
+      </section>
+
+      <section data-nb-section="scale" id="scale">
+        <h2>How small the demonstrations were</h2>
+        <p>
+          For all its later reach, the demonstration was small. The symmetry
+          network the letter shows in full has six input units, two hidden units,
+          and one output.<sup class="nb-cite"><a href="#s1">1</a></sup> Its task
+          is to report whether a row of six values reads the same backward as
+          forward. Learning it took 1,425 sweeps through all sixty-four possible
+          inputs, with the weights adjusted once per
+          sweep.<sup class="nb-cite"><a href="#s1">1</a></sup> The trained network
+          is small enough to print every weight on the page.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="backpropagation/asset-2.png"
+            alt="A diagram of the symmetry network: six input units in a column, feeding two hidden units at left and right, both feeding one output unit at top. Every connection is labeled with a weight, mirror-symmetric across the column, and the hidden and output units carry bias values."
+          />
+          <figcaption>
+            Fig. 2 &middot; The full symmetry-detector network after 1,425
+            training sweeps. Every weight and bias is shown; the three weights on
+            each side of the midpoint settle into a 1:2:4
+            ratio.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Fig. 1 &middot; p. 534"
+                data-nb-url="https://www.cri.minesparis.psl.eu/people/silber/cours/2025/nlp/bib/RumelhartDE1986.pdf#page=2"
+                data-nb-note="A complete trained network small enough to read every weight."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          The family-tree network was larger but still legible: thirty-six input
+          units across five layers, trained for 1,500 sweeps on 100 of the 104
+          kinship triples.<sup class="nb-cite"><a href="#s1">1</a></sup> The
+          companion chapter runs the paper's other test problems, the classic toy
+          tasks of the field. Exclusive-or, the function Minsky and Papert had
+          used against earlier networks, was solved with a single hidden unit in
+          558 sweeps. Four-bit parity took 2,825 pattern presentations. An
+          eight-input network learned to squeeze eight patterns through three
+          hidden units and reproduce
+          them.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            The paper's demonstrations, with the sizes and training lengths the
+            two documents report.<sup class="nb-cite"><a href="#s1">1</a></sup
+            ><sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Network</th>
+              <th>Size</th>
+              <th class="txt">Task</th>
+              <th class="txt">Training</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Symmetry</span></td>
+              <td>6-2-1</td>
+              <td class="txt">mirror symmetry of six inputs</td>
+              <td class="txt">1,425 sweeps over 64 patterns</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Family tree</span></td>
+              <td>36 in, 5 layers</td>
+              <td class="txt">kinship triples</td>
+              <td class="txt">1,500 sweeps, 100 of 104 triples</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">XOR</span></td>
+              <td>2-1-1</td>
+              <td class="txt">exclusive-or</td>
+              <td class="txt">558 sweeps, one hidden unit</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">4-bit parity</span></td>
+              <td>4-4-1</td>
+              <td class="txt">parity of four bits</td>
+              <td class="txt">2,825 presentations</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          What the papers never give is how long any of this took, or on what
+          hardware.<sup class="nb-cite"><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s2">2</a></sup> They count sweeps and
+          pattern presentations, never seconds or machines. A network trained
+          today learns from enormous datasets. The whole training set here was sixty-four inputs, or a
+          hundred kinship triples, swept over and over until the weights stopped
+          moving.
+        </p>
+      </section>
+
+      <section data-nb-section="priority" id="priority">
+        <h2>The algorithm predates the paper that made it famous</h2>
+        <p>
+          The paper is often remembered as the invention of back-propagation.
+          Read against the record, that is wrong in both directions. The core
+          operation, computing how every input affects an output by working
+          backward through the steps of a calculation, was in print well before
+          1986. In 1976, Seppo Linnainmaa published a method for exactly this,
+          tracking how rounding errors accumulate through an arbitrary numerical
+          computation; his first-order coefficient, he wrote, &ldquo;is the
+          partial derivative&rdquo; of one value with respect to
+          another.<sup class="nb-cite"><a href="#s3">3</a></sup> He was analyzing
+          rounding error and never mentioned neural networks, but the procedure is
+          the backward pass. Two years earlier, Paul Werbos's 1974 Harvard thesis
+          had set out &ldquo;dynamic feedback,&rdquo; which he called &ldquo;a
+          technique for calculating derivatives inexpensively, for use with the
+          classic method of steepest
+          descent.&rdquo;<sup class="nb-cite"><a href="#s4">4</a></sup> Werbos
+          framed it for fitting statistical models and named brains only as an
+          analogy.
+        </p>
+        <p>
+          So did the 1986 authors overwrite the people who came before them? Read
+          the two documents and the answer is no. In the <em>Nature</em> letter
+          they write that variants of the procedure &ldquo;have been discovered
+          independently by David Parker&rdquo; and by Yann Le Cun, both
+          contemporaries.<sup class="nb-cite"><a href="#s1">1</a></sup> In the
+          chapter they credit the underlying delta rule to Widrow and Hoff's 1960
+          work and again name Parker and Le
+          Cun.<sup class="nb-cite"><a href="#s2">2</a></sup> What they did not do
+          was cite Werbos or Linnainmaa. The plainest reading of that gap is not
+          theft. Linnainmaa and Werbos had published in numerical analysis and in
+          the behavioral sciences, and their work was not yet known in the
+          connectionist corner of the field the 1986 authors were writing for. The
+          miscrediting that later grew around the paper lives in popular memory,
+          not in the paper's own text.
+        </p>
+        <p>
+          The fuller chronology reaches back further still, through control-theory
+          work in the early 1960s, as the neural-network researcher Jürgen
+          Schmidhuber has documented.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          Schmidhuber is himself a party to these priority disputes and argues a
+          strong case for the predecessors, so read him as an advocate. On the
+          split that matters he is careful: he credits the 1986 paper not with the
+          algorithm but with the experimental demonstration that back-propagation
+          yields useful internal
+          representations.<sup class="nb-cite"><a href="#s5">5</a></sup> Linnainmaa
+          owns the backward derivative, Werbos owns
+          its use in steepest descent, and Rumelhart, Hinton, and Williams own the
+          demonstration that, run on a network, it builds the kind of features the
+          family-tree units showed.
+        </p>
+      </section>
+
+      <section data-nb-section="limits" id="limits">
+        <h2>How the paper's stated limits held up</h2>
+        <p>
+          The paper did not oversell itself. Rumelhart, Hinton, and Williams named
+          its limits plainly. The most serious, they wrote, is that &ldquo;the
+          error-surface may contain local minima so that gradient descent is not
+          guaranteed to find a global
+          minimum.&rdquo;<sup class="nb-cite"><a href="#s1">1</a></sup> A local
+          minimum is a low point in the error that is not the lowest; a network
+          that settles into one stops improving while a better set of weights
+          exists somewhere else. The same sentence reports what they actually saw:
+          &ldquo;experience with many tasks shows that the network very rarely
+          gets stuck in poor local
+          minima.&rdquo;<sup class="nb-cite"><a href="#s1">1</a></sup> The chapter
+          puts it more strongly, calling the local-minimum problem
+          &ldquo;irrelevant in a wide variety of learning
+          tasks.&rdquo;<sup class="nb-cite"><a href="#s2">2</a></sup> They were as
+          blunt about biology: the procedure, they wrote, &ldquo;is not a
+          plausible model of learning in
+          brains.&rdquo;<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Did later work prove them wrong about local minima? No, and this is
+          where the legend most often misreads the record. In 2014, Yann Dauphin
+          and five co-authors examined the error surfaces of neural networks in
+          high dimensions and found that the thing which slows training is not
+          poor local minima but saddle points: places where the surface falls
+          away in some directions and rises in
+          others.<sup class="nb-cite"><a href="#s6">6</a></sup> The genuine local
+          minima, they showed, are rare, and the ones that exist sit at an error
+          very close to the best
+          possible.<sup class="nb-cite"><a href="#s6">6</a></sup> A critical point
+          with high error is almost always a saddle, because in high dimensions
+          &ldquo;the chance that all the directions around a critical point lead
+          upward is exponentially
+          small.&rdquo;<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          That result corrects the paper's explanation while confirming its
+          observation. Rumelhart, Hinton, and Williams had reported, from
+          experiment, that their networks rarely got stuck. Dauphin and colleagues
+          supplied the reason the 1986 authors could not: in a network with many
+          weights, being trapped at a genuinely bad minimum requires every
+          direction to point uphill at once, and that almost never happens. Their
+          observation held. The explanation for it arrived twenty-eight years
+          later.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The paper's importance is real, and it is a matter of demonstration,
+          not invention. Its lasting result was not a new algorithm. The backward
+          calculus was already in print, and the authors credited the
+          contemporaries they knew of. On networks small enough to read every
+          weight, Rumelhart, Hinton, and Williams showed that a simple rule for
+          pushing weights downhill will make a network build its own useful
+          features. The family-tree units had recovered nationality and
+          generation from nothing but a list of relatives. They were careful
+          about what they had not solved,
+          and the local-minimum worry they flagged is the one later work most
+          cleanly confirmed. That is how to tell the paper from the legend. It
+          inherited the algorithm and earned its place by showing what the
+          algorithm could build.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://people.idsia.ch/~juergen/who-invented-backpropagation.html">Jürgen Schmidhuber, &ldquo;Who Invented Backpropagation?&rdquo;</a>:
+            his annotated priority record, back to 1960s control theory.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1406.2572">Dauphin et al., &ldquo;Identifying and attacking the saddle point problem&rdquo;</a>:
+            the analysis that reframed the local-minimum worry as saddle points.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.cri.minesparis.psl.eu/people/silber/cours/2025/nlp/bib/RumelhartDE1986.pdf"
+              >Nature &middot; Rumelhart, Hinton &amp; Williams, &ldquo;Learning representations by back-propagating errors&rdquo; (1986)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://stanford.edu/~jlmcc/papers/PDP/Volume%201/Chap8_PDP86.pdf"
+              >MIT Press &middot; Rumelhart, Hinton &amp; Williams, &ldquo;Learning Internal Representations by Error Propagation,&rdquo; in Parallel Distributed Processing, Vol. 1 (1986)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://papers.baulab.info/papers/also/Linnainmaa-1976.pdf"
+              >BIT &middot; Linnainmaa, &ldquo;Taylor Expansion of the Accumulated Rounding Error&rdquo; (1976)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://gwern.net/doc/ai/nn/1974-werbos.pdf"
+              >Harvard University &middot; Werbos, &ldquo;Beyond Regression: New Tools for Prediction and Analysis in the Behavioral Sciences,&rdquo; Ph.D. thesis (1974)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://people.idsia.ch/~juergen/who-invented-backpropagation.html"
+              >IDSIA &middot; Schmidhuber, &ldquo;Who Invented Backpropagation?&rdquo;</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1406.2572"
+              >arXiv &middot; Dauphin et al., &ldquo;Identifying and attacking the saddle point problem in high-dimensional non-convex optimization&rdquo; (2014)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
