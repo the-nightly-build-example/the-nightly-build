@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>COMET scores a translation by predicting the grade a human would give it · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "comet-score",
+        "template": "lesson",
+        "title": "COMET scores a translation by predicting the grade a human would give it",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-21",
+        "tags": ["comet", "machine-translation", "evaluation", "learned-metrics", "wmt"],
+        "sources": 9,
+        "words": 1958,
+        "reading_minutes": 9,
+        "dek": "That grade is a learned guess, and the same translation earns a different one under another model version or another language direction, so a bare COMET number means little on its own.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">COMET scores a translation by predicting the grade a human would give it</h1>
+        <p class="nb-dekline">
+          That grade is a learned guess, and the same translation earns a
+          different one under another model version or another language
+          direction, so a bare COMET number means little on its own.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-21</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Almost every public comparison of machine translation now leans on
+          COMET or a metric like it. When a lab reports that its new model
+          gains three COMET points, or a paper claims one system beats another,
+          that number is doing the arguing. But it comes out of a model trained
+          to imitate human ratings, and that origin changes what it can bear.
+          By the end of this lesson you will know what a COMET score actually
+          measures, why two of them often cannot be compared, and how a
+          translation can score at the top while getting the year wrong.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/bleu.html">BLEU</a>: the string-overlap
+            count COMET displaced at the top of the field.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/bertscore.html">BERTScore</a>: another
+            metric that reads meaning with a pretrained encoder, but without
+            training on human ratings.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The count that ran the field lost to a model</h2>
+        <p>
+          For a decade, almost every machine-translation system was judged by
+          one number. Of 769 translation papers published at the main
+          computational-linguistics conferences between 2010 and 2020, 98.8
+          percent reported BLEU, and 74.3 percent reported nothing
+          else.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          <a href="../the-instruments/bleu.html">BLEU</a> is a count: it
+          measures how many short runs of words a system's output shares with a
+          human translation of the same sentence, and it never models what
+          either sentence means.
+        </p>
+        <p>
+          At the 2022 Conference on Machine Translation, the organizers ranked
+          13 such metrics against the judgments of professional translators.
+          BLEU came last, with an average rank of 5.31. First, at 1.32, was a
+          metric called COMET.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          COMET is not a counting procedure. It is a neural network, trained to
+          predict the score a human would have given a
+          translation.<sup class="nb-cite"><a href="#s3">3</a></sup> In the
+          largest comparison of its kind, run against 2.3 million human
+          judgments across 232 language directions, COMET agreed with human
+          rankings on 83.4 percent of system pairs where BLEU managed 74.6, and
+          the authors recommended dropping BLEU
+          entirely.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          A COMET score is a guess at a human judgment, produced by a model
+          that learned what a good translation looks like from a particular pile
+          of human ratings. Where those ratings were rich, COMET is sharp. Where
+          they were thin, it is blind.
+        </p>
+      </section>
+
+      <section data-nb-section="training-signal" id="training-signal">
+        <h2>The human scores COMET copies</h2>
+        <p>
+          COMET learns from two kinds of human judgment, and it can only be as
+          discerning as they were. The first is Direct Assessment. A person reads a translation
+          and drags a slider from 0 to 100 to rate how completely it carries
+          the meaning of the original. The ratings come from crowd workers,
+          standardized per rater so one person's harsh 40 counts the same as
+          another's.<sup class="nb-cite"><a href="#s5">5</a></sup> It is a single
+          number for the whole sentence, with no record of what was right or
+          wrong in it.
+        </p>
+        <p>
+          The second is MQM, or Multidimensional Quality Metrics. Here a
+          professional translator marks each error in the output, tags it by
+          type, and grades its severity. The score is a weighted sum of those
+          errors: a minor error costs 1 point, a major error 5, and a complete
+          non-translation
+          25.<sup class="nb-cite"><a href="#s6">6</a></sup> MQM records exactly
+          what went wrong; Direct Assessment records only how a rater felt about
+          the whole.
+        </p>
+        <p>
+          The two do not agree. When professional translators re-scored systems
+          with MQM that crowd workers had rated with Direct Assessment, the two
+          methods produced sharply different rankings of the same systems, and
+          the crowd's judgments correlated poorly with the
+          experts'.<sup class="nb-cite"><a href="#s6">6</a></sup> COMET's early
+          models learned mostly from crowd Direct Assessment. Whatever the crowd
+          failed to notice, the model was trained not to notice either.
+        </p>
+      </section>
+
+      <section data-nb-section="how-scored" id="how-scored">
+        <h2>Turning three sentences into one number</h2>
+        <p>
+          To convert those ratings into a metric, COMET starts from a pretrained
+          multilingual model, a network already trained on large amounts of text
+          in many languages. It turns each sentence into a list of
+          numbers that stand in for its meaning. COMET's founding version used
+          one called XLM-RoBERTa.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          The rest of the procedure is short.
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>Read three sentences</h3>
+            <p>
+              The original, the system's translation (the candidate), and a
+              human translation of the original (the reference). Encode each into
+              its list of numbers.<sup class="nb-cite"><a href="#s3">3</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Compare them</h3>
+            <p>
+              Combine those lists into a single summary of how closely the
+              candidate matches the meaning carried by the source and the
+              reference.<sup class="nb-cite"><a href="#s3">3</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>Predict a score</h3>
+            <p>
+              Pass that summary through a small scoring layer, fine-tuned (its
+              internal settings nudged) until the numbers it returns match the
+              human Direct Assessment and MQM scores as closely as
+              possible.<sup class="nb-cite"><a href="#s3">3</a></sup>
+            </p>
+          </li>
+        </ol>
+        <p>
+          A second version drops the reference and scores the candidate against
+          the source alone. This is quality estimation, or QE: a COMET score for
+          a translation whose correct answer was never shown to the model. It is
+          a separate network from the reference-based one, not a setting on the
+          same model.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="uninterpretable" id="uninterpretable">
+        <h2>A COMET number moves when the translation doesn't</h2>
+        <p>
+          Suppose you read that a system scores 0.85 on COMET. On its own that
+          number is close to meaningless.
+        </p>
+        <p>
+          Which model produced it? The people who build COMET ship several.
+          Their default reference-based model returns a score from 0 to 1, where
+          1 is a perfect translation. But models released before 2022 return a
+          raw number that, in the developers' own words, "does not have a direct
+          interpretation"; the rescaling to a 0-to-1 range only arrived in
+          2022.<sup class="nb-cite"><a href="#s7">7</a></sup> A 0.85 from a 2021
+          model and a 0.85 from a 2022 model are not the same measurement. Was a
+          reference used, or was it the reference-free QE model, a different
+          network trained on different data? Which language direction produced
+          it? The average human score behind these models runs from about 0.51
+          in some directions to 0.91 in others across the data COMET is trained
+          and tested on, so a number is high or low only relative to its
+          direction.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          The score moves even when nothing about the translation changes at
+          all. Researchers ran a single fixed model on the same
+          English-to-German test set under two releases of the COMET software
+          and got two answers.
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">0.796</span
+            ><span class="nb-stat-l">SOFTWARE 1.1.2</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">0.837</span
+            ><span class="nb-stat-l">SOFTWARE 2.2.2</span>
+          </div>
+        </div>
+        <p>
+          Same model, same translations, same test set, two software releases,
+          and the score shifts by 0.04 with none of the translation
+          changed.<sup class="nb-cite"><a href="#s8">8</a></sup> None of these
+          facts can be recovered from the number itself, which may be why at
+          least 12 percent of the papers one survey examined reported a COMET
+          score without saying which model
+          produced it.<sup class="nb-cite"><a href="#s8">8</a></sup> A COMET
+          score reported without its model version, its reference mode, and its
+          language direction cannot honestly be set beside another.
+        </p>
+      </section>
+
+      <section data-nb-section="over-optimization" id="over-optimization">
+        <h2>Optimizing toward COMET selects the wrong number</h2>
+        <p>
+          A metric can be used two ways. As a judge it scores translations after
+          the fact. As a target it picks them: instead of taking a system's
+          single best guess, you generate many candidate translations and keep
+          the one the metric scores highest. This second use, a form of what is
+          called minimum Bayes risk decoding, is where COMET's training shows
+          its cost.
+        </p>
+        <p>
+          Amrhein and Sennrich selected translations this way and checked what
+          COMET chose. The outputs it preferred carried wrong numbers and
+          mistranslated names, because COMET is far less sensitive to those
+          errors than to ordinary
+          words.<sup class="nb-cite"><a href="#s9">9</a></sup> They measured that
+          insensitivity directly, by changing one thing in a translation and
+          watching how far the score fell.
+        </p>
+        <table class="nb-table">
+          <caption>
+            How far COMET's score drops when one element of a translation is
+            corrupted. A smaller drop means the model minds the error
+            less.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">What was changed</th>
+              <th>Score drop</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">A number</td>
+              <td>0.037</td>
+            </tr>
+            <tr>
+              <td class="txt">A person or place name</td>
+              <td>0.068</td>
+            </tr>
+            <tr>
+              <td class="txt">An ordinary noun</td>
+              <td>0.232</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Corrupting an ordinary noun costs six times what corrupting a number
+          does. So when COMET sorts a pool of candidates, a swapped digit is
+          cheap and easily outweighed. In one of their examples the source and
+          the human reference both say a musician left his band in 1970; the
+          translation COMET scored highest says 1980. In another a person's name
+          is corrupted from "Tebboune" to
+          "Tebboene".<sup class="nb-cite"><a href="#s9">9</a></sup> The date is
+          wrong and the name is wrong, and COMET rated the output near the top,
+          because a swapped digit barely moves a score built to predict a human
+          rating in which digits rarely decided anything.
+        </p>
+        <p>
+          It would be easy to read this as a sign that COMET is the weaker
+          metric. The rankings say the opposite: against professional human
+          judgment it placed first and BLEU last, and across millions of
+          judgments it tracked human preference more closely than any
+          count.<sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s4">4</a></sup>
+          The blind spot appears only when COMET stops being the judge and
+          becomes the target. Nor is it that COMET cannot see a wrong number at
+          all: shown a clean pair of translations that differ in a single digit,
+          it usually prefers the correct
+          one.<sup class="nb-cite"><a href="#s9">9</a></sup> The failure needs a
+          realistic pool, where its mild dislike of a wrong number is swamped by
+          other differences and a meaning-breaking output wins. And newer did
+          not mean safer here: the checkpoint trained on MQM, the more careful of
+          the two human signals, chose a wrong number in 16.6 percent of cases
+          against the older Direct-Assessment model's 7.2
+          percent.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <p>
+          The trap is general. Push any system hard enough toward a metric and it
+          finds the metric's blind spots. The same survey that traced COMET's
+          version problems found it assigning positive scores to empty and
+          wrong-language outputs. At a 2024 competition, a translation system
+          used this decoding to dominate the automatic metrics without matching
+          that lead under human
+          evaluation.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A COMET score is a model's best guess at how a human panel would have
+          rated a translation, learned from a particular set of those ratings.
+          That is what it measures, and it is why it beats a word-count: it was
+          built to imitate the judgment a word-count ignores. It is also why it
+          can be gamed, and why it goes blind wherever its training ratings were
+          thin.
+        </p>
+        <p>
+          Before you set two COMET numbers side by side, check that three things
+          match: the model version, whether each used a reference or scored
+          against the source alone, and the language direction. If any of the
+          three differ, the numbers are not on the same scale. And be wary of a
+          COMET score won by aiming at COMET, because a higher number bought that
+          way can sit on a translation with the year wrong.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://aclanthology.org/2022.aacl-main.83/"
+              >Amrhein &amp; Sennrich, on what COMET chooses</a
+            >: the full set of translations COMET preferred that mangled numbers
+            and names.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2408.15366"
+              >Zouhar et al., on reading a COMET score</a
+            >: a catalogue of the ways a bare COMET number breaks, with the
+            version and direction tables.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2106.15195"
+              >arXiv · Marie, Fujita &amp; Rubino, "Scientific Credibility of
+              Machine Translation Research: A Meta-Evaluation of 769
+              Papers"</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2022.wmt-1.2/"
+              >ACL Anthology · Freitag et al., "Results of WMT22 Metrics Shared
+              Task: Stop Using BLEU"</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2020.emnlp-main.213/"
+              >ACL Anthology · Rei, Stewart, Farinha &amp; Lavie, "COMET: A
+              Neural Framework for MT Evaluation"</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2021.wmt-1.57/"
+              >ACL Anthology · Kocmi et al., "To Ship or Not to Ship: Extensive
+              Evaluation of Automatic Metrics for MT"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/W13-2305/"
+              >ACL Anthology · Graham, Baldwin, Moffat &amp; Zobel, "Continuous
+              Measurement Scales in Human Evaluation of Machine
+              Translation"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2021.tacl-1.87/"
+              >ACL Anthology · Freitag et al., "Experts, Errors, and Context: A
+              Large-Scale Study of Human Evaluation for Machine
+              Translation"</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/Unbabel/COMET"
+              >GitHub · Unbabel, COMET model documentation</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2408.15366"
+              >arXiv · Zouhar et al., "Pitfalls and Outlooks in Using COMET"</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/2022.aacl-main.83/"
+              >ACL Anthology · Amrhein &amp; Sennrich, "Identifying Weaknesses in
+              Machine Translation Metrics Through Minimum Bayes Risk Decoding"</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
