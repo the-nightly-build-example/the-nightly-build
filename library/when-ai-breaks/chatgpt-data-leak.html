@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A cancelled request showed ChatGPT users other people's chat titles · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "chatgpt-data-leak",
+        "template": "lesson",
+        "title": "A cancelled request showed ChatGPT users other people's chat titles",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-21",
+        "tags": ["openai", "chatgpt", "data-breach", "privacy", "gdpr"],
+        "sources": 10,
+        "words": 1993,
+        "reading_minutes": 9,
+        "dek": "The same bug also exposed some paying subscribers' card details, and it lived in an open-source library ChatGPT shared with much of the web.",
+        "harness": "claude-code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">A cancelled request showed ChatGPT users other people's chat titles</h1>
+        <p class="nb-dekline">
+          The same bug also exposed some paying subscribers' card details, and it lived in an open-source library ChatGPT shared with much of the web.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-21</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Most stories about ChatGPT going wrong are about the model: a made-up
+          fact, a shift in how it behaves, an answer it should never have given.
+          This one is not. For a few hours on 20 March 2023, ChatGPT showed some
+          users other people's chat titles, and showed a slice of its paying
+          subscribers pieces of other subscribers' payment details. The cause
+          was an ordinary bug in the caching layer that every busy web service
+          runs, and it drew Italy's privacy regulator into a case that ran for
+          three years. By the end you will know how a cancelled request and a
+          shared connection can hand one user another's data. You will also know
+          exactly what OpenAI exposed and to how many, and what Italy's Garante
+          did and did not order.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://danluu.com/cache-incidents/">Dan Luu, "A decade of major cache incidents at Twitter"</a>: how a shared cache became the leading cause of outages at one large service.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A stranger's chat titles in your sidebar</h2>
+        <p>
+          On Monday, 20 March 2023, some people who opened ChatGPT found
+          conversations in their history that were not theirs. The sidebar down
+          the left of the screen lists each past chat by a title drawn from its
+          first message. For a stretch of that day, titles belonging to another
+          active user showed up in the list instead.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          That was the visible part. Over the four days that followed, OpenAI
+          traced the fault and disclosed that the same bug had also exposed
+          payment details belonging to a slice of its paying subscribers.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Neither problem was in the model that writes the answers. Both were in
+          the layer that stores them.
+        </p>
+      </section>
+
+      <section data-nb-section="mechanism" id="mechanism">
+        <h2>How one request ends up reading another's answer</h2>
+        <p>
+          To keep ChatGPT responsive, OpenAI put a cache in front of its slower
+          stores: a fast, in-memory holding area for data the server has looked
+          up recently, so it does not have to fetch the same thing twice. The
+          cache software is Redis, an open-source data store used across the
+          industry.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          A service handling many requests at once does not open a new
+          connection to Redis for each one. It keeps a set of open connections
+          and lends a free one to each request, then takes it back when the
+          request is done. That set is a connection pool.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The trouble starts when a request is abandoned before it finishes,
+          which happens constantly at scale: a user closes the tab, or the
+          server gives up on a slow call and cancels it. Early on 20 March, a
+          change OpenAI made caused a sudden spike in these cancellations.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          In OpenAI's account, "At 1 a.m. Pacific time on Monday, March 20, we
+          inadvertently introduced a change to our server that caused a spike in
+          Redis request cancellations. This created a small probability for each
+          connection to return bad data."<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <p>
+          Here is how one cancellation returns bad data. The server takes a
+          connection from the pool, sends its command to Redis, and waits to
+          read the reply. The redis-py client that OpenAI used to talk to Redis
+          holds commands it sends in one queue and replies it receives in another.
+          If the request is cancelled in the gap after its command was sent but
+          before its reply is read, the connection goes back into the pool still
+          carrying that unread reply. The next request handed that same
+          connection sends its own command, reads the first reply waiting for
+          it, and gets the previous request's leftover data.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">The bug in OpenAI's words</span>
+          <blockquote>
+            "If a request is canceled after the request is pushed onto the
+            incoming queue, but before the response popped from the outgoing
+            queue, we see our bug: the connection thus becomes corrupted and the
+            next response that's dequeued for an unrelated request can receive
+            data left behind in the connection."<sup class="nb-cite"
+              ><a href="#s1">1</a></sup
+            >
+            <span class="nb-note-who">OpenAI, March 20 ChatGPT outage report</span>
+          </blockquote>
+        </div>
+        <p>
+          A developer outside OpenAI had reported the same fault against redis-py
+          three days before the incident, on 17 March. The report is titled "Off
+          by 1" and traces the sequence step for step: after a cancelled command,
+          "the following redis operation on the same connection will send the
+          command, and then promptly continue to read the response from the
+          previous, canceled command."<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          Under the cancellation spike on 20 March, that off-by-one misdelivery
+          happened often enough that one user's cached data surfaced in
+          another's session.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          OpenAI took ChatGPT offline that day, patched its own systems, added
+          checks that the data coming back from the cache belongs to the user
+          who asked, and contributed a fix upstream.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The redis-py maintainers merged it on 22 March: it shields a command
+          from cancellation, so a request cancelled midway resets its connection
+          instead of returning it to the pool dirty.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+        </p>
+        <p>
+          One fix did not settle it. On 25 March the same reporter opened a
+          follow-up, noting that the shielding covered only pipelined operations
+          and that a single cancelled command outside a pipeline could still
+          corrupt a pooled connection.<sup class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+          Closing the fault took a second round.
+        </p>
+      </section>
+
+      <section data-nb-section="exposure" id="exposure">
+        <h2>Chat titles first, card details four days later</h2>
+        <p>
+          When ChatGPT went dark on 20 March, OpenAI did not say why. It put the
+          outage down to a bug without naming the cause; the payment-data
+          disclosure came only with the postmortem on 24 March.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+          Sam Altman, OpenAI's chief executive, wrote at the time, "We feel awful
+          about this."<sup class="nb-cite"><a href="#s5">5</a></sup>
+        </p>
+        <p>
+          The reported scope grew as the investigation went. The first exposure
+          was the chat titles, and the first message of a newly created
+          conversation could also appear in another user's history if the two
+          were active at the same moment.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          Deeper investigation found that the same bug had exposed
+          payment-related information for 1.2% of the ChatGPT Plus subscribers
+          who were active during a nine-hour window that morning, from 1 a.m. to
+          10 a.m. Pacific.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          That 1.2% is a ceiling, not a count. It measures how many active
+          subscribers could have been shown another person's data in that
+          window, not how many actually were; OpenAI said separately that the
+          number of users whose data was actually seen by someone else was
+          extremely low.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          What a subscriber might have seen depended on the route. Some were sent
+          a subscription-confirmation email meant for a different user, carrying
+          that user's credit card type and the last four digits of the number.
+          Others, on the "Manage my subscription" page, saw another active
+          subscriber's first and last name, email, payment address, card type,
+          last four digits, and expiration date.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">OpenAI on the payment data</span>
+          <blockquote>
+            "it was possible for some users to see another active user's first
+            and last name, email address, payment address, credit card type and
+            the last four digits (only) of a credit card number, and credit card
+            expiration date. Full credit card numbers were not exposed at any
+            time."<sup class="nb-cite"><a href="#s1">1</a></sup>
+            <span class="nb-note-who">OpenAI, March 20 ChatGPT outage report</span>
+          </blockquote>
+        </div>
+      </section>
+
+      <section data-nb-section="italy-block" id="italy-block">
+        <h2>Italy blocks ChatGPT, on other grounds</h2>
+        <p>
+          Ten days later, ChatGPT stopped working in Italy. On 30 March 2023 the
+          Garante, Italy's data-protection authority, ordered a provisional
+          limitation on OpenAI's processing of the personal data of users in
+          Italy, effective the moment OpenAI received it, using the GDPR's power
+          to impose urgent measures.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <p>
+          Much of the coverage said the regulator acted over the breach.<sup
+            class="nb-cite"
+            ><a href="#s7">7</a></sup
+          >
+          The order's own text does not. It sets out four grounds, and the
+          20 March breach is not among them. OpenAI gave users no information
+          notice and had no adequate legal basis for collecting personal data at
+          scale to train the model. It processed inaccurate data because the
+          model's outputs do not always match reality, and it ran no age check on
+          a service its terms reserve for users 13 and older.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+        </p>
+        <p>
+          Where the breach does appear is the Garante's press release the next
+          day, as background to the action: it recorded that on 20 March ChatGPT
+          had suffered "a data breach affecting ChatGPT users' conversations and
+          information on payments by subscribers to the service."<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          The breach shaped the episode without grounding the order.
+        </p>
+        <p>
+          The block held for about four weeks. The breach became a formal
+          violation only later, in the Garante's decision of 2 November 2024, as
+          a failure to notify the authority; the same decision fined OpenAI
+          €15 million. That fine no longer stands: the Court of Rome annulled the
+          decision in a judgment published 18 March 2026, upholding OpenAI's
+          appeal.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <ol class="nb-timeline">
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">30 Mar 2023</span>
+            <h3>
+              The Garante orders a halt<sup class="nb-cite"
+                ><a href="#s6">6</a></sup
+              >
+            </h3>
+            <p>
+              A provisional limit on OpenAI's processing of Italian users' data,
+              in force from the moment the order arrives.
+            </p>
+          </li>
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">28 Apr 2023</span>
+            <h3>
+              ChatGPT returns to Italy<sup class="nb-cite"
+                ><a href="#s10">10</a></sup
+              >
+            </h3>
+            <p>
+              OpenAI adds a privacy notice, an opt-out from training on
+              conversations, and an age gate at sign-up, and the Garante lifts
+              the block.
+            </p>
+          </li>
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">2 Nov 2024</span>
+            <h3>
+              A €15 million fine<sup class="nb-cite"><a href="#s9">9</a></sup>
+            </h3>
+            <p>
+              The Garante closes its inquiry, finds a failure to notify the
+              breach among other violations, and fines OpenAI. Announced that
+              December.
+            </p>
+          </li>
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">18 Mar 2026</span>
+            <h3>
+              The fine is annulled<sup class="nb-cite"><a href="#s9">9</a></sup>
+            </h3>
+            <p>
+              The Court of Rome upholds OpenAI's appeal, and the Garante removes
+              the decision from its site.
+            </p>
+          </li>
+        </ol>
+      </section>
+
+      <section data-nb-section="shared-caches" id="shared-caches">
+        <h2>The same flaw, wherever state is cached</h2>
+        <p>
+          Nothing about this failure needed an AI. The bug lived in redis-py, an
+          open-source client that many services use to reach Redis, and it was
+          found by a developer with no connection to OpenAI.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The ingredients are common: a cache holding per-user data, a pool of
+          connections shared across requests, and requests that can be cancelled
+          before they finish. Any busy service built that way can leak one
+          user's data into another's session, whether it runs a chat window, an
+          inbox, a bank account, or a store's checkout.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          ><sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          An AI product sits on this same web plumbing, and a regulator will
+          treat a leak from it as a data-protection event wherever in the stack
+          it began.<sup class="nb-cite"><a href="#s6">6</a></sup
+          ><sup class="nb-cite"><a href="#s9">9</a></sup>
+          None of it needs a model to hand one person another's data.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The fault that exposed ChatGPT's users sat in front of the model, in
+          the cache that keeps the service fast. A cancelled request left a
+          shared connection holding one user's reply, and the next request read
+          it as its own. The reply could be a chat title, or a subscriber's name
+          and card details, and a privacy regulator followed on grounds of its
+          own. Neither changes where the bug lived: in redis-py, an open-source
+          library ChatGPT shared with much of the web. Its pattern, a per-user
+          cache reached through pooled, cancellable connections, sits behind
+          email, banking, and checkout alike. The thing to carry is that an AI
+          product is a web service first. When such a service leaks one user's
+          data to another, the cause is far more likely to be the plumbing than
+          the model.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://newsletter.pragmaticengineer.com/p/the-biggest-ever-global-outage-lessons">Gergely Orosz, "The biggest-ever global outage: lessons for software engineers"</a>: how one latent bug crashed systems worldwide, and what engineers took from it.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://openai.com/index/march-20-chatgpt-outage/"
+              >OpenAI · March 20 ChatGPT outage: Here's what happened</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/redis/redis-py/issues/2624"
+              >redis/redis-py · Issue #2624: "Off by 1" — cancelled async command leaves connection unsafe</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/redis/redis-py/pull/2641"
+              >redis/redis-py · PR #2641: AsyncIO Race Condition Fix</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/redis/redis-py/issues/2665"
+              >redis/redis-py · Issue #2665: cancelled command still leaves connection unsafe</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.bleepingcomputer.com/news/security/openai-chatgpt-payment-data-leak-caused-by-open-source-bug/"
+              >BleepingComputer · OpenAI: ChatGPT payment data leak caused by open-source bug</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://web.archive.org/web/20241222150723/https://www.garanteprivacy.it/home/docweb/-/docweb-display/docweb/9870832"
+              >Garante per la protezione dei dati personali · Provvedimento del 30 marzo 2023 (doc-web 9870832)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://techcrunch.com/2023/03/31/chatgpt-blocked-italy/"
+              >TechCrunch · Italy orders ChatGPT blocked over privacy concerns</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://web.archive.org/web/20260904190957/https://www.garanteprivacy.it/home/docweb/-/docweb-display/docweb/9870847"
+              >Garante · Press release, 31 March 2023: stop to ChatGPT by the Italian SA</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://web.archive.org/web/20260917130924/https://www.garanteprivacy.it/home/docweb/-/docweb-display/docweb/10085432"
+              >Garante · Press release, 20 December 2024: final decision and the Rome court's annulment note</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://web.archive.org/web/20260831071752/https://www.garanteprivacy.it/home/docweb/-/docweb-display/docweb/9881490"
+              >Garante · Press release, 28 April 2023: OpenAI reopens ChatGPT in Italy</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
