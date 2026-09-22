@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Long Short-Term Memory · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "long-short-term-memory",
+        "template": "lesson",
+        "title": "LSTM learned to carry a value across 1,000 time steps, on a network of a few thousand weights",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-22",
+        "tags": ["lstm", "recurrent-neural-networks", "vanishing-gradient", "hochreiter-schmidhuber", "sequence-modeling"],
+        "sources": 8,
+        "words": 2191,
+        "reading_minutes": 10,
+        "dek": "The speech recognition and translation the name now carries came years later, on a three-gate cell Hochreiter and Schmidhuber's paper never described.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">LSTM learned to carry a value across 1,000 time steps, on a network of a few thousand weights</h1>
+        <p class="nb-dekline">
+          The speech recognition and translation the name now carries came years later, on a three-gate cell Hochreiter and Schmidhuber's paper never described.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-09-22</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          For about fifteen years, the standard way to make a neural network
+          read a sequence, a sentence, a recording, was a design called Long
+          Short-Term Memory. Its name still turns up whenever someone
+          explains how machines handled language before the current models. The
+          design comes from a 1997 paper by Sepp Hochreiter and Jürgen
+          Schmidhuber. This lesson reads that paper and tells you what is
+          in it: the problem, the mechanism it introduced, and how large the
+          evidence really was. By the end you will
+          know why an ordinary recurrent network cannot learn to connect events
+          far apart in a sequence, and what a memory cell does about that. You
+          will also see why the LSTM that later ran speech recognition and
+          translation was not quite the one this paper described.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/gradient-descent.html">One gradient step drops the loss from 7.0 to 0.225</a>:
+            the weight-update rule the training in this lesson depends on.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/backpropagation.html">Backpropagation's famous paper showed a network building features no one designed</a>:
+            how a network assigns blame backward through its own steps.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What Hochreiter and Schmidhuber published in 1997</h2>
+        <p>
+          The paper is called &ldquo;Long Short-Term Memory,&rdquo; and it ran to
+          forty-six pages in the journal <em>Neural Computation</em> in
+          1997.<sup class="nb-cite"><a href="#s1">1</a></sup> Its authors were
+          Sepp Hochreiter at the Technical University of Munich and Jürgen
+          Schmidhuber at the IDSIA lab in Lugano. A recurrent neural network
+          reads a sequence one step at a time and carries some state forward. In
+          practice it cannot learn to connect an input to an output that depends
+          on it many steps
+          later.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Every result in the paper comes from artificial data the authors
+          designed themselves. There is no speech and no text
+          anywhere in it, and the name would later be attached to both.
+        </p>
+      </section>
+
+      <section data-nb-section="vanishing-gradient" id="vanishing-gradient">
+        <h2>How the error signal dies on the way back</h2>
+        <p>
+          To train a network like this, you need a way to assign blame. When the
+          output is wrong,
+          <a href="../the-evidence/backpropagation.html">backpropagation</a> works
+          backward through the network's steps and computes how much each weight
+          contributed to the error.
+          <a href="../the-mechanics/gradient-descent.html">Gradient descent</a>
+          then nudges each weight a little way down its share. In a recurrent
+          network the same signal has to travel backward not only through layers
+          but through time, from the step where the mistake showed up to the much
+          earlier step where the relevant input arrived.
+        </p>
+        <p>
+          At each step of that backward journey the error signal is multiplied by
+          a weight and by the slope of an activation function. Multiply a number
+          by roughly the same factor over and over and one of two things happens.
+          If the factor is below one, the product shrinks toward zero. If it is
+          above one, it grows without bound. Sepp Hochreiter had shown exactly
+          this in his 1991 diploma thesis, the document the 1997 paper credits for
+          the analysis.<sup class="nb-cite"><a href="#s2">2</a></sup> He proved it
+          for two quantities: the influence of a distant input on the network's
+          current state, and the dependence of the output on any single weight.
+          Each scales as a product of terms that falls or rises exponentially with
+          the number of steps in
+          between.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          Over a long gap, the error signal that should
+          tell an early weight what to do has either vanished to nothing or blown
+          up into noise by the time it arrives. The network can learn short-range
+          connections and not long-range ones. This is the vanishing gradient
+          problem, and in 1997 it was the reason recurrent networks could not
+          learn to remember.
+        </p>
+      </section>
+
+      <section data-nb-section="memory-cell" id="memory-cell">
+        <h2>The memory cell that holds a value untouched</h2>
+        <p>
+          LSTM's answer is a protected place to keep a value. The core is a single
+          unit with a loop back to itself whose weight is fixed at exactly
+          1.0.<sup class="nb-cite"><a href="#s1">1</a></sup> Because the weight is
+          one, a value written into that unit is still there at the next step, and
+          the step after, for as long as nothing disturbs it. Run the training
+          signal backward through that loop and it too is multiplied by one at
+          every step, so it neither shrinks nor grows. Hochreiter and Schmidhuber
+          named this the constant error carousel: a channel down which the error
+          flows across many steps without
+          decaying.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          A value that can never be changed or hidden would be useless, so the
+          cell is wrapped in two controls. An input gate multiplies the incoming
+          signal before it reaches the cell. Near zero, it lets nothing new in and
+          the stored value is left alone. Open, it lets a new value be written. An
+          output gate multiplies the cell's value on the way out, so when it is
+          near zero the rest of the network cannot see the stored
+          value.<sup class="nb-cite"><a href="#s1">1</a></sup> Both gates are
+          trained, so the network learns when to write and when to read.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="long-short-term-memory/asset-1.png"
+            alt="A rectangular memory cell containing a central unit whose curved arrow loops back to itself, labeled 1.0. To its left a unit marked g feeds in; to its right a unit marked h feeds out. Below the box sit two small round gate units, y-in on the left and y-out on the right, each fed by several input arrows. The cell has these two gates and no forget gate."
+          />
+          <figcaption>
+            Fig. 1 &middot; The 1997 memory cell. The central unit's
+            self-connection, labeled 1.0, is the constant error carousel; the
+            input gate (y-in) and output gate (y-out) below the box are the two
+            multiplicative controls. There is no forget
+            gate.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Fig. 1 &middot; p. 7"
+                data-nb-url="https://www.bioinf.jku.at/publications/older/2604.pdf#page=7"
+                data-nb-note="The 1997 cell has a self-loop of weight one and two gates, and no forget gate."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          The 1997 cell has these two gates and no others. The word
+          &ldquo;forget&rdquo; does not appear anywhere in the
+          paper.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="scale" id="scale">
+        <h2>A strong result on a deliberately small benchmark</h2>
+        <p>
+          So the mechanism is compact. The evidence is where the paper and its
+          reputation part company. Every experiment in it runs on synthetic
+          sequences the authors built to order, and the networks are tiny by any
+          later standard.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          The paper reports six experiments with about a dozen task variants, all
+          artificial.<sup class="nb-cite"><a href="#s1">1</a></sup> A network
+          recognizes strings of a small formal grammar, or recalls a symbol buried
+          behind a long run of random distractors. Others add two marked numbers
+          far apart in a sequence, or report the order of a few widely separated
+          symbols. The networks that solved these held between two and four memory
+          cells and ran from under a hundred to a few thousand
+          weights.<sup class="nb-cite"><a href="#s1">1</a></sup> The single largest
+          network, in one distractor experiment, reached about 10,500
+          weights.<sup class="nb-cite"><a href="#s1">1</a></sup> A language model
+          today is measured in billions of parameters.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The 1997 paper's experiments and the whole-network weight counts it
+            reports. Every task uses synthetic data.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Sec. 5, Tables 1&ndash;9"
+                data-nb-url="https://www.bioinf.jku.at/publications/older/2604.pdf#page=9"
+                >1</a
+              ></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Experiment</th>
+              <th class="txt">What the network had to do</th>
+              <th>Weights</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">Reber grammar</span></td>
+              <td class="txt">recognize strings from a small formal grammar</td>
+              <td>264&ndash;276</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Distractors</span></td>
+              <td class="txt">recall one symbol past up to 1 000 random distractors</td>
+              <td>364&ndash;6 064</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Adding</span></td>
+              <td class="txt">sum two marked numbers in a long sequence</td>
+              <td>93</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Temporal order</span></td>
+              <td class="txt">report the order of widely separated symbols</td>
+              <td>156 / 308</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The hardest task carried a value across a gap of more than 1,000 time
+          steps, with 1,000 distractor symbols in between. The network learned it
+          on about 6,000 weights and two memory cells, after some 49,000 training
+          sequences.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Task 2c, Table 3">1</a></sup
+          > Nothing else at the time could do this. The standard recurrent
+          training methods, the ones that ran backpropagation through time, failed
+          these long-lag tasks outright.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          > Within its scope the result was strong and genuinely new.
+        </p>
+        <p>
+          The small scale was a choice, not a limitation the authors missed. They
+          wrote that they picked artificial tasks on purpose. Many long-lag
+          benchmarks then in use could be solved by a short-lag shortcut, or by
+          guessing weights at random, and they wanted problems that could only be
+          solved by truly
+          remembering.<sup class="nb-cite"><a href="#s1">1</a></sup> They were
+          equally plain about what LSTM could not do. Its efficient training
+          algorithm could not handle a strongly delayed exclusive-or, and the
+          network could not count time steps
+          precisely.<sup class="nb-cite"><a href="#s1">1</a></sup> The paper does
+          not oversell itself. The gap that opened later is between this evidence
+          and the reputation, not between the paper's claims and its own results.
+        </p>
+      </section>
+
+      <section data-nb-section="later-lstm" id="later-lstm">
+        <h2>The LSTM that got famous was not the one from 1997</h2>
+        <p>
+          The cell that carried the name into production had a part the 1997 cell
+          lacked. In 2000, Felix Gers, Jürgen Schmidhuber and Fred Cummins added a
+          third gate, the forget gate, in a paper titled &ldquo;Learning to
+          Forget.&rdquo; A cell reading a continuous stream that is never reset can
+          let its stored value grow without bound. The forget gate lets it learn
+          to clear its own state once the stored value has served its
+          purpose.<sup class="nb-cite"><a href="#s3">3</a></sup> Hochreiter's own
+          group revisited the architecture in 2024. It lists the standard cell's
+          three gates, input, output and forget, and says plainly that &ldquo;the
+          forget gate has been introduced by
+          Gers.&rdquo;<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Sec. 1">3</a></sup
+          > The explainer that taught LSTM to a generation of practitioners,
+          Christopher Olah's from 2015, opens its walk through the cell with the
+          forget gate.<sup class="nb-cite"><a href="#s4">4</a></sup> So the LSTM
+          most people picture is the three-gate cell from 2000, not the two-gate
+          cell from 1997.
+        </p>
+        <p>
+          The real-world results arrived on that later cell, and from more than
+          one group.
+        </p>
+        <ol class="nb-timeline">
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">1997</span>
+            <h3>
+              LSTM is published<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </h3>
+            <p>
+              Hochreiter and Schmidhuber introduce the constant error carousel and
+              its two gates, tested only on synthetic sequence tasks.
+            </p>
+          </li>
+          <li class="nb-tl-event">
+            <span class="nb-tl-date">2000</span>
+            <h3>
+              The forget gate is added<sup class="nb-cite"><a href="#s3">3</a></sup>
+            </h3>
+            <p>
+              Gers, Schmidhuber and Cummins give the cell a third gate, so it can
+              reset itself on a continuous input stream.
+            </p>
+          </li>
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">2005</span>
+            <h3>
+              LSTM reads real speech<sup class="nb-cite"><a href="#s5">5</a></sup>
+            </h3>
+            <p>
+              Alex Graves and Jürgen Schmidhuber apply the three-gate cell to the
+              TIMIT speech corpus. It reaches a 69.8% mean framewise phoneme
+              score, beating the recurrent and feedforward alternatives.
+            </p>
+          </li>
+          <li class="nb-tl-event">
+            <span class="nb-tl-date">2013</span>
+            <h3>
+              Deep LSTM sets a speech record<sup class="nb-cite"><a href="#s6">6</a></sup>
+            </h3>
+            <p>
+              Alex Graves, Abdel-rahman Mohamed and Geoffrey Hinton, at Toronto,
+              combine deep LSTM with connectionist temporal classification. They
+              reach 17.7% error on TIMIT phoneme recognition, the best score then
+              recorded.
+            </p>
+          </li>
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">2014</span>
+            <h3>
+              LSTM translates<sup class="nb-cite"><a href="#s7">7</a></sup>
+            </h3>
+            <p>
+              Ilya Sutskever, Oriol Vinyals and Quoc Le at Google map an English
+              sentence into a single vector and back out as French. It is the
+              encoder-decoder design our
+              <a href="../the-evidence/seq2seq.html">seq2seq lesson</a> covers,
+              built on what they call the LSTM formulation from Graves. An ensemble
+              scores 34.8 BLEU on English-French, past a phrase-based baseline at
+              33.3.
+            </p>
+          </li>
+          <li class="nb-tl-interlude">
+            <p>
+              That model had four layers of 1,000 cells, 1,000-dimensional
+              <a href="../the-mechanics/word-embeddings.html">word embeddings</a>,
+              and 384 million parameters.<sup class="nb-cite"
+                ><a href="#s7">7</a></sup
+              > Set that against the few thousand weights of 1997: a descendant of
+              that cell, at a scale those experiments never approached.
+            </p>
+          </li>
+          <li class="nb-tl-event">
+            <span class="nb-tl-date">2017</span>
+            <h3>
+              Attention displaces recurrence<sup class="nb-cite"><a href="#s8">8</a></sup>
+            </h3>
+            <p>
+              Vaswani and colleagues introduce the Transformer, which dispenses
+              with recurrence and overtakes recurrent models, LSTM among them, for
+              translation. Recurrent nets had been the established state of the art
+              until then.
+            </p>
+          </li>
+          <li class="nb-tl-event">
+            <span class="nb-tl-date">2024</span>
+            <h3>
+              Hochreiter's group returns<sup class="nb-cite"><a href="#s3">3</a></sup>
+            </h3>
+            <p>
+              An extended LSTM, xLSTM, is scaled to 2.7 billion parameters on 300
+              billion tokens, a revival of the idea rather than the 1997 cell.
+            </p>
+          </li>
+        </ol>
+        <p>
+          This is where a citation of LSTM can mislead. When a history says LSTM
+          ran speech recognition or machine translation, that is true. It happened
+          on the three-gate cell, trained by methods the 1997 paper did not use,
+          by groups that in one case included neither original
+          author.<sup class="nb-cite"><a href="#s6">6</a></sup> What the 1997 paper
+          itself demonstrated was narrower and earlier: that a gated memory cell
+          could learn to carry a value across a long gap on a synthetic task. The
+          Transformer displaced recurrence for language in 2017, and by then the
+          models people called LSTM were already a generation removed from the one
+          in the paper.<sup class="nb-cite"><a href="#s8">8</a></sup> Its 2024
+          return, xLSTM, revives the idea, not the original
+          evidence.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Here is what to keep. The 1997 Long Short-Term Memory paper solved a
+          real and hard problem: it showed that a network could learn to hold a
+          value across a thousand steps, when no earlier recurrent method could
+          manage more than a handful. It did so with one clean idea, a memory cell
+          whose self-loop of weight one lets the error flow back undecayed, opened
+          and closed by two gates the network trains for itself. What the paper
+          did not have was scale, or a forget gate. Its evidence was a dozen
+          synthetic tasks on networks of a few thousand weights. The speech
+          recognition and translation the name now carries came later, on a
+          three-gate cell that other papers built and other groups ran. The
+          reputation is earned, and not all of it was earned in 1997. When you see
+          LSTM invoked, it is worth knowing which LSTM is meant. It is either the
+          compact, careful demonstration in the paper, or the larger machine the
+          field assembled around it over the fifteen years that followed.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/">Christopher Olah, &ldquo;Understanding LSTM Networks&rdquo;</a>:
+            the step-by-step walk through the modern three-gate cell.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2405.04517">Beck et al., &ldquo;xLSTM: Extended Long Short-Term Memory&rdquo;</a>:
+            Hochreiter's group revisiting the design at billions of parameters.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.bioinf.jku.at/publications/older/2604.pdf"
+              >Neural Computation &middot; Hochreiter &amp; Schmidhuber, &ldquo;Long Short-Term Memory&rdquo; (1997)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.bioinf.jku.at/publications/older/3804.pdf"
+              >TU München &middot; Hochreiter, &ldquo;Untersuchungen zu dynamischen neuronalen Netzen,&rdquo; Diplomarbeit (1991)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2405.04517"
+              >arXiv &middot; Beck et al., &ldquo;xLSTM: Extended Long Short-Term Memory&rdquo; (2024)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/"
+              >Christopher Olah &middot; &ldquo;Understanding LSTM Networks&rdquo; (2015)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.cs.toronto.edu/~graves/nn_2005.pdf"
+              >Neural Networks &middot; Graves &amp; Schmidhuber, &ldquo;Framewise Phoneme Classification with Bidirectional LSTM&rdquo; (2005)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1303.5778"
+              >ICASSP &middot; Graves, Mohamed &amp; Hinton, &ldquo;Speech Recognition with Deep Recurrent Neural Networks&rdquo; (2013)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1409.3215"
+              >NIPS &middot; Sutskever, Vinyals &amp; Le, &ldquo;Sequence to Sequence Learning with Neural Networks&rdquo; (2014)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.03762"
+              >NIPS &middot; Vaswani et al., &ldquo;Attention Is All You Need&rdquo; (2017)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
