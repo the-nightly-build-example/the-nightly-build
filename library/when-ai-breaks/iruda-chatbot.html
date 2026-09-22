@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Korea fined Iruda's maker for its training data, not its slurs · When AI Breaks</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "when-ai-breaks",
+        "slug": "iruda-chatbot",
+        "template": "lesson",
+        "title": "Korea fined Iruda's maker for its training data, not its slurs",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-22",
+        "tags": ["chatbots", "privacy", "training-data", "data-protection"],
+        "sources": 9,
+        "words": 2126,
+        "reading_minutes": 9,
+        "dek": "Scatter Lab trained the chatbot on 9.4 billion private KakaoTalk messages from 600,000 people who had never agreed to that use, and Korea's data regulator made it the country's first AI company fined over how it handled data.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">When AI Breaks</div>
+        <h1 class="nb-title">Korea fined Iruda's maker for its training data, not its slurs</h1>
+        <p class="nb-dekline">
+          Scatter Lab trained the chatbot on 9.4 billion private KakaoTalk
+          messages from 600,000 people who had never agreed to that use, and
+          Korea's data regulator made it the country's first AI company fined
+          over how it handled data.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-22</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          In December 2020 a Korean startup released a chatbot that talked like
+          a real 20-year-old. Within three weeks it had insulted its users and
+          been caught repeating real people's private messages back to them. You
+          have probably heard the short version: an AI said terrible
+          things and got shut down. That version leaves out the part that
+          carried legal weight. The bot's maker had built it out of 9.4 billion
+          private KakaoTalk messages from 600,000 people who had never agreed to
+          that use. When Korea's data regulator stepped in, it fined the company
+          over the messages, not the slurs. By the end you will understand why a
+          chatbot trained directly on real conversations can both memorize
+          private data and absorb the worst of the text it learned from. You
+          will also see why the privacy failure was the one a regulator could
+          act on.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../when-ai-breaks/microsoft-tay.html">Microsoft's Tay chatbot learned racism from Twitter users in about 16 hours</a>:
+            the other chatbot that turned toxic, and why a bot with no filter
+            says what its inputs teach it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/memorization.html">A verbatim quote comes out of the weights, not a lookup</a>:
+            how a specific string ends up reproducible from a trained model
+            rather than stored in a database.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A chatbot sold as a friend</h2>
+        <p>
+          On 23 December 2020, the Seoul startup Scatter Lab (㈜스캐터랩) launched
+          Iruda (이루다, a personal name read surname-first as "Lee Luda"). The
+          chatbot had the persona of a female college student in her twenties
+          and ran on Facebook Messenger.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The company built it as something to talk to rather than a bot that
+          takes commands: an "AI friend" you messaged the way you would text a
+          person. It ran on Scatter Lab's own conversational engine, Pingpong
+          (핑퐁), and the company was led by its chief executive, Kim Jong-yoon
+          (김종윤).<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Scatter Lab presented Iruda as close to the state of the art. At
+          launch it claimed the bot scored 78% on the Sensibleness and
+          Specificity Average, a measure of how coherent and on-topic a
+          chatbot's replies are. Scatter Lab said that matched Google's Meena.
+          The figure was its own, and no one checked it independently.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The pitch worked. Within about two weeks of release, close to 750,000
+          people had talked with Iruda.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="two-failures" id="two-failures">
+        <h2>Two failures in three weeks</h2>
+        <p>
+          Two things went wrong, and they were not the same kind of thing.
+        </p>
+        <p>
+          The first was visible to anyone using it. In ordinary conversation
+          Iruda produced slurs. The captures were reproduced across Korean and
+          international reporting, sourced to Yonhap and to screenshots shared
+          online. In them, Iruda said it "really hate[d]" lesbians and found
+          them "creepy."<sup class="nb-cite"><a href="#s3">3</a></sup>
+          In others it called disabled people "wrong," called seats reserved
+          for pregnant women "disgusting," and used a Korean racial slur for
+          Black people.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          On men's online forums, users passed around methods for steering
+          Iruda into sexual talk.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          These are reported screenshots rather than a primary transcript of the
+          system, so they establish what the captures show and not how reliably
+          the bot said it on demand.
+        </p>
+        <p>
+          The second failure was not visible until people asked where the words
+          came from. Iruda answered by drawing on a database of about 100
+          million real sentences, and it had been pre-trained on a much larger
+          pile: roughly 9.4 billion lines of KakaoTalk conversation from about
+          600,000 people.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Those people were not Iruda's users. They were customers of two other
+          Scatter Lab apps: the dating-advice services Text At (텍스트앳) and
+          "Science of Love" (연애의 과학). Those apps read a person's uploaded
+          KakaoTalk chats to score how much a partner liked them.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          Scatter Lab later conceded that its filter on the response database was
+          mechanical and imperfect. Real people's names, and the names of banks,
+          survived into some of Iruda's replies. Depending on context, the
+          company admitted, a person's name would remain.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          The regulator would later put the omission plainly. The messages had
+          been gathered from February 2020 onward, and none of the names, phone
+          numbers, or addresses in them had been deleted or encrypted before
+          Scatter Lab trained on them.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="what-was-punished" id="what-was-punished">
+        <h2>What the regulator actually punished</h2>
+        <p>
+          Scatter Lab apologized on 11 January 2021 and took Iruda offline the
+          next day, shutting it down in stages between 11:00 and 18:00.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          On 28 April 2021, the Personal Information Protection Commission
+          (개인정보보호위원회, PIPC), Korea's data-protection regulator, fined Scatter
+          Lab a total of 103.3 million won and ordered corrective action.<sup class="nb-cite"><a href="#s5">5</a></sup>
+          The penalty came in two parts: a surcharge of 55.5 million won and an
+          administrative fine of 47.8 million won.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The commission found eight violations of the Personal Information
+          Protection Act (개인정보 보호법, PIPA), and every one of them was about how
+          the company handled data.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The slurs were the reason the investigation opened. They were not
+          among the eight things it punished.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+        <p>
+          What the commission rejected was the company's account of consent.
+          Scatter Lab's position, stated in its January defense, was that it had
+          used Science of Love data "within the scope of the privacy policy,
+          with the users' prior consent."<sup class="nb-cite"><a href="#s2">2</a></sup>
+          The PIPC did not accept it. A "New Service Development" clause in the
+          apps' privacy terms did not amount to explicit consent to feed a
+          person's chat logs into a separate product. The use went beyond the
+          purpose for which the data had been collected.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          The commission was specific about what had leaked. Scatter Lab had
+          posted its trained model and a slice of data to GitHub between October
+          2019 and January 2021. That release held 1,431 messages exposing 22
+          real given names, 34 place names down to the neighborhood, and each
+          speaker's gender and relationship status.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          That disclosure is the one violation the public record ties to a
+          numbered provision, Article 28-2(2) of PIPA. The article forbids a
+          company from including information that can identify a specific
+          individual when it hands pseudonymized data to a third party.<sup class="nb-cite"><a href="#s6">6</a></sup>
+          The commission also found that Scatter Lab had collected data on more
+          than 200,000 children under 14 without a guardian's consent.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          This was the first time Korea had sanctioned an AI company for the
+          indiscriminate handling of personal data, the Future of Privacy Forum
+          noted in its account of the ruling.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          Regulatory trackers logged the action as machine-learning
+          enforcement.<sup class="nb-cite"><a href="#s8">8</a></sup>
+          The commission's chairman, Yoon Jong-in (윤종인), said the case had
+          divided even the experts and was decided only after careful review.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The fine was small beside the data at issue. 103.3 million won was
+          about 92,900 US dollars.<sup class="nb-cite"><a href="#s7">7</a></sup>
+        </p>
+        <p>
+          The civil case ran on for years. On 12 June 2025, the Seoul Eastern
+          District Court's 15th Civil Division partly upheld the claims of 246
+          plaintiffs, in case 2021가합104007. The court found that users had given
+          no substantive consent, and that names and home addresses had not been
+          obscured in the training data.<sup class="nb-cite"><a href="#s9">9</a></sup>
+          It set consolation damages by what each person could show. The award
+          was 100,000 won where only ordinary personal-information use was
+          confirmed, 300,000 won where only sensitive-information use was, and
+          400,000 won where both were, for roughly 20 million won in all.
+          Scatter Lab said it would appeal.<sup class="nb-cite"><a href="#s9">9</a></sup>
+        </p>
+        <ol class="nb-timeline">
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">23 Dec 2020</span>
+            <h3>
+              Iruda launches on Facebook Messenger<sup class="nb-cite"><a href="#s1">1</a></sup>
+            </h3>
+            <p>Scatter Lab releases the "AI friend" persona to the public.</p>
+          </li>
+          <li class="nb-tl-event">
+            <span class="nb-tl-date">11 Jan 2021</span>
+            <h3>
+              Scatter Lab apologizes<sup class="nb-cite"><a href="#s2">2</a></sup>
+            </h3>
+            <p>The company addresses the hateful outputs and the data use.</p>
+          </li>
+          <li class="nb-tl-event">
+            <span class="nb-tl-date">12 Jan 2021</span>
+            <h3>
+              The service is shut down<sup class="nb-cite"><a href="#s2">2</a></sup>
+            </h3>
+            <p>Iruda is taken offline in stages between 11:00 and 18:00.</p>
+          </li>
+          <li class="nb-tl-event">
+            <span class="nb-tl-date">28 Apr 2021</span>
+            <h3>
+              PIPC fines Scatter Lab 103.3 million won<sup class="nb-cite"><a href="#s5">5</a></sup>
+            </h3>
+            <p>Eight violations of the privacy law, and an order to correct.</p>
+          </li>
+          <li class="nb-tl-event major">
+            <span class="nb-tl-date">12 Jun 2025</span>
+            <h3>
+              A court awards tiered damages to 246 users<sup class="nb-cite"><a href="#s9">9</a></sup>
+            </h3>
+            <p>The first-instance civil judgment; Scatter Lab appeals.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section data-nb-section="one-training-set" id="one-training-set">
+        <h2>One training set behind both failures</h2>
+        <p>
+          Both failures came from a single decision: to build a chatbot directly
+          out of a body of real human conversation, tuned only to sound like the
+          people in it.
+        </p>
+        <p>
+          A model built this way can memorize. When a specific string appears
+          often enough in the training text, the network can reproduce it later
+          word for word. The sequence has been pressed into its weights, not
+          kept in a table it looks up. The library covers this in its
+          lesson on <a href="../the-mechanics/memorization.html">memorization</a>.
+          Iruda's response database held 100 million real sentences, and Scatter
+          Lab's filter was meant to strip the identifying details out of them.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The company conceded the filter was mechanical, and that a real
+          person's name would survive into a reply depending on context.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          A leaked name here was not a record the bot pulled from storage. It was
+          part of what the model had learned to say.
+        </p>
+        <p>
+          The second mechanism is the absence of one. A model trained only to
+          produce fluent, human-sounding replies has no separate check on what
+          those replies contain. It learned to talk by imitating human messages,
+          and human messages carry slurs, so it produced slurs when a
+          conversation led there. Nothing in Iruda stood between the behavior it
+          had learned and the person reading it.
+        </p>
+        <p>
+          The PIPC finding is the same root seen from the data side. Scatter Lab
+          deleted or encrypted none of the names, phone numbers, or addresses in
+          the 9.4 billion messages before training on them.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          The corpus was private conversation, taken from real people and used
+          whole.
+        </p>
+      </section>
+
+      <section data-nb-section="corpus-problem-today" id="corpus-problem-today">
+        <h2>The corpus problem did not end with Iruda</h2>
+        <p>
+          The way Scatter Lab built Iruda is now the ordinary way large language
+          models are made: train on a very large body of real human text, then
+          tune the result to be fluent. Both of Iruda's failure modes are
+          properties of that recipe rather than of one startup. A model trained
+          on scraped human writing can still surface a memorized private string,
+          the way Iruda returned a name it had read in someone's chat logs. And a
+          model tuned to sound human still absorbs whatever its text contains,
+          including the parts no one would want repeated. That is why the job of
+          catching those replies has to fall to something outside the model that
+          writes them.
+        </p>
+        <p>
+          What set Iruda apart from a chatbot that merely embarrassed its maker
+          was the second half of the story: a regulator that treated the
+          training data itself as the offense. Scatter Lab kept 9.4 billion real
+          messages, de-identified none of them, and trained on them whole.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          That choice is made before a model says a word, and the recipe still
+          leaves it to whoever holds the data.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Iruda was two failures with one cause. It said hateful things because
+          it had learned to talk by imitating human messages, and nothing
+          filtered what it imitated. It exposed private data because those same
+          real messages were what it had learned from. When Korea's regulator ruled,
+          it treated the training data as the violation: eight findings under the
+          privacy law, a 103.3-million-won fine, and not one of them about the
+          slurs. Keep this. When a system is built directly out of real people's
+          data, the data itself is the exposure, and that holds for models far
+          larger than one Korean chatbot.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://fpf.org/blog/south-korea-the-first-case-where-the-personal-information-protection-act-was-applied-to-an-ai-system/">South Korea: The First Case Where PIPA Was Applied to an AI System</a>:
+            the Future of Privacy Forum's English walk-through of the PIPC
+            decision and its consent reasoning.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12882987/">The fall and rise of Iruda</a>:
+            an open-access academic case study of the incident and Scatter Lab's
+            later relaunch.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.aitimes.kr/news/articleView.html?idxno=18758"
+              data-nb-locator="Launch announcement, Dec 2020: persona '20대 여자 대학생', launch date '12월 23일', SSA claim, Pingpong engine, CEO Kim Jong-yoon"
+              >AI Times · Scatter Lab's Iruda launch announcement (Dec 2020), as reproduced by AI Times</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://platum.kr/archives/156057"
+              data-nb-locator="Scatter Lab statement (11 Jan 2021) and media Q&amp;A (12 Jan 2021), Q1–Q3: user figure, consent claim, filtering admission, staged shutdown"
+              >Platum · Scatter Lab's statement and media Q&amp;A (Jan 2021), as reproduced by Platum</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://thenextweb.com/news/chatbot-shut-down-after-saying-it-really-hates-lesbians-and-using-racist-slurs"
+              data-nb-note="Reproduces Yonhap-sourced and community screenshots of the outputs; reported captures, not a primary transcript of the system"
+              >The Next Web · "Chatbot shut down after saying it 'really hates' lesbians and using racist slurs" (2021)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.korea.kr/briefing/policyBriefingView.do?newsId=156449232"
+              data-nb-locator="PIPC ministry briefing, 28 Apr 2021: 94억여 건 / 약 60만 명, 약 1억 건 response DB, GitHub 1,431 / 22 / 34, under-14 figures, no deletion or encryption"
+              >개인정보보호위원회 (PIPC) · Ministry briefing on the Iruda investigation findings (28 Apr 2021), via korea.kr</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.korea.kr/briefing/pressReleaseView.do?newsId=156552448"
+              data-nb-locator="PIPC press release, 28 Apr 2021: sanction, date, and eight-violation finding; full text in the attached HWP/PDF"
+              >개인정보보호위원회 (PIPC) · Press release on the sanction against Scatter Lab (28 Apr 2021), via korea.kr</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.boannews.com/news/articleView.html?idxno=96939"
+              data-nb-locator="Report of 28 Apr 2021: eight total PIPA violations, 103.3M won; Article 28조의2 제2항 the only provision cited by number"
+              >Boannews · Report on the PIPC decision against Scatter Lab (28 Apr 2021)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://fpf.org/blog/south-korea-the-first-case-where-the-personal-information-protection-act-was-applied-to-an-ai-system/"
+              data-nb-locator="Article body, ¶¶1–8: consent reasoning, 'first case' framing, USD 92,900, chairman Yoon Jong-in quote"
+              >Future of Privacy Forum · "South Korea: The First Case Where PIPA Was Applied to an AI System"</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://digitalpolicyalert.org/event/12005"
+              data-nb-locator="Event 12005: 28 Apr 2021, KRW 103.3M, eight PIPA violations, classified as ML/AI development enforcement"
+              >Digital Policy Alert · Enforcement record for the PIPC fine of Scatterlab Inc. (event 12005)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://news.koreanbar.or.kr/news/articleView.html?idxno=33912"
+              data-nb-locator="Seoul Eastern District Court 2021가합104007, first-instance judgment 12 Jun 2025: 246 plaintiffs, tiered award 100k/300k/400k won; as reported, judgment text not consulted"
+              >Seoul Eastern District Court · Iruda damages judgment 2021가합104007 (12 Jun 2025), as reported by the Korean Bar Association news</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
