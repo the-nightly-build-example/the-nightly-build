@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HELM's team stopped ranking models by mean win rate · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "helm",
+        "template": "lesson",
+        "title": "HELM's team stopped ranking models by mean win rate",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-22",
+        "tags": ["benchmarks", "evaluation", "leaderboard"],
+        "sources": 8,
+        "words": 1910,
+        "reading_minutes": 8,
+        "dek": "Stanford's HELM team ranked its leaderboard by a count of head-to-head wins, then dropped the number after the same results kept reordering under other defensible choices.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">HELM's team stopped ranking models by mean win rate</h1>
+        <p class="nb-dekline">
+          Stanford's HELM team ranked its leaderboard by a count of head-to-head
+          wins, then dropped the number after the same results kept reordering
+          under other defensible choices.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-22</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You keep meeting language models ranked against each other. One is
+          "state of the art on HELM," another is "#1 on the HELM leaderboard,"
+          and the rank is meant to settle which model is better. HELM is a real
+          and careful benchmark from Stanford, and the rank is a real number.
+          This lesson shows how that number is built, from a grid of separate
+          measurements down to one column, and what the grid disagrees about
+          that the column hides. By the end you will be able to say what a HELM
+          rank does and does not compare, and why the same underlying results
+          can put a different model on top.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/mmlu.html">MMLU</a>: one of the
+            capability tests HELM runs and reports as a scenario.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/calibration-error.html">Calibration error</a>:
+            the metric behind HELM's calibration axis, and why lower is better.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>What a HELM rank sits on top of</h2>
+        <p>
+          HELM is the Holistic Evaluation of Language Models, published in 2022
+          by Percy Liang and more than fifty coauthors at Stanford's Center for
+          Research on Foundation Models, the group most people mean by "CRFM."
+          It ran 30 language models through the same tests and put them in order
+          on a public leaderboard.<sup class="nb-cite"
+            ><a
+              href="#s1"
+              data-nb-locator="Abstract; §1.1"
+              data-nb-url="https://arxiv.org/pdf/2211.09110#page=3"
+              >1</a
+            ></sup
+          >
+        </p>
+        <p>
+          The tests are 42 scenarios. A scenario pairs a task with a domain and
+          the group of people the text is about, so "answer questions about a
+          passage" becomes a specific scenario once you fix which passages and
+          whose language. Sixteen of the 42 are core scenarios and 26 are
+          targeted at one skill. For each model on each core scenario, HELM
+          measures up to seven things: accuracy, calibration, robustness,
+          fairness, bias, toxicity, and efficiency. Not every metric applies to
+          every scenario, so the seven are all measured about seven times in
+          eight.<sup class="nb-cite"
+            ><a
+              href="#s1"
+              data-nb-locator="§1.1; §4.3-4.9 (metric definitions)"
+              >1</a
+            ></sup
+          >
+        </p>
+        <p>
+          Every model met every scenario the same way. HELM placed five worked
+          examples in the prompt before the real question, held those five fixed
+          across the questions in a scenario, and re-ran each scenario three
+          times drawing a different five. That single procedure is what lets the
+          30 models be compared at all.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§7-8.1 (in-context examples)">1</a></sup
+          >
+        </p>
+        <p>
+          The output of all this is a grid. One cell holds one model's score on
+          one metric in one scenario. The paper is deliberate that this grid,
+          and not any single figure, is the model's result: it assigns "a score
+          matrix to each model" rather than a score.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§8 (score matrix); Fig 24-26">1</a></sup
+          >
+          A leaderboard cannot show a grid, so it sorts by one column laid on top
+          of it. The board that still presents the original 2022 evaluation,
+          HELM Classic, orders its models by a single figure called the mean win
+          rate, and that column is what a "#1 on HELM" claim points at.<sup
+            class="nb-cite"
+            ><a
+              href="#s2"
+              data-nb-locator="Core scenarios view; mean win rate column"
+              >2</a
+            ></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="mean-win-rate" id="mean-win-rate">
+        <h2>Mean win rate is a count of pairwise wins</h2>
+        <p>
+          You cannot average the seven metrics into one score directly, because
+          they are not on the same scale and do not even point the same way.
+          Accuracy is a fraction where higher is better. Calibration is an error
+          where lower is better. Efficiency is a time in seconds. CRFM calls
+          averaging numbers like these together "dubious semantically," and
+          ranks by counting comparisons instead.<sup class="nb-cite"
+            ><a
+              href="#s3"
+              data-nb-locator="Announcing HELM Lite, mean win rate paragraph"
+              >3</a
+            ></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Mean win rate</span>
+          <p>
+            The fraction of times a model obtains a better score than another
+            model, averaged across scenarios.<sup class="nb-cite"
+              ><a
+                href="#s3"
+                data-nb-locator="Announcing HELM Lite, mean win rate paragraph"
+                >3</a
+              ></sup
+            >
+          </p>
+        </div>
+        <p>
+          To compute it for one model, take another model and one scenario, and
+          give the point to whichever scored better on that scenario's metric.
+          Do that for the model against every other model on every scenario. Its
+          mean win rate is the share of those matchups it won. A rate of 1.0
+          means it beat every model on every scenario. On accuracy, text-davinci-002
+          is the clear leader, winning more than nine of every ten of its
+          comparisons.<sup class="nb-cite"
+            ><a
+              href="#s1"
+              data-nb-locator="§8, Fig 26 (accuracy subfigure)"
+              data-nb-url="https://arxiv.org/pdf/2211.09110#page=51"
+              >1</a
+            ></sup
+          >
+        </p>
+        <p>
+          A mean win rate is computed from the grid, so it can say nothing the
+          grid does not, and the grid holds seven separate opinions that need
+          not agree. The paper's own authors decline to reduce a model to one
+          number. They "leave the question of aggregating model performance to a
+          single number ... to future work" and add that they "do not believe
+          there exists a universal aggregation that satisfies all preferences."
+          The leaderboard picks one anyway.<sup class="nb-cite"
+            ><a
+              href="#s1"
+              data-nb-locator="§9-10, 'We leave the question of aggregating...'"
+              >1</a
+            ></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="axis-reorder" id="axis-reorder">
+        <h2>Each axis reorders the same models</h2>
+        <p>
+          Compute the win rate on one metric at a time and each metric hands you
+          a different order. Figure 26 of the paper prints six of these
+          rankings side by side, the same 30 models sorted six ways.<sup
+            class="nb-cite"
+            ><a
+              href="#s1"
+              data-nb-locator="§8, Fig 26 (p. 51)"
+              data-nb-url="https://arxiv.org/pdf/2211.09110#page=51"
+              >1</a
+            ></sup
+          >
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="helm/asset-1.png"
+            alt="Six horizontal-bar rankings of the same 30 language models, one per metric. The accuracy, robustness and fairness panels place the models in nearly the same order, led by text-davinci-002. The calibration-error, bias and toxicity panels place them in visibly different orders: T0pp sits at the top of the toxicity panel but near the bottom of the bias panel, and davinci sits low on toxicity but high on bias."
+          />
+          <figcaption>
+            Fig. 1 · The same 30 models ranked six times, once per metric.
+            Accuracy, robustness and fairness nearly agree; calibration, bias
+            and toxicity do not.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Fig. 26, p. 51"
+                data-nb-url="https://arxiv.org/pdf/2211.09110#page=51"
+                data-nb-note="Six per-metric win-rate rankings of the same 30 models; the reorder across axes is the article's central evidence."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+        <p>
+          Three of the six panels barely differ. The paper reports that
+          accuracy, robustness, and fairness are "extremely strongly correlated"
+          across scenarios. A model that is accurate tends to be robust and fair
+          too. Ranking on any of those three leaves the order about where
+          accuracy put it.<sup class="nb-cite"
+            ><a
+              href="#s1"
+              data-nb-locator="§8, discussion of Fig 24-25"
+              >1</a
+            ></sup
+          >
+          The loose version of the complaint against HELM is that dropping any
+          axis scrambles the ranking. Drop robustness or fairness and it does
+          not, and that is why CRFM later felt free to drop them.
+        </p>
+        <p>
+          The axes that move the order are the ones that do not track accuracy:
+          toxicity, bias, and calibration. On toxicity and bias, lower is
+          better, so the model at the top of those panels is the worst one.
+          Watch two models. T0pp (11B) sits at the top of the toxicity panel,
+          the most toxic model measured, and near the bottom of the bias panel,
+          among the least gender-biased. davinci (175B) does the reverse: near
+          the bottom on toxicity, and high on bias among the most biased. The
+          same two models trade ends of the table when you switch which axis you
+          rank on.<sup class="nb-cite"
+            ><a
+              href="#s1"
+              data-nb-locator="§8, Fig 26 (bias and toxicity subfigures), p. 51"
+              data-nb-url="https://arxiv.org/pdf/2211.09110#page=51"
+              >1</a
+            ></sup
+          >
+        </p>
+        <p>
+          Calibration is stranger, because it can reorder models by scenario
+          rather than by model. Calibration measures whether a model's stated
+          confidence matches how often it is right, and lower error counts as
+          better. Across the 30 models, on one commonsense-question scenario,
+          OpenBookQA, the more accurate models are also the better calibrated.
+          On another, HellaSwag, the more accurate a model is, the worse its
+          calibration. So even a single axis can put the models in opposite
+          orders depending on which scenarios you average over.<sup
+            class="nb-cite"
+            ><a
+              href="#s1"
+              data-nb-locator="§1.1 finding 3; §8 (Fig 24-25)"
+              >1</a
+            ></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="comparison-set" id="comparison-set">
+        <h2>The leader can move when a rival leaves</h2>
+        <p>
+          The order also depends on which models are in the room, because a win
+          rate is measured against exactly the other models present. CRFM says
+          so in plain terms: a mean win rate "cannot be interpreted in isolation
+          and depends on the full set of models in the comparison set."<sup
+            class="nb-cite"
+            ><a
+              href="#s3"
+              data-nb-locator="Announcing HELM Lite, mean win rate disadvantage"
+              >3</a
+            ></sup
+          >
+        </p>
+        <p>
+          An independent team at IBM Research studied HELM from the outside and
+          found how far that reaches. They report that "a benchmark leader may
+          change by merely removing a low-ranked model from the benchmark." The
+          model on top can change without anyone touching the model, only the
+          company it was scored against.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Abstract; Benchmark Agreement Testing">4</a></sup
+          >
+        </p>
+        <p>
+          Two smaller dependencies run the same way. The win rate is sensitive
+          to how the arithmetic handles ties: HELM's own changelog records a
+          correction, "Fix incorrect handling of ties in win rate computation,"
+          which moved the published numbers after the fact.<sup class="nb-cite"
+            ><a
+              href="#s5"
+              data-nb-locator="Entry: 'Fix incorrect handling of ties...' (#3001, #2008)"
+              >5</a
+            ></sup
+          >
+          The rank also depends on how much you run. HELM's own tutorial for
+          placing a model on the board uses the IBM team's method. Running just
+          10 examples per scenario, it notes, recovers a rank only to within
+          about five positions, at 95% confidence, while cutting the compute by
+          a factor of 400. Five positions of a leaderboard rank are an artifact
+          of the sample size.<sup class="nb-cite"
+            ><a
+              href="#s6"
+              data-nb-locator="get_helm_rank.md, 'Run Efficient-HELM' table"
+              >6</a
+            ></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="helm-retreat" id="helm-retreat">
+        <h2>HELM dropped the axes, then the number</h2>
+        <p>
+          CRFM did not defend mean win rate to the end. It changed the
+          leaderboard twice, each time moving away from the single number. In
+          December 2023 it launched HELM Lite: 30 models on 10
+          scenarios, one random seed instead of three, and only capability
+          tests kept.<sup class="nb-cite"
+            ><a
+              href="#s5"
+              data-nb-locator="Entry: 'Launched new HELM Lite leaderboard with 30 models and 10 scenarios'"
+              >5</a
+            ></sup
+          >
+          It dropped the robustness and fairness perturbations, calibration, and
+          perplexity. The stated reason for dropping robustness and fairness was
+          the correlation from the panels above: they tracked accuracy, so
+          measuring them apart added little.<sup class="nb-cite"
+            ><a
+              href="#s3"
+              data-nb-locator="Announcing HELM Lite, structural simplifications"
+              >3</a
+            ></sup
+          >
+          That reason is honest but not a law. The paper flags that the
+          correlation is itself "a finding contingent on how we chose to measure
+          robustness/fairness," worst-case over mild typo-style perturbations. A
+          different measurement could weaken it. Even the ground for simplifying
+          is a choice.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§8, robustness/fairness measurement caveat">1</a></sup
+          >
+        </p>
+        <p>
+          HELM now runs many boards rather than one. Capabilities, Lite,
+          Classic, and Safety sit beside domain versions for medicine and
+          vision, and each carries its own ranking column computed its own way.
+          The "one HELM number" a claim quotes is really one of several.<sup
+            class="nb-cite"
+            ><a href="#s7" data-nb-locator="Leaderboard navigation on the hub page">7</a></sup
+          >
+        </p>
+        <p>
+          Then, in March 2025, HELM Capabilities stopped ranking by mean win
+          rate at all and switched to a mean score. CRFM gave two reasons, and
+          both have already appeared above.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In HELM's own words</span>
+          <blockquote>
+            This change is motivated by the fact that the mean win rate is 1)
+            dependent on the set of models being compared, and 2) sensitive to
+            small variations in scenario scores that invert ranks.<sup
+              class="nb-cite"
+              ><a
+                href="#s8"
+                data-nb-locator="Section 'Top-level Aggregation'"
+                data-nb-url="https://crfm.stanford.edu/2025/03/20/helm-capabilities.html"
+                data-nb-note="CRFM naming the comparison-set dependence and the rank instability as its reasons for abandoning mean win rate."
+                >8</a
+              ></sup
+            >
+            <span class="nb-note-who">CRFM, Announcing HELM Capabilities (2025)</span>
+          </blockquote>
+        </div>
+        <p>
+          None of this makes the ranking worthless, and HELM never said it was.
+          The same paper that refuses a universal score calls single-number
+          metrics "reductive" yet "useful practical tools to simplify
+          decision-making," and CRFM still builds and publishes the boards.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§9-10, aggregation stance">1</a></sup
+          >
+          The claim that survives is the narrow one. A HELM rank is a summary of
+          choices about which scenarios count, which metric you sort on, and
+          which models share the board. Read it as the output of those choices,
+          because that is what it is.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A HELM rank is a mean win rate: the share of head-to-head comparisons
+          a model wins, averaged across scenarios. That number is read off a
+          grid of per-metric, per-scenario scores, and it can say nothing the
+          grid does not. The grid disagrees. Rank on accuracy and the order is
+          one thing. Rank on toxicity, bias, or calibration and the same models
+          move, because those axes do not track accuracy the way robustness and
+          fairness do. Change which models share the board and the leader itself
+          can change. HELM's own team made three of these choices differently
+          over three years and, in 2025, dropped mean win rate for the two flaws
+          this lesson traced. So when you read "#1 on HELM," ask which board,
+          which metric, and which models it was measured against. The rank
+          compares those choices as much as it compares the models.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2211.09110">Holistic Evaluation of Language Models</a>:
+            the HELM paper, for the metric definitions and Figures 24-26 in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://www.newyorker.com/magazine/2011/02/14/the-order-of-things">The Order of Things</a>:
+            Malcolm Gladwell on how college and car rankings flip when you change
+            the weights.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2211.09110"
+              >Stanford CRFM · Holistic Evaluation of Language Models (Liang et al., 2022)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://crfm.stanford.edu/helm/classic/latest/"
+              >Stanford CRFM · HELM Classic leaderboard</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://crfm.stanford.edu/2023/12/19/helm-lite.html"
+              >Stanford CRFM · Announcing HELM Lite</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://arxiv.org/abs/2308.11696"
+              >Perlitz et al. · Efficient Benchmarking (of Language Models)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/stanford-crfm/helm/blob/main/CHANGELOG.md"
+              >Stanford CRFM · HELM changelog</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/stanford-crfm/helm/blob/v0.5.0/docs/get_helm_rank.md"
+              >Stanford CRFM · Get Your Model's Leaderboard Rank</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://crfm.stanford.edu/helm/"
+              >Stanford CRFM · HELM leaderboards</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://crfm.stanford.edu/2025/03/20/helm-capabilities.html"
+              >Stanford CRFM · Announcing HELM Capabilities</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
