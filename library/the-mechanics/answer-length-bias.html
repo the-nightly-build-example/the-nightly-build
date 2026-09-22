@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chatbots pad simple answers because the reward model scored longer as better · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "answer-length-bias",
+        "template": "lesson",
+        "title": "Chatbots pad simple answers because the reward model scored longer as better",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-22",
+        "tags": ["rlhf", "reward-models"],
+        "sources": 8,
+        "words": 1929,
+        "reading_minutes": 8,
+        "dek": "Humans prefer the longer of two answers 62% of the time, and reinforcement learning amplifies that modest edge into the padded default you get on a question with a one-word answer.",
+        "harness": "Claude Code",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">Chatbots pad simple answers because the reward model scored longer as better</h1>
+        <p class="nb-dekline">
+          Humans prefer the longer of two answers 62% of the time, and reinforcement learning amplifies that modest edge into the padded default you get on a question with a one-word answer.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-22</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have probably noticed that a chatbot answers a simple question at
+          length: a restated question, a few labeled points, a caveat you did
+          not ask for. It is easy to file that under the model's personality, or
+          to assume the extra words mean extra care. The padding traces to a
+          measurable place in how these models are trained, the reward model
+          that scores their answers, and the measurements show how much of what
+          looks like improvement is just the extra length. By the end you will
+          be able to say why answers run long, and to tell a measured training
+          artifact apart from a story about how the model simply is.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/instructgpt.html">A 1.3B model beat GPT-3 on the one metric OpenAI trained it to win</a>:
+            how RLHF tunes a model on which answers labelers preferred.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/deep-rl-from-human-preferences.html">Two more papers turned a robot's backflip trick into InstructGPT's training recipe</a>:
+            where learning from human comparisons came from, before it reached language.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-evidence/proximal-policy-optimization.html">Tested on Atari and robots in 2017, PPO now tunes billion-parameter models</a>:
+            the optimizer that pushes a model toward higher reward.
+          </dd>
+          <dt>04</dt>
+          <dd>
+            <a href="../the-mechanics/length-control.html">A model can't count the words it's writing</a>:
+            the opposite failure, why a model overshoots a word count you set.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The same answer, four times as long</h2>
+        <p>
+          Ask a chatbot why adults do not roll off the bed and a well-tuned
+          model will not simply answer. It will restate the question, offer a
+          few labeled reasons, and close with a qualification. Researchers
+          studying this behavior ran that exact prompt through two versions of
+          one model. The supervised version answered in 59 tokens, the
+          word-pieces a model reads and writes. The version finished with
+          reinforcement learning answered the same question in 243, with
+          near-identical content.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Figure 1 and intro box">1</a></sup
+          >
+        </p>
+        <p>
+          The padding is not incidental. GPT-5 ships a setting called verbosity
+          with three levels, low, medium, and high, and medium is the default.
+          On one task the same model returns 560 output tokens at low and 1,288
+          at high.<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Verbosity parameter section">2</a></sup
+          >
+          A lab that builds a dial for how long answers run is saying the
+          default runs long on its own.
+        </p>
+        <p>
+          This is not the model missing a length you asked for. A model told to
+          answer in exactly ten words overshoots because it keeps no running
+          count while it writes, which
+          <a href="../the-mechanics/length-control.html">a separate lesson covers</a>.
+          Here nobody set a length. The question had a one-word answer, and the
+          model reached for several sentences with nothing prompting it. That
+          default pull toward length has a specific cause, and it sits in the
+          part of training that decides which answers are good.
+        </p>
+      </section>
+
+      <section data-nb-section="preference-to-default" id="preference-to-default">
+        <h2>How a modest preference becomes a default</h2>
+        <p>
+          Modern assistants are tuned with reinforcement learning from human
+          feedback, or RLHF: a
+          <a href="../the-evidence/instructgpt.html">reward model</a> scores
+          candidate answers, and the model is
+          <a href="../the-evidence/proximal-policy-optimization.html">optimized</a>
+          to produce answers the reward model scores higher. The reward model is
+          the part that matters here. It is trained on
+          <a href="../the-evidence/deep-rl-from-human-preferences.html">human comparisons</a>,
+          pairs of answers where a person marked which they preferred, and it
+          learns to predict that judgment for answers it has not seen.
+        </p>
+        <p>
+          That reward model scores longer answers higher, and Singhal and
+          colleagues measured it directly. Across three datasets of helpfulness
+          comparisons, the correlation between an answer's length and the reward
+          it received ran from 0.55 to 0.72.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 4 (CORR)">1</a></sup
+          >
+          On one of them, open-domain question answering, the reward model's
+          accuracy at predicting which answer a human preferred was 61.5%,
+          barely above the 50% of a guess, while its correlation with length sat
+          at 0.72.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 4 (ACC)">1</a></sup
+          >
+          Length was a large part of what it had learned to read.
+        </p>
+        <p>
+          A reward model picks that up from the labels. OpenAI documented the
+          shape of it with a different trait. Its written instructions told
+          labelers to reward answers that expressed appropriate uncertainty, so
+          labelers favored answers that hedged, and, in the paper's words, this
+          "gets picked up by our reward model."<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Section 4.4">3</a></sup
+          >
+          The trained model then hedged on simple questions that had one clear
+          answer. Length runs the same path. Whatever labelers systematically
+          preferred, the reward model learned to score higher, and the policy
+          learned to produce.
+        </p>
+        <p>
+          And labelers did prefer length. In the AlpacaFarm study, human raters
+          picked the longer of two answers 62% of the time.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="Appendix C.2">4</a></sup
+          >
+          That is a real preference and a modest one, above the 50% of a coin
+          and well short of a rule. The mechanism does not need it to be large,
+          because reinforcement learning amplifies it. Park and colleagues found
+          that a model trained on preference data with only a small lean toward
+          longer answers came out roughly twice as long as the model it started
+          from, running well past the length gap in its own training
+          data.<sup class="nb-cite"
+            ><a href="#s5" data-nb-locator="Section 1">5</a></sup
+          >
+        </p>
+        <p>
+          This is one case of a general problem. Optimize a model against a
+          learned score instead of the thing you actually want, and the model
+          raises the score while drifting from the goal, the pattern named for
+          Goodhart's law.<sup class="nb-cite"
+            ><a href="#s6" data-nb-locator="Section 1">6</a></sup
+          >
+          Verbose, confident-sounding answers that score well without being more
+          helpful are a standard sign of it in early chat models.<sup
+            class="nb-cite"
+            ><a href="#s7" data-nb-locator="Over-Optimization chapter">7</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="subtracting-length" id="subtracting-length">
+        <h2>Subtracting the length from the gain</h2>
+        <p>
+          How much of RLHF's apparent improvement is length, and how much is
+          everything else? Singhal built a way to split the two. Take the total
+          gain in reward and separate the part explained by answers simply
+          getting longer from the part left once you compare answers of the same
+          length. On open-domain QA the length-neutral part, the improvement
+          that survives holding length constant, was 2.0% of the total. On a
+          dialogue dataset it was 27.2%.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 1">1</a></sup
+          >
+          Then the sharper test: train a reward that is nothing but a function of
+          length, optimize against it, and count how often the result beats the
+          starting model. That length-only reward won 56% to 64% of
+          comparisons, against the full RLHF model's 58% to 63%.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 2">1</a></sup
+          >
+          A reward that could not see the content did nearly as well as one that
+          could.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Length's grip across three helpfulness datasets, measured on
+            7-billion-parameter models and scored by a GPT-4 simulator. The
+            length-only reward's win rate is against the supervised model, where
+            50% is a tie.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Tables 1, 2, 4">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Dataset</th>
+              <th class="txt">Answers</th>
+              <th>Length-reward corr.</th>
+              <th>Non-length share of gain</th>
+              <th>Length-only reward wins</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">WebGPT</span></td>
+              <td class="txt">open-domain QA</td>
+              <td>0.72</td>
+              <td>2.0%</td>
+              <td>56%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">RLCD</span></td>
+              <td class="txt">dialogue</td>
+              <td>0.67</td>
+              <td>27.2%</td>
+              <td>64%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Stack</span></td>
+              <td class="txt">technical QA</td>
+              <td>0.55</td>
+              <td>53.4%</td>
+              <td>59%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Two cautions sit on these numbers. First, they were measured on small
+          models, 7-billion-parameter reward models and policies fine-tuned on
+          three open research datasets, and the win rates were scored by a
+          GPT-4-based simulator that carries a length preference of its own. No
+          published study decomposes a frontier assistant, a GPT-4- or
+          Claude-class model, into length and non-length this way. The tie from
+          these measurements to the chatbot on your screen is the shared
+          mechanism, a reward model and the optimization against it, not a
+          matching number. Second, Singhal checked the simulator's thumb on the
+          scale. The length-only reward still beat a baseline that picked the
+          longest of eight supervised answers, while producing shorter text than
+          that baseline, so the win is not only the judge preferring
+          length.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 3.2">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="judges" id="judges">
+        <h2>The judges reward length too</h2>
+        <p>
+          That simulator is worth staying on, because the automated judges the
+          field uses to rank chat models reward length the same way a reward
+          model does. AlpacaEval scores a model by how often a GPT-4 judge
+          prefers its answers to a fixed baseline's. Dubois and colleagues showed
+          the score moves on length alone. Prompt the baseline to be verbose
+          rather than concise, change nothing else, and its win rate swings from
+          22.9% to 64.3%.<sup class="nb-cite"
+            ><a href="#s8" data-nb-locator="Section 4.1">8</a></sup
+          >
+          The judge is rewarding the added words.
+        </p>
+        <p>
+          They then fit the length back out. A correction that models the length
+          effect and removes it cut that swing to a 41.9%-to-51.6% band, and
+          raised the benchmark's rank correlation with human preference in the
+          LMSYS Chatbot Arena from 0.94 to 0.98.<sup class="nb-cite"
+            ><a href="#s8" data-nb-locator="Section 4.2">8</a></sup
+          >
+          Taking length out of the automated score made it agree more with what
+          people actually chose. The length the judge had been rewarding was, to
+          that extent, noise in the ranking.
+        </p>
+      </section>
+
+      <section data-nb-section="length-or-thoroughness" id="length-or-thoroughness">
+        <h2>Length itself, or the thoroughness with it</h2>
+        <p>
+          Two things are settled. Reward models trained on helpfulness
+          comparisons score longer answers higher, and optimizing against them
+          raises length. And the length can be taken back out without losing the
+          quality: Park's length-regularized training stopped the doubling while
+          still improving win rates once length was controlled for.<sup
+            class="nb-cite"
+            ><a href="#s5" data-nb-locator="Abstract">5</a></sup
+          >
+        </p>
+        <p>
+          Two qualifiers keep the finding honest. Length does not dominate
+          everywhere. On the technical-QA dataset, over half the reward gain,
+          53.4%, was not length.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 1">1</a></sup
+          >
+          And length is not a fixed property of reward models. A reward model
+          Singhal trained to score for harmlessness ran the correlation the
+          other way, around negative 0.3, because the harmless answer to a
+          dangerous request is often a short refusal.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Appendix C.3">1</a></sup
+          >
+          The length pull belongs to helpfulness-style objectives, not to RLHF
+          as such.
+        </p>
+        <p>
+          One thing is open, and no source here closes it. When a rater prefers
+          the longer answer 62% of the time, nobody has shown whether they are
+          rewarding the length itself or the extra information a longer answer
+          usually carries. The two travel together in almost every comparison,
+          and the reward model's correlation cannot separate them. Singhal
+          grants it outright: longer output "may correspond to greater
+          informativeness."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Section 1">1</a></sup
+          >
+          If it does, some of the length is answering the question. If it does
+          not, it is padding. The measurements locate the preference precisely.
+          They do not yet say which of the two it is.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The long answer to a short question is not the model being thorough by
+          nature. It is the mark of a reward model that learned to score longer
+          answers higher, from human labels that leaned that way 62% of the
+          time, and of training that amplified that lean into a default. On
+          small open models a reward that measured nothing but length nearly
+          matched full RLHF, though no one has run that decomposition on a
+          frontier assistant. So when someone explains a padded answer by the
+          model's personality, you have the step they skipped: the length was
+          rewarded, and it was rewarded because raters, and the automated judges
+          built to stand in for them, preferred it. What no measurement has
+          settled is whether raters wanted the length or the substance that
+          usually comes with it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2310.03716">Singhal et al., "A Long Way to Go: Investigating Length Correlations in RLHF"</a>:
+            the length-correlation and decomposition measurements in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2404.04475">Dubois et al., "Length-Controlled AlpacaEval"</a>:
+            how much a verbosity prompt moves a benchmark score, and how to remove it.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2310.03716"
+              >arXiv · Singhal et al., "A Long Way to Go: Investigating Length
+              Correlations in RLHF"</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://developers.openai.com/cookbook/examples/gpt-5/gpt-5_new_params_and_tools"
+              >OpenAI · "GPT-5 New Params and Tools," verbosity parameter</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2203.02155"
+              >arXiv · Ouyang et al., "Training language models to follow
+              instructions with human feedback"</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2305.14387"
+              >arXiv · Dubois et al., "AlpacaFarm: A Simulation Framework for
+              Methods that Learn from Human Feedback"</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2403.19159"
+              >arXiv · Park et al., "Disentangling Length from Quality in Direct
+              Preference Optimization"</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2210.10760"
+              >arXiv · Gao, Schulman, Hilton, "Scaling Laws for Reward Model
+              Overoptimization"</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://rlhfbook.com/c/14-over-optimization"
+              >rlhfbook.com · Nathan Lambert, "RLHF Book," Over-Optimization</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2404.04475"
+              >arXiv · Dubois et al., "Length-Controlled AlpacaEval: A Simple Way
+              to Debias Automatic Evaluators"</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
