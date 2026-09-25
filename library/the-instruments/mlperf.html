@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>An MLPerf number is comparable only to another in its box · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "mlperf",
+        "template": "lesson",
+        "title": "An MLPerf number is comparable only to another in its box",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-25",
+        "tags": ["mlperf", "mlcommons", "benchmarks", "ai-hardware", "measurement"],
+        "sources": 11,
+        "words": 1790,
+        "reading_minutes": 8,
+        "dek": "Double the chip count from 256 to 512 and the same Llama 3.1 405B run goes 1.93 times as fast, a fact about how many chips you bought and not about a better one.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">An MLPerf number is comparable only to another in its box</h1>
+        <p class="nb-dekline">
+          Double the chip count from 256 to 512 and the same Llama 3.1 405B run goes 1.93 times as fast, a fact about how many chips you bought and not about a better one.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-25</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When a chipmaker says its new accelerator set a record, or runs some
+          number of times faster than the last one, the figure behind the claim
+          almost always comes from an MLPerf submission. MLPerf is the industry's
+          shared stopwatch, run by the nonprofit MLCommons, and it is careful
+          about what its numbers mean. This lesson takes one apart. You will
+          see how a submission turns into a number, then the two labels that
+          decide whether two numbers can be compared at all, and last a
+          documented case where a record ranked machines sixteen times apart in
+          size. By the end you
+          will know the one column to look for the next time an MLPerf figure
+          crosses your feed, which is how many chips ran it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/tokens-per-second.html">Tokens per second</a>: the raw inference-speed number MLPerf standardizes into a scenario.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/training-compute.html">Training compute</a>: how much arithmetic a training run costs, which system scale buys down.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-instruments/helm.html">HELM</a>: how a benchmark's own choices move the ranking it produces.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>How a run becomes a number</h2>
+        <p>
+          MLPerf is a set of benchmarks run by MLCommons, a nonprofit
+          engineering consortium, and a single training result is a stopwatch
+          reading. MLCommons fixes the model, the dataset, and a target quality,
+          and the score is the wall-clock time a system takes to train that
+          model from scratch until it reaches the target.<sup class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The clock starts when the system first touches the training data and
+          stops when the model hits the defined quality on the validation set,
+          so nobody can win by stopping early at a worse model.<sup
+            class="nb-cite"
+            ><a href="#s1">1</a></sup
+          >
+          The rules pin the rest: in the Closed division a submission must use
+          the same preprocessing, model, training method, and quality target as
+          MLCommons' reference implementation.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+        </p>
+        <p>
+          Inference is a separate suite with its own metrics. Instead of one
+          number it defines scenarios that stand in for real request patterns.
+          In the Offline scenario every sample is available at once and the
+          score is throughput in samples per second; in the Server scenario
+          requests arrive at random times and the score is the queries per
+          second the system holds under a latency bound.<sup class="nb-cite"
+            ><a href="#s3">3</a></sup
+          >
+          A submission reports one of these per benchmark, and for a language
+          model that throughput is counted in
+          <a href="../the-instruments/tokens-per-second.html">tokens per second</a>.<sup
+            class="nb-cite"
+            ><a href="#s4">4</a></sup
+          >
+        </p>
+        <p>
+          So an MLPerf number is never just fast. It is a specific quantity, a
+          time or a throughput under a named scenario, for one system on one
+          fixed task under one set of rules.
+        </p>
+      </section>
+
+      <section data-nb-section="comparable" id="comparable">
+        <h2>What a division and a category fix</h2>
+        <p>
+          A number for one system earns its keep only next to a number for
+          another, and two MLPerf numbers are comparable only when they were
+          made under matching rules. Two labels do most of that work. The
+          division names the rulebook the run followed. Closed pins the
+          reference model and method, so the only thing left to differ is the
+          systems. Open lets the submitter change the model or the training
+          method, which turns the run into a demonstration rather than a
+          like-for-like race.<sup class="nb-cite"
+            ><a href="#s2">2</a></sup
+          >
+          The availability category says how real the system is. Available means
+          you can rent or buy it now. Preview means the submitter has committed
+          to ship it within a set window. RDI, for research, development, or
+          internal, means a lab machine that may never ship. These categories
+          apply to Closed, Network, and Open runs alike.<sup
+            class="nb-cite"
+            ><a href="#s5">5</a></sup
+          >
+        </p>
+        <p>
+          MLCommons does not leave the comparison to trust. Its Results
+          Messaging Guidelines require that any published comparison name every
+          dimension of the box, chip count included, where chip count is the
+          count of the compute devices doing the most of the work.<sup
+            class="nb-cite"
+            ><a
+              href="#s6"
+              data-nb-locator="§ When comparing MLPerf results, you must identify any submission differences"
+              >6</a
+            ></sup
+          >
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">What a comparison must disclose</span>
+          <blockquote>
+            When comparing results the main text, table, or figure must clearly
+            identify any difference in version, division, category, verified or
+            unverified status, scenario or chip count (count of the compute
+            devices executing the largest number of ops, which could be
+            processors or accelerators).<sup class="nb-cite"
+              ><a href="#s6">6</a></sup
+            >
+            <span class="nb-note-who">MLCommons, MLPerf Results Messaging Guidelines</span>
+          </blockquote>
+        </div>
+        <p>
+          The document even works an example for you: an eight-chip result in
+          the RDI category of the Closed division may be set against a
+          sixteen-chip Available on-premise Closed result only if both
+          descriptions sit on the page.<sup class="nb-cite"
+            ><a href="#s6">6</a></sup
+          >
+          A comparison that crosses those labels, or drops them, is not one the
+          rules allow.
+        </p>
+      </section>
+
+      <section data-nb-section="the-box" id="the-box">
+        <h2>256 chips against 512</h2>
+        <p>
+          To see why chip count belongs inside the number, take one round.
+          MLPerf Training v5.0, published in June 2025, carried 201 results from
+          20 organizations.<sup class="nb-cite"><a href="#s7">7</a></sup> In it,
+          one submitter ran the same benchmark, Llama 3.1 405B pretraining, on
+          the same accelerator at two sizes. On 256 GB200 GPUs the run reached
+          the quality target in 205.6 minutes; on 512 of the same GPUs it took
+          106.5 minutes.<sup class="nb-cite"
+            ><a
+              href="#s8"
+              data-nb-locator="NVIDIA/results/tyche_ngpu{256,512}.../llama31_405b/result_0.txt, run_start/run_stop"
+              data-nb-url="https://github.com/mlcommons/training_results_v5.0/blob/main/NVIDIA/results/tyche_ngpu512_ngc25.04_nemo/llama31_405b/result_0.txt"
+              >8</a
+            ></sup
+          >
+          Everything else held fixed: same benchmark, same Closed division, same
+          Available on-premise category, same chip. Only the count moved. These
+          are the wall-clock times from each run's own timing log, one run
+          apiece, so read them to the minute rather than as the single figure
+          MLCommons selects across a benchmark's several runs.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+        </p>
+        <p>
+          Now do the division a headline would skip. 205.6 divided by 106.5 is
+          1.93. Doubling the chips made the run 1.93 times as fast.<sup
+            class="nb-cite"
+            ><a href="#s8">8</a></sup
+          >
+          That is about what you would want from twice the hardware, and it is a
+          fact about scale, not about a better chip. Put the 106.5-minute figure
+          on a slide without the chip count and it reads as a verdict on the
+          silicon; it is really a verdict on how many of that silicon someone
+          bought.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Two MLPerf pairs. The top two rows differ only in chip count and
+            compare directly; the bottom two, from an earlier round and
+            different benchmarks, differ roughly sixteenfold in chips and do
+            not.<sup class="nb-cite"><a href="#s8">8</a></sup
+            ><sup class="nb-cite"><a href="#s9">9</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">System</th>
+              <th>Round</th>
+              <th>Chips</th>
+              <th>Division</th>
+              <th class="txt">Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt"><span class="nb-table-token">NVIDIA Tyche</span></td>
+              <td>v5.0</td>
+              <td>256</td>
+              <td>Closed</td>
+              <td class="txt">205.6 min on Llama 3.1 405B</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">NVIDIA Tyche</span></td>
+              <td>v5.0</td>
+              <td>512</td>
+              <td>Closed</td>
+              <td class="txt">106.5 min on the same benchmark</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">NVIDIA A100</span></td>
+              <td>v2.0</td>
+              <td>4 216</td>
+              <td>Closed</td>
+              <td class="txt">leads the raw ranking at largest scale</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Graphcore IPU</span></td>
+              <td>v2.0</td>
+              <td>256</td>
+              <td>Closed</td>
+              <td class="txt">trails, at one sixteenth the chips</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          That comparable pair is also the ceiling on what the number supports.
+          Under Closed rules it is a clean system-against-system time on a fixed
+          task. It is not a claim that the model is better, because the model is
+          fixed. It is not a promise about your own workload, which is not the
+          benchmark. And it says nothing across a boundary. A 512-chip time
+          cannot stand next to a 256-chip time as though the systems were peers,
+          and that is the exact difference the guidelines make a submitter
+          disclose.<sup class="nb-cite"><a href="#s6">6</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="disclosure" id="disclosure">
+        <h2>Where the disclosure gets dropped</h2>
+        <p>
+          None of this is hidden inside MLPerf. The box is printed in every row,
+          and the guidelines demand it be repeated in every comparison. The
+          failure happens later, when a marketing page or a news write-up keeps
+          the ratio and drops the disclosures around it.
+        </p>
+        <p>
+          The clearest documented case sits in Google's 2023 paper on its TPU
+          v4. Reading the published MLPerf Training 2.0 leaderboard, the authors
+          note that the largest A100 entry ran on 4,216 chips while the largest
+          Graphcore IPU entry ran on 256, a roughly sixteenfold gap in scale
+          that the raw ranking simply lists side by side.<sup class="nb-cite"
+            ><a href="#s9" data-nb-locator="Sec 6; Table 5">9</a></sup
+          >
+          Their own summary makes the trap concrete. A four-times-larger,
+          4,096-chip system came out nearly ten times faster. Compare systems of
+          similar size and the TPU v4 lead over the IPU is about 4.3 times on
+          one benchmark and 4.5 on another, well short of the gap the raw table
+          implies.<sup class="nb-cite"><a href="#s9">9</a></sup> MLCommons,
+          the authors add, lets a vendor pick the size of system it reports and
+          does not require an equal-size comparison.<sup class="nb-cite"
+            ><a href="#s9">9</a></sup
+          >
+          That reading is a competitor's, since Google submits too, but it lines
+          up with the rules and with the v5.0 scale pair above.
+        </p>
+        <p>
+          The honest version of the same move is easy to tell apart. In the v5.0
+          round, NVIDIA reported its Blackwell system training Llama 3.1 405B 2.2
+          times faster than the previous Hopper generation, 512 GPUs against 512
+          GPUs, and up to 2.6 times the performance per GPU across the suite.<sup
+            class="nb-cite"
+            ><a href="#s10">10</a></sup
+          >
+          Chip count, benchmark, division, and category are all held fixed and
+          only the hardware generation changes, which is what the rules allow.
+          The number and the disclosure travel together.
+        </p>
+        <p>
+          The pattern is still live. Covering MLPerf Inference v6.0 in 2026, one
+          trade report noted that NVIDIA's throughput record came from the
+          largest configuration ever submitted: 288 GPUs wired into a single
+          system, against the far smaller machines AMD and Intel entered. The
+          results, the report wrote, are only partially comparable, because each
+          vendor frames the configuration that shows it best.<sup class="nb-cite"
+            ><a href="#s11">11</a></sup
+          >
+          The record is real. It is a record for 288 GPUs, and a reader who
+          wants to know about eight has to go find that line.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          An MLPerf result is a time or a throughput for one system, on one
+          fixed task, under one set of rules, and it can be compared only with
+          another result made the same way. The rules call that matching box a
+          division and a category, and they require anyone who compares two
+          results to print the differences, chip count included. So the figure
+          itself is rarely the problem. What to watch is what gets dropped
+          between the results table and the headline: take the chip count off a
+          106-minute run and a fact about buying 512 GPUs starts to read like a
+          claim about one of them. The next time you meet a number of times
+          faster, find the two chip counts and do the division yourself.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://mlcommons.org/benchmarks/">MLCommons benchmark results</a>: the public dashboard where every row carries its own division, category, and chip count.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1911.02549">MLPerf Inference Benchmark</a>: the design paper on the scenarios and why they are built the way they are.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1910.01500"
+              >arXiv · Mattson et al., "MLPerf Training Benchmark" (2019)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/mlcommons/training_policies/blob/master/training_rules.adoc"
+              >MLCommons · MLPerf Training rules (training_rules.adoc)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1911.02549"
+              >arXiv · Reddi et al., "MLPerf Inference Benchmark" (2020)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/mlcommons/inference_policies/blob/master/inference_rules.adoc"
+              >MLCommons · MLPerf Inference rules (inference_rules.adoc)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/mlcommons/policies/blob/master/submission_rules.adoc"
+              >MLCommons · MLPerf submission rules (submission_rules.adoc)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/mlcommons/policies/blob/master/MLPerf_Results_Messaging_Guidelines.adoc"
+              >MLCommons · MLPerf Results Messaging Guidelines</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://mlcommons.org/2025/06/mlperf-training-v5-0-results/"
+              >MLCommons · MLPerf Training v5.0 results announcement</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/mlcommons/training_results_v5.0"
+              >MLCommons · MLPerf Training v5.0 submission logs</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2304.01433"
+              >Google · Jouppi et al., "TPU v4" (ISCA 2023)</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://developer.nvidia.com/blog/nvidia-blackwell-delivers-up-to-2-6x-higher-performance-in-mlperf-training-v5-0/"
+              >NVIDIA · Blackwell MLPerf Training v5.0 results</a
+            >
+          </li>
+          <li id="s11">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://the-decoder.com/nvidia-sets-new-mlperf-records-with-288-gpus-while-amd-and-intel-focus-on-different-battles/"
+              >THE DECODER · Schreiner, MLPerf Inference v6.0</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
