@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The viral AI-footprint numbers all describe one query or one run, and that is the wrong scale · What Could Go Wrong</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "what-could-go-wrong",
+        "slug": "ai-environmental-cost",
+        "template": "lesson",
+        "title": "The viral AI-footprint numbers all describe one query or one run, and that is the wrong scale",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-25",
+        "tags": ["energy", "data-centers", "carbon-accounting", "water", "measurement"],
+        "sources": 8,
+        "words": 1952,
+        "reading_minutes": 8,
+        "dek": "Both the five-car carbon stat and the ten-times-a-search query were revised down by 88-fold and tenfold, while the number that actually strains grids, 415 terawatt-hours of data-centre power in 2024, draws the least argument.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">What Could Go Wrong</div>
+        <h1 class="nb-title">The viral AI-footprint numbers all describe one query or one run, and that is the wrong scale</h1>
+        <p class="nb-dekline">
+          Both the five-car carbon stat and the ten-times-a-search query were
+          revised down by 88-fold and tenfold, while the number that actually
+          strains grids, 415 terawatt-hours of data-centre power in 2024, draws
+          the least argument.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-25</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          You have probably seen a claim that one ChatGPT question uses ten
+          times the power of a Google search, or that training a model emits as
+          much carbon as five cars do over their lifetimes. This lesson takes
+          the most-repeated environmental numbers about AI and checks each one
+          against the document it came from. By the end you will know which
+          figures were miscopied or walked back, why a single query's cost is
+          both the hardest number to pin down and the least useful, and where
+          the real strain on the electricity grid actually sits. The aim is not
+          to tell you how worried to be. It is to hand you the figures that hold
+          up and to mark plainly the places where nobody has a good one.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-instruments/energy-per-query.html">A ChatGPT query costs 0.3 watt-hours by one honest measure and 2.9 by another</a>:
+            how per-query energy is actually measured, and why two credible
+            numbers disagree by tenfold.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/training-compute.html">GPT-4 sits above the EU's systemic-risk line on a number OpenAI never disclosed</a>:
+            what the compute of a single training run adds up to, and why so
+            little of it is published.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>Strubell put a carbon number on training one model</h2>
+        <p>
+          In 2019 Emma Strubell and two colleagues at the University of
+          Massachusetts Amherst measured what the field had mostly guessed at.
+          They sampled the real power draw of the processors training four
+          standard language models. They converted that to carbon using a
+          United States grid average of 0.954 pounds of CO2e per kilowatt-hour,
+          together with a data-centre overhead factor of 1.58. Training one large
+          Transformer worked out to 192 pounds of CO2e, and their BERT model
+          came to about the carbon of a single passenger flying across the
+          country.<sup class="nb-cite"><a href="#s1" data-nb-locator="Table 3, p. 3648; Sec 4.1">1</a></sup>
+        </p>
+        <p>
+          That paper handed the environmental case its first hard number, and
+          the case has grown from it. If one run costs that much, and the models
+          keep getting larger and more numerous, then the warehouses of chips
+          training and serving them become an electricity and water problem
+          worth taking seriously. The strongest version of the argument no
+          longer rests on any single run. It points at the build-out itself, the
+          data centres going up to run these models, and at the water evaporated
+          to cool them, which almost no operator reports. One row in Strubell's
+          own table, comparing a run against five car-lifetimes, became the image
+          that carried the alarm into the press.<sup class="nb-cite"><a href="#s1" data-nb-locator="Table 1, p. 3645">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="shrinking-query" id="shrinking-query">
+        <h2>How the three-watt-hour query shrank to 0.3</h2>
+        <p>
+          The number most people have actually heard is not about training but
+          about a single question. A widely repeated figure held that one
+          ChatGPT query uses roughly 3 watt-hours, ten times a Google search.
+          How that per-query energy is measured is a subject of its own, worked
+          through in a companion lesson on
+          <a href="../the-instruments/energy-per-query.html">energy per query</a>;
+          what matters here is where the 3 came from and where it went. It
+          traces to Alex de Vries's 2023 analysis, which built on a February
+          2023 estimate that assumed 4,000 input and 2,000 output tokens running
+          on Nvidia A100 chips.<sup class="nb-cite"><a href="#s2" data-nb-locator="Where does the 3 Wh figure come from">2</a></sup>
+        </p>
+        <p>
+          In February 2025 Epoch AI recomputed a typical GPT-4o query at about
+          0.3 watt-hours, roughly ten times lower.<sup class="nb-cite"><a href="#s2" data-nb-locator="Our estimate; Caveats">2</a></sup>
+          Three assumptions had inflated the old figure. It counted a far longer
+          answer than a real query returns, around 500 output tokens rather than
+          2,000. It assumed the older A100 rather than the newer H100. And it
+          used peak power, not the power a chip actually draws. Reporting at the
+          time recorded the walk-back.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <p>
+          The correction is not that a query is always trivial. Epoch's own
+          numbers climb to about 2.4 watt-hours for a 10,000-token input and
+          about 40 for 100,000. The IEA's measured per-task figures run wider
+          still: 0.3 watt-hours on a small text model, 5 on a medium one, 1.7 for
+          an image, and 115 for a six-second video, against roughly 15 to charge
+          a phone.<sup class="nb-cite"><a href="#s4" data-nb-locator="Fig 1.16, p. 45">4</a></sup>
+          A short text question is a rounding error next to charging your phone.
+          A generated video is not. Ask the same question about water and there
+          is nothing to correct, because there is no reliable per-query figure to
+          begin with. The most-quoted water numbers trace to work no primary
+          document here could confirm, and the operators who could measure it
+          publish almost nothing. Water is the part of the per-query story that
+          is a genuine blank.
+        </p>
+      </section>
+
+      <section data-nb-section="five-car-figure" id="five-car-figure">
+        <h2>The five-car figure was a model search, corrected 88-fold</h2>
+        <p>
+          Strubell's table put a full neural architecture search, an automated
+          hunt across 979 million training steps for a better model design, at
+          626,155 pounds of CO2e. The row beneath it, one car's lifetime
+          emissions, was 126,000 pounds.<sup class="nb-cite"><a href="#s1" data-nb-locator="Table 1, p. 3645">1</a></sup>
+          That is the origin of "training a model equals five cars," and it
+          describes the search, not a training run. A single Transformer in the
+          same table is 192 pounds. Patterson and colleagues later cut the search
+          estimate 88-fold, to about 3.2 tonnes.<sup class="nb-cite"><a href="#s5" data-nb-locator="Sec 4.1, p. 8">5</a></sup>
+          The original assumed the search ran at full scale when it in fact ran
+          on a small proxy task, and it did not credit the efficient data centres
+          that handled the rest.
+          A search like that is also run once for a whole class of problems, not
+          once per model, so its cost was charged to the wrong line.
+        </p>
+        <p>
+          The number for an ordinary run is real, but it moves by more than an
+          order of magnitude on where and how you count. Patterson put GPT-3's
+          training at 552 tonnes on a United States average grid.<sup class="nb-cite"><a href="#s5" data-nb-locator="Table 4, p. 6">5</a></sup>
+          BLOOM, a model of comparable size trained on France's nuclear-heavy
+          grid at 57 grams per kilowatt-hour, came to about 25 tonnes counting
+          only the power the run drew.<sup class="nb-cite"><a href="#s6" data-nb-locator="Sec 4.2, p. 4">6</a></sup>
+          Widen BLOOM's boundary to take in the manufacture of the hardware and
+          the idle infrastructure around it and the same run doubles, to 50.5
+          tonnes.<sup class="nb-cite"><a href="#s6" data-nb-locator="Table 3, p. 5">6</a></sup>
+          A carbon figure for one training run says nothing without the grid it
+          ran on and the boundary it counts.
+        </p>
+      </section>
+
+      <section data-nb-section="measured-aggregate" id="measured-aggregate">
+        <h2>Data centres drew 415 terawatt-hours in 2024</h2>
+        <p>
+          This is the half that is measured rather than extrapolated. The IEA's
+          2025 Energy and AI report puts data-centre electricity at about 415
+          terawatt-hours in 2024, roughly 1.5 percent of world electricity,
+          growing about 12 percent a year since 2017, four times faster than
+          total demand. Its Base Case projects about 945 terawatt-hours by 2030,
+          a little more than Japan's entire electricity use today.<sup class="nb-cite"><a href="#s4" data-nb-locator="Executive Summary, pp. 13-15">4</a></sup>
+          That projection is a scenario, not a measurement: the report's four
+          cases span roughly 670 to 1,260 terawatt-hours at 2030 and 700 to
+          1,720 by 2035. The base year is counted; the doubling is a band.
+        </p>
+        <p>
+          Even the base year depends on what you fold in. An earlier IEA edition
+          reported about 460 terawatt-hours in 2022 and floated more than 1,000
+          by 2026, but it counted cryptocurrency mining in the same total. The
+          2025 figure is lower because it sets crypto aside, not because data
+          centres shrank.<sup class="nb-cite"><a href="#s7">7</a></sup>
+          The history also warns against straight-line panic. Masanet and
+          colleagues found global data-centre energy rose only about 6 percent
+          from 2010 to 2020, even as the computing done inside them rose roughly
+          550 percent.<sup class="nb-cite"><a href="#s5" data-nb-locator="Sec 2.3, p. 4">5</a></sup>
+          Each unit of work kept getting cheaper to run. Per unit, the trend has
+          been strongly downward. In total, the load has still climbed fast. Both
+          hold at once.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The per-unit estimates swing by orders of magnitude on the boundary
+            and the base year; the aggregate is a measured base with a projected
+            band.<sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s2">2</a></sup><sup class="nb-cite"><a href="#s5">5</a></sup><sup class="nb-cite"><a href="#s6">6</a></sup><sup class="nb-cite"><a href="#s4">4</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Scale</th>
+              <th>Figure</th>
+              <th class="txt">Accounting boundary and base year</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">per query</span></td>
+              <td>0.3 Wh</td>
+              <td class="txt">Typical GPT-4o query, GPU energy on H100, about 500 output tokens; 2025 estimate. The viral figure was 2.9 Wh on a 2023 A100 assumption.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">per search</span></td>
+              <td>284 → 3.2 t</td>
+              <td class="txt">Evolved-Transformer architecture search: Strubell's 2019 estimate against Patterson's corrected value; run once per problem class.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">per run</span></td>
+              <td>552 t</td>
+              <td class="txt">GPT-3 training, net CO2e on a US-average grid (0.429 kg/kWh); ran 2020.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">per run</span></td>
+              <td>25 / 50.5 t</td>
+              <td class="txt">BLOOM training, French grid (57 g/kWh): running power only against full life-cycle; 2022.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">whole fleet</span></td>
+              <td>415 TWh</td>
+              <td class="txt">All data centres excluding crypto, about 1.5% of world electricity; measured base year 2024.</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">whole fleet</span></td>
+              <td>945 TWh</td>
+              <td class="txt">IEA Base Case projection for 2030, within a 670 to 1,260 range across four cases.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section data-nb-section="the-gap" id="the-gap">
+        <h2>Where the alarm and the dismissal both overreach</h2>
+        <p>
+          The people making the environmental case today want disclosure of
+          energy and water use, efficiency standards, and, in the strongest
+          version, a slower build-out. De Vries, whose 2023 paper seeded the
+          per-query figure, projected AI electricity rising 85 to 134
+          terawatt-hours a year by 2027, with a worst case in which Google's AI
+          alone draws about as much as Ireland. Those figures are reported here
+          from secondary coverage, because the paper itself sits behind a bot
+          check.<sup class="nb-cite"><a href="#s8">8</a></sup>
+        </p>
+        <p>
+          Each side reaches past its evidence. The alarmist version quotes
+          per-query figures with no sourcing and skips over how fast the cost per
+          query has fallen. The dismissive version waves away a real,
+          fast-growing aggregate load and the undisclosed water by pointing to
+          how little one query costs. They are answering different questions.
+          Whether a single query is cheap tells you nothing about whether a
+          cluster of new data centres strains a regional grid, and the measured
+          aggregate tells you nothing about which query you should feel bad
+          about. What would settle it is disclosure the operators can produce and
+          mostly do not: how much electricity and water each facility uses, and
+          which grid its power is drawn from.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The numbers that travel fastest are the per-unit ones, a single query
+          or a single run, and those are the numbers the accounting bends most.
+          The five-car figure was a model search corrected 88-fold. The
+          per-query estimate that meant ten Google searches was recomputed at
+          about a tenth of that, and a training run's carbon swings more than
+          tenfold with the grid under it. What holds still is the aggregate.
+          Data centres used about 415 terawatt-hours in 2024, roughly 1.5 percent
+          of world electricity, and that load is climbing fast even as its 2030
+          size stays a wide band. If you want to judge AI's footprint, the place
+          to look is that measured, uncertain aggregate and the cooling
+          water no operator reports. A single query's cost is the wrong place.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://www.iea.org/reports/energy-and-ai">IEA, Energy and AI (2025)</a>:
+            the measured 2024 base, the four projection scenarios, and the
+            per-task energy figures in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://aclanthology.org/P19-1355/">Strubell, Ganesh & McCallum, Energy and Policy Considerations for Deep Learning (2019)</a>:
+            the original measurements, including the table that started the
+            five-car comparison.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://aclanthology.org/P19-1355/"
+              >ACL 2019 · Strubell, Ganesh &amp; McCallum, Energy and Policy Considerations for Deep Learning in NLP</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://epoch.ai/gradient-updates/how-much-energy-does-chatgpt-use"
+              >Epoch AI · Josh You, How much energy does ChatGPT use?</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://techcrunch.com/2025/02/11/chatgpt-may-not-be-as-power-hungry-as-once-assumed/"
+              >TechCrunch · ChatGPT may not be as power-hungry as once assumed</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://www.iea.org/reports/energy-and-ai"
+              >IEA · Energy and AI, World Energy Outlook Special Report (April 2025)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2104.10350"
+              >Patterson et al. · Carbon Emissions and Large Neural Network Training (2021)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2211.02001"
+              >Luccioni, Viguier &amp; Ligozat · Estimating the Carbon Footprint of BLOOM (2022)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.datacenterfrontier.com/energy/article/33038469/iea-study-sees-ai-cryptocurrency-doubling-data-center-energy-consumption-by-2026"
+              >Data Center Frontier · IEA study sees AI, cryptocurrency doubling data-centre energy by 2026</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.downtoearth.org.in/science-technology/global-electricity-consumption-by-ai-could-increase-by-85-134-twh-annually-by-2027-92286"
+              >Down To Earth · Global electricity consumption by AI could rise 85-134 TWh a year by 2027</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
