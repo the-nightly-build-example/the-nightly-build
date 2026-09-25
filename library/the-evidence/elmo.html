@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ELMo &middot; The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "elmo",
+        "template": "lesson",
+        "title": "ELMo set records on six language tasks without replacing the models it improved",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-25",
+        "tags": ["elmo", "contextual-word-representations", "language-model-pretraining", "bilstm", "feature-based-transfer"],
+        "sources": 6,
+        "words": 1966,
+        "reading_minutes": 9,
+        "dek": "The Allen Institute made a word's vector depend on its whole sentence, with a method BERT discarded within a year.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">ELMo set records on six language tasks without replacing the models it improved</h1>
+        <p class="nb-dekline">
+          The Allen Institute made a word's vector depend on its whole sentence, with a method BERT discarded within a year.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-25</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every large language model in use today starts the same way. It is
+          pretrained on a huge amount of ordinary text before it is ever pointed
+          at a particular job. The idea that a model can learn language from raw
+          text and then lend what it learned to other tasks is usually traced to
+          a 2018 paper, &ldquo;Deep contextualized word representations,&rdquo;
+          which introduced a method named ELMo. This lesson reads that paper. You
+          already have the lesson on word2vec, where a word gets one fixed
+          vector; ELMo is the step where a word&rsquo;s vector starts to change
+          with the sentence around it, and it sits between word2vec and BERT. By
+          the end you will know what ELMo actually did, how well it worked across
+          six different tasks, and why the field kept its central idea while
+          dropping the exact method it shipped, all within about a year.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/word2vec.html">king &minus; man + woman = queen scored 65.6% on word2vec&rsquo;s own test</a>:
+            what a fixed word vector is, and where it comes from.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/long-short-term-memory.html">LSTM learned to carry a value across 1,000 time steps, on a network of a few thousand weights</a>:
+            the recurrent cell ELMo&rsquo;s language model is built from.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-evidence/bert.html">BERT&rsquo;s near-human score on a reasoning test collapsed once the shortcut was closed</a>:
+            the model that displaced ELMo&rsquo;s method a year later.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One vector for &ldquo;bank,&rdquo; whatever the sentence</h2>
+        <p>
+          A model that reads text has to turn each word into numbers first.
+          Before 2018 the standard way came from methods like
+          <a href="../the-evidence/word2vec.html">word2vec</a>: every word gets
+          one vector, learned once and looked up the same way every time. A table
+          like that has no room for a word that means two things.
+          &ldquo;Bank&rdquo; is one row whether the sentence is about a river or
+          a savings account, and &ldquo;play&rdquo; is one row in a theater and
+          on a field. &ldquo;Deep contextualized word representations,&rdquo; the
+          paper that introduced ELMo, begins from that failure. Its claim fits in
+          a sentence: a word&rsquo;s representation should be a function of the
+          entire sentence it appears in, not a fixed entry pulled from a
+          table.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="reading-the-sentence" id="reading-the-sentence">
+        <h2>How ELMo builds a word from its whole sentence</h2>
+        <p>
+          ELMo stands for Embeddings from Language Models, and it is built out of
+          a language model: a network trained to predict the next word in a
+          sentence from the words before it. Train one on enough text and, to
+          predict well, it has to hold some representation of what it has read so
+          far. ELMo runs two of these, one reading left to right and one reading
+          right to left, each a two-layer
+          <a href="../the-evidence/long-short-term-memory.html">LSTM</a>. That
+          pair is the biLM, the bidirectional language
+          model.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Here is the move. Instead of throwing the language model away after
+          training and keeping only its word predictions, ELMo reaches inside and
+          takes the internal states, the vectors the LSTM layers hold as they
+          pass over a sentence. For a given word those states already depend on
+          every other word around it, because the network read the whole sentence
+          to compute them. ELMo&rsquo;s representation of a word is a weighted sum
+          of the biLM&rsquo;s layers at that word&rsquo;s position, and the
+          weights are learned separately for each task it is used on. The paper
+          found the two layers do different work: the higher layer captures a
+          word&rsquo;s meaning in context, well enough to tell a word&rsquo;s
+          senses apart on its own, while the lower layer captures
+          syntax.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+        <p>
+          Two separable things arrived together in that description. One is an
+          idea: a word&rsquo;s representation should be computed by a language
+          model that has read the whole sentence, and that model can be
+          pretrained once on plain text and reused. The other is a method for
+          delivering it: a specific frozen two-layer biLM whose layer states you
+          weight, add up, and attach to a task model as extra input. ELMo shipped
+          both. To use it, the paper says, you freeze the biLM&rsquo;s weights and
+          concatenate the ELMo vector onto the word representation your existing
+          model already takes in.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The task model itself does not change. ELMo is added to what it reads.
+        </p>
+        <p>
+          The released model was not large by a current measure, and the paper
+          never states a single parameter count. It gives the shape instead: two
+          biLSTM layers of 4,096 units with 512-dimensional projections, over a
+          character-based input layer, trained for ten epochs on a one-billion-word
+          corpus of roughly thirty million
+          sentences.<sup class="nb-cite"><a href="#s1">1</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="six-benchmarks" id="six-benchmarks">
+        <h2>Six benchmarks moved by one added representation</h2>
+        <p>
+          The test of the idea was breadth. The authors took six established
+          tasks, each with its own strong published model, and for each one added
+          ELMo to that model&rsquo;s input and retrained the small task-specific
+          part on top. Every one improved, and on every one the ELMo version set
+          a new state of the art.<sup class="nb-cite"><a href="#s1">1</a></sup>
+          The six were not variants of one problem. They were question
+          answering, judging whether one sentence follows from another, labeling
+          who did what to whom, linking pronouns to what they refer to, finding
+          names in text, and rating a review&rsquo;s sentiment.
+        </p>
+        <p>
+          The question-answering benchmark, SQuAD, shows the reach. It is more
+          than a hundred thousand questions written by crowdworkers about
+          Wikipedia passages, each answer a span of text to be located in the
+          passage.<sup class="nb-cite"><a href="#s2">2</a></sup> On it, adding
+          ELMo produced the largest gain of the six.
+        </p>
+        <table class="nb-table">
+          <caption>
+            Single-model test results on the six tasks, from ELMo&rsquo;s own
+            comparison table. &ldquo;ELMo&rdquo; is the paper&rsquo;s baseline
+            model with ELMo added to its input; &ldquo;error cut&rdquo; is the
+            relative reduction in that baseline&rsquo;s remaining
+            error.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="&sect;4, Table 1"
+                data-nb-url="https://arxiv.org/abs/1802.05365"
+                >1</a
+              ></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Metric</th>
+              <th>Prev. SOTA</th>
+              <th>Baseline</th>
+              <th>ELMo</th>
+              <th>Error cut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">SQuAD</span></td>
+              <td>F1</td>
+              <td>84.4</td>
+              <td>81.1</td>
+              <td>85.8</td>
+              <td>24.9%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">SNLI</span></td>
+              <td>acc.</td>
+              <td>88.6</td>
+              <td>88.0</td>
+              <td>88.7</td>
+              <td>5.8%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">SRL</span></td>
+              <td>F1</td>
+              <td>81.7</td>
+              <td>81.4</td>
+              <td>84.6</td>
+              <td>17.2%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Coref</span></td>
+              <td>F1</td>
+              <td>67.2</td>
+              <td>67.2</td>
+              <td>70.4</td>
+              <td>9.8%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">NER</span></td>
+              <td>F1</td>
+              <td>91.93</td>
+              <td>90.15</td>
+              <td>92.22</td>
+              <td>21%</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">SST-5</span></td>
+              <td>acc.</td>
+              <td>53.7</td>
+              <td>51.4</td>
+              <td>54.7</td>
+              <td>6.8%</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The gains were real and they were uneven. On SQuAD, adding ELMo cut the
+          baseline&rsquo;s remaining error by about a quarter. On SNLI, the task
+          of judging whether one sentence follows from another, it cut the error
+          by about a twentieth, and the ELMo score passed the previous record by
+          a tenth of a point.<sup class="nb-cite"><a href="#s1">1</a></sup> The
+          single summary, &ldquo;state of the art on six tasks,&rdquo; hides that
+          spread. What held across all six was not the size of the win but
+          where it came from: in every case a pretrained representation was added
+          to a model that was otherwise left as it was.
+        </p>
+      </section>
+
+      <section data-nb-section="not-first-not-alone" id="not-first-not-alone">
+        <h2>ELMo was neither first nor alone</h2>
+        <p>
+          It is tempting to read ELMo as the moment word meaning in NLP stopped
+          being fixed, and easy to overstate it. Context-dependent word vectors
+          already existed. A year earlier, CoVe had taken the encoder from a
+          machine-translation model and used its output as context vectors added
+          to other models, improving several
+          tasks.<sup class="nb-cite"><a href="#s3">3</a></sup> CoVe&rsquo;s
+          vectors came from a model trained on translation, which needs sentences
+          paired across two languages; ELMo&rsquo;s came from a language model
+          trained on plain unlabeled text, of which there is effectively an
+          unlimited supply. ELMo was not alone in 2018 either. ULMFiT, submitted
+          weeks before ELMo&rsquo;s first version, pretrained a language model on
+          plain text and then fine-tuned the whole thing for a task, reducing
+          error by 18 to 24 percent on most of six text-classification
+          datasets.<sup class="nb-cite"><a href="#s4">4</a></sup>
+        </p>
+        <p>
+          So the accurate credit is narrower than the legend. ELMo did not invent
+          context-dependent representations, and it did not by itself start the
+          era of pretraining. What it did was make language-model pretraining work
+          broadly: one pretrained representation, dropped into six different task
+          models, setting the state of the art on all of them at once. That
+          breadth is what got noticed. In July 2018 Sebastian Ruder called this
+          NLP&rsquo;s &ldquo;ImageNet moment,&rdquo; arguing that practitioners
+          would soon download pretrained language models the way vision
+          researchers download pretrained image models. He named three works
+          together as the evidence: ELMo, ULMFiT, and the OpenAI
+          transformer.<sup class="nb-cite"><a href="#s5">5</a></sup> The phrase is
+          often pinned on ELMo alone now. Ruder pinned it on all three.
+        </p>
+      </section>
+
+      <section data-nb-section="what-bert-replaced" id="what-bert-replaced">
+        <h2>The method BERT replaced in a year</h2>
+        <p>
+          Within the year, ELMo&rsquo;s delivery method was gone. In late 2018
+          BERT sorted the new pretraining approaches into two kinds. The
+          feature-based kind, and it named ELMo as the example, keeps a
+          task-specific model and feeds the pretrained representation in as extra
+          features, which is exactly what ELMo
+          did.<sup class="nb-cite"><a href="#s6">6</a></sup> The fine-tuning kind
+          adds almost no task-specific parts and instead trains all of the
+          pretrained model&rsquo;s weights on the task itself. BERT was the second
+          kind, and it beat ELMo across the tasks they shared.
+        </p>
+        <p>
+          BERT&rsquo;s paper is direct about which part of ELMo it was setting
+          aside.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">In BERT&rsquo;s words</span>
+          <blockquote>
+            ELMo uses &ldquo;a shallow concatenation of independently trained
+            left-to-right and right-to-left LMs.&rdquo;<sup class="nb-cite"
+              ><a href="#s6" data-nb-locator="Introduction">6</a></sup
+            >
+            <span class="nb-note-who">Devlin et al., placing BERT against ELMo</span>
+          </blockquote>
+        </div>
+        <p>
+          The complaint is about the delivery, the frozen biLM and the
+          concatenation. It comes with a claim: a single model trained to read in
+          both directions at once is more powerful than two one-directional models
+          glued together after the
+          fact.<sup class="nb-cite"><a href="#s6">6</a></sup> It is not a complaint
+          about the idea. The idea BERT kept and built on: pretrain a model on
+          plain text, then reuse what it learned to represent language for some
+          other task.
+        </p>
+        <p>
+          ELMo&rsquo;s idea and ELMo&rsquo;s method ended up in different places.
+          The idea, that a word&rsquo;s representation should come from a language
+          model pretrained on unlabeled text, is the ground the models after it
+          stand on.
+          ELMo&rsquo;s method for shipping that idea, a frozen two-layer biLM whose
+          layer states you weight and concatenate as features, lasted about a year
+          in frontline use before fine-tuning a whole Transformer took its place.
+          The first part the field kept. The second it did not.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Here is what to keep. ELMo answered a real limit of fixed word vectors:
+          it made a word&rsquo;s representation depend on the whole sentence, by
+          pretraining a bidirectional language model on plain text and pulling its
+          internal states out as features. Added on top of six different task
+          models, one at a time, it set a new state of the art on all six. The
+          gains ran from about a quarter of the error on question answering down
+          to a twentieth on entailment. ELMo did not invent contextual
+          representations, and it was not the only group in 2018 pretraining a
+          language model to reuse. What it showed, more convincingly than anything
+          before it, was that the approach worked across the board. Then BERT
+          fine-tuned a whole Transformer instead of freezing a language model and
+          feeding it in as features, and it won. The idea ELMo is remembered for,
+          contextual representations from a pretrained language model, is now
+          everywhere. The particular method it shipped is not. A history that
+          credits ELMo with starting the era has the idea right and the method
+          wrong.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1802.05365">Peters et al., &ldquo;Deep contextualized word representations&rdquo;</a>:
+            ELMo&rsquo;s own paper, with the method and the six-task table.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1810.04805">Devlin et al., &ldquo;BERT&rdquo;</a>:
+            the paper that names ELMo as the feature-based approach and fine-tunes instead.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1802.05365"
+              >arXiv &middot; Peters et al., &ldquo;Deep contextualized word representations&rdquo; (NAACL 2018)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1606.05250"
+              >arXiv &middot; Rajpurkar et al., &ldquo;SQuAD: 100,000+ Questions for Machine Comprehension of Text&rdquo; (2016)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1708.00107"
+              >arXiv &middot; McCann et al., &ldquo;Learned in Translation: Contextualized Word Vectors&rdquo; (2017)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1801.06146"
+              >arXiv &middot; Howard &amp; Ruder, &ldquo;Universal Language Model Fine-tuning for Text Classification&rdquo; (2018)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://thegradient.pub/nlp-imagenet/"
+              >The Gradient &middot; Sebastian Ruder, &ldquo;NLP&rsquo;s ImageNet moment has arrived&rdquo; (2018)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1810.04805"
+              >arXiv &middot; Devlin et al., &ldquo;BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding&rdquo; (2018)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
