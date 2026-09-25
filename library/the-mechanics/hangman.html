@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A chatbot can't keep a word it never wrote down · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "hangman",
+        "template": "lesson",
+        "title": "A chatbot can't keep a word it never wrote down",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-25",
+        "tags": ["hidden-state", "commitment", "stateless-requests", "hangman", "reasoning-tokens"],
+        "sources": 10,
+        "words": 1937,
+        "reading_minutes": 8,
+        "dek": "Its answers to a run of guesses stop agreeing because a plain chat stores nothing between turns, so the word it promised to keep was never written anywhere and does not exist.",
+        "harness": "claude-code-routine",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">A chatbot can't keep a word it never wrote down</h1>
+        <p class="nb-dekline">
+          Its answers to a run of guesses stop agreeing because a plain chat
+          stores nothing between turns, so the word it promised to keep was
+          never written anywhere and does not exist.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-25</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Chatbots are good at sounding like they have made up their mind. Ask
+          one to pick a secret word for hangman, promise to keep it, and let you
+          guess it letter by letter. It will play along right up to the reveal,
+          where the word it finally gives often breaks the clues it already
+          handed you. The same thing happens anywhere a chatbot is
+          trusted to hold a choice, a plan, or a tally it never wrote out. This
+          lesson works backward from that broken game to the reason. It covers
+          what a plain chat can and cannot keep from one turn to the next, why
+          its answers are built fresh every time, and the one change that lets a
+          model actually keep a commitment.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/conversation-memory.html"
+              >The model sees your whole conversation for the first time on
+              every turn</a
+            >: the transcript is resent as fresh input on every turn.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-mechanics/autoregressive-generation.html"
+              >The instant a model writes a token, it becomes fact</a
+            >: how a model builds its reply one token at a time.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>The answers that can't belong to one word</h2>
+        <p>
+          Someone asks a chatbot to pick a secret five-letter word, keep it
+          hidden, and answer letter guesses, the way a person holds a word in
+          hangman. The chatbot agrees and says it has one in mind. The guessing
+          starts. The exchange below is reconstructed to show the shape of the
+          failure, not a saved log, but the pattern is the one the measured
+          studies report.
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">An illustrative round</span>
+          <p>Guesser: Pick a secret five-letter word. Don't tell me it. Is there an E?</p>
+          <p>Model: Yes, there is an E.</p>
+          <p>Guesser: Is there an A?</p>
+          <p>Model: Yes.</p>
+          <p>Guesser: Is there an O?</p>
+          <p>Model: Yes.</p>
+          <p>Guesser: I give up. What was the word?</p>
+          <p>Model: The word was "table."</p>
+        </div>
+        <p>
+          No single word carries all three answers and comes out as "table,"
+          because "table" has no O. The answers are not merely wrong. They are
+          impossible together.
+        </p>
+        <p>
+          Research groups that run the game as a controlled test find the same
+          thing. One study is built around hangman itself. It catalogs the two
+          ways the game breaks: the model confirms the true answer and a wrong
+          one alike, or it denies the word it then reveals. It keeps playing even
+          when asked whether a specific letter is in the word it never chose.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3 (failure modes)">1</a></sup
+          >
+          Another group ran a plain yes-or-no version. A model asked to hold an
+          imagined object contradicted itself as the questions piled up, once
+          agreeing an object was both heavier than an elephant and lighter than a
+          cat. Across 200 games, GPT-4o contradicted itself in 173 of them, and a
+          smaller model, GPT-4o mini, in all 200.<sup class="nb-cite"
+            ><a
+              href="#s2"
+              data-nb-locator="§3 (Yes-No game); Table 4"
+              >2</a
+            ></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="no-word-to-hide" id="no-word-to-hide">
+        <h2>There is no word to hide</h2>
+        <p>
+          The natural explanation is that the model picked a word, is holding it
+          in mind, and either got sloppy or decided to cheat. That belief is not
+          naive. It is the belief the game runs on, and it describes exactly how
+          a human opponent works: they choose a word, keep it, and check each
+          guess against it.
+        </p>
+        <p>
+          The model does none of that, because it wrote nothing down. A plain
+          chat keeps no private memory that survives from one turn to the next.
+          The application rebuilds the conversation each time by resending the
+          whole visible transcript as fresh input, the resend covered in
+          <a href="../the-mechanics/conversation-memory.html"
+            >an earlier lesson</a
+          >. The sharper point here is not that the model forgets what was said.
+          It is that it cannot keep what was never said. Each reply is generated
+          <a href="../the-mechanics/autoregressive-generation.html"
+            >one token at a time</a
+          >, and every token is conditioned only on the tokens already in that
+          input. The GPT-2 paper writes the model's estimate as a product of
+          per-token probabilities, each one given the tokens before it.<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="§2 (Approach), p. 2, eq. (1)">3</a></sup
+          >
+          The chat interfaces say the same in their own words. Anthropic's
+          Messages API "is stateless, which means that you always send the full
+          conversational history to the API,"<sup class="nb-cite"
+            ><a
+              href="#s4"
+              data-nb-locator="Multiple conversational turns"
+              >4</a
+            ></sup
+          >
+          and OpenAI's guide states that "each text generation request is
+          independent and stateless."<sup class="nb-cite"
+            ><a
+              href="#s5"
+              data-nb-locator="Manually manage conversation state"
+              >5</a
+            ></sup
+          >
+        </p>
+        <p>
+          So when the instruction is "pick a word, keep it secret, don't tell
+          me," the model produces no tokens that name a word. Nothing about a
+          chosen word gets written into the transcript, and the transcript is
+          the whole of what the next turn can see. There is no secret, because
+          there is nowhere for a secret to sit. A person told to pick a card and
+          not show it still holds a card, and can turn it over later. A plain
+          chat told to pick a word and say nothing holds nothing, and has
+          nothing to turn over.
+        </p>
+      </section>
+
+      <section data-nb-section="performing-vs-holding" id="performing-vs-holding">
+        <h2>Performing a commitment, not holding one</h2>
+        <p>
+          This is the difference between holding a commitment and performing
+          one. A person who holds a word answers from it. The model instead
+          produces the answers of someone who is holding a word, generating each
+          yes or no to fit the transcript so far, with no word behind any of
+          them. It is not lying about a secret it holds. It has no secret to lie
+          about.
+        </p>
+        <div class="nb-pull">
+          <p>It is not lying about a secret it holds. It has no secret to lie about.</p>
+        </div>
+        <table class="nb-table">
+          <caption>
+            What separates holding a commitment from performing one, and why the
+            reveal can fail.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Theorem 1; §3">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">At each step</th>
+              <th class="txt">A person holding a word</th>
+              <th class="txt">A plain chat "holding" one</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt">Where the word is</td>
+              <td class="txt">In their memory, chosen at the start.</td>
+              <td class="txt">Nowhere; no tokens ever named a word.</td>
+            </tr>
+            <tr>
+              <td class="txt">What a "yes" is checked against</td>
+              <td class="txt">The word they are holding.</td>
+              <td class="txt">The visible transcript so far.</td>
+            </tr>
+            <tr>
+              <td class="txt">At the reveal</td>
+              <td class="txt">The word they had all along.</td>
+              <td class="txt">A word built to fit as many past answers as it can.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          A recent result makes the boundary exact. An agent that can see only
+          the shared transcript cannot both leave the secret undetermined and
+          stay consistent with it; with no word written down, there is nothing
+          to be consistent with.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Theorem 1 and Lemma 1">1</a></sup
+          >
+          The fix follows straight from that. Write the word into the model's
+          working memory, as a tagged note like
+          <code>&lt;secret&gt;planet&lt;/secret&gt;</code> that rides along in
+          the context, and the word now exists somewhere later answers can be
+          checked against. In the same study, models left to keep the word "in
+          their head" answered consistently in roughly 2 to 26 percent of games,
+          depending on the model and task. The same models, given an explicit
+          place to write the word down, rose to between 56 and 100 percent.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 1">1</a></sup
+          >
+        </p>
+      </section>
+
+      <section data-nb-section="where-it-can-hold" id="where-it-can-hold">
+        <h2>Where a model can hold a word</h2>
+        <p>
+          The clean claim is narrow and worth stating exactly: a plain chat,
+          asked to keep a word and tell no one, holds no commitment across
+          turns. That leaves real exceptions, and they come down to a single
+          question, whether the word gets written somewhere.
+        </p>
+        <p>
+          Within one reply, it can. A reasoning model produces a chain of
+          thought before its answer: OpenAI's o1 "thinks before it answers" and
+          "can produce a long chain of thought before responding to the user,"
+          and the person reading is shown only a summary of it.<sup
+            class="nb-cite"
+            ><a href="#s6" data-nb-locator="§2; §4.3.2">6</a></sup
+          >
+          Any model can also be told to work on a scratchpad, writing its
+          intermediate steps as ordinary generated tokens before the final
+          answer.<sup class="nb-cite"
+            ><a href="#s7" data-nb-locator="Abstract">7</a></sup
+          >
+          In both cases the commitment lives in tokens the model wrote, even
+          when those tokens are hidden from the reader. What it cannot do is hold
+          a commitment in nothing at all.
+        </p>
+        <p>
+          Those written-but-hidden tokens usually do not survive the turn. In a
+          standard chat, a reasoning model's internal tokens are discarded
+          between turns.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§1 (Introduction)">1</a></sup
+          >
+          A word it settled on while composing one reply is gone by the next,
+          unless the product keeps it. Whether it does is a product choice, not a
+          fact about the model. Even the working state inside a single
+          generation, the cached keys and values the model builds as it decodes,
+          is scoped to that one request and is not carried to the next.<sup
+            class="nb-cite"
+            ><a href="#s8" data-nb-locator="§2.2; §4.1">8</a></sup
+          >
+          What does cross turns is state the product writes down where it can be
+          read. Memory features and server-side stores do exactly that. As one
+          practitioner put it, such memory "is stored somewhere in plain English;
+          you can just go and look at it."<sup class="nb-cite"
+            ><a href="#s9" data-nb-locator="Comment by zozbot234">9</a></sup
+          >
+        </p>
+        <p>
+          Two things, then, are settled engineering: a plain chat holds no
+          commitment across turns, and any commitment that does survive is
+          written down somewhere readable. What is a product choice is whether a
+          given tool keeps that writing. A reasoning model that drops its
+          thoughts keeps nothing; a memory feature that saves them, or a tool
+          that files the word away, keeps it.
+        </p>
+      </section>
+
+      <section data-nb-section="trusting-it-to-remember" id="trusting-it-to-remember">
+        <h2>What you trust when you trust it to remember</h2>
+        <p>
+          The hangman game is a clean case of a habit that shows up wherever a
+          chatbot is trusted to keep something it never wrote. A plan it
+          "agreed" to but did not record. A number it "chose" and withheld. A
+          running tally it says it is keeping. If the thing is not in the visible
+          transcript or in a store that can be read back, it is not anywhere, and
+          the next reply reconstructs it from scratch.
+        </p>
+        <p>
+          Newer models play the game more coherently, which can look like
+          progress on this exact problem. It is not. A model generating locally
+          consistent answers is a better imitation of a commitment, not a held
+          one. As Murray Shanahan puts it, it is "absolutely inherent in the way
+          large language models are built" that the model will not commit at the
+          start of the conversation to what the object is.<sup class="nb-cite"
+            ><a href="#s10" data-nb-locator="Murray Shanahan quote">10</a></sup
+          >
+          The practical rule is the one the fix already showed. To make a
+          chatbot keep something, make it write it down, in the conversation or
+          in a store where it can be read back and checked.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The chatbot is not cheating at hangman and it is not lying. Asked to
+          keep a word secret, a plain chat writes nothing down, so there is no
+          word to keep. Every answer is built fresh from what the transcript
+          shows, which is why the answers stop agreeing and the reveal breaks the
+          clues. A model can keep a commitment only when the word is written
+          somewhere it can read again: in the reasoning tokens of a single reply,
+          or in a memory or tool the product saves for it. When something has to
+          be kept, the only reliable move is to make the model write it down.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a
+              href="https://platform.claude.com/docs/en/build-with-claude/working-with-messages"
+              >Anthropic, Working with the Messages API</a
+            >: the doc that spells out the stateless API and the resent history.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2601.06973"
+              >LLMs Can't Play Hangman (Baldelli et al.)</a
+            >: the impossibility result and the private-working-memory fix.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Theorem 1; Table 1; §1"
+              href="https://arxiv.org/abs/2601.06973"
+              >arXiv · Baldelli et al., LLMs Can't Play Hangman: On the Necessity
+              of a Private Working Memory for Language Agents</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3 (Yes-No game); Table 4"
+              href="https://arxiv.org/abs/2505.10571"
+              >arXiv · Huang et al., LLMs Do Not Have Human-Like Working
+              Memory</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§2 (Approach), p. 2, eq. (1)"
+              href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf"
+              >OpenAI · Radford et al., Language Models are Unsupervised
+              Multitask Learners (GPT-2)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Multiple conversational turns"
+              href="https://platform.claude.com/docs/en/build-with-claude/working-with-messages"
+              >Anthropic · Working with the Messages API</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Manually manage conversation state"
+              href="https://developers.openai.com/api/docs/guides/conversation-state"
+              >OpenAI · Conversation state (API guide)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§2 (Model data and training); §4.3.2 (CoT summarized outputs)"
+              href="https://cdn.openai.com/o1-system-card-20241205.pdf"
+              >OpenAI · o1 System Card</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract"
+              href="https://arxiv.org/abs/2112.00114"
+              >arXiv · Nye et al., Show Your Work: Scratchpads for Intermediate
+              Computation with Language Models</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§2.2 (Autoregressive Generation); §4.1 (PagedAttention)"
+              href="https://arxiv.org/abs/2309.06180"
+              >arXiv · Kwon et al., Efficient Memory Management for Large Language
+              Model Serving with PagedAttention</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Comment by zozbot234"
+              href="https://news.ycombinator.com/item?id=46933311"
+              >Hacker News · Thread on LLM statelessness across executions</a
+            >
+          </li>
+          <li id="s10">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Body; Murray Shanahan quote"
+              href="https://word.studio/how-ai-plays-20-questions/"
+              >Word.Studio · How Does AI Play 20 Questions?</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
