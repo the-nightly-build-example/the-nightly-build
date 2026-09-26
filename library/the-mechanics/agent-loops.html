@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>An agent reruns the step that just failed because the transcript still points to it · The Mechanics</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-mechanics",
+        "slug": "agent-loops",
+        "template": "lesson",
+        "title": "An agent reruns the step that just failed because the transcript still points to it",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-26",
+        "tags": ["agents", "tool-use", "stateless-requests", "self-correction", "react"],
+        "sources": 9,
+        "words": 2197,
+        "reading_minutes": 10,
+        "dek": "An agent is a stateless model re-reading a transcript and a harness running what it returns, and that plain design makes repeating a just-failed step the most likely next move.",
+        "harness": "Claude Code (nb-orchestrator edition)",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Mechanics</div>
+        <h1 class="nb-title">An agent reruns the step that just failed because the transcript still points to it</h1>
+        <p class="nb-dekline">
+          An agent is a stateless model re-reading a transcript and a harness running what it returns, and that plain design makes repeating a just-failed step the most likely next move.
+        </p>
+        <div class="nb-byline">
+          <span>10 min read</span><span>2026-09-26</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Agents are the form most new AI products now take. A coding assistant
+          that edits files, a browsing agent that clicks through a site, an
+          autonomous runner you hand a goal: each is a language model placed in a
+          loop and given a way to act. Leave one
+          running and you will eventually watch it get stuck. It reruns the
+          command that just errored, clicks the dead link again, retries the
+          approach that already failed, turn after turn, until something outside
+          it stops the run. This lesson works backward from that stuck agent to
+          the part of the design that produces it, and stops at the point below
+          which nothing you could change would alter the result. By the end you
+          can look at any proposed fix and say whether it touches that part or
+          only decorates it.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/tool-use.html">A model that calls a tool never runs it</a>: what actually happens when a model "calls" a tool, and who runs it.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/react-reasoning-and-acting.html">ReAct searched Wikipedia between thoughts</a>: the reason-act loop as the paper that introduced it.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A coding agent breaks one line and keeps editing it</h2>
+        <p>
+          SWE-agent is an autonomous coding agent that reads a bug report, edits
+          files in a repository, and runs the tests. Its authors name a prominent
+          failure of it plainly: the agent repeatedly edits the same snippet of
+          code. The usual trigger is an errant edit that introduced a syntax
+          error, a wrong indentation or an extra parenthesis, which the agent then
+          keeps trying to fix.<sup class="nb-cite"><a href="#s1" data-nb-locator="§5.2">1</a></sup>
+          Failed edits are not rare. Of 2942 SWE-bench task instances, 1185 of
+          the runs, 51.7%, contain at least one failed edit, and the odds of
+          recovery fall as those failed edits pile up.<sup class="nb-cite"><a href="#s1" data-nb-locator="§5.2">1</a></sup>
+          These agents do not finish often: this one resolved 12.47% of the test
+          tasks, against a prior non-interactive best of 3.8%.<sup class="nb-cite"><a href="#s1" data-nb-locator="Abstract; §1">1</a></sup>
+        </p>
+        <div class="nb-stat-strip">
+          <div class="nb-stat">
+            <span class="nb-stat-n">51.7%</span><span class="nb-stat-l">SWE-agent runs with a failed edit</span>
+          </div>
+          <div class="nb-stat">
+            <span class="nb-stat-n">12.47%</span><span class="nb-stat-l">SWE-bench tasks resolved</span>
+          </div>
+        </div>
+        <p>
+          The same pattern turns up wherever a model is put in a loop. In
+          ReAct's error analysis of 50 runs on the HotpotQA question set, the
+          authors single out one failure specific to it. The model keeps
+          regenerating its previous thoughts and actions and cannot reason its
+          way to a different next step. They file it under reasoning errors,
+          47% of ReAct's failures against 16% for plain chain-of-thought, though
+          the repeated loop is only one part of that row.<sup class="nb-cite"><a href="#s2" data-nb-locator="§3.3, Table 2">2</a></sup>
+          AgentBench, which scores models as agents across a range of
+          environments, keeps a tally of why a run ends. One reason it records is that the
+          agent "begins to do repeated generations for many turns," and that
+          category of unfinished run reaches as high as 82.5% of tasks in some
+          environments.<sup class="nb-cite"><a href="#s3" data-nb-locator="§2, Table 4">3</a></sup>
+          Outside the papers, a user filed an AutoGPT issue in April 2023 titled
+          "Gets stuck in a loop." Its log shows the runner re-issuing the same
+          Google query at three consecutive timestamps after it had already
+          received results.<sup class="nb-cite"><a href="#s4" data-nb-locator="Issue #1994">4</a></sup>
+          That is one unreplicated report, not a rate, but the pattern is
+          catalogued as a recognized failure of these runners.<sup class="nb-cite"><a href="#s5" data-nb-locator="autogpt-planning-failures">5</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="the-loop" id="the-loop">
+        <h2>Underneath an agent is a model calling a harness in a loop</h2>
+        <p>
+          To see why the step comes back, take the agent apart. An agent is a
+          language model given a way to act, and the model cannot act on its own.
+          It writes text, and a program outside it does the running and reports
+          back; the mechanics of one such
+          <a href="../the-mechanics/tool-use.html">tool call</a> are their own
+          lesson. Put that exchange on repeat and you have the
+          <a href="../the-evidence/react-reasoning-and-acting.html">reason-act loop</a>.
+          Four steps, one turn:
+        </p>
+        <ol class="nb-steps">
+          <li>
+            <h3>The model proposes an action</h3>
+            <p>
+              Given the transcript so far, the model writes its next reasoning
+              and the action it wants taken, as text.<sup class="nb-cite"><a href="#s2" data-nb-locator="Abstract">2</a></sup>
+            </p>
+          </li>
+          <li>
+            <h3>The harness runs it</h3>
+            <p>
+              A program outside the model, the harness, parses that text and
+              performs the action: it runs the command, follows the link, applies
+              the edit.
+            </p>
+          </li>
+          <li>
+            <h3>The result goes back into the transcript</h3>
+            <p>
+              Whatever came back, an output or an error message, is appended to
+              the transcript as more text.
+            </p>
+          </li>
+          <li>
+            <h3>The model is called again</h3>
+            <p>
+              With the transcript now one turn longer, the model is called to
+              propose the next action, and the loop turns again.
+            </p>
+          </li>
+        </ol>
+        <p>
+          One fact about the model in step one governs everything downstream. It
+          is <a href="../the-mechanics/conversation-memory.html">stateless</a>: it
+          keeps nothing between calls, so on every turn it re-reads the whole
+          transcript from the top and produces the next action from that text
+          alone. Its only record of what it has already tried is whatever the
+          transcript holds. A model cannot keep a private note of a word it never
+          wrote down, the same reason a chatbot loses a secret it promised to keep
+          in a game of <a href="../the-mechanics/hangman.html">hangman</a>.
+        </p>
+      </section>
+
+      <section data-nb-section="the-transcript" id="the-transcript">
+        <h2>The transcript keeps recommending the step that just failed</h2>
+        <p>
+          Now run the loop forward into the stuck state. Suppose the transcript
+          still names the same goal and still shows the same action as the most
+          reasonable next move. The model returns the most probable continuation
+          of that text, so it returns that action again. The error the harness
+          appended is evidence against the action, but it is weak evidence
+          against a strong prior, and a model frequently continues on the prior
+          instead of revising on the error.
+        </p>
+        <p>
+          How weak that evidence is has been measured. Huang and colleagues
+          separate two settings.<sup class="nb-cite"><a href="#s6" data-nb-locator="§2, Tables 2–3">6</a></sup>
+          In intrinsic self-correction the model reviews its own answer with no
+          outside check. Accuracy holds flat or slips: GPT-4 on the GSM8K math
+          set went from 95.5 to 91.5 to 89.0 over two rounds of self-review.
+          Hand the same procedure a correct-label oracle that decides when to
+          stop, and accuracy climbs instead, GPT-3.5 on CommonSenseQA rising from
+          75.8 to 89.7.<sup class="nb-cite"><a href="#s6" data-nb-locator="Tables 2–3">6</a></sup>
+          The finding is not that a model cannot revise. It is that a model
+          cannot reliably judge whether its own reasoning was correct, so
+          feedback it generates about itself is worth little while a reliable
+          signal from outside is worth a great deal.<sup class="nb-cite"><a href="#s6" data-nb-locator="§3.3">6</a></sup>
+        </p>
+        <div class="nb-note">
+          <span class="nb-note-label">Open question</span>
+          <p>
+            Huang and colleagues give the proximate cause, that the model cannot
+            judge the correctness of its own reasoning.<sup class="nb-cite"><a href="#s6" data-nb-locator="§3.3">6</a></sup>
+            Why a model under-weights the error already sitting in its
+            transcript, and whether it could learn to weight that feedback
+            reliably with no outside signal, is not settled by these results.
+          </p>
+        </div>
+        <p>
+          Statelessness is not the only push toward the repeat. ReAct's own
+          authors attribute part of their loop to greedy decoding, the habit of
+          taking the single most probable token at each step, and suggest a
+          different decoding procedure might address it.<sup class="nb-cite"><a href="#s2" data-nb-locator="Footnote 6">2</a></sup>
+          That is the same force behind the token-level
+          <a href="../the-mechanics/repetition-loops.html">repetition loops</a> an
+          earlier lesson took apart, where a model is made likelier to repeat a
+          phrase by having just repeated it. Some action-level looping shares
+          that decoding-level cause. And the obvious knob does not reach it.
+          Raising the <a href="../the-mechanics/sampling-temperature.html">sampling temperature</a>
+          adds randomness to the draw. It does not add a strategy for what to try
+          next, so it can knock the agent off the exact repeat without giving it
+          anywhere better to go.
+        </p>
+      </section>
+
+      <section data-nb-section="ground" id="ground">
+        <h2>Below the transcript and the harness, nothing else decides</h2>
+        <p>
+          Follow the chain down and it bottoms out quickly. The action appears
+          because the transcript makes it the most probable continuation.<sup class="nb-cite"><a href="#s2" data-nb-locator="Abstract">2</a></sup>
+          The transcript reads that way because the earlier turns, the failed one
+          included, are still in it and still point at the goal. The model
+          re-derives the action because that is what predicting the next token
+          from this text yields, and the harness runs it because running what the
+          model returns is the harness's one job.<sup class="nb-cite"><a href="#s1" data-nb-locator="§5.2">1</a></sup>
+        </p>
+        <p>
+          No component in the base
+          loop keeps a list of what was already tried, ranks the alternatives, or
+          decides to explore. Nothing below that line changes the outcome: the
+          loop is the default behavior of a stateless predictor reading a
+          transcript while a harness executes what it says, and not a defect in
+          one product built on that design.
+        </p>
+      </section>
+
+      <section data-nb-section="breaking-the-loop" id="breaking-the-loop">
+        <h2>What breaks the loop is a better signal or a harder stop</h2>
+        <p>
+          Because the cause sits in the transcript and the harness, the fixes
+          that work reach for one of those two places. Reflexion adds a step
+          after a failed trial.<sup class="nb-cite"><a href="#s7" data-nb-locator="§3, Figure 2">7</a></sup>
+          The agent writes a short reflection on what went wrong and stores it in
+          a memory the next trial reads, so the transcript now carries an
+          explicit record of the attempt and not just its failed output. On the
+          AlfWorld task set, ReAct with Reflexion finished 130 of 134 tasks,
+          well above plain ReAct, and on the HumanEval coding set it reached 91.0
+          pass@1 against an 80.1 GPT-4 baseline.<sup class="nb-cite"><a href="#s7" data-nb-locator="Table 1, §4.1">7</a></sup>
+          The gain is not uniform: on MBPP the same method scored 77.1, below
+          that baseline. What it isolates is the missing ingredient: a memory of
+          past attempts.
+        </p>
+        <p>
+          SWE-agent's authors changed the harness instead. Recall that the
+          repeated edits begin when an errant edit introduces a syntax error.
+          They added a check to the edit action that applies a change only if it
+          produces no major error, so the broken edit never enters the transcript
+          to be repeated, and performance improves considerably.<sup class="nb-cite"><a href="#s1" data-nb-locator="§3, §5.2">1</a></sup>
+          LangGraph takes the bluntest route. Its recursion limit caps how many
+          steps a graph runs in one execution, 1000 by default as of version
+          1.0.6 and 25 in earlier ones. It raises an error at the cap, noting it
+          "is often due to an infinite loop."<sup class="nb-cite"><a href="#s8" data-nb-locator="Graph API, recursion limit">8</a></sup>
+          A cap is not a way out of the loop. It ends the run without solving the
+          task, which makes it a way to bound the damage rather than fix the
+          cause. A person watching supplies what the model cannot: the outside signal
+          Huang and colleagues found to be the difference between self-correction
+          that helps and self-correction that hurts.<sup class="nb-cite"><a href="#s6" data-nb-locator="Tables 2–3">6</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            Four ways to stop a repeated action, sorted by where each one acts.<sup class="nb-cite"><a href="#s7">7</a></sup><sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s8">8</a></sup><sup class="nb-cite"><a href="#s6">6</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Fix</th>
+              <th class="txt">Where it acts</th>
+              <th class="txt">What it supplies</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Reflexion</span></td>
+              <td class="txt">the transcript</td>
+              <td class="txt">A written record of past attempts for the next trial to read.</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Edit guardrail</span></td>
+              <td class="txt">the harness</td>
+              <td class="txt">A check that keeps a broken edit out of the transcript.</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Recursion limit</span></td>
+              <td class="txt">the harness</td>
+              <td class="txt">A cap that ends the run, without breaking the loop.</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">Human interrupt</span></td>
+              <td class="txt">outside the loop</td>
+              <td class="txt">The judgment the model cannot form about its own work.</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          One caution sits over all of it. Not every repeated action is an
+          unintended loop. Kapoor and colleagues note that repeating a step on
+          purpose, sampling an answer several times and keeping the best, can
+          match more elaborate agents at lower cost.<sup class="nb-cite"><a href="#s9" data-nb-locator="§2.1">9</a></sup>
+          A fix that suppresses all repetition can drop that useful strategy
+          along with the failure. The test is whether the repeat is making
+          progress, not whether it is a repeat. What is settled is the
+          architecture, and that scaffolding of
+          this kind helps: an explicit memory, a harness guardrail, and an
+          outside judge each cut the looping their designers went after.<sup class="nb-cite"><a href="#s7" data-nb-locator="Table 1">7</a></sup><sup class="nb-cite"><a href="#s1" data-nb-locator="§5.2">1</a></sup>
+          What stays open is the layer beneath, why a model under-weights the
+          error already in front of it, and whether it could be trained to
+          correct itself reliably with no outside signal at all.<sup class="nb-cite"><a href="#s6" data-nb-locator="§3.3">6</a></sup>
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          A stuck agent is not a broken product. It is what the plain design does
+          by default: a model that knows only what the transcript tells it,
+          reading a transcript that still points at the failed step, while a
+          harness runs whatever comes back. That is why raising the temperature
+          or adding "try something else" to the prompt buys so little. They leave
+          the transcript pointing the same way. The fixes that work change what
+          the model reads or what the harness allows. They add a written record of
+          what was already tried, a check that refuses the broken edit, or a
+          person who supplies the judgment the model cannot form about its own
+          work. When
+          someone shows you an agent that no longer loops, ask which of those
+          they changed. If the answer is none, the loop is still there, waiting
+          for the input that sets it off.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2405.15793">SWE-agent (Yang et al., 2024)</a>: the coding-agent interface, its failure analysis, and the edit guardrail, in full.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2310.01798">Huang et al., 2023</a>: the intrinsic-versus-oracle self-correction experiments behind the weak-signal step.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2405.15793"
+              >Yang et al. · SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering (2024)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2210.03629"
+              >Yao et al. · ReAct: Synergizing Reasoning and Acting in Language Models (2022)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2308.03688"
+              >Liu et al. · AgentBench: Evaluating LLMs as Agents (2023)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://github.com/Significant-Gravitas/AutoGPT/issues/1994"
+              >Significant Gravitas · AutoGPT issue #1994, "Gets stuck in a loop" (2023)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://github.com/vectara/awesome-agent-failures/blob/main/docs/case-studies/autogpt-planning-failures.md"
+              >Vectara · awesome-agent-failures: AutoGPT planning failures</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2310.01798"
+              >Huang et al. · Large Language Models Cannot Self-Correct Reasoning Yet (2023)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2303.11366"
+              >Shinn et al. · Reflexion: Language Agents with Verbal Reinforcement Learning (2023)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://docs.langchain.com/oss/python/langgraph/graph-api"
+              >LangChain · LangGraph Graph API documentation</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/2407.01502"
+              >Kapoor et al. · AI Agents That Matter (2024)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
