@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Judging 980 more documents moved a dense retriever above BM25 · The Instruments</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-instruments",
+        "slug": "ndcg",
+        "template": "lesson",
+        "title": "Judging 980 more documents moved a dense retriever above BM25",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-26",
+        "tags": ["ndcg", "retrieval", "benchmarks", "leaderboards", "information-retrieval"],
+        "sources": 9,
+        "words": 2155,
+        "reading_minutes": 9,
+        "dek": "nDCG@10 is the single number that sorts retrieval on the MTEB and BEIR leaderboards, and it scores each system against whichever documents a person chose to judge.",
+        "harness": "Claude Code (nb-orchestrator edition)",
+        "model": "Claude Opus 4.8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Instruments</div>
+        <h1 class="nb-title">Judging 980 more documents moved a dense retriever above BM25</h1>
+        <p class="nb-dekline">
+          nDCG@10 is the single number that sorts retrieval on the MTEB and BEIR leaderboards, and it scores each system against whichever documents a person chose to judge.
+        </p>
+        <div class="nb-byline">
+          <span>9 min read</span><span>2026-09-26</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          Every team that builds a search feature, or a system that answers
+          questions from its own documents, has to choose a retrieval model.
+          Almost all of them choose the same way: they sort a leaderboard by
+          nDCG@10 and take something near the top. That single number drives real
+          engineering decisions. This lesson takes it apart, from one graded
+          result up to the normalized score. Inside that number sit choices:
+          which documents a person judged, on what grade scale, with which gain
+          and discount conventions, and cut at which rank. Any of those can move
+          the score, sometimes far enough to reorder the ranking, while no system
+          gets better at retrieval. You will finish able to read an
+          nDCG@10 for what it is, and to say when two of them can honestly be
+          compared.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-mechanics/retrieval.html">A chatbot quotes your PDF without learning a word of it</a>: how a retrieval system turns a question into a ranked list of passages.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-instruments/mteb.html">A model can top the MTEB average and be ordinary at retrieval</a>: how MTEB averages one nDCG@10 per dataset into a leaderboard rank.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-instruments/mean-average-precision.html">Mean average precision</a>: the binary-relevance ranking metric that nDCG generalizes.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>A score for one ranked list of results</h2>
+        <p>
+          A retrieval system answers a query by returning a ranked list of
+          documents, its best guess first. To grade that list you have to know
+          which documents actually answer the query, so someone reads
+          query-document pairs and marks each one with a relevance judgment: a
+          label saying how well that document answers that query. The collected
+          labels are the test collection's answer key. nDCG@10 scores the ranked
+          list against that key, and it is the single number MTEB reports to rank
+          retrieval systems. MTEB takes both its datasets and that metric from
+          BEIR.<sup class="nb-cite"><a href="#s1">1</a></sup><sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          A judgment can be as plain as relevant or not, or it can run over
+          several levels of relevance. That grading is what separates nDCG from
+          an older sibling,
+          <a href="../the-instruments/mean-average-precision.html">mean average precision</a>,
+          which assumes a document is either relevant or not and averages
+          precision down the list. nDCG reads the graded label and then adds a
+          penalty for how far down the list a good document sits. The whole
+          measure follows from those two ideas, a grade and a position penalty,
+          and both are simple arithmetic.
+        </p>
+      </section>
+
+      <section data-nb-section="by-hand" id="by-hand">
+        <h2>Working nDCG by hand</h2>
+        <p>
+          Start with the wrong version, because it is the one most people carry.
+          Suppose you just count the relevant documents in the top ten. Two
+          systems each return four relevant documents, so they tie. But one put
+          its four at ranks 1 through 4 and the other buried them at 7 through 10,
+          and anyone reading the results would tell the two apart at a glance. A
+          count cannot see order. nDCG is built to see it.
+        </p>
+        <p>
+          The defining paper grades each result from 0, no value, to 3, high
+          value.<sup class="nb-cite"><a href="#s3">3</a></sup> The grade a result
+          earns is its gain: a document graded 3 is worth 3. That is the linear
+          convention, the one the official TREC scorer uses and therefore the one
+          behind every MTEB and BEIR number.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          Then comes the position penalty, the discount: divide each gain by the
+          logarithm of one past its rank, log2(rank + 1). At rank 1 that divisor
+          is log2(2) = 1, so the top result keeps its full gain. At rank 3 it is
+          log2(4) = 2, so a document there is worth half its gain. The further
+          down a good result sits, the less it counts.
+        </p>
+        <p>
+          Add the discounted gains down to a cutoff and you have the discounted
+          cumulative gain, DCG. Take a six-result list graded 3, 2, 3, 0, 1, 2.
+          Its DCG works out to 6.861. On its own that number says nothing,
+          because it depends on how many high grades were there to be found. So
+          you divide by the best score the list could have reached: the DCG of
+          the same judged documents sorted from best to worst, called the ideal
+          DCG, or IDCG. Here the ideal order is 3, 3, 2, 2, 1, 0, and its IDCG is
+          7.141. The normalized score is 6.861 divided by 7.141, which is 0.961.
+          That is nDCG: 1 is a perfect ranking, and any value below 1 is the
+          share of the ideal the system reached.<sup class="nb-cite"><a href="#s3">3</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            nDCG@6 worked by hand, in the linear convention: the grade is the
+            gain, and each is divided by the log2(rank + 1) discount. DCG 6.861 ÷
+            IDCG 7.141 = 0.961.<sup class="nb-cite"><a href="#s3">3</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Grade</th>
+              <th>Contribution</th>
+              <th>Ideal grade</th>
+              <th>Ideal contribution</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td><td>3</td><td>3.000</td><td>3</td><td>3.000</td>
+            </tr>
+            <tr>
+              <td>2</td><td>2</td><td>1.262</td><td>3</td><td>1.893</td>
+            </tr>
+            <tr>
+              <td>3</td><td>3</td><td>1.500</td><td>2</td><td>1.000</td>
+            </tr>
+            <tr>
+              <td>4</td><td>0</td><td>0.000</td><td>2</td><td>0.861</td>
+            </tr>
+            <tr>
+              <td>5</td><td>1</td><td>0.387</td><td>1</td><td>0.387</td>
+            </tr>
+            <tr>
+              <td>6</td><td>2</td><td>0.712</td><td>0</td><td>0.000</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The cutoff is the k in nDCG@k. Stop the sum at rank 10 and you have
+          nDCG@10, the leaderboard number, which reports how well a system
+          ordered its first ten results and says nothing about the
+          eleventh.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+      </section>
+
+      <section data-nb-section="two-scores" id="two-scores">
+        <h2>One ranking can score 0.961 or 0.949</h2>
+        <p>
+          That 0.961 came out of two choices that could have gone another way,
+          and a different choice gives a different number for the very same
+          ranking. The first is the gain. The linear convention sets the gain
+          equal to the grade. The other common convention sets it to 2^grade − 1,
+          so the jump from a 2 to a 3 counts for far more than the jump from a 0
+          to a 1.<sup class="nb-cite"><a href="#s4">4</a></sup> That exponential
+          form is the one major web-search companies and Kaggle competitions use,
+          and the two agree only when relevance is
+          binary.<sup class="nb-cite"><a href="#s5">5</a></sup> Run the same
+          six-result list through it and the score is 0.949 rather than 0.961.
+        </p>
+        <table class="nb-table">
+          <caption>
+            The same six-result ranking, scored under the two gain
+            conventions.<sup class="nb-cite"><a href="#s4">4</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Convention</th>
+              <th class="txt">Gain rule</th>
+              <th>DCG@6</th>
+              <th>IDCG@6</th>
+              <th>nDCG@6</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt"><span class="nb-table-token">linear</span></td>
+              <td class="txt">grade</td>
+              <td>6.861</td><td>7.141</td><td>0.961</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">exponential</span></td>
+              <td class="txt">2^grade − 1</td>
+              <td>13.848</td><td>14.595</td><td>0.949</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The second choice is the discount itself. The 2002 original divided by
+          the logarithm of the rank in a chosen base and applied no discount
+          until that base rank; the modern standard divides by log2(rank + 1) at
+          every rank.<sup class="nb-cite"><a href="#s3">3</a></sup> Both go by the
+          name "the log discount." None of this makes any number wrong. It makes
+          a bare nDCG@10 comparable only to another one computed the same way, on
+          the same judgments. A leaderboard score and an in-house web-search
+          score can both be called nDCG@10 and still not belong on the same axis.
+        </p>
+      </section>
+
+      <section data-nb-section="judged-documents" id="judged-documents">
+        <h2>The number only counts the documents someone judged</h2>
+        <p>
+          Every score so far assumed the answer key was complete. It never is. A
+          test collection is judged by pooling: assessors label the documents
+          that some set of systems returned, and anything left unjudged is
+          treated as not relevant. When a newer system surfaces a relevant
+          document that no earlier system found, that document sits in the results
+          unjudged and is counted as a miss. These gaps are called holes, and a
+          system with more of them is graded against a key that is missing its
+          own best answers.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <p>
+          BEIR ran the cleanest demonstration of what that does, on its
+          TREC-COVID dataset. Left alone, the dense retriever ANCE scored 0.654,
+          just below the old lexical baseline BM25. Its top-ten results carried
+          far more holes than BM25's, 14.4 percent against 6.4 percent, because it
+          kept retrieving recent papers the original pool had never judged. BEIR
+          had assessors judge 980 of those missing pairs and recomputed the
+          scores. No retrieval system changed. ANCE rose to 0.735, now 6.7 points
+          above BM25, while the lexical docT5query, which had almost no holes,
+          barely moved, from 0.713 to 0.714. ColBERT gained 5.8 points the same
+          way. The ranking flipped, and the only thing that changed was the
+          labels.<sup class="nb-cite"><a href="#s2">2</a></sup>
+        </p>
+        <table class="nb-table">
+          <caption>
+            TREC-COVID nDCG@10 before and after 980 missing relevance judgments
+            were filled in. The retrieval systems were left
+            unchanged.<sup class="nb-cite"><a href="#s2">2</a></sup>
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">System</th>
+              <th>Hole@10</th>
+              <th>nDCG@10 before</th>
+              <th>nDCG@10 after</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="txt"><span class="nb-table-token">ANCE</span></td>
+              <td>14.4%</td><td>0.654</td><td>0.735</td>
+            </tr>
+            <tr>
+              <td class="txt"><span class="nb-table-token">docT5query</span></td>
+              <td>2.8%</td><td>0.713</td><td>0.714</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          The dependence gets sharper when the key is thin. Some collections
+          judge fewer than two relevant documents per query,<sup class="nb-cite"><a href="#s2">2</a></sup> and training sets
+          drawn from click logs often carry exactly
+          one.<sup class="nb-cite"><a href="#s6">6</a></sup> Work out what nDCG@10
+          becomes with a single relevant document. The ideal is that one document
+          at rank 1, so IDCG is 1. The score is then just 1 divided by log2(1 +
+          the rank of the hit): 1.000 at rank 1, 0.631 at rank 2, 0.500 at rank 3,
+          0.289 at rank 10, and 0 below that. The graded scale and the discount
+          now have nothing to work with. The metric
+          has quietly become a measure of one thing, how high the single answer
+          landed, wearing the same name as before.
+        </p>
+        <p>
+          When an offline number can move like that, a whole field can spend
+          years chasing it. Reviewing eighteen neural recommendation models
+          published at top venues, Ferrari Dacrema and colleagues could reproduce
+          only seven, and six of those seven were beaten by simple, well-tuned
+          baselines that had been around for years, measured on nDCG among other
+          scores.<sup class="nb-cite"><a href="#s7">7</a></sup> The reported
+          progress had been in the metric, not in the systems.
+        </p>
+      </section>
+
+      <section data-nb-section="what-it-gets-right" id="what-it-gets-right">
+        <h2>What nDCG still gets right</h2>
+        <p>
+          None of this makes nDCG a poor measure. Of the common ranking measures,
+          it is the one that best matches what people actually prefer. Sanderson
+          and colleagues showed crowd workers pairs of rankings and asked which
+          they liked better. nDCG agreed with the crowd on 63 percent of the
+          comparisons it could judge, 160 of 252, significantly more often than
+          reciprocal rank at 53 percent or precision-at-ten at 50
+          percent.<sup class="nb-cite"><a href="#s8">8</a></sup> It earns its
+          place as the default.
+        </p>
+        <p>
+          The same study marks the edge of that defense. nDCG's advantage leaned
+          on the easy cases, the ones where a system returned nothing relevant at
+          all; where both rankings returned something, agreement was weaker, and
+          even at its best nDCG matched people only about two times in
+          three.<sup class="nb-cite"><a href="#s8">8</a></sup> It is an offline
+          stand-in for a satisfied user, and a good one, not the user.
+        </p>
+        <p>
+          A second result defends the number and warns about it at once. Wang and
+          colleagues proved that the standard log-discount nDCG can still tell
+          substantially different rankers apart on almost any dataset, even
+          though its raw value drifts toward 1 as a collection grows, so the
+          absolute number means little on its
+          own.<sup class="nb-cite"><a href="#s9">9</a></sup> Their proof turns on
+          the discount: choose one that decays too slowly, past a critical rate,
+          and nDCG loses even that ability to separate rankers. The discount is
+          not decoration. It is the part of the formula the guarantee depends on.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          An nDCG@10 is not one measurement but a stack of choices: a grade
+          scale, a gain rule, a discount rule, a rank cutoff, and above all the
+          set of documents that some person decided to judge. Change the
+          judgments alone and BEIR watched a dense retriever cross from below a
+          lexical baseline to well above it, with no system touched. Two of these
+          numbers are worth comparing only when they were computed the same way on
+          the same judged pool; a leaderboard score and an in-house one that share
+          the name often were not. This is not a case against the measure, which
+          of the common ranking metrics still best matches what people prefer. It
+          is the reason to ask, every time, which judged pool produced the number.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://dl.acm.org/doi/10.1145/582415.582418">Järvelin &amp; Kekäläinen, Cumulated gain-based evaluation of IR techniques</a>: the 2002 paper that defines DCG and its normalization, with the original worked vectors.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/2104.08663">BEIR: A Heterogeneous Benchmark for Zero-shot IR</a>: the benchmark behind the leaderboard number, including the full TREC-COVID hole study.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="https://github.com/usnistgov/trec_eval">trec_eval</a>: the official TREC scorer that computes the linear-gain nDCG@10 the leaderboards report.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.2 Tasks and Evaluation, Retrieval paragraph: nDCG@10 the main metric; datasets and evaluation reused from BEIR"
+              href="https://arxiv.org/abs/2210.07316"
+              >Muennighoff, Tazi, Magne &amp; Reimers (Hugging Face) · MTEB: Massive Text Embedding Benchmark (2022)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3.3 Evaluation Metric (why nDCG@10, computed with trec_eval); §3 and Table 1 (qrels, Avg. D/Q, some datasets < 2 relevant per query); §4 and Table 4, Hole@10 analysis on TREC-COVID"
+              href="https://arxiv.org/abs/2104.08663"
+              >Thakur, Reimers, Rücklé, Srivastava &amp; Gurevych (NeurIPS 2021 Datasets &amp; Benchmarks) · BEIR: A Heterogeneous Benchmark for Zero-shot Evaluation of Information Retrieval (2021)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="ACM TOIS 20(4), Oct 2002, pp. 422–446; §2.1 Eq. 1 pp. 424–425 (grades 0–3, linear gain), §2.2 Eq. 2 pp. 425–426 (log discount), §2.3 Eq. 5 pp. 426–427 (normalization)"
+              href="https://dl.acm.org/doi/10.1145/582415.582418"
+              >Järvelin &amp; Kekäläinen (ACM TOIS) · Cumulated Gain-based Evaluation of IR Techniques (2002)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§2 Information Retrieval Measures, Eq. 5: DCG@T with gain 2^l − 1 and 1/log(1 + i) discount; five relevance levels; T = 10 first-page example"
+              href="https://www.microsoft.com/en-us/research/publication/from-ranknet-to-lambdarank-to-lambdamart-an-overview/"
+              >Burges (Microsoft Research) · From RankNet to LambdaRank to LambdaMART: An Overview (MSR-TR-2010-82, 2010)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              data-nb-locator="Sections 'Discounted Cumulative Gain' and 'Normalized DCG': exponential form common in industry and on Kaggle; the two forms coincide for binary relevance (retrieved 2026-09-26)"
+              href="https://en.wikipedia.org/wiki/Discounted_cumulative_gain"
+              >Wikipedia · Discounted cumulative gain</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="§3 Datasets: sparse labels, 'often only one positive label per query'; Overall results: nDCG@10 the main metric on the 4-level NIST judgments"
+              href="https://arxiv.org/abs/2003.07820"
+              >Craswell, Mitra, Yilmaz, Campos &amp; Voorhees (TREC) · Overview of the TREC 2019 Deep Learning Track (2019)</a
+            >
+          </li>
+          <li id="s7">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract and §2.1 Table 1: 18 examined, 7 reproducible, 6 of 7 beaten by simple baselines; §4: metrics include NDCG"
+              href="https://arxiv.org/abs/1907.06902"
+              >Ferrari Dacrema, Cremonesi &amp; Jannach (RecSys 2019, Best Paper) · Are We Really Making Much Progress? A Worrying Analysis of Recent Neural Recommendation Approaches (2019)</a
+            >
+          </li>
+          <li id="s8">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="SIGIR 2010, pp. 555–562; §4.2 and Table 4 (nDCG 160/252 = 63%, MRR 127/241, P(10) 106/214; nDCG significantly higher); §6 Conclusions (advantage concentrated where one system returned nothing relevant)"
+              href="https://dl.acm.org/doi/10.1145/1835449.1835542"
+              >Sanderson, Paramita, Clough &amp; Kanoulas (SIGIR 2010) · Do User Preferences and Evaluation Measures Line Up? (2010)</a
+            >
+          </li>
+          <li id="s9">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              data-nb-locator="Abstract and §1: standard log-discount NDCG converges to 1; consistent distinguishability for substantially different rankers; r^−1 the critical discount-decay point"
+              href="https://arxiv.org/abs/1304.6480"
+              >Wang, Wang, Li, He, Liu &amp; Chen (COLT 2013) · A Theoretical Analysis of NDCG Type Ranking Measures (2013)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
