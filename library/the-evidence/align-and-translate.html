@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Align and translate · The Evidence</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../assets/theme.css" />
+    <link rel="stylesheet" href="../../assets/nb.css" />
+    <script defer src="../../assets/nb.js"></script>
+    <script type="application/json" id="nb-meta">
+      {
+        "protocol": "1.1",
+        "series": "the-evidence",
+        "slug": "align-and-translate",
+        "template": "lesson",
+        "title": "Bahdanau's 2014 translator chose which source words to read for each word it wrote",
+        "mode": "open",
+        "order": null,
+        "date": "2026-09-26",
+        "tags": ["attention", "machine-translation", "rnn", "history"],
+        "sources": 6,
+        "words": 1804,
+        "reading_minutes": 8,
+        "dek": "The model now cited as the origin of attention ran on WMT'14 English-French alone, and its authors credited a 2013 handwriting network for the idea.",
+        "harness": "Claude Code (nb-orchestrator edition)",
+        "model": "claude-opus-4-8"
+      }
+    </script>
+  </head>
+  <body class="nb-article">
+    <article class="nb-reading">
+      <header>
+        <div class="nb-eyebrow">The Evidence</div>
+        <h1 class="nb-title">Bahdanau's 2014 translator chose which source words to read for each word it wrote</h1>
+        <p class="nb-dekline">
+          The model now cited as the origin of attention ran on WMT'14 English-French alone, and its authors credited a 2013 handwriting network for the idea.
+        </p>
+        <div class="nb-byline">
+          <span>8 min read</span><span>2026-09-26</span>
+        </div>
+      </header>
+
+      <section class="nb-bookend" data-nb-section="why" id="why">
+        <p class="nb-bookend-name">Why this matters</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          When people say attention was invented in 2014, they mean one
+          paper: Bahdanau, Cho, and Bengio's translation model, cited tens of
+          thousands of times as the place the idea began. The story is mostly
+          right and partly overstated. This lesson separates what the paper
+          actually built from the origin story now told about it, and shows
+          how narrow the evidence under that story was.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Background</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="../the-evidence/seq2seq.html">Google packed a whole sentence into a single vector</a>: the fixed-vector encoder-decoder this paper set out to improve on.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="../the-evidence/long-short-term-memory.html">LSTM learned to carry a value across 1,000 time steps</a>: the recurrent cell these translators are built from.
+          </dd>
+          <dt>03</dt>
+          <dd>
+            <a href="../the-evidence/attention-is-all-you-need.html">The paper credited with starting the LLM era never trained a language model</a>: the 2017 Transformer that kept this idea and dropped the recurrence.
+          </dd>
+          <dt>04</dt>
+          <dd>
+            <a href="../the-mechanics/attention.html">An attention head is a weighted average that computes its own weights</a>: how a single attention operation works, step by step.
+          </dd>
+        </dl>
+      </section>
+
+      <section data-nb-section="orientation" id="orientation">
+        <h2>One vector had to hold the whole sentence</h2>
+        <p>
+          In 2014 a neural translation model worked in two halves. An encoder
+          read the source sentence one word at a time and compressed
+          everything it had read into a single fixed-length vector, a list of
+          numbers of a set size. A decoder then generated the translation from
+          that one vector, producing the target sentence word by word with
+          nothing else to consult. Bahdanau, Cho, and Bengio looked at that
+          design and named its cost. A network, they wrote, "needs to be able
+          to compress all the necessary information of a source sentence into
+          a fixed-length vector," and they conjectured that this fixed-length
+          vector was "a bottleneck" on how good the translation could
+          get.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Abstract; §1">1</a></sup
+          >
+        </p>
+        <p>
+          The design they were improving on was recent, and partly their own.
+          Cho and his coauthors had proposed the RNN encoder-decoder that same
+          year: one recurrent network "encodes a sequence of symbols into a
+          fixed-length vector representation, and the other decodes the
+          representation into another sequence of symbols."<sup class="nb-cite"
+            ><a href="#s2" data-nb-locator="Abstract">2</a></sup
+          >
+          Bahdanau was a coauthor on that earlier paper too, so the 2014
+          alignment work is a group revising a model it had just built, not
+          attacking someone else's.
+        </p>
+      </section>
+
+      <section data-nb-section="reading-per-word" id="reading-per-word">
+        <h2>Reading the source again for each output word</h2>
+        <p>
+          The fix removed the single vector. Instead of squeezing the whole
+          source into one representation, the encoder keeps one representation
+          per source word. Bahdanau's model builds these with a bidirectional
+          recurrent network that reads the sentence forward and backward and
+          joins the two, so each word's representation carries what came
+          before it and after it. The paper calls each of these an
+          annotation.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.2">1</a></sup
+          >
+        </p>
+        <p>
+          The change is in the decoder. The older model read the same fixed
+          vector every time it produced a word. Bahdanau's decoder computes,
+          for each target word it is about to produce, a fresh set of weights
+          over all the source annotations, and reads a weighted sum of them.
+          Those weights are the alignment: they say how much each source word
+          matters to the word being generated right now. The weighted sum is
+          the context vector, and the paper is explicit that here the
+          probability of an output word "is conditioned on a distinct context
+          vector c_i for each target word y_i," unlike the older approach that
+          reused one vector throughout.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.1">1</a></sup
+          >
+          The weights themselves come from a small feedforward network trained
+          jointly with the rest of the model.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.1, alignment model">1</a></sup
+          >
+        </p>
+        <p>
+          The authors give this a name in passing. "Intuitively, this
+          implements a mechanism of attention in the decoder," they write.
+          "The decoder decides parts of the source sentence to pay attention
+          to."<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§3.1">1</a></sup
+          >
+          The word appears in that one intuitive passage; the model itself is
+          named RNNsearch, and the formal method is written in terms of
+          alignment, annotations, and the context vector.
+        </p>
+        <p>
+          The alignment is legible in the weights themselves. In one of the
+          paper's sample sentences, the English "The agreement on the European
+          Economic Area was signed in August 1992" is translated into French,
+          and the brightest weights run down the diagonal, each French word
+          drawing mostly from its English counterpart. Where French reorders
+          the phrase, the weights bend off the diagonal: to produce "zone
+          économique européenne" the decoder reaches back across "European
+          Economic Area" in reverse, lighting the cells that cross.<sup
+            class="nb-cite"
+            ><a href="#s1" data-nb-locator="Fig. 3(a), §6.1">1</a></sup
+          >
+          Nothing in the setup told the model that French inverts that phrase.
+          The reordering fell out of training.
+        </p>
+        <figure class="nb-figure">
+          <img
+            src="align-and-translate/asset-1.png"
+            alt="A grayscale grid showing alignment weights between the English source sentence 'The agreement on the European Economic Area was signed in August 1992' across the top and its French translation down the left side. Bright cells follow the diagonal, and a block of bright cells crosses over where 'European Economic Area' maps in reverse order to 'zone économique européenne'."
+          />
+          <figcaption>
+            Fig. 1 · Alignment weights for one English-to-French sentence: brighter cells mean the decoder drew more heavily on that source word, and the crossed block is where the French phrase order inverts the English.<sup class="nb-cite"
+              ><a
+                href="#s1"
+                data-nb-locator="Fig. 3(a), p. 6"
+                data-nb-url="https://ar5iv.labs.arxiv.org/html/1409.0473"
+                data-nb-note="The paper's own visualization of soft alignment, including non-monotonic reordering."
+                >1</a
+              ></sup
+            >
+          </figcaption>
+        </figure>
+      </section>
+
+      <section data-nb-section="long-sentences" id="long-sentences">
+        <h2>The gain showed up on the long sentences</h2>
+        <p>
+          The evidence for all this was narrow. The models
+          trained on one language pair, WMT'14 English to French, on 348
+          million words of text selected down from a combined pool of about
+          850 million.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§4.1">1</a></sup
+          >
+          Both the source and target vocabularies were capped at the 30,000
+          most frequent words, and any rarer word became a single unknown
+          token.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§4.1">1</a></sup
+          >
+          Each recurrent network held 1,000 hidden units per direction, with
+          620-dimensional word embeddings.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Appendix A.2.3">1</a></sup
+          >
+          By later standards this is a small model on a single task.
+        </p>
+        <p>
+          On that task the alignment model beat the fixed-vector baseline
+          cleanly. Scores are in BLEU, a translation metric from 0 to 100 that
+          measures how much of the output's word sequences match a reference
+          translation, so higher is better. The full comparison is one small
+          table.
+        </p>
+        <table class="nb-table">
+          <caption>
+            BLEU on the WMT'14 English-French test set (news-test-2014, 3,003
+            sentences). RNNsearch is the alignment model. RNNencdec is the
+            fixed-vector baseline. The number is the sentence length each was
+            trained up to. Moses is a mature phrase-based system that trained
+            its language model on an extra 418M words of French text the
+            neural models did not use.<sup class="nb-cite"
+              ><a href="#s1" data-nb-locator="Table 1">1</a></sup
+            >
+          </caption>
+          <thead>
+            <tr>
+              <th class="txt">Model</th>
+              <th>BLEU, all</th>
+              <th>BLEU, no unknown words</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="nb-table-token">RNNencdec-30</span></td>
+              <td>13.93</td>
+              <td>24.19</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">RNNsearch-30</span></td>
+              <td>21.50</td>
+              <td>31.44</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">RNNencdec-50</span></td>
+              <td>17.82</td>
+              <td>26.71</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">RNNsearch-50</span></td>
+              <td>26.75</td>
+              <td>34.16</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">RNNsearch-50*</span></td>
+              <td>28.45</td>
+              <td>36.15</td>
+            </tr>
+            <tr>
+              <td><span class="nb-table-token">Moses</span></td>
+              <td>33.30</td>
+              <td>35.63</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>
+          Trained on sentences up to 50 words, RNNsearch scored 26.75 against
+          RNNencdec's 17.82, and 34.16 against 26.71 once sentences with an
+          unknown word were removed.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 1">1</a></sup
+          >
+          The starred RNNsearch-50, trained until the development set stopped
+          improving, reached 28.45, within reach of the 33.30 that Moses
+          managed with its extra monolingual data.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Table 1, §5.1">1</a></sup
+          >
+        </p>
+        <p>
+          A single score hides where the gain came from. The paper's own
+          picture of the bottleneck is a plot of BLEU against sentence length:
+          the fixed-vector RNNencdec climbs, then falls as sentences grow past
+          twenty or thirty words, while RNNsearch-50 stays flat out to length
+          50 and beyond.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="Fig. 2">1</a></sup
+          >
+          That curve, more than the headline BLEU, is the evidence for the
+          conjecture, because it shows the baseline breaking down exactly
+          where a single fixed vector would run out of room.
+        </p>
+        <p>
+          One contemporaneous result complicates the account. Sutskever,
+          Vinyals, and Le trained a deep fixed-vector LSTM on the same
+          English-French test set and reported 34.8 BLEU, above RNNsearch-50's
+          26.75. They wrote that "the LSTM did not have difficulty on long
+          sentences," helped by feeding the source in reverse order.<sup
+            class="nb-cite"
+            ><a href="#s3" data-nb-locator="Abstract">3</a></sup
+          >
+          Those two numbers are not a head-to-head. Sutskever's system was
+          deeper, reversed its inputs, and used an ensemble for its strongest
+          scores, and the BLEU protocols differ, so 34.8 does not read against
+          26.75 as a like-for-like loss.<sup class="nb-cite"
+            ><a href="#s3" data-nb-locator="Abstract">3</a></sup
+          >
+          What Bahdanau's paper actually establishes is narrower than a defeat
+          of every fixed-vector model: its own RNNencdec baseline fell off
+          with length, and alignment repaired that baseline.
+        </p>
+      </section>
+
+      <section data-nb-section="one-translator" id="one-translator">
+        <h2>A fix for one translator, not the Transformer</h2>
+        <p>
+          The paper is now cited roughly 30,000 times and is routinely named
+          as the origin of attention.<sup class="nb-cite"
+            ><a href="#s4" data-nb-locator="citation count, retrieved 2026-09-26">4</a></sup
+          >
+          Two things in its own text sit awkwardly against that story.
+        </p>
+        <p>
+          The authors did not claim to have invented learned alignment. In
+          their related-work section they point back a year: "A similar
+          approach of aligning an output symbol with an input symbol was
+          proposed recently by Graves (2013)," in a model that generated
+          handwriting.<sup class="nb-cite"
+            ><a href="#s1" data-nb-locator="§6.1">1</a></sup
+          >
+          Graves's network emitted the parameters of a soft window over the
+          input characters as it wrote, so that it "dynamically determines an
+          alignment between the text and the pen locations."<sup class="nb-cite"
+            ><a href="#s5" data-nb-locator="§5.1">5</a></sup
+          >
+          A differentiable, learned alignment predated the translation paper,
+          by one of the paper's own citations.
+        </p>
+        <p>
+          Nor did the 2014 work build what the origin story credits it with.
+          It demonstrated soft alignment inside a recurrent translator, on one
+          language pair. The Transformer came three years later, when Vaswani
+          and coauthors kept the attention idea, cited this paper for it, and
+          removed the recurrence: an architecture "based solely on attention
+          mechanisms, dispensing with recurrence and convolutions."<sup
+            class="nb-cite"
+            ><a href="#s6" data-nb-locator="Abstract; References [2]">6</a></sup
+          >
+          Self-attention, where a token attends to other positions in the same
+          sequence, is defined in that 2017 paper, not in this one.<sup
+            class="nb-cite"
+            ><a href="#s6" data-nb-locator="§3.2, Background">6</a></sup
+          >
+          Language-model pretraining, the later step that turned
+          attention-based models into general systems, is nowhere in the 2014
+          work at all.
+        </p>
+        <p>
+          Calling this the paper that invented attention compresses that
+          history. It introduced soft alignment in a translator and named it
+          attention in a single passage. The Transformer, self-attention, and
+          language-model pretraining were later, and by others.
+        </p>
+      </section>
+
+      <section class="nb-bookend" data-nb-section="takeaway" id="takeaway">
+        <p class="nb-bookend-name">The takeaway</p>
+        <div class="nb-bookend-rule"></div>
+        <p>
+          The 2014 paper did something specific and did it well: it let a
+          translator read a different slice of the source for every word it
+          produced, and showed that this beat a fixed-vector model on long
+          English-French sentences. The authors named the trick attention in
+          one passage, and pointed to a 2013 handwriting model for the
+          underlying idea. They did not build the Transformer, self-attention,
+          or the pretrained language models that came after. So the paper is
+          the origin of soft alignment in machine translation, not the origin
+          of the whole architecture people picture when they hear the word
+          today. The case behind the famous claim was one language pair and a
+          single table of BLEU scores.
+        </p>
+        <div class="nb-bookend-band">
+          <span class="nb-bookend-label">Go deeper</span>
+          <span class="nb-bookend-note">optional reading</span>
+        </div>
+        <dl class="nb-bookend-reading">
+          <dt>01</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1409.0473">Bahdanau, Cho, and Bengio, "Neural Machine Translation by Jointly Learning to Align and Translate"</a>: the paper itself; Section 3.1 is the attention passage.
+          </dd>
+          <dt>02</dt>
+          <dd>
+            <a href="https://arxiv.org/abs/1706.03762">Vaswani et al., "Attention Is All You Need"</a>: the 2017 architecture that kept the idea and dropped the recurrence.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="nb-sources" data-nb-section="sources" id="sources">
+        <h2>Sources</h2>
+        <ol>
+          <li id="s1">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1409.0473"
+              >arXiv · Bahdanau, Cho, and Bengio, "Neural Machine Translation by Jointly Learning to Align and Translate" (v7, 2016; ICLR 2015)</a
+            >
+          </li>
+          <li id="s2">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1406.1078"
+              >arXiv · Cho et al., "Learning Phrase Representations using RNN Encoder–Decoder for Statistical Machine Translation" (EMNLP 2014)</a
+            >
+          </li>
+          <li id="s3">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1409.3215"
+              >arXiv · Sutskever, Vinyals, and Le, "Sequence to Sequence Learning with Neural Networks" (2014)</a
+            >
+          </li>
+          <li id="s4">
+            <a
+              data-nb-source
+              data-nb-kind="secondary"
+              href="https://www.semanticscholar.org/paper/fa72afa9b2cbc8f0d7b05d52548906610ffbb9c5"
+              >Semantic Scholar · citation record for "Neural Machine Translation by Jointly Learning to Align and Translate" (retrieved 2026-09-26)</a
+            >
+          </li>
+          <li id="s5">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1308.0850"
+              >arXiv · Graves, "Generating Sequences With Recurrent Neural Networks" (2013)</a
+            >
+          </li>
+          <li id="s6">
+            <a
+              data-nb-source
+              data-nb-kind="primary"
+              href="https://arxiv.org/abs/1706.03762"
+              >arXiv · Vaswani et al., "Attention Is All You Need" (2017)</a
+            >
+          </li>
+        </ol>
+      </section>
+    </article>
+  </body>
+</html>
